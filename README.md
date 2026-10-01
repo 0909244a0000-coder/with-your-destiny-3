@@ -1,6 +1,6 @@
 # With Your Destiny Ⅲ
 
-タントラの世界観で作る、オート戦闘のハクスラ（ディアブロ風）ゲームです。設計図は [docs/SPEC.md](docs/SPEC.md)。
+長く遊びながら育てていく、オート戦闘のハクスラ（ディアブロ風）ゲームです。設計図は [docs/SPEC.md](docs/SPEC.md)。
 
 ## 遊び方
 - `index.html` をブラウザで開くだけで遊べます（PC向け）。

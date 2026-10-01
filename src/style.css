@@ -120,3 +120,142 @@ aside { width: 400px; display: flex; flex-direction: column; gap: 12px; }
 .skill-icon { width: 22px; height: 22px; object-fit: contain; }
 .tip-item .unique-power { margin-top: 4px; line-height: 1.3; }
 .tip-item .unique-power small { color: #eadbb0; font-size: 11px; }
+.build { margin-top: 8px; padding-top: 6px; border-top: 1px solid #2f281e; font-size: 12px; line-height: 1.45; }
+.build small { color: var(--text); opacity: 0.85; font-size: 11px; }
+.build-title { color: var(--muted); font-size: 11px; margin-bottom: 2px; }
+select { background: #3a3226; color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 2px 4px; font: inherit; }
+.modal { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; }
+.modal[hidden] { display: none; }
+.modal-box { background: var(--panel); border: 1px solid var(--accent); border-radius: 8px; padding: 18px 22px; min-width: 300px; max-width: 90vw; }
+.modal-box h2 { font-size: 18px; }
+.modal-box ul { margin: 8px 0 14px; padding-left: 1.2em; color: var(--accent); }
+
+/* ===== ディアブロ風の見た目（黒い石・鉄・くすんだ金） =====
+   上の基本の見た目を、ここで上書きしています。 */
+:root {
+  --bg: #0b0a09;
+  --panel: #17140f;
+  --line: #3d3427;
+  --text: #ddd1b6;
+  --muted: #9a8b6f;
+  --accent: #c9a24a;
+  --serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "MS PMincho", serif;
+}
+body {
+  background: radial-gradient(ellipse at 50% 0%, #1d1812 0%, #0b0a09 60%) fixed;
+}
+header {
+  background: linear-gradient(#1a1610, #0f0d0a);
+  border-bottom: 1px solid #000;
+  box-shadow: 0 1px 0 #3d3427, 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+h1 {
+  font-family: var(--serif);
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  color: #d8b45c;
+  text-shadow: 0 0 10px rgba(201, 162, 74, 0.35), 0 2px 0 #000;
+}
+h2 {
+  font-family: var(--serif);
+  letter-spacing: 0.08em;
+  color: #d0ab55;
+  text-shadow: 0 1px 0 #000;
+  border-bottom: 1px solid #2c251b;
+  padding-bottom: 4px;
+}
+.panel {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(0, 0, 0, 0.25)),
+    repeating-linear-gradient(45deg, #17140f 0 6px, #15120e 6px 12px);
+  border: 1px solid #000;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px #3d3427, inset 0 0 18px rgba(0, 0, 0, 0.8), 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+/* 四すみの金具 */
+.panel::before, .panel::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #8a6d32;
+  pointer-events: none;
+}
+.panel::before { top: 3px; left: 3px; border-right: none; border-bottom: none; }
+.panel::after { bottom: 3px; right: 3px; border-left: none; border-top: none; }
+canvas {
+  border: 2px solid #000;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px #4a3d2a, 0 6px 18px rgba(0, 0, 0, 0.8);
+}
+button, select {
+  background: linear-gradient(#3a3125, #241e16);
+  border: 1px solid #000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px #4a3d2a;
+  color: #e3d5b5;
+  border-radius: 2px;
+}
+button:hover:not(:disabled) { background: linear-gradient(#4a3f2e, #2c241a); }
+button.active { background: linear-gradient(#d8b45c, #9c7a33); color: #140f08; }
+button.on { background: linear-gradient(#3b6a3c, #23421f); }
+button.off { background: linear-gradient(#6a3434, #3e1d1d); }
+button.danger { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px #7a2e2e; }
+.bar { background: #050403; border: 1px solid #000; box-shadow: 0 0 0 1px #3d3427; border-radius: 2px; }
+.bar .fill.hp { background: linear-gradient(#e0473f, #8e1612 60%, #5a0b08); }
+.bar .fill.exp { background: linear-gradient(#a48ae8, #5b3cb6 60%, #3a2477); }
+.bar span { text-shadow: 0 1px 2px #000; }
+.stats span { font-family: var(--serif); }
+.cell {
+  background: radial-gradient(#15120e, #0a0907);
+  border-width: 1px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 10px var(--r, transparent), inset 0 0 2px #000;
+}
+.cell:hover:not(.blank) { background: radial-gradient(#231d15, #0f0c09); }
+#tooltip {
+  background: rgba(6, 5, 4, 0.97);
+  border: 1px solid #000;
+  box-shadow: 0 0 0 1px #6b5427, 0 8px 20px rgba(0, 0, 0, 0.8);
+  border-radius: 2px;
+}
+#tooltip .tip-item > div:first-of-type, #tooltip .tip-item > div[style*="font-weight"] {
+  font-family: var(--serif);
+}
+.modal-box {
+  background: linear-gradient(#1a1610, #0d0b08);
+  border: 1px solid #000;
+  box-shadow: 0 0 0 1px #8a6d32, 0 12px 30px rgba(0, 0, 0, 0.9);
+  border-radius: 3px;
+}
+.modal-box h2 { text-align: center; font-size: 20px; }
+#log { font-size: 12.5px; }
+.paragon-row { display: inline-flex; align-items: center; gap: 6px; width: 49%; padding: 1px 0; }
+.paragon-row span { flex: 1; }
+.paragon-row button { padding: 0 6px; font-size: 12px; }
+.skill-rune { font-size: 12px; margin-top: 3px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.skill-rune select { font-size: 12px; padding: 0 2px; }
+.skill-rune-desc { color: #c9b48a; }
+
+/* 図鑑と記録 */
+.codex-box { width: 880px; max-height: 88vh; display: flex; flex-direction: column; }
+#codex-body { overflow-y: auto; margin-bottom: 10px; }
+.codex-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.codex-cols h3 { font-family: var(--serif); color: #c9a85a; font-size: 14px; margin: 10px 0 4px; border-bottom: 1px solid #2f281e; }
+.codex-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 1px 0; }
+.codex-ach { font-size: 12px; padding: 3px 0; border-bottom: 1px dotted #2f281e; color: #8a7d66; }
+.codex-ach.done { color: #ffd36b; }
+.codex-ach small { color: var(--muted); }
+.codex-ach-side { display: block; font-size: 11px; color: var(--muted); }
+.codex-item { font-size: 12.5px; padding: 4px 0; border-bottom: 1px dotted #2f281e; line-height: 1.4; }
+.codex-item.unknown b { color: #5a5245; }
+#codex-close { display: block; margin: 0 auto; }
+@media (max-width: 700px) { .codex-cols { grid-template-columns: 1fr; } }
+
+/* 宝石とソケット */
+#gems { display: flex; flex-wrap: wrap; gap: 4px; }
+.gem-chip { font-size: 12px; border: 1px solid #444; border-radius: 3px; padding: 2px 6px; cursor: pointer; background: #14110c; }
+.gem-chip.selected { background: #3a3020; box-shadow: 0 0 6px #e8c46a; }
+.gem-chip button { font-size: 11px; padding: 0 4px; margin-left: 2px; }
+.tip-item .socket { font-size: 12px; margin-top: 2px; }
+.tip-item .socket.empty { color: #8a7d66; }
