@@ -18,6 +18,10 @@ WYD.ui = {
     const s = state;
 
     this.$("help").onclick = () => this.showStory("help");
+    this.$("sound-toggle").onclick = () => {
+      s.settings.sound = !s.settings.sound;
+      this.changed();
+    };
     this.$("area-down").onclick = () => this.changeArea(-1);
     this.$("area-up").onclick = () => this.changeArea(1);
     this.$("diff-down").onclick = () => this.changeDifficulty(-1);
@@ -186,6 +190,7 @@ WYD.ui = {
       this.world.player.hp = stats.maxHp;
       const p = this.world.player;
       WYD.fx.burst(this.world, p.x, p.y + 10, WYD.data.fx.levelUp, null, { angle: -Math.PI / 2, spread: 0.6, glow: true });
+      WYD.sound.play("levelUp");
     }
     WYD.save.write(this.state);
   },
@@ -300,6 +305,7 @@ WYD.ui = {
       btn.classList.toggle("active", Number(btn.dataset.speed) === s.settings.speed);
     }
     this.$("auto-salvage").value = s.settings.autoSalvage;
+    this.$("sound-toggle").textContent = `音：${s.settings.sound ? "ON" : "OFF"}`;
     this.$("auto-diff").checked = s.settings.autoDifficulty;
 
     // キャラ

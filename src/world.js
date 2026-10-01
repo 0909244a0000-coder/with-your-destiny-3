@@ -92,6 +92,7 @@ WYD.world = {
         boss.boss = true;
         boss.slamTimer = WYD.data.enemies[area.boss].slam.interval;
         WYD.ui.log(`ボス「${WYD.data.enemies[area.boss].name}」が現れた！`, WYD.data.boss.nameColor);
+        WYD.sound.play("bossAppear");
         WYD.ui.markDirty();
       }
     }
@@ -320,6 +321,7 @@ WYD.world = {
       }
       w.effects.push({ type: "ring", x: p.x, y: p.y, radius: s.radius, color: s.color, time: 0, duration: 0.35 });
       WYD.fx.burst(w, p.x, p.y, { ...WYD.data.fx.whirl, speed: s.radius * 2.2 }, s.color, { glow: true });
+      WYD.sound.play("whirl");
       // 固有能力：劫火の腕輪（足元の地面が燃える）
       const fire = stats.powers.whirlFire;
       if (fire) {
@@ -455,6 +457,7 @@ WYD.world = {
         p.hp -= hit.damage;
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
         WYD.fx.burst(w, p.x, p.y, WYD.data.fx.playerHit, null, { gravity: true });
+        WYD.sound.play("hurt");
         // 精鋭の能力：吸血
         if (this.hasAffix(e, "vampiric")) {
           e.hp = Math.min(e.maxHp, e.hp + hit.damage * this.eliteAffix("vampiric").lifestealPercent / 100);
@@ -554,6 +557,7 @@ WYD.world = {
       w.effects.push({ type: "shock", x: e.x, y: e.y, radius: slam.radius, color: WYD.data.boss.warnColor, time: 0, duration: 0.5 });
       WYD.fx.burst(w, e.x, e.y, { ...WYD.data.fx.slamDust, speed: slam.radius * 2.4 }, null, {});
       WYD.fx.shake(w, WYD.data.fx.shakeSlam);
+      WYD.sound.play("slam");
       if (WYD.util.dist(e, p) <= slam.radius) {
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
         const hit = this.calcDamage(e.attack * slam.damageMult, defense, 0);
@@ -631,6 +635,7 @@ WYD.world = {
     if (e.hp <= 0 || chance <= 0 || Math.random() * 100 >= chance) return;
     const def = WYD.loot.effectInfo("thunder");
     w.effects.push({ type: "bolt", x: e.x, y: e.y, color: def.color, time: 0, duration: 0.25 });
+    WYD.sound.play("thunder");
     const hit = this.calcDamage(stats.attack * def.power, e.defense, 0);
     this.damageEnemy(w, state, e, hit.damage, false);
   },
@@ -727,6 +732,7 @@ WYD.world = {
       const item = WYD.loot.createUnique(state, state.difficulty + area.itemLevelBonus);
       w.drops.push({ x: e.x, y: e.y, item, age: 0 });
       WYD.ui.log(`ユニーク装備「${item.name}」が落ちた！`, U.color);
+      WYD.sound.play("uniqueDrop");
     }
     for (let i = 0; i < count; i++) {
       const item = WYD.loot.create(state, state.difficulty + area.itemLevelBonus, bonus);
@@ -738,6 +744,7 @@ WYD.world = {
         WYD.ui.markDirty();
         continue;
       }
+      if (item.rarity === "legend") WYD.sound.play("rareDrop");
       const spread = count > 1 ? 10 + count * 4 : 0;
       w.drops.push({ x: e.x + WYD.util.rand(-spread, spread), y: e.y + WYD.util.rand(-spread, spread), item, age: 0 });
     }

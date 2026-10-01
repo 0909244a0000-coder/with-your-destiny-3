@@ -27,6 +27,7 @@ WYD.fx = {
     const F = WYD.data.fx;
     const def = WYD.data.enemies[e.kind];
     this.burst(w, e.x, e.y, crit ? F.crit : F.hit, null, { glow: true });
+    WYD.sound.play(crit ? "crit" : "hit");
     this.burst(w, e.x, e.y, F.blood, def.color, { gravity: true });
   },
 
@@ -35,6 +36,7 @@ WYD.fx = {
     const F = WYD.data.fx;
     const def = WYD.data.enemies[e.kind];
     const big = e.boss || e.elite;
+    WYD.sound.play(big ? "bigDeath" : "death");
     this.burst(w, e.x, e.y, big ? F.bigDeath : F.death, def.color, { gravity: true });
     if (big) this.burst(w, e.x, e.y, F.crit, null, { glow: true });
     if (e.boss) this.shake(w, F.shakeBossDeath);

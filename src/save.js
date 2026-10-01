@@ -25,7 +25,7 @@ WYD.save = {
       unlockedAreas: [WYD.data.areas[0].id],    // 行けるエリア
       floor: 1,                                 // 今いる階（ふつうの階の数+1 がボスの間）
       bossProgress: 0,                          // 次の階へ降りるまでに倒した数
-      settings: { speed: 1, autoSalvage: "none", autoDifficulty: false },
+      settings: { speed: 1, autoSalvage: "none", autoDifficulty: false, sound: true },
       seenHelp: false, // 遊び方を見たか（最初の1回だけ自動で出す）
       cleared: false,  // 最後のボスを倒したか
       materials: 0,    // 素材（装備を捨てるともらえる。名前は data/crafting.js）

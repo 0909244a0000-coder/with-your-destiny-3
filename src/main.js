@@ -11,6 +11,7 @@ window.WYD = window.WYD || {};
   canvas.height = WYD.data.map.height;
 
   WYD.ui.init(state, world);
+  WYD.sound.init();
   WYD.ui.log("ようこそ。戦いは自動で進みます。装備とスキルを選んで強くなろう。", "#ffd447");
   WYD.offline.apply(state, world, lastSeen);
   // 初めて遊ぶとき（前に遊んだ記録がないとき）だけ、遊び方を出す
