@@ -6,6 +6,7 @@ WYD.ui = {
   world: null,
   dirty: true,
   craftMode: false,   // つけ直しモード（クリックで特殊効果をつけ直す）
+  stashOpen: false,   // 倉庫を開いているか
 
   $(id) {
     return document.getElementById(id);
@@ -16,6 +17,21 @@ WYD.ui = {
     this.world = world;
     const s = state;
 
+    this.$("help").onclick = () => this.showStory("help");
+    // 修練ポイントを振る
+    this.$("paragon").onclick = (e) => {
+      const btn = e.target.closest("button[data-paragon]");
+      if (!btn) return;
+      const pg = s.player.paragon;
+      if (pg.points <= 0) return;
+      pg.points--;
+      pg.alloc[btn.dataset.paragon] = (pg.alloc[btn.dataset.paragon] || 0) + 1;
+      this.changed();
+    };
+    this.$("sound-toggle").onclick = () => {
+      s.settings.sound = !s.settings.sound;
+      this.changed();
+    };
     this.$("area-down").onclick = () => this.changeArea(-1);
     this.$("area-up").onclick = () => this.changeArea(1);
     this.$("diff-down").onclick = () => this.changeDifficulty(-1);
@@ -30,8 +46,10 @@ WYD.ui = {
       s.settings.autoDifficulty = e.target.checked;
       this.changed();
     };
-    this.$("skip-normal").onchange = (e) => {
-      s.settings.skipNormal = e.target.checked;
+    this.$("auto-salvage").innerHTML = WYD.data.crafting.autoSalvageOptions
+      .map((o) => `<option value="${o.id}">${o.label}</option>`).join("");
+    this.$("auto-salvage").onchange = (e) => {
+      s.settings.autoSalvage = e.target.value;
       this.changed();
     };
     this.$("reset").onclick = () => {
@@ -62,8 +80,11 @@ WYD.ui = {
     inv.onclick = (e) => {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
-      if (this.craftMode) this.rerollItem(s.inventory[Number(cell.dataset.index)]);
-      else WYD.inventory.equip(s, Number(cell.dataset.index));
+      const index = Number(cell.dataset.index);
+      if (this.craftMode) this.rerollItem(s.inventory[index]);
+      else if (e.shiftKey) {
+        if (!WYD.inventory.toStash(s, index)) this.log("倉庫がいっぱいで入れられない", "#ff6b6b");
+      } else WYD.inventory.equip(s, index);
       this.changed();
     };
     inv.oncontextmenu = (e) => {
@@ -77,6 +98,31 @@ WYD.ui = {
     };
     inv.onmouseover = (e) => this.showTooltipFor(e, "inv");
     inv.onmouseleave = () => this.hideTooltip();
+
+    // 倉庫：クリックで持ち物へ、右クリックで捨てる
+    this.$("stash-toggle").onclick = () => {
+      this.stashOpen = !this.stashOpen;
+      this.markDirty();
+    };
+    const stash = this.$("stash");
+    stash.onclick = (e) => {
+      const cell = e.target.closest("[data-index]");
+      if (!cell) return;
+      if (this.craftMode) this.rerollItem(s.stash[Number(cell.dataset.index)]);
+      else if (!WYD.inventory.fromStash(s, Number(cell.dataset.index))) this.log("持ち物がいっぱいで戻せない", "#ff6b6b");
+      this.changed();
+    };
+    stash.oncontextmenu = (e) => {
+      e.preventDefault();
+      const cell = e.target.closest("[data-index]");
+      if (!cell) return;
+      const item = s.stash[Number(cell.dataset.index)];
+      const gained = WYD.inventory.discardFromStash(s, Number(cell.dataset.index));
+      if (item) this.log(`${item.name}を捨てた（${C.materialName} +${gained}）`);
+      this.changed();
+    };
+    stash.onmouseover = (e) => this.showTooltipFor(e, "stash");
+    stash.onmouseleave = () => this.hideTooltip();
 
     // 装備欄：クリックで外す
     const eq = this.$("equipment");
@@ -118,6 +164,26 @@ WYD.ui = {
     this.log(`${item.name}の特殊効果をつけ直した → ${names}`, WYD.data.effects.color);
   },
 
+  // 真ん中に出るお知らせの画面（遊び方・おかえりなさい・クリア）
+  showModal(title, text, items) {
+    this.$("modal-title").textContent = title;
+    this.$("modal-text").textContent = text;
+    this.$("modal-list").innerHTML = items.map((x) => `<li>${x}</li>`).join("");
+    this.$("modal").hidden = false;
+    this.$("modal-ok").onclick = () => { this.$("modal").hidden = true; };
+  },
+
+  // 「おかえりなさい」の画面（放置中の進行）
+  showWelcome(text, items) {
+    this.showModal("おかえりなさい", text, items);
+    this.log(`${text} ${items.join("、")}`, "#ffd447");
+  },
+
+  showStory(key) {
+    const st = WYD.data.story[key];
+    this.showModal(st.title, st.text, st.items);
+  },
+
   // 何かが変わったとき：画面を作り直してセーブ
   changed() {
     this.dirty = true;
@@ -130,7 +196,12 @@ WYD.ui = {
 
   onLevelUp() {
     const stats = WYD.stats.compute(this.state);
-    if (this.world && !this.world.player.dead) this.world.player.hp = stats.maxHp;
+    if (this.world && !this.world.player.dead) {
+      this.world.player.hp = stats.maxHp;
+      const p = this.world.player;
+      WYD.fx.burst(this.world, p.x, p.y + 10, WYD.data.fx.levelUp, null, { angle: -Math.PI / 2, spread: 0.6, glow: true });
+      WYD.sound.play("levelUp");
+    }
     WYD.save.write(this.state);
   },
 
@@ -153,9 +224,12 @@ WYD.ui = {
     if (!next) return;
     s.area = next.id;
     s.bossProgress = 0;
+    s.floor = 1;
     WYD.world.resetEnemies(this.world, s, false);
     this.world.drops = [];
     this.log(`「${next.name}」へ移動した`, "#ff8a2a");
+    const intro = WYD.data.story.areaIntro[next.id];
+    if (intro) this.log(intro, "#c9b48a");
     this.changed();
   },
 
@@ -212,8 +286,16 @@ WYD.ui = {
     this.$("hp-text").textContent = `HP ${hp} / ${stats.maxHp}`;
     const need = WYD.stats.expToNext(s.player.level);
     const maxed = s.player.level >= WYD.data.player.maxLevel;
-    this.$("exp-bar").style.width = maxed ? "100%" : `${(s.player.exp / need) * 100}%`;
-    this.$("exp-text").textContent = maxed ? "EXP MAX" : `EXP ${s.player.exp} / ${need}`;
+    if (maxed) {
+      // レベル上限のあとは、修練の経験値を出す
+      const pg = s.player.paragon;
+      const pneed = WYD.stats.paragonToNext(pg.level);
+      this.$("exp-bar").style.width = `${(pg.exp / pneed) * 100}%`;
+      this.$("exp-text").textContent = `修練 ${Math.floor(pg.exp)} / ${pneed}`;
+    } else {
+      this.$("exp-bar").style.width = `${(s.player.exp / need) * 100}%`;
+      this.$("exp-text").textContent = `EXP ${s.player.exp} / ${need}`;
+    }
   },
 
   renderPanels() {
@@ -229,7 +311,9 @@ WYD.ui = {
     this.$("area-name").textContent = area.name;
     this.$("area-down").disabled = ai <= 0;
     this.$("area-up").disabled = ai >= opened.length - 1;
-    this.$("boss-progress").textContent = `（ボスまで ${s.bossProgress}/${area.killsForBoss}体）`;
+    this.$("boss-progress").textContent = WYD.world.isBossRoom(s)
+      ? `（${WYD.world.floorName(s)}）`
+      : `（${WYD.world.floorName(s)}・次の階まで ${s.bossProgress}/${area.killsPerFloor}体）`;
     this.$("diff-value").textContent = s.difficulty;
     this.$("diff-progress").textContent =
       s.maxDifficulty >= diff.max
@@ -238,11 +322,15 @@ WYD.ui = {
     for (const btn of document.querySelectorAll("[data-speed]")) {
       btn.classList.toggle("active", Number(btn.dataset.speed) === s.settings.speed);
     }
-    this.$("skip-normal").checked = s.settings.skipNormal;
+    this.$("auto-salvage").value = s.settings.autoSalvage;
+    this.$("sound-toggle").textContent = `音：${s.settings.sound ? "ON" : "OFF"}`;
     this.$("auto-diff").checked = s.settings.autoDifficulty;
 
     // キャラ
-    this.$("char-name").textContent = `${P.className}　Lv ${s.player.level}`;
+    const pg = s.player.paragon;
+    this.$("char-name").textContent = `${P.className}　Lv ${s.player.level}${pg.level > 0 ? `　修練 ${pg.level}` : ""}`;
+    this.$("paragon").hidden = !(s.player.level >= P.maxLevel || pg.level > 0);
+    if (!this.$("paragon").hidden) this.$("paragon").innerHTML = this.paragonHtml();
     const rows = [
       ["攻撃力", Math.round(stats.attack)],
       ["防御力", Math.round(stats.defense)],
@@ -251,8 +339,10 @@ WYD.ui = {
       ["HP回復", `${stats.hpRegen.toFixed(1)} /秒`],
       ["移動速度", Math.round(stats.moveSpeed)],
       ["スキル威力", `+${Math.round(stats.skillDamage)}%`],
+      ["会心ダメージ", `×${stats.critMultiplier.toFixed(2)}`],
     ];
     this.$("stats").innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("");
+    this.$("build").innerHTML = this.buildHtml(stats);
 
     // スキル
     this.$("skill-points").textContent = s.player.skillPoints;
@@ -278,7 +368,7 @@ WYD.ui = {
     const slots = WYD.data.items.slots;
     this.$("equipment").innerHTML = Object.keys(slots).map((slot) => {
       const item = s.equipment[slot];
-      return `<div class="cell slot" data-slot="${slot}" ${item ? `style="border-color:${this.color(item)}"` : ""}>
+      return `<div class="cell slot" data-slot="${slot}" ${item ? `style="border-color:${this.color(item)};--r:${this.glow(item)}"` : ""}>
         <small>${slots[slot]}${item ? this.fxMark(item) : ""}</small>
         ${item ? `<span style="color:${this.color(item)}">${item.name}</span>${this.iconImg(item)}` : `<span class="empty">なし</span>`}
       </div>`;
@@ -293,18 +383,63 @@ WYD.ui = {
     this.$("craft-mode").classList.toggle("active", this.craftMode);
     this.$("inv-help").textContent = this.craftMode
       ? "つけ直しモード：持ち物や装備をクリックすると、素材を使って特殊効果をつけ直す"
-      : "左クリック：装備する／右クリック：捨てる（捨てると素材になる）";
+      : "左クリック：装備する／右クリック：捨てる（捨てると素材になる）／Shift＋クリック：倉庫へ";
+    this.$("inventory").innerHTML = this.cellsHtml(s.inventory, size);
+
+    // 倉庫
+    const stashSize = WYD.data.items.stashSize;
+    this.$("stash-count").textContent = `${s.stash.length} / ${stashSize}`;
+    this.$("stash-toggle").textContent = this.stashOpen ? "閉じる" : "開く";
+    this.$("stash-body").hidden = !this.stashOpen;
+    if (this.stashOpen) this.$("stash").innerHTML = this.cellsHtml(s.stash, stashSize);
+    this.hideTooltip();
+  },
+
+  // 持ち物・倉庫のマス目
+  cellsHtml(list, size) {
+    const slots = WYD.data.items.slots;
     let html = "";
     for (let i = 0; i < size; i++) {
-      const item = s.inventory[i];
+      const item = list[i];
       html += item
-        ? `<div class="cell" data-index="${i}" style="border-color:${this.color(item)}">
+        ? `<div class="cell" data-index="${i}" style="border-color:${this.color(item)};--r:${this.glow(item)}">
              <small>${slots[item.slot]}${this.fxMark(item)}</small><span style="color:${this.color(item)}">${item.name}</span>${this.iconImg(item)}
            </div>`
         : `<div class="cell blank"></div>`;
     }
-    this.$("inventory").innerHTML = html;
-    this.hideTooltip();
+    return html;
+  },
+
+  // 修練ポイントの振り分け
+  paragonHtml() {
+    const G = WYD.data.player.paragon;
+    const pg = this.state.player.paragon;
+    const rows = Object.keys(G.stats).map((k) => {
+      const st = G.stats[k];
+      const n = pg.alloc[k] || 0;
+      const v = n * st.per;
+      return `<div class="paragon-row"><span>${st.name} +${Number.isInteger(v) ? v : v.toFixed(2)}${st.percent ? "%" : ""}</span>
+        <button data-paragon="${k}" ${pg.points > 0 ? "" : "disabled"}>＋</button></div>`;
+    }).join("");
+    return `<div class="build-title">修練ポイント：<b style="color:var(--accent)">${pg.points}</b>（レベル上限のあとの経験値でたまる）</div>${rows}`;
+  },
+
+  // 装備から今効いている特殊効果（合計）と固有能力のまとめ
+  buildHtml(stats) {
+    const lines = [];
+    for (const def of WYD.data.effects.list) {
+      const v = stats.effects[def.id];
+      if (!v) continue;
+      const capped = v >= def.cap ? "（上限）" : "";
+      lines.push(`<div style="color:${WYD.data.effects.color}">✦ ${def.name}：<small>${WYD.util.formatEffect(def, v)}${capped}</small></div>`);
+    }
+    for (const slot in this.state.equipment) {
+      const u = WYD.loot.uniqueInfo(this.state.equipment[slot]);
+      if (u) lines.push(`<div style="color:${WYD.data.uniques.color}">◆ ${u.name}：<small>${WYD.loot.uniqueDesc(u)}</small></div>`);
+    }
+    return lines.length
+      ? `<div class="build-title">装備の効果</div>${lines.join("")}`
+      : `<div class="build-title">装備の効果：なし</div>`;
   },
 
   // 装備のアイコン（絵が用意されているときだけ）。読めなかったら消す
@@ -317,6 +452,11 @@ WYD.ui = {
   fxMark(item) {
     const n = this.itemEffects(item).length;
     return n ? ` <b class="fx-mark" style="color:${WYD.data.effects.color}">✦${n}</b>` : "";
+  },
+
+  // マスの内側をレア度の色でうっすら光らせる（ノーマルは光らせない）
+  glow(item) {
+    return item.rarity === "normal" ? "transparent" : this.color(item) + "55";
   },
 
   color(item) {
@@ -391,9 +531,9 @@ WYD.ui = {
   showTooltipFor(e, where) {
     const s = this.state;
     let item = null, html = "";
-    if (where === "inv") {
+    if (where === "inv" || where === "stash") {
       const cell = e.target.closest("[data-index]");
-      item = cell && s.inventory[Number(cell.dataset.index)];
+      item = cell && (where === "inv" ? s.inventory : s.stash)[Number(cell.dataset.index)];
       if (item) {
         html = this.itemHtml(item);
         const cur = s.equipment[item.slot];
@@ -401,7 +541,7 @@ WYD.ui = {
         html += this.compareHtml(item, cur);
         html += this.craftMode
           ? this.rerollHelp(item)
-          : `<div class="tip-help">左クリック：装備する／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.data.crafting.salvage[item.rarity] || 0}）</div>`;
+          : `<div class="tip-help">${where === "inv" ? "左クリック：装備する／Shift＋クリック：倉庫へ" : "クリック：持ち物へ戻す"}／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.data.crafting.salvage[item.rarity] || 0}）</div>`;
       }
     } else {
       const cell = e.target.closest("[data-slot]");

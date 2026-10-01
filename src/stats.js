@@ -44,6 +44,7 @@ WYD.stats = {
     const lv = state.player.level - 1;
     const b = this.equipmentBonus(state);
     const fx = this.effectTotals(state);
+    const pb = this.paragonBonus(state);
     const powers = this.powers(state);
     // 固有能力：苦行者の法衣（スキルの空き枠でスキル威力アップ）
     let asceticBonus = 0;
@@ -53,11 +54,11 @@ WYD.stats = {
       asceticBonus = Math.max(0, WYD.data.skillSlots - active) * powers.ascetic.percentPerSlot;
     }
     return {
-      maxHp: Math.round(P.base.maxHp + P.perLevel.maxHp * lv + b.maxHp),
-      attack: P.base.attack + P.perLevel.attack * lv + b.attack,
-      defense: P.base.defense + P.perLevel.defense * lv + b.defense,
+      maxHp: Math.round(P.base.maxHp + P.perLevel.maxHp * lv + b.maxHp + pb.maxHp),
+      attack: P.base.attack + P.perLevel.attack * lv + b.attack + pb.attack,
+      defense: P.base.defense + P.perLevel.defense * lv + b.defense + pb.defense,
       attackSpeed: Math.max(P.minAttackSpeed, P.base.attackSpeed * (1 + b.attackSpeed / 100)),
-      critChance: Math.min(P.critChanceCap, P.base.critChance + b.critChance),
+      critChance: Math.min(P.critChanceCap, P.base.critChance + b.critChance + pb.critChance),
       hpRegen: P.base.hpRegen + b.hpRegen,
       moveSpeed: P.base.moveSpeed * (1 + (b.moveSpeed + fx.moveSpeed) / 100),
       skillDamage: b.skillDamage + asceticBonus,
@@ -69,6 +70,24 @@ WYD.stats = {
 
   expToNext(level) {
     const P = WYD.data.player;
-    return Math.round(P.expBase * Math.pow(P.expGrowth, level - 1));
+    const early = Math.min(level, P.expLateFrom) - 1;
+    const late = Math.max(0, level - P.expLateFrom);
+    return Math.round(P.expBase * Math.pow(P.expGrowth, early) * Math.pow(P.expGrowthLate, late));
+  },
+
+  // 修練レベル1つぶんに必要な経験値
+  paragonToNext(plevel) {
+    const G = WYD.data.player.paragon;
+    return Math.round(G.expBase * Math.pow(G.expGrowth, plevel));
+  },
+
+  // 修練ポイントで上げた能力
+  paragonBonus(state) {
+    const G = WYD.data.player.paragon;
+    const pg = state.player.paragon || {};
+    const alloc = pg.alloc || {};
+    const out = {};
+    for (const k in G.stats) out[k] = (alloc[k] || 0) * G.stats[k].per;
+    return out;
   },
 };
