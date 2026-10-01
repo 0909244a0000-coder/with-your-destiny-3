@@ -1,9 +1,8 @@
-// 味方の手下（ネクロマンサーの骸骨）。敵を殴り、近くの敵の攻撃を引きつける。時間がたつと崩れる。
-// 数値は、手下を呼んだスキルの数値（data/classes.js の kind: "raise" のスキル）を使う。
+// 味方の手下（ネクロマンサーの骸骨・ユニーク装備の呼び出し）。敵を殴り、近くの敵の攻撃を引きつける。時間がたつと崩れる。
+// 数値は、手下を呼んだスキル（data/classes.js の kind: "raise"）か、固有能力 periodicSummon（data/uniques.js）の数値を使う。
 window.WYD = window.WYD || {};
 
 WYD.allies = {
-  // 呼べる数
   // 呼べる数（骸の王冠などの固有能力で増える）
   maxCount(s, lv, stats) {
     const boost = stats && stats.powers.raiseBoost;
@@ -12,34 +11,51 @@ WYD.allies = {
 
   // スキル「骸骨召喚」：足りないぶんを呼ぶ。呼んだら true
   summon(w, state, stats, s, lv) {
-    const p = w.player;
-    const alive = w.allies.length;
+    const alive = w.allies.filter((a) => a.source === "raise").length;
     const max = this.maxCount(s, lv, stats);
     const boost = stats.powers.raiseBoost;
     if (alive >= max) return false;
-    const map = WYD.data.map;
-    for (let i = alive; i < max; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const hp = Math.round(stats.maxHp * s.hpRatio);
-      const a = {
-        x: WYD.util.clamp(p.x + Math.cos(ang) * s.spawnSpread, 20, map.width - 20),
-        y: WYD.util.clamp(p.y + Math.sin(ang) * s.spawnSpread, 20, map.height - 20),
-        hp, maxHp: hp,
-        attack: stats.attack * (s.attackBase + s.attackPerLevel * (lv - 1)) * (1 + stats.skillDamage / 100) *
-          (1 + (boost ? boost.attackPercent : 0) / 100),
-        defense: stats.defense * s.defenseRatio,
-        timeLeft: s.duration, duration: s.duration,
-        moveSpeed: s.moveSpeed, attackSpeed: s.attackSpeed, range: s.range, radius: s.radius,
-        attackTimer: s.firstAttackDelay, followDistance: s.followDistance, hitFlash: 0, atkAnim: 0, face: 1,
-        color: s.color, image: s.image, imageFilter: s.imageFilter,
-      };
-      w.allies.push(a);
-      w.effects.push({ type: "ring", x: a.x, y: a.y, radius: s.radius * 2, color: s.color, time: 0, duration: 0.35 });
-    }
+    const attackMult = (s.attackBase + s.attackPerLevel * (lv - 1)) * (1 + (boost ? boost.attackPercent : 0) / 100);
+    for (let i = alive; i < max; i++) this.spawn(w, stats, s, attackMult, "raise");
     return true;
   },
 
+  // 手下を1体出す（s = 手下の数値、attackMult = 主人公の攻撃力の何倍か、source = だれが呼んだか）
+  spawn(w, stats, s, attackMult, source) {
+    const p = w.player;
+    const map = WYD.data.map;
+    const ang = Math.random() * Math.PI * 2;
+    const hp = Math.round(stats.maxHp * s.hpRatio);
+    const a = {
+      source,
+      x: WYD.util.clamp(p.x + Math.cos(ang) * s.spawnSpread, 20, map.width - 20),
+      y: WYD.util.clamp(p.y + Math.sin(ang) * s.spawnSpread, 20, map.height - 20),
+      hp, maxHp: hp,
+      attack: stats.attack * attackMult * (1 + stats.skillDamage / 100),
+      defense: stats.defense * s.defenseRatio,
+      timeLeft: s.duration, duration: s.duration,
+      moveSpeed: s.moveSpeed, attackSpeed: s.attackSpeed, range: s.range, radius: s.radius,
+      attackTimer: s.firstAttackDelay, followDistance: s.followDistance, hitFlash: 0, atkAnim: 0, face: 1,
+      color: s.color, image: s.image, imageFilter: s.imageFilter,
+    };
+    w.allies.push(a);
+    w.effects.push({ type: "ring", x: a.x, y: a.y, radius: s.radius * 2, color: s.color, time: 0, duration: 0.35 });
+    return a;
+  },
+
+  // 固有能力 periodicSummon：敵がいるとき、一定時間ごとに味方を呼ぶ
+  periodic(w, stats, dt) {
+    const ps = stats.powers.periodicSummon;
+    if (!ps || w.player.dead) return;
+    w.summonTimer = (w.summonTimer == null ? ps.firstDelay : w.summonTimer) - dt;
+    if (w.summonTimer > 0 || !w.enemies.length) return;
+    w.summonTimer = ps.interval;
+    for (let i = 0; i < ps.count; i++) this.spawn(w, stats, ps, ps.attackMult, "unique");
+    WYD.sound.play("bossAppear");
+  },
+
   update(w, state, stats, dt) {
+    this.periodic(w, stats, dt);
     for (const a of w.allies) {
       a.timeLeft -= dt;
       a.hitFlash = Math.max(0, a.hitFlash - dt);

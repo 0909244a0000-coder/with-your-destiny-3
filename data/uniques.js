@@ -79,6 +79,25 @@ WYD.data.uniques = {
       params: { percent: 35 },
     },
     {
+      // periodicSummon … 敵がいるとき、interval 秒ごとに味方を count 体呼ぶ（手下のしくみ。src/allies.js）
+      id: "ancestorHelm", name: "祖霊の兜", base: "turban", weight: 7,
+      stats: { defense: [3, 6], maxHp: [20, 35] },
+      power: "periodicSummon",
+      desc: "{interval}秒ごとに祖先の戦士を{count}体呼ぶ（{duration}秒いて、攻撃力×{attackMult}倍でなぐる）",
+      params: { interval: 15, firstDelay: 3, count: 2, duration: 10, attackMult: 0.6, hpRatio: 0.5, defenseRatio: 0.8,
+        moveSpeed: 120, attackSpeed: 1.0, range: 26, radius: 13, spawnSpread: 30, followDistance: 40, firstAttackDelay: 0.3,
+        color: "#ffcf6a", image: "assets/enemies/yaksha.png", imageFilter: "sepia(0.8) brightness(1.4) opacity(0.8)" },
+    },
+    {
+      id: "frostOrb", name: "氷霊の腕輪", base: "bracelet", weight: 7,
+      stats: { attackSpeed: [4, 8], skillDamage: [8, 15] },
+      power: "periodicSummon",
+      desc: "{interval}秒ごとに氷の精霊を{count}体呼ぶ（{duration}秒いて、攻撃力×{attackMult}倍でなぐる）",
+      params: { interval: 10, firstDelay: 2, count: 1, duration: 8, attackMult: 1.0, hpRatio: 0.35, defenseRatio: 0.5,
+        moveSpeed: 140, attackSpeed: 1.3, range: 24, radius: 11, spawnSpread: 25, followDistance: 40, firstAttackDelay: 0.2,
+        color: "#9fdcff", image: "assets/enemies/preta.png", imageFilter: "hue-rotate(170deg) brightness(1.6) opacity(0.8)" },
+    },
+    {
       // classOnly … この職業でだけ落ちる（ほかの職業ではスキルがないので）
       id: "boneCrown", name: "骸の王冠", base: "crown", weight: 10, classOnly: "necromancer",
       stats: { maxHp: [20, 35], skillDamage: [8, 15] },
