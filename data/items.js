@@ -14,6 +14,8 @@ WYD.data.items = {
     { id: "magic",  name: "マジック",   color: "#5b8cff", weight: 28, affixes: [1, 2] },
     { id: "rare",   name: "レア",       color: "#ffd447", weight: 10, affixes: [3, 4] },
     { id: "legend", name: "レジェンド", color: "#ff8a2a", weight: 2,  affixes: [5, 6] },
+    // ユニークはふつうには出ない（weight 0）。ボスと精鋭がまれに落とす。data/uniques.js
+    { id: "unique", name: "ユニーク",   color: "#e8c46a", weight: 0,  affixes: [0, 0] },
   ],
 
   slots: {
@@ -38,21 +40,25 @@ WYD.data.items = {
   },
 
   // 装備の種類。main = 必ず付く能力 [最小, 最大]
+  // アイコンの絵は icons に書く（なければ文字だけで表示）
   bases: [
-    { slot: "weapon", name: "双剣",       main: { attack: [5, 8] } },
-    { slot: "weapon", name: "大刀",       main: { attack: [8, 12], attackSpeed: [-10, -10] } },
-    { slot: "weapon", name: "チャクラム", main: { attack: [4, 6], critChance: [3, 5] } },
-    { slot: "head",   name: "ターバン",   main: { defense: [2, 4] } },
-    { slot: "head",   name: "宝冠",       main: { defense: [1, 2], maxHp: [10, 20] } },
-    { slot: "body",   name: "鎖帷子",     main: { defense: [4, 7] } },
-    { slot: "body",   name: "法衣",       main: { defense: [2, 3], maxHp: [15, 25] } },
-    { slot: "hands",  name: "籠手",       main: { defense: [1, 3] } },
-    { slot: "hands",  name: "腕輪",       main: { attackSpeed: [3, 6] } },
-    { slot: "feet",   name: "脚絆",       main: { defense: [1, 3] } },
-    { slot: "feet",   name: "サンダル",   main: { moveSpeed: [5, 10] } },
-    { slot: "ring",   name: "指輪",       main: { maxHp: [5, 10] } },
-    { slot: "ring",   name: "数珠",       main: { hpRegen: [0.5, 1] } },
+    { slot: "weapon", id: "dual_blades", name: "双剣",       main: { attack: [5, 8] } },
+    { slot: "weapon", id: "great_blade", name: "大剣",       main: { attack: [8, 12], attackSpeed: [-10, -10] } },
+    { slot: "weapon", id: "chakram", name: "ダガー",     main: { attack: [4, 6], critChance: [3, 5] } },
+    { slot: "head",   id: "turban", name: "兜",         main: { defense: [2, 4] } },
+    { slot: "head",   id: "crown", name: "サークレット", main: { defense: [1, 2], maxHp: [10, 20] } },
+    { slot: "body",   id: "chainmail", name: "鎖帷子",     main: { defense: [4, 7] } },
+    { slot: "body",   id: "robe", name: "ローブ",     main: { defense: [2, 3], maxHp: [15, 25] } },
+    { slot: "hands",  id: "gauntlets", name: "籠手",       main: { defense: [1, 3] } },
+    { slot: "hands",  id: "bracelet", name: "腕輪",       main: { attackSpeed: [3, 6] } },
+    { slot: "feet",   id: "leggings", name: "グリーブ",   main: { defense: [1, 3] } },
+    { slot: "feet",   id: "sandals", name: "ブーツ",     main: { moveSpeed: [5, 10] } },
+    { slot: "ring",   id: "ring", name: "指輪",       main: { maxHp: [5, 10] } },
+    { slot: "ring",   id: "rosary", name: "印章指輪",   main: { hpRegen: [0.5, 1] } },
   ],
+
+  // 装備のアイコンの絵（id → ファイル）。例: dual_blades: "assets/items/dual_blades.png"
+  icons: {},
 
   // 追加能力（マジック以上に付く）
   affixes: [
@@ -68,7 +74,16 @@ WYD.data.items = {
 
   // 名前の頭につく言葉
   rarePrefixes: ["鋭き", "古の", "猛き", "聖なる", "呪われし", "黄昏の"],
-  legendPrefixes: ["シヴァの", "ヴィシュヌの", "インドラの", "アグニの", "ヴァーユの"],
+  legendPrefixes: ["熾天使の", "冥王の", "雷帝の", "焔王の", "嵐の"],
+
+  // 名前を変えた言葉（前 → 今）。古いセーブに残っている装備の名前を、読みこむときに直す
+  // id はセーブとのつながりのため、名前を変えても同じままにしている
+  renamedWords: {
+    "大刀": "大剣", "チャクラム": "ダガー", "ターバン": "兜", "宝冠": "サークレット",
+    "法衣": "ローブ", "脚絆": "グリーブ", "サンダル": "ブーツ", "数珠": "印章指輪",
+    "シヴァの": "熾天使の", "ヴィシュヌの": "冥王の", "インドラの": "雷帝の",
+    "アグニの": "焔王の", "ヴァーユの": "嵐の",
+  },
 };
 
 // 戦闘の計算

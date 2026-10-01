@@ -3,7 +3,7 @@ window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
 WYD.data.player = {
-  className: "アスラ",          // 職業名
+  className: "バーバリアン",    // 職業名
   weaponName: "双剣",           // 初期の武器種（表示用）
   color: "#4fa3ff",             // 絵がないときの丸の色
   image: null,                  // 例: "assets/player.png"（あとで絵に差し替える用）

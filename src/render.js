@@ -16,6 +16,12 @@ WYD.render = {
     return img.complete && img.naturalWidth > 0 ? img : null;
   },
 
+  patterns: {},
+  patternFor(ctx, img) {
+    if (!this.patterns[img.src]) this.patterns[img.src] = ctx.createPattern(img, "repeat");
+    return this.patterns[img.src];
+  },
+
   makeDecorations() {
     const map = WYD.data.map;
     const rnd = WYD.util.seededRandom(map.decorationSeed);
@@ -31,20 +37,26 @@ WYD.render = {
 
   draw(ctx, w, state) {
     const map = WYD.data.map;
+    const area = WYD.world.area(state);
     if (!this.decorations) this.decorations = this.makeDecorations();
 
-    ctx.fillStyle = map.bgColor;
+    // 地面：絵があれば敷きつめる、なければ色でぬる
+    const ground = this.getImage(area.groundImage);
+    ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
-    for (const d of this.decorations) {
-      ctx.fillStyle = d.kind === "grass" ? "#34482f" : "#4a4f47";
+    // 地面の絵がないときだけ、草や石の飾りを描く
+    for (const d of ground ? [] : this.decorations) {
+      ctx.fillStyle = d.kind === "grass" ? area.grassColor : area.stoneColor;
       ctx.beginPath();
       ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
       ctx.fill();
     }
 
+    for (const f of w.fields) this.drawField(ctx, f);
     for (const drop of w.drops) this.drawDrop(ctx, drop);
     for (const e of w.enemies) this.drawEnemy(ctx, e);
     this.drawPlayer(ctx, w.player);
+    for (const b of w.projectiles) this.drawProjectile(ctx, b);
     for (const ef of w.effects) this.drawEffect(ctx, ef);
 
     ctx.textAlign = "center";
@@ -60,7 +72,8 @@ WYD.render = {
     ctx.textAlign = "left";
     ctx.font = "bold 16px sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillText(`${map.name}　危険度 ${state.difficulty}`, 12, 24);
+    ctx.fillText(`${area.name}　危険度 ${state.difficulty}`, 12, 24);
+    this.drawBossBar(ctx, w);
 
     if (w.player.dead) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
@@ -75,10 +88,40 @@ WYD.render = {
     }
   },
 
-  drawCircleOrImage(ctx, x, y, r, color, imageSrc) {
+  // ボスがいるときは、画面の上にボスのHPを大きく出す
+  drawBossBar(ctx, w) {
+    const boss = w.enemies.find((e) => e.boss);
+    if (!boss) return;
+    const map = WYD.data.map;
+    const def = WYD.data.enemies[boss.kind];
+    const bw = map.width * 0.5, bh = 12;
+    const bx = (map.width - bw) / 2, by = 40;
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+    ctx.fillStyle = "#5a0000";
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = WYD.data.boss.nameColor;
+    ctx.fillRect(bx, by, bw * Math.max(0, boss.hp / boss.maxHp), bh);
+    ctx.textAlign = "center";
+    ctx.font = "bold 15px sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(def.name, map.width / 2, by - 6);
+  },
+
+  // flash = true のときは白く光らせる（攻撃が当たったとき）
+  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash) {
     const img = this.getImage(imageSrc);
     if (img) {
-      ctx.drawImage(img, x - r * 1.5, y - r * 1.5, r * 3, r * 3);
+      const M = WYD.data.map;
+      const size = r * M.spriteScale;
+      // 足元の影（暗い地面でも絵が浮いて見えるように）
+      ctx.fillStyle = `rgba(0,0,0,${M.spriteShadow})`;
+      ctx.beginPath();
+      ctx.ellipse(x, y + size * 0.38, size * 0.32, size * 0.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+      if (flash) ctx.filter = "brightness(2.2)";
+      ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
+      ctx.filter = "none";
       return;
     }
     ctx.fillStyle = color;
@@ -87,8 +130,40 @@ WYD.render = {
     ctx.fill();
   },
 
+  // 炎の陣：消える前にだんだん薄くなる円
+  drawField(ctx, f) {
+    ctx.fillStyle = f.color;
+    ctx.globalAlpha = 0.25 * Math.min(1, f.timeLeft / (f.duration * 0.3));
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  },
+
+  // 敵の弾：光る玉
+  drawProjectile(ctx, b) {
+    ctx.fillStyle = b.color;
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.size * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+    ctx.fill();
+  },
+
   drawPlayer(ctx, p) {
     const P = WYD.data.player;
+    if (p.haste) {
+      ctx.strokeStyle = p.haste.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, P.radius + 11, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     if (p.buff) {
       ctx.strokeStyle = p.buff.color;
       ctx.lineWidth = 3;
@@ -116,16 +191,64 @@ WYD.render = {
 
   drawEnemy(ctx, e) {
     const def = WYD.data.enemies[e.kind];
-    this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, def.image);
+    const E = WYD.data.elites;
+    if (e.elite) {
+      // 精鋭：業火の範囲と、青い輪
+      if (e.elite.affixes.includes("burning")) {
+        const burning = E.affixes.find((a) => a.id === "burning");
+        ctx.fillStyle = burning.auraColor;
+        ctx.globalAlpha = 0.12;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, burning.auraRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      ctx.strokeStyle = E.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, def.radius + 4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, def.image, e.hitFlash > 0);
 
+    // HPバー：絵があるときは絵の上に出す
+    const top = this.getImage(def.image) ? def.radius * WYD.data.map.spriteScale / 2 : def.radius;
     const bw = def.radius * 2.2, bh = 4;
-    const bx = e.x - bw / 2, by = e.y - def.radius - 9;
+    const bx = e.x - bw / 2, by = e.y - top - 9;
     ctx.fillStyle = "#300";
     ctx.fillRect(bx, by, bw, bh);
     ctx.fillStyle = "#e33";
     ctx.fillRect(bx, by, bw * Math.max(0, e.hp / e.maxHp), bh);
 
-    if (def.showName) {
+    if (e.stunTimer > 0) {
+      // 縛られている敵：緑の縄
+      ctx.strokeStyle = WYD.data.skills.nagapasha.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, def.radius + 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    if (e.slamCharge != null) {
+      // ボスの大技の予告：だんだん濃くなる赤い円
+      const t = 1 - e.slamCharge / e.slamWindup;
+      ctx.fillStyle = WYD.data.boss.warnColor;
+      ctx.globalAlpha = 0.1 + 0.25 * t;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, def.slam.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    if (e.boss) {
+      ctx.textAlign = "center";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillStyle = WYD.data.boss.nameColor;
+      ctx.fillText(def.name, e.x, by - 4);
+    } else if (e.elite) {
+      ctx.textAlign = "center";
+      ctx.font = "bold 12px sans-serif";
+      ctx.fillStyle = E.color;
+      ctx.fillText(e.name, e.x, by - 4);
+    } else if (def.showName) {
       ctx.textAlign = "center";
       ctx.font = "12px sans-serif";
       ctx.fillStyle = "#e6c7ff";
@@ -159,6 +282,37 @@ WYD.render = {
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.arc(ef.x, ef.y, ef.radius * (0.4 + 0.6 * t), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (ef.type === "chain") {
+      // 投げ斧の通り道
+      ctx.strokeStyle = ef.color;
+      ctx.globalAlpha = 1 - ef.time / ef.duration;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(ef.points[0].x, ef.points[0].y);
+      for (const pt of ef.points.slice(1)) ctx.lineTo(pt.x, pt.y);
+      ctx.stroke();
+      for (const pt of ef.points.slice(1)) {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    if (ef.type === "bolt") {
+      // 雷：上から落ちるギザギザの線
+      const t = ef.time / ef.duration;
+      ctx.strokeStyle = ef.color;
+      ctx.globalAlpha = 1 - t;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(ef.x + 6, ef.y - 70);
+      ctx.lineTo(ef.x - 6, ef.y - 45);
+      ctx.lineTo(ef.x + 5, ef.y - 35);
+      ctx.lineTo(ef.x - 4, ef.y - 12);
+      ctx.lineTo(ef.x, ef.y);
       ctx.stroke();
       ctx.globalAlpha = 1;
     }

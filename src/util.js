@@ -41,4 +41,10 @@ WYD.util = {
     const sign = value >= 0 ? "+" : "";
     return `${info.name} ${sign}${v}${info.percent ? "%" : ""}`;
   },
+  // 特殊効果の説明文を作る（{v} = 数値、{名前} = data/effects.js の同じ名前の数値）
+  formatEffect(def, value) {
+    return def.desc.replace(/\{(\w+)\}/g, (all, key) =>
+      key === "v" ? value.toFixed(def.decimals) : (key in def ? String(def[key]) : all)
+    );
+  },
 };

@@ -110,3 +110,13 @@ aside { width: 400px; display: flex; flex-direction: column; gap: 12px; }
 .tip-item .main { color: #fff; }
 .tip-item .affix { color: #8fb4ff; }
 .tip-help { margin-top: 8px; color: var(--muted); font-size: 11px; }
+.tip-item .effect { margin-top: 3px; line-height: 1.3; }
+.tip-item .effect small { color: #d9c3e6; font-size: 11px; }
+.tip-compare .up { color: #7dff8a; }
+.tip-compare .down { color: #ff6b6b; }
+.cell .fx-mark { float: right; font-size: 10px; }
+.cell { position: relative; }
+.cell .item-icon { position: absolute; right: 2px; bottom: 2px; width: 26px; height: 26px; object-fit: contain; opacity: 0.9; pointer-events: none; }
+.skill-icon { width: 22px; height: 22px; object-fit: contain; }
+.tip-item .unique-power { margin-top: 4px; line-height: 1.3; }
+.tip-item .unique-power small { color: #eadbb0; font-size: 11px; }

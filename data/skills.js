@@ -18,7 +18,7 @@ WYD.data.skills = {
   },
   // 守りスキル：HPが減ったら防御アップ＋回復
   vajra: {
-    name: "金剛身",
+    name: "鉄の皮膚",
     desc: "HPが減ると発動。しばらく防御力アップし、HPを回復。",
     startLevel: 0,        // 0 = 最初は覚えていない（スキルポイントで覚える）
     maxLevel: 10,
@@ -31,7 +31,72 @@ WYD.data.skills = {
     triggerHpPercent: 60, // HPがこの%以下になったら使う
     color: "#ffd75e",
   },
+  // 攻撃スキル：敵から敵へ跳ね返る投げ斧
+  sudarshana: {
+    name: "連鎖の投げ斧",
+    desc: "投げた斧が敵から敵へ跳ね返り、何体もまとめて切り裂く。",
+    startLevel: 0,
+    maxLevel: 10,
+    cooldown: 5,
+    range: 260,           // 最初の敵までの距離
+    jumpRange: 160,       // 次の敵へ飛び移れる距離
+    targetsBase: 3,       // Lv1で当たる敵の数
+    targetsPerLevel: 0.5, // 1レベルごとに増える数（端数は切り捨て）
+    damageBase: 1.6,
+    damagePerLevel: 0.25,
+    color: "#ffe680",
+  },
+  // 攻撃スキル：地面に炎を残す
+  agni: {
+    name: "焦土",
+    desc: "敵の多い場所の地面を燃やし、中の敵を焼き続ける。",
+    startLevel: 0,
+    maxLevel: 10,
+    cooldown: 8,
+    range: 220,           // 陣を張れる距離
+    radius: 80,           // 陣の大きさ
+    duration: 4,          // 陣が残る秒数
+    tick: 0.5,            // 何秒ごとにダメージを与えるか
+    damageBase: 0.5,      // 1回あたりの倍率（攻撃力×これ）
+    damagePerLevel: 0.1,
+    color: "#ff7a2a",
+  },
+  // 強化スキル：攻撃速度アップ
+  hanuman: {
+    name: "狂戦士の怒り",
+    desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
+    startLevel: 0,
+    maxLevel: 10,
+    cooldown: 14,
+    duration: 6,
+    hasteBase: 40,        // 攻撃速度 +%
+    hastePerLevel: 6,
+    triggerRange: 120,    // この距離に敵がいたら使う
+    color: "#ff9a5e",
+  },
+  // 足止めスキル：周りの敵を縛る
+  nagapasha: {
+    name: "鉄鎖の束縛",
+    desc: "鉄の鎖で周りの敵を縛り、しばらく動けなくしてダメージ。ボスには効きにくい。",
+    startLevel: 0,
+    maxLevel: 10,
+    cooldown: 10,
+    radius: 110,
+    minTargets: 2,
+    bindBase: 1.5,        // 縛る秒数
+    bindPerLevel: 0.2,
+    bossBindMult: 0.3,    // ボスを縛る時間の倍率
+    damageBase: 0.8,
+    damagePerLevel: 0.15,
+    color: "#5fd9a0",
+  },
 };
 
+// スキルのアイコンの絵（スキル名 → ファイル）。例: whirl: "assets/skills/whirl.png"
+WYD.data.skillIcons = {};
+
+// 同時にONにできるスキルの数（ここでビルドを選ぶ）
+WYD.data.skillSlots = 3;
+
 // AIがスキルを試す順番
-WYD.data.skillOrder = ["vajra", "whirl"];
+WYD.data.skillOrder = ["vajra", "hanuman", "nagapasha", "whirl", "sudarshana", "agni"];

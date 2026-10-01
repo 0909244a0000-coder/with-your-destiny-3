@@ -10,10 +10,17 @@
   <header>
     <h1>With Your Destiny Ⅲ <small>最小版</small></h1>
     <div class="controls">
+      <span>エリア</span>
+      <button id="area-down" title="前のエリアへ">◀</button>
+      <b id="area-name"></b>
+      <button id="area-up" title="次のエリアへ">▶</button>
+      <span id="boss-progress" class="muted"></span>
+      <span class="sep"></span>
       <span>危険度</span>
       <button id="diff-down" title="危険度を下げる">◀</button>
       <b id="diff-value">1</b>
       <button id="diff-up" title="危険度を上げる">▶</button>
+      <label title="新しい危険度が解放されたら自動で上げ、何度も倒れたら1つ下げる"><input type="checkbox" id="auto-diff"> 自動</label>
       <span id="diff-progress" class="muted"></span>
       <span class="sep"></span>
       <span>速度</span>
@@ -38,14 +45,14 @@
 
     <aside>
       <section class="panel">
-        <h2 id="char-name">アスラ　Lv 1</h2>
+        <h2 id="char-name">Lv 1</h2>
         <div class="bar"><div id="hp-bar" class="fill hp"></div><span id="hp-text"></span></div>
         <div class="bar"><div id="exp-bar" class="fill exp"></div><span id="exp-text"></span></div>
         <div id="stats" class="stats"></div>
       </section>
 
       <section class="panel">
-        <h2>スキル <small>残りポイント：<b id="skill-points">0</b></small></h2>
+        <h2>スキル <small>残りポイント：<b id="skill-points">0</b>　使用中：<b id="skill-slots"></b></small></h2>
         <div id="skills"></div>
       </section>
 
@@ -55,13 +62,14 @@
       </section>
 
       <section class="panel">
-        <h2>持ち物 <small id="inv-count"></small></h2>
+        <h2>持ち物 <small id="inv-count"></small> <small id="materials"></small></h2>
         <div id="inventory" class="grid"></div>
         <div class="inv-buttons">
           <button id="discard-normal">ノーマルを全部捨てる</button>
           <button id="discard-magic">マジック以下を全部捨てる</button>
+          <button id="craft-mode">つけ直しモード：OFF</button>
         </div>
-        <p class="muted">左クリック：装備する／右クリック：捨てる</p>
+        <p class="muted" id="inv-help">左クリック：装備する／右クリック：捨てる（捨てると素材になる）</p>
       </section>
     </aside>
   </main>
@@ -72,8 +80,13 @@
   <script src="data/player.js"></script>
   <script src="data/skills.js"></script>
   <script src="data/enemies.js"></script>
+  <script src="data/elites.js"></script>
   <script src="data/map.js"></script>
+  <script src="data/areas.js"></script>
   <script src="data/items.js"></script>
+  <script src="data/effects.js"></script>
+  <script src="data/crafting.js"></script>
+  <script src="data/uniques.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>

@@ -6,7 +6,7 @@ WYD.data.enemies = {
   preta: {
     name: "餓鬼",
     color: "#9aa86a",
-    image: null,
+    image: "assets/enemies/preta.png",
     radius: 11,
     hp: 30,
     attack: 4,
@@ -17,12 +17,11 @@ WYD.data.enemies = {
     exp: 5,
     dropChance: 0.15,  // 装備を落とす確率（0〜1）
     rarityBonus: 1.0,  // 大きいほどレアが出やすい
-    spawnWeight: 60,   // 出現しやすさ
   },
   yaksha: {
     name: "夜叉",
     color: "#c0653a",
-    image: null,
+    image: "assets/enemies/yaksha.png",
     radius: 14,
     hp: 75,
     attack: 8,
@@ -33,12 +32,11 @@ WYD.data.enemies = {
     exp: 12,
     dropChance: 0.3,
     rarityBonus: 1.3,
-    spawnWeight: 30,
   },
   rakshasa: {
     name: "羅刹",
     color: "#8e3bd1",
-    image: null,
+    image: "assets/enemies/rakshasa.png",
     radius: 20,
     hp: 240,
     attack: 14,
@@ -49,8 +47,181 @@ WYD.data.enemies = {
     exp: 45,
     dropChance: 1.0,
     rarityBonus: 2.5,
-    spawnWeight: 8,
     showName: true,    // 頭の上に名前を出す
+  },
+
+  // 遠くから弾を撃つ敵
+  //   ranged.keepDistance … プレイヤーとこの距離を保とうとする
+  //   ranged.range        … この距離に入ったら撃つ
+  //   ranged.speed        … 弾の速さ（1秒あたりのピクセル）
+  //   ranged.size         … 弾の大きさ
+  yakshaArcher: {
+    name: "夜叉の弓兵",
+    color: "#d89a5a",
+    image: null,
+    radius: 12,
+    hp: 40,
+    attack: 7,
+    defense: 1,
+    attackSpeed: 0.6,
+    moveSpeed: 70,
+    range: 22,
+    exp: 8,
+    dropChance: 0.2,
+    rarityBonus: 1.2,
+    ranged: { keepDistance: 180, range: 260, speed: 240, size: 4, color: "#ffe0a0" },
+  },
+
+  // ---- シュマシャーナ（火葬場） ----
+  vetala: {
+    name: "ヴェーターラ",
+    color: "#c9c9a8",
+    image: null,
+    radius: 11,
+    hp: 40,
+    attack: 6,
+    defense: 1,
+    attackSpeed: 1.2,
+    moveSpeed: 110,
+    range: 22,
+    exp: 7,
+    dropChance: 0.15,
+    rarityBonus: 1.1,
+  },
+  pishacha: {
+    name: "ピシャーチャ",
+    color: "#5f8f6a",
+    image: null,
+    radius: 15,
+    hp: 95,
+    attack: 9,
+    defense: 3,
+    attackSpeed: 0.8,
+    moveSpeed: 75,
+    range: 26,
+    exp: 15,
+    dropChance: 0.3,
+    rarityBonus: 1.4,
+  },
+
+  bhuta: {
+    name: "鬼火のブータ",
+    color: "#7fb0c9",
+    image: null,
+    radius: 12,
+    hp: 50,
+    attack: 9,
+    defense: 1,
+    attackSpeed: 0.5,
+    moveSpeed: 80,
+    range: 22,
+    exp: 10,
+    dropChance: 0.2,
+    rarityBonus: 1.3,
+    ranged: { keepDistance: 200, range: 280, speed: 180, size: 7, color: "#8fe8ff" },
+  },
+
+  // ---- パーターラ（地底界） ----
+  naga: {
+    name: "ナーガ",
+    color: "#3fa7a0",
+    image: "assets/enemies/naga.png",
+    radius: 16,
+    hp: 130,
+    attack: 10,
+    defense: 6,
+    attackSpeed: 0.7,
+    moveSpeed: 65,
+    range: 34,
+    exp: 18,
+    dropChance: 0.3,
+    rarityBonus: 1.5,
+  },
+  daitya: {
+    name: "ダイティヤ",
+    color: "#b04a6a",
+    image: null,
+    radius: 15,
+    hp: 100,
+    attack: 13,
+    defense: 3,
+    attackSpeed: 0.9,
+    moveSpeed: 90,
+    range: 28,
+    exp: 18,
+    dropChance: 0.3,
+    rarityBonus: 1.5,
+  },
+
+  nagaCaster: {
+    name: "ナーガの呪術師",
+    color: "#7ad16a",
+    image: null,
+    radius: 14,
+    hp: 80,
+    attack: 12,
+    defense: 3,
+    attackSpeed: 0.55,
+    moveSpeed: 60,
+    range: 22,
+    exp: 16,
+    dropChance: 0.3,
+    rarityBonus: 1.5,
+    ranged: { keepDistance: 200, range: 300, speed: 220, size: 6, color: "#b6ff6a" },
+  },
+
+  // ---- ボス ----
+  //   slam… 大技：予告のあと、周りにまとめてダメージ
+  ravana: {
+    name: "羅刹王ラーヴァナ",
+    color: "#7a1fb0",
+    image: "assets/enemies/ravana.png",
+    radius: 30,
+    hp: 900,
+    attack: 14,
+    defense: 6,
+    attackSpeed: 0.7,
+    moveSpeed: 60,
+    range: 40,
+    exp: 300,
+    dropChance: 1.0,
+    rarityBonus: 6,
+    boss: true,
+    slam: { interval: 6, windup: 1.0, radius: 110, damageMult: 2.2 },
+  },
+  asuraKing: {
+    name: "阿修羅王",
+    color: "#3f5fd0",
+    image: "assets/enemies/asuraKing.png",
+    radius: 30,
+    hp: 1100,
+    attack: 15,
+    defense: 7,
+    attackSpeed: 1.1,   // 双剣使いなので、ほかのボスより手数が多い
+    moveSpeed: 90,
+    range: 40,
+    exp: 380,
+    dropChance: 1.0,
+    rarityBonus: 7,
+    boss: true,
+    slam: { interval: 5, windup: 0.9, radius: 120, damageMult: 2.2 },
+  },
+  mahisha: {
+    name: "水牛魔マヒシャ",
+    color: "#4a3a2a",
+    image: null,
+    radius: 34,
+    hp: 1300,
+    attack: 18,
+    defense: 9,
+    attackSpeed: 0.6,
+    moveSpeed: 75,
+    range: 44,
+    exp: 480,
+    dropChance: 1.0,
+    rarityBonus: 8,
+    boss: true,
+    slam: { interval: 5, windup: 0.8, radius: 130, damageMult: 2.5 },
   },
 };
 
@@ -63,4 +234,6 @@ WYD.data.difficulty = {
   expGrowth: 0.4,
   rarityGrowth: 0.08,    // 危険度+1ごとのレア出やすさ増加
   killsToUnlockNext: 25, // 今の最高危険度でこの数倒すと次が解放
+  autoDownAfterDeaths: 2,// 「自動」がONのとき、同じ危険度でこの回数倒れたら1つ下げる
+  autoUpAfterKills: 80,  // 「自動」がONで最高より下にいるとき、この数倒すと1つ上げる
 };
