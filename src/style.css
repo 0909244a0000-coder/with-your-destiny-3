@@ -265,3 +265,9 @@ button.danger { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px #
 
 /* 秒間ダメージ */
 .dps { font-size: 12px; color: #e8c46a; margin: 4px 0 2px; text-align: right; }
+
+/* カナイの箱 */
+.cube-row { font-size: 12px; padding: 3px 0; border-bottom: 1px dotted #2f281e; }
+.cube-name { display: inline-block; width: 70px; color: #e8a84a; }
+.cube-row select { font-size: 12px; max-width: 170px; }
+.cube-desc { color: #c9b48a; font-size: 11px; margin-top: 2px; }

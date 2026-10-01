@@ -66,6 +66,8 @@ WYD.stats = {
     for (const a of this.activeSetBonuses(state)) {
       if (a.bonus.power && !out[a.bonus.power]) out[a.bonus.power] = a.bonus.params;
     }
+    // カナイの箱に入れた能力（装備と同じ能力なら装備のほうが効く）
+    for (const def of WYD.cube.active(state)) if (!out[def.power]) out[def.power] = def.params;
     return out;
   },
 

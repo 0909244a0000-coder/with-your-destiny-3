@@ -8,6 +8,7 @@ WYD.ui = {
   craftMode: false,   // つけ直しモード（クリックで特殊効果をつけ直す）
   paused: false,      // 一時停止中か（セーブしない）
   enhanceMode: false, // 強化モード（クリックで +1 する）
+  cubeMode: false,    // カナイの箱に入れるモード（クリックでユニークを分解して覚える）
   gemSelected: null,  // はめるために選んだ宝石（"種類:段階"）
   stashOpen: false,   // 倉庫を開いているか
 
@@ -147,12 +148,23 @@ WYD.ui = {
     };
     this.$("craft-mode").onclick = () => {
       this.craftMode = !this.craftMode;
-      if (this.craftMode) this.enhanceMode = false;
+      if (this.craftMode) this.enhanceMode = this.cubeMode = false;
       this.markDirty();
+    };
+    this.$("cube-mode").onclick = () => {
+      this.cubeMode = !this.cubeMode;
+      if (this.cubeMode) this.craftMode = this.enhanceMode = false;
+      this.markDirty();
+    };
+    this.$("cube").onchange = (e) => {
+      const sel = e.target.closest("select[data-cube-slot]");
+      if (!sel) return;
+      s.cube.slots[sel.dataset.cubeSlot] = sel.value || null;
+      this.changed();
     };
     this.$("enhance-mode").onclick = () => {
       this.enhanceMode = !this.enhanceMode;
-      if (this.enhanceMode) this.craftMode = false;
+      if (this.enhanceMode) this.craftMode = this.cubeMode = false;
       this.markDirty();
     };
 
@@ -182,6 +194,7 @@ WYD.ui = {
       if (!cell) return;
       const index = Number(cell.dataset.index);
       if (e.ctrlKey || e.metaKey) this.toggleLock(s.inventory[index]);
+      else if (this.cubeMode) this.cubeItem(s.inventory[index]);
       else if (this.gemSelected) this.socketGem(s.inventory[index]);
       else if (this.enhanceMode) this.enhanceItem(s.inventory[index]);
       else if (this.craftMode) this.rerollItem(s.inventory[index]);
@@ -213,6 +226,7 @@ WYD.ui = {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
       if (e.ctrlKey || e.metaKey) this.toggleLock(s.stash[Number(cell.dataset.index)]);
+      else if (this.cubeMode) this.cubeItem(s.stash[Number(cell.dataset.index)]);
       else if (this.gemSelected) this.socketGem(s.stash[Number(cell.dataset.index)]);
       else if (this.enhanceMode) this.enhanceItem(s.stash[Number(cell.dataset.index)]);
       else if (this.craftMode) this.rerollItem(s.stash[Number(cell.dataset.index)]);
@@ -358,6 +372,33 @@ WYD.ui = {
     WYD.world.resetEnemies(this.world, s, true);
     this.log(`危険度を ${next} にした`);
     this.changed();
+  },
+
+  // カナイの箱に入れる（ユニークを分解して力を覚える）
+  cubeItem(item) {
+    if (!item) return;
+    const def = WYD.loot.uniqueInfo(item);
+    if (def && !this.state.cube.learned[def.id] && !confirm(`「${item.name}」を箱に入れて分解し、力を覚えますか？（装備はなくなります）`)) return;
+    const r = WYD.cube.extract(this.state, item);
+    if (!r.ok) return this.log(r.why, "#ff6b6b");
+    this.log(`カナイの箱が「${r.def.name}」の力を覚えた（${WYD.loot.uniqueDesc(r.def)}）`, WYD.data.cube.color);
+    WYD.sound.play("uniqueDrop");
+  },
+
+  // カナイの箱の欄
+  cubeHtml() {
+    const s = this.state;
+    const C = WYD.data.cube;
+    return Object.keys(C.slots).map((cs) => {
+      const list = WYD.cube.learnedFor(s, cs);
+      const cur = s.cube.slots[cs];
+      const curDef = cur && WYD.data.uniques.list.find((u) => u.id === cur);
+      const opts = [`<option value="">（なし）</option>`].concat(list.map((u) =>
+        `<option value="${u.id}" ${u.id === cur ? "selected" : ""}>${u.name}</option>`)).join("");
+      return `<div class="cube-row"><span class="cube-name">${C.slots[cs]}</span>
+        <select data-cube-slot="${cs}" ${list.length ? "" : "disabled"}>${opts}</select>
+        <div class="cube-desc">${curDef ? WYD.loot.uniqueDesc(curDef) : list.length ? "" : "まだ覚えた力がない"}</div></div>`;
+    }).join("") + `<p class="muted">「入れるモード」をONにしてユニーク装備をクリックすると、分解して力を覚える（${WYD.data.crafting.materialName} ${C.extractCost}個）</p>`;
   },
 
   // ロック：捨てられない・まとめて捨てない・自動装備で外れない
@@ -581,6 +622,14 @@ WYD.ui = {
       : "左クリック：装備する／右クリック：捨てる（捨てると素材になる）／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック";
     this.$("inventory").innerHTML = this.cellsHtml(s.inventory, size);
     this.$("gems").innerHTML = this.gemsHtml();
+    const cubeHtml = this.cubeHtml();
+    if (cubeHtml !== this.lastCubeHtml) {   // 選んでいる最中にリストが閉じないよう、変わったときだけ描き直す
+      this.lastCubeHtml = cubeHtml;
+      this.$("cube").innerHTML = cubeHtml;
+    }
+    this.$("cube-mode").textContent = `入れるモード：${this.cubeMode ? "ON" : "OFF"}`;
+    this.$("cube-mode").classList.toggle("active", this.cubeMode);
+    if (this.cubeMode) this.$("inv-help").textContent = "カナイの箱に入れるモード：ユニーク装備をクリックすると、分解してその力を覚える";
     if (this.gemSelected) this.$("inv-help").textContent = `${WYD.gems.name(this.gemSelected)}を選んでいる：持ち物・装備・倉庫の装備をクリックすると、空いたソケットにはめる（もう一度宝石をクリックでやめる）`;
 
     // 倉庫
@@ -777,6 +826,9 @@ WYD.ui = {
     for (const slot in this.state.equipment) {
       const u = WYD.loot.uniqueInfo(this.state.equipment[slot]);
       if (u) lines.push(`<div style="color:${WYD.data.uniques.color}">◆ ${u.name}：<small>${WYD.loot.uniqueDesc(u)}</small></div>`);
+    }
+    for (const u of WYD.cube.active(this.state)) {
+      lines.push(`<div style="color:${WYD.data.cube.color}">▣ 箱：${u.name}：<small>${WYD.loot.uniqueDesc(u)}</small></div>`);
     }
     for (const a of WYD.stats.activeSetBonuses(this.state)) {
       lines.push(`<div style="color:${WYD.data.sets.color}">■ ${a.set.name}（${a.need}つ）：<small>${this.bonusText(a.bonus)}</small></div>`);
