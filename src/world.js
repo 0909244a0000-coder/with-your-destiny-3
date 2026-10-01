@@ -36,6 +36,7 @@ WYD.world = {
     this.updateEffects(w, dt);
     WYD.offline.tick(state, dt);
     WYD.trial.tick(w, state, dt);
+    WYD.records.add(state, "playSeconds", dt);
 
     if (p.dead) {
       p.respawnTimer -= dt;
@@ -665,6 +666,8 @@ WYD.world = {
       if (drop.age < D.pickupDelay || drop.picked) continue;
       if (WYD.inventory.add(state, drop.item)) {
         drop.picked = true;
+        WYD.records.found(state, drop.item);
+        WYD.records.check(state);
         const r = WYD.loot.rarityInfo(drop.item.rarity);
         WYD.ui.log(`${drop.item.name}（${r.name}）を拾った`, r.color);
         WYD.ui.markDirty();
@@ -748,6 +751,10 @@ WYD.world = {
     const area = this.area(state);
     const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult * this.floorPower(state);
     this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult));
+
+    WYD.records.add(state, "kills");
+    if (e.elite) WYD.records.add(state, "eliteKills");
+    if (e.boss) WYD.records.add(state, "bossKills");
 
     if (inTrial) {
       WYD.trial.onKill(w, state, e);
@@ -849,6 +856,7 @@ WYD.world = {
       const spread = count > 1 ? 10 + count * 4 : 0;
       w.drops.push({ x: e.x + WYD.util.rand(-spread, spread), y: e.y + WYD.util.rand(-spread, spread), item, age: 0 });
     }
+    WYD.records.check(state);
   },
 
   // ボスを倒したら次のエリアを解放する
@@ -913,6 +921,7 @@ WYD.world = {
   },
 
   respawn(w, state, stats) {
+    WYD.records.add(state, "deaths");
     const map = WYD.data.map;
     const p = w.player;
     // 「自動」がONなら、同じ危険度で何度も倒れたら1つ下げる

@@ -236,3 +236,18 @@ button.danger { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px #
 .skill-rune { font-size: 12px; margin-top: 3px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .skill-rune select { font-size: 12px; padding: 0 2px; }
 .skill-rune-desc { color: #c9b48a; }
+
+/* 図鑑と記録 */
+.codex-box { width: 880px; max-height: 88vh; display: flex; flex-direction: column; }
+#codex-body { overflow-y: auto; margin-bottom: 10px; }
+.codex-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.codex-cols h3 { font-family: var(--serif); color: #c9a85a; font-size: 14px; margin: 10px 0 4px; border-bottom: 1px solid #2f281e; }
+.codex-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 1px 0; }
+.codex-ach { font-size: 12px; padding: 3px 0; border-bottom: 1px dotted #2f281e; color: #8a7d66; }
+.codex-ach.done { color: #ffd36b; }
+.codex-ach small { color: var(--muted); }
+.codex-ach-side { display: block; font-size: 11px; color: var(--muted); }
+.codex-item { font-size: 12.5px; padding: 4px 0; border-bottom: 1px dotted #2f281e; line-height: 1.4; }
+.codex-item.unknown b { color: #5a5245; }
+#codex-close { display: block; margin: 0 auto; }
+@media (max-width: 700px) { .codex-cols { grid-template-columns: 1fr; } }

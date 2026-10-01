@@ -18,6 +18,11 @@ WYD.ui = {
     const s = state;
 
     this.$("help").onclick = () => this.showStory("help");
+    this.$("codex-open").onclick = () => {
+      this.$("codex-body").innerHTML = this.codexHtml();
+      this.$("codex").hidden = false;
+    };
+    this.$("codex-close").onclick = () => { this.$("codex").hidden = true; };
     // セーブのバックアップ
     this.$("backup-export").onclick = () => {
       WYD.save.exportAll(s);
@@ -484,6 +489,49 @@ WYD.ui = {
   },
 
   // セットのボーナスの説明文
+  // 図鑑と記録の画面
+  codexHtml() {
+    const s = this.state;
+    const R = WYD.data.records;
+    const rec = WYD.records;
+    const rarity = (id) => WYD.loot.rarityInfo(id);
+    const baseName = (id) => (WYD.data.items.bases.find((b) => b.id === id) || {}).name || "";
+    // 記録
+    const counters = R.counters.map((c) => {
+      const v = s.records[c.id] || 0;
+      return `<div class="codex-row"><span>${c.name}</span><b>${c.time ? rec.timeText(v) : Math.floor(v).toLocaleString()}</b></div>`;
+    }).join("") +
+      `<div class="codex-row"><span>最高危険度</span><b>${s.maxDifficulty}</b></div>` +
+      `<div class="codex-row"><span>試練の最高段階</span><b>${s.trial.best}</b></div>`;
+    // 実績
+    const done = R.achievements.filter((a) => s.achievements[a.id]).length;
+    const achievements = R.achievements.map((a) => {
+      const ok = s.achievements[a.id];
+      const now = Math.min(rec.progress(s, a), rec.target(a));
+      return `<div class="codex-ach${ok ? " done" : ""}"><b>${ok ? "★" : "☆"} ${a.name}</b> <small>${a.desc}</small>` +
+        `<span class="codex-ach-side">${ok ? "達成" : `${Math.floor(now).toLocaleString()} / ${rec.target(a).toLocaleString()}`}　${WYD.data.crafting.materialName} ${a.reward}</span></div>`;
+    }).join("");
+    // ユニーク図鑑
+    const U = WYD.data.uniques;
+    const uFound = U.list.filter((u) => s.codex.uniques[u.id]).length;
+    const uniques = U.list.map((u) => s.codex.uniques[u.id]
+      ? `<div class="codex-item"><b style="color:${rarity("unique").color}">${u.name}</b> <small class="muted">${baseName(u.base)}</small><br><small>${WYD.loot.uniqueDesc(u)}</small></div>`
+      : `<div class="codex-item unknown"><b>？？？</b> <small class="muted">${baseName(u.base)}</small></div>`).join("");
+    // セット図鑑
+    const SE = WYD.data.sets;
+    const sets = SE.list.map((set) => {
+      const have = set.pieces.filter((p) => s.codex.setPieces[p.id]).length;
+      const pieces = set.pieces.map((p) => s.codex.setPieces[p.id]
+        ? `<span style="color:${SE.color}">${p.name}</span>` : `<span class="muted">？？？（${baseName(p.base)}）</span>`).join("、");
+      const bonuses = Object.keys(set.bonuses).map((n) => `<div><small>（${n}つ）${this.bonusText(set.bonuses[n])}</small></div>`).join("");
+      return `<div class="codex-item"><b style="color:${SE.color}">${set.name}</b> <small class="muted">${have}/${set.pieces.length}</small><br><small>${pieces}</small>${bonuses}</div>`;
+    }).join("");
+    return `<div class="codex-cols">
+      <div><h3>記録</h3>${counters}<h3>実績 <small>${done}/${R.achievements.length}</small></h3>${achievements}</div>
+      <div><h3>ユニーク図鑑 <small>${uFound}/${U.list.length}</small></h3>${uniques}<h3>セット図鑑</h3>${sets}</div>
+    </div>`;
+  },
+
   bonusText(bonus) {
     const parts = [];
     for (const k in bonus.stats || {}) parts.push(WYD.util.formatStat(k, bonus.stats[k]));

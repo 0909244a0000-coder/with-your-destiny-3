@@ -24,5 +24,6 @@ WYD.data.sound = {
     levelUp: { notes: [523, 659, 784, 1047], type: "triangle", step: 0.09, dur: 0.25, gain: 0.18 },
     rareDrop:{ notes: [988, 1319], type: "sine", step: 0.07, dur: 0.3, gain: 0.15 },
     uniqueDrop: { notes: [784, 988, 1175, 1568], type: "sine", step: 0.08, dur: 0.5, gain: 0.2 },
+    achievement: { notes: [659, 784, 1047, 1319, 1568], type: "triangle", step: 0.07, dur: 0.45, gain: 0.18 },
   },
 };

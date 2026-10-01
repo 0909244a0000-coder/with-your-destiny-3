@@ -35,6 +35,9 @@ WYD.save = {
       trial: { best: 0, level: 1, autoNext: true, runs: 0 },   // 終わりのない試練の記録
       trialRun: null,  // 今挑んでいる試練（読み直すとふつうの冒険にもどる）
       materials: 0,    // 素材（装備を捨てるともらえる。名前は data/crafting.js）
+      records: {},     // 数えた記録（data/records.js の counters）
+      codex: { uniques: {}, setPieces: {} },   // 図鑑（見つけたユニーク・セット装備の id）
+      achievements: {},   // 達成した実績の id
     };
   },
 
@@ -76,6 +79,9 @@ WYD.save = {
       if (typeof state.materials !== "number") state.materials = 0;
       state.trial = Object.assign(this.newState().trial, saved.trial);
       state.trialRun = null;
+      state.records = Object.assign({}, saved.records);
+      state.codex = Object.assign(this.newState().codex, saved.codex);
+      state.achievements = Object.assign({}, saved.achievements);
       // 「ノーマルを拾わない」だった頃のセーブは、「ノーマルを自動分解」にする
       if (saved.settings && saved.settings.skipNormal && !saved.settings.autoSalvage) state.settings.autoSalvage = "normal";
       delete state.settings.skipNormal;
@@ -86,6 +92,7 @@ WYD.save = {
         if (!Array.isArray(item.effects)) item.effects = [];
         this.renameItem(item);
       }
+      WYD.records.backfill(state);
       return state;
     } catch (e) {
       console.warn("セーブデータを読めませんでした。新しく始めます。", e);
