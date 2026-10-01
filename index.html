@@ -98,6 +98,11 @@
         <p class="muted" id="inv-help">左クリック：装備する／右クリック：捨てる（捨てると素材になる）</p>
       </section>
 
+      <section class="panel" id="maps-panel" hidden>
+        <h2>地図 <small id="maps-count"></small> <small class="muted">クリア後に落ちる。使うと条件つきの試練に挑む（右クリックで捨てる）</small></h2>
+        <div id="maps"></div>
+      </section>
+
       <section class="panel">
         <h2>カナイの箱 <small class="muted">ユニークの力を覚えて、装備とは別に3つまで使える</small> <button id="cube-mode">入れるモード：OFF</button></h2>
         <div id="cube"></div>
@@ -162,6 +167,7 @@
   <script src="data/gems.js"></script>
   <script src="data/daily.js"></script>
   <script src="data/cube.js"></script>
+  <script src="data/maps.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>
@@ -179,6 +185,7 @@
   <script src="src/daily.js"></script>
   <script src="src/allies.js"></script>
   <script src="src/cube.js"></script>
+  <script src="src/maps.js"></script>
   <script src="src/sound.js"></script>
   <script src="src/offline.js"></script>
   <script src="src/render.js"></script>

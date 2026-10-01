@@ -25,6 +25,8 @@
 - エフェクト（`src/fx.js`）、絵の動き（`src/render.js` の `pose`）、ディアブロ風パネル（`src/style.css` の後半）、効果音（`src/sound.js`）
 - 絵：主人公、地面3枚、装備13個・スキル6個のアイコン、全13種類の敵・ボス（`docs/ART.md` の「受け取り済み」）。アイコンの切り出し用シートも `assets/sheets/` に保存
 
+- 地図（`src/maps.js`）。試練のしくみに `trialRun.map` をつけて動かす。条件は日替わりの試練と同じ `data/daily.js` の mods を使う
+- ルーンとルーンワード（`data/gems.js` の runes・runewords。ルーンは宝石と同じ `state.gems` に `"rune:el"` の名前で入る）
 - カナイの箱（`src/cube.js`）。`state.cube.learned`（覚えた力）と `state.cube.slots`（枠に入れた力）。固有能力は `WYD.stats.powers` で装備の次に足す
 
 ## 決まったこと（変えるときは持ち主に相談）

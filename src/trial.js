@@ -16,7 +16,7 @@ WYD.trial = {
     const T = WYD.data.trial;
     const n = state.trialRun.level;
     return {
-      id: "trial", name: state.trialRun.daily ? "日替わりの試練" : "終わりのない試練",
+      id: "trial", name: state.trialRun.map ? WYD.maps.name(state.trialRun.map) : state.trialRun.daily ? "日替わりの試練" : "終わりのない試練",
       bgColor: T.bgColor, grassColor: T.grassColor, stoneColor: T.stoneColor, groundImage: T.groundImage,
       powerMult: T.powerBase * Math.pow(T.powerGrowth, n - 1),
       itemLevelBonus: 0, enemies: T.enemies, floors: 1, killsPerFloor: T.kills, boss: state.trialRun.guardian,
@@ -29,18 +29,20 @@ WYD.trial = {
   },
 
   // daily = 日替わりの試練のとき { date, modIds, guardian }（src/daily.js）
-  start(w, state, level, daily) {
+  // map = 地図で挑むとき（src/maps.js）
+  start(w, state, level, daily, map) {
     const T = WYD.data.trial;
-    state.trialRun = { level, guardian: daily ? daily.guardian : WYD.util.pick(T.guardians), daily: daily || null };
-    const timeLimit = Math.round(T.timeLimit * WYD.daily.mult(state, "timeMult"));
+    state.trialRun = { level, guardian: daily ? daily.guardian : WYD.util.pick(T.guardians), daily: daily || null, map: map || null };
+    const timeLimit = Math.round((map ? WYD.data.maps.timeLimit : T.timeLimit) * WYD.daily.mult(state, "timeMult"));
     const killTarget = Math.round(T.kills * WYD.daily.mult(state, "killsMult"));
     w.trial = { timeLeft: timeLimit, timeLimit, killTarget, kills: 0, guardianOut: false, done: false };
     WYD.world.resetEnemies(w, state, false);
     w.drops = [];
-    const name = daily ? "日替わりの試練" : "終わりのない試練";
+    const name = map ? WYD.maps.name(map) : daily ? "日替わりの試練" : "終わりのない試練";
     w.banner = { text: `${name}　段階 ${level}`, time: 0 };
     WYD.ui.log(`${name} 段階${level} に挑む（${timeLimit}秒で${killTarget}体倒し、守護者を討て）`, daily ? WYD.data.daily.color : T.color);
     if (daily) WYD.ui.log(`今日の条件：${WYD.daily.describe(daily.date)}`, WYD.data.daily.color);
+    if (map && map.modIds.length) WYD.ui.log(`地図の条件：${WYD.maps.mods(map).map((m) => `${m.name}（${m.desc}）`).join("・")}`, WYD.data.maps.color);
     WYD.ui.changed();
   },
 
@@ -80,7 +82,7 @@ WYD.trial = {
     if (t.done) {
       t.nextIn -= dt;
       if (t.nextIn > 0) return;
-      if (state.trial.autoNext && !state.trialRun.daily) this.start(w, state, state.trial.level);
+      if (state.trial.autoNext && !state.trialRun.daily && !state.trialRun.map) this.start(w, state, state.trial.level);
       else this.stop(w, state);
       return;
     }
@@ -104,6 +106,11 @@ WYD.trial = {
     const t = w.trial;
     t.done = true;
     t.nextIn = T.nextDelay;
+    if (state.trialRun.map) {
+      WYD.maps.finish(w, state, success, guardian);
+      WYD.ui.changed();
+      return;
+    }
     if (state.trialRun.daily) {
       WYD.daily.finish(w, state, success, guardian);
       WYD.ui.changed();
@@ -153,6 +160,6 @@ WYD.trial = {
     ctx.fillStyle = "#fff";
     const m = Math.max(0, Math.ceil(t.timeLeft));
     const goal = t.guardianOut ? "守護者を倒せ！" : `守護者まで ${t.kills}/${t.killTarget}体`;
-    ctx.fillText(`${daily ? "日替わり" : "試練"} 段階${state.trialRun.level}　残り ${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}　${goal}`, map.width / 2, y - 6);
+    ctx.fillText(`${state.trialRun.map ? WYD.maps.name(state.trialRun.map) + "（試練の段階" + state.trialRun.level + "）" : (daily ? "日替わり" : "試練") + " 段階" + state.trialRun.level}　残り ${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}　${goal}`, map.width / 2, y - 6);
   },
 };

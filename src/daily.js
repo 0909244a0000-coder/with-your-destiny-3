@@ -41,8 +41,9 @@ WYD.daily = {
   // 今の試練についている条件（日替わりでなければ空）
   mods(state) {
     const run = state.trialRun;
-    if (!run || !run.daily) return [];
-    return run.daily.modIds.map((id) => WYD.data.daily.mods.find((m) => m.id === id)).filter(Boolean);
+    const src = run && (run.daily || run.map);   // 日替わりの試練か、地図
+    if (!src) return [];
+    return src.modIds.map((id) => WYD.data.daily.mods.find((m) => m.id === id)).filter(Boolean);
   },
 
   // 条件の倍率をかけあわせる（name = "enemyHp" など）

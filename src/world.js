@@ -1058,6 +1058,7 @@ WYD.world = {
     }
     if (def.treasure) this.goblinTreasure(w, state, e);
     WYD.gems.onKill(w, state, e);
+    WYD.maps.onKill(w, state, e);
     WYD.records.check(state);
   },
 

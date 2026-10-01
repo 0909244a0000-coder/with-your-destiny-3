@@ -156,6 +156,22 @@ WYD.ui = {
       if (this.cubeMode) this.craftMode = this.enhanceMode = false;
       this.markDirty();
     };
+    this.$("maps").onclick = (e) => {
+      const use = e.target.closest("[data-map-use]");
+      const up = e.target.closest("[data-map-up]");
+      if (use) WYD.maps.use(this.world, s, Number(use.dataset.mapUse));
+      else if (up) {
+        if (!WYD.maps.upgrade(s, Number(up.dataset.mapUp))) this.log(`${WYD.data.crafting.materialName}が足りない`, "#ff6b6b");
+      } else return;
+      this.changed();
+    };
+    this.$("maps").oncontextmenu = (e) => {
+      const row = e.target.closest("[data-map-row]");
+      if (!row) return;
+      e.preventDefault();
+      s.maps.splice(Number(row.dataset.mapRow), 1);
+      this.changed();
+    };
     this.$("cube").onchange = (e) => {
       const sel = e.target.closest("select[data-cube-slot]");
       if (!sel) return;
@@ -383,6 +399,23 @@ WYD.ui = {
     if (!r.ok) return this.log(r.why, "#ff6b6b");
     this.log(`カナイの箱が「${r.def.name}」の力を覚えた（${WYD.loot.uniqueDesc(r.def)}）`, WYD.data.cube.color);
     WYD.sound.play("uniqueDrop");
+  },
+
+  // 地図の欄
+  mapsHtml() {
+    const s = this.state;
+    const M = WYD.data.maps;
+    if (!s.maps.length) return `<p class="muted">まだ地図がない（危険度が高いほど、段階の高い地図が落ちる）</p>`;
+    const inTrial = WYD.trial.active(s);
+    return s.maps.map((m, i) => {
+      const mods = WYD.maps.mods(m);
+      const cost = M.upgradeCostPerTier * m.tier;
+      return `<div class="map-row" data-map-row="${i}"><b style="color:${WYD.maps.color(m)}">${WYD.maps.name(m)}</b>
+        <small class="muted">量×${WYD.maps.quantity(m).toFixed(2)}</small>
+        <button data-map-use="${i}" ${inTrial ? "disabled" : ""}>使う</button>
+        <button data-map-up="${i}" title="${WYD.data.crafting.materialName}${cost}個で、条件を3〜4つにつけ直す（むずかしいぶん、ごほうびが増える）">レアにする</button>
+        <div class="map-mods">${mods.length ? mods.map((x) => `${x.name}（${x.desc}）`).join("・") : "条件なし"}</div></div>`;
+    }).join("");
   },
 
   // カナイの箱の欄
@@ -622,6 +655,9 @@ WYD.ui = {
       : "左クリック：装備する／右クリック：捨てる（捨てると素材になる）／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック";
     this.$("inventory").innerHTML = this.cellsHtml(s.inventory, size);
     this.$("gems").innerHTML = this.gemsHtml();
+    this.$("maps-panel").hidden = !s.cleared && !s.maps.length;
+    this.$("maps-count").textContent = `${s.maps.length} / ${WYD.data.maps.maxHeld}　最高 段階${s.mapBest || 0}`;
+    this.$("maps").innerHTML = this.mapsHtml();
     const cubeHtml = this.cubeHtml();
     if (cubeHtml !== this.lastCubeHtml) {   // 選んでいる最中にリストが閉じないよう、変わったときだけ描き直す
       this.lastCubeHtml = cubeHtml;

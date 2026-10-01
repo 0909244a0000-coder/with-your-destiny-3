@@ -5,6 +5,7 @@
 //     trialBest（試練の最高段階）・uniques（図鑑に載ったユニークの数）・setPieces（図鑑に載ったセット装備の数）
 //     setComplete（全部の部位を図鑑に載せたセットの数）・cleared（クリアしたか：value は 1）
 //     dailyStreak（日替わりの試練の最高連続日数）・dailyTotal（日替わりの試練の成功回数）
+//     mapBest（成功した地図の最高段階）
 //   reward       … 達成したときにもらえる素材の数
 window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
@@ -45,6 +46,9 @@ WYD.data.records = {
     { id: "daily1", name: "今日の試練", desc: "日替わりの試練に成功する", check: "dailyTotal", value: 1, reward: 20 },
     { id: "daily7", name: "七日の誓い", desc: "日替わりの試練に7日連続で成功する", check: "dailyStreak", value: 7, reward: 150 },
     { id: "daily30", name: "不屈の巡礼", desc: "日替わりの試練に30日連続で成功する", check: "dailyStreak", value: 30, reward: 500 },
+    { id: "map1", name: "地図読み", desc: "地図に成功する", check: "mapBest", value: 1, reward: 20 },
+    { id: "map8", name: "辺境の探索者", desc: "段階8の地図に成功する", check: "mapBest", value: 8, reward: 120 },
+    { id: "map16", name: "地図の果て", desc: "段階16の地図に成功する", check: "mapBest", value: 16, reward: 400 },
     { id: "unique3", name: "蒐集家", desc: "ユニーク装備を3種類見つける", check: "uniques", value: 3, reward: 30 },
     { id: "uniqueAll", name: "伝説の目録", desc: "ユニーク装備を全種類見つける", check: "uniques", value: "all", reward: 150 },
     { id: "set4", name: "そろえる楽しみ", desc: "セット装備を4種類見つける", check: "setPieces", value: 4, reward: 30 },

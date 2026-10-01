@@ -44,6 +44,7 @@ WYD.records = {
       case "cleared": return state.cleared ? 1 : 0;
       case "dailyStreak": return state.daily.bestStreak;
       case "dailyTotal": return state.daily.total;
+      case "mapBest": return state.mapBest || 0;
     }
     return 0;
   },
