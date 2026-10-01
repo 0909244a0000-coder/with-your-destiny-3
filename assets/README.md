@@ -28,7 +28,7 @@ icons: { dual_blades: "assets/items/dual_blades.png", turban: "assets/items/turb
 
 ## 絵の決まり
 - PNG、背景は透明（地面だけは透明なし・つなぎ目なしの模様）
-- キャラ・敵：512×512px、真ん中に全体の約70%の大きさ。ゲームでは体の大きさ×4（`data/map.js` の `spriteScale`）の正方形に縮めて表示
+- キャラ・敵：正方形。**余白なしでいっぱいに**（`tools/prepare_sprite.py` で整えると自動でそうなる）。余白があると、そのぶん小さく表示される。ゲームでは体の大きさ×4（`data/map.js` の `spriteScale`）の正方形に縮めて表示
 - アイコン：256×256px
 - 地面：512×512px、上下左右がつながる模様
 
