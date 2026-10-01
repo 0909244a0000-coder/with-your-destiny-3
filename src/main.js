@@ -13,6 +13,15 @@ window.WYD = window.WYD || {};
   WYD.ui.init(state, world);
   WYD.ui.log("ようこそ。戦いは自動で進みます。装備とスキルを選んで強くなろう。", "#ffd447");
   WYD.offline.apply(state, world, lastSeen);
+  // 初めて遊ぶとき（前に遊んだ記録がないとき）だけ、遊び方を出す
+  if (!state.seenHelp) {
+    state.seenHelp = true;
+    if (!lastSeen) {
+      WYD.ui.showStory("help");
+      const intro = WYD.data.story.areaIntro[state.area];
+      if (intro) WYD.ui.log(intro, "#c9b48a");
+    }
+  }
 
   // タブを裏にしている間は画面が止まるので、戻ってきたときに放置ぶんを渡す
   let hiddenAt = null;

@@ -25,6 +25,8 @@ WYD.save = {
       unlockedAreas: [WYD.data.areas[0].id],    // 行けるエリア
       bossProgress: 0,                          // ボスが出るまでに倒した数
       settings: { speed: 1, autoSalvage: "none", autoDifficulty: false },
+      seenHelp: false, // 遊び方を見たか（最初の1回だけ自動で出す）
+      cleared: false,  // 最後のボスを倒したか
       materials: 0,    // 素材（装備を捨てるともらえる。名前は data/crafting.js）
     };
   },

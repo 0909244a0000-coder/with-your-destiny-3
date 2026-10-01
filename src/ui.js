@@ -17,6 +17,7 @@ WYD.ui = {
     this.world = world;
     const s = state;
 
+    this.$("help").onclick = () => this.showStory("help");
     this.$("area-down").onclick = () => this.changeArea(-1);
     this.$("area-up").onclick = () => this.changeArea(1);
     this.$("diff-down").onclick = () => this.changeDifficulty(-1);
@@ -149,13 +150,24 @@ WYD.ui = {
     this.log(`${item.name}の特殊効果をつけ直した → ${names}`, WYD.data.effects.color);
   },
 
+  // 真ん中に出るお知らせの画面（遊び方・おかえりなさい・クリア）
+  showModal(title, text, items) {
+    this.$("modal-title").textContent = title;
+    this.$("modal-text").textContent = text;
+    this.$("modal-list").innerHTML = items.map((x) => `<li>${x}</li>`).join("");
+    this.$("modal").hidden = false;
+    this.$("modal-ok").onclick = () => { this.$("modal").hidden = true; };
+  },
+
   // 「おかえりなさい」の画面（放置中の進行）
   showWelcome(text, items) {
-    this.$("welcome-text").textContent = text;
-    this.$("welcome-list").innerHTML = items.map((x) => `<li>${x}</li>`).join("");
-    this.$("welcome").hidden = false;
-    this.$("welcome-ok").onclick = () => { this.$("welcome").hidden = true; };
+    this.showModal("おかえりなさい", text, items);
     this.log(`${text} ${items.join("、")}`, "#ffd447");
+  },
+
+  showStory(key) {
+    const st = WYD.data.story[key];
+    this.showModal(st.title, st.text, st.items);
   },
 
   // 何かが変わったとき：画面を作り直してセーブ
@@ -196,6 +208,8 @@ WYD.ui = {
     WYD.world.resetEnemies(this.world, s, false);
     this.world.drops = [];
     this.log(`「${next.name}」へ移動した`, "#ff8a2a");
+    const intro = WYD.data.story.areaIntro[next.id];
+    if (intro) this.log(intro, "#c9b48a");
     this.changed();
   },
 

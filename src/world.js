@@ -652,7 +652,12 @@ WYD.world = {
     const next = list[list.indexOf(area) + 1];
     if (next && !state.unlockedAreas.includes(next.id)) {
       state.unlockedAreas.push(next.id);
-      WYD.ui.log(`新しいエリア「${next.name}」に行けるようになった！`, "#ff8a2a");
+      WYD.ui.log(`新しいエリア「${next.name}」に行けるようになった！（上の「エリア ▶」で移動）`, "#ff8a2a");
+    }
+    // 最後のエリアのボスを初めて倒したらクリア
+    if (!next && !state.cleared) {
+      state.cleared = true;
+      WYD.ui.showStory("clear");
     }
     WYD.ui.changed();
   },
