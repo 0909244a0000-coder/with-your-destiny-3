@@ -18,6 +18,27 @@ WYD.ui = {
     const s = state;
 
     this.$("help").onclick = () => this.showStory("help");
+    // セーブのバックアップ
+    this.$("backup-export").onclick = () => {
+      WYD.save.exportAll(s);
+      this.log("セーブをファイルに書き出した（ダウンロードの場所に保存されます）", "#7dff8a");
+    };
+    this.$("backup-import").onclick = () => this.$("backup-file").click();
+    this.$("backup-file").onchange = (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      f.text().then((text) => {
+        if (!confirm("今のセーブを、このファイルの中身で置きかえますか？（今のセーブは消えます）")) return;
+        try {
+          WYD.save.importAll(text);
+          WYD.resetting = true;
+          location.reload();
+        } catch (err) {
+          alert(`読み込めませんでした：${err.message}`);
+        }
+      });
+      e.target.value = "";
+    };
     // 職業の切り替え
     this.$("class-select").innerHTML = Object.keys(WYD.data.classes)
       .map((id) => `<option value="${id}">${WYD.data.classes[id].name}</option>`).join("");

@@ -37,9 +37,20 @@ WYD.save = {
 
   load() {
     try {
-      const text = localStorage.getItem(this.KEY);
+      let text = localStorage.getItem(this.KEY);
       if (!text) return this.newState();
-      const saved = JSON.parse(text);
+      let saved;
+      try {
+        saved = JSON.parse(text);
+        // 読めたセーブは「控え」として残しておく（次に壊れたときに戻せるように）
+        localStorage.setItem(this.KEY + "-backup", text);
+      } catch (e) {
+        // 壊れていたら、前回の控えから読む
+        text = localStorage.getItem(this.KEY + "-backup");
+        if (!text) throw e;
+        saved = JSON.parse(text);
+        this.restoredFromBackup = true;
+      }
       // 新しく増えた項目があっても壊れないように、初期値と合体する
       const base = this.newState();
       const state = Object.assign(base, saved);
@@ -85,6 +96,40 @@ WYD.save = {
     }
     const words = WYD.data.items.renamedWords || {};
     for (const old in words) item.name = item.name.split(old).join(words[old]);
+  },
+
+  // ---------- バックアップ（ファイルに書き出す・読み込む） ----------
+  // このゲームのセーブ（全部のキャラ、控えもふくむ）をまとめて1つのファイルにする
+  exportAll(state) {
+    this.write(state);
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("wyd3-")) data[k] = localStorage.getItem(k);
+    }
+    const file = { format: "wyd3-backup", version: 1, exportedAt: new Date().toISOString(), data };
+    const blob = new Blob([JSON.stringify(file)], { type: "application/json" });
+    const a = document.createElement("a");
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    a.href = URL.createObjectURL(blob);
+    a.download = `wyd3-backup-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  },
+
+  // 書き出したファイルを読み込んで、セーブを置きかえる。うまくいったら true
+  importAll(text) {
+    const file = JSON.parse(text);
+    if (!file || file.format !== "wyd3-backup" || typeof file.data !== "object") {
+      throw new Error("このゲームのバックアップファイルではありません");
+    }
+    for (const k in file.data) {
+      if (k.startsWith("wyd3-") && typeof file.data[k] === "string") localStorage.setItem(k, file.data[k]);
+    }
+    return true;
   },
 
   write(state) {
