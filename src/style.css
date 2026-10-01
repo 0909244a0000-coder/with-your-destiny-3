@@ -115,3 +115,6 @@ aside { width: 400px; display: flex; flex-direction: column; gap: 12px; }
 .tip-compare .up { color: #7dff8a; }
 .tip-compare .down { color: #ff6b6b; }
 .cell .fx-mark { float: right; font-size: 10px; }
+.cell { position: relative; }
+.cell .item-icon { position: absolute; right: 2px; bottom: 2px; width: 26px; height: 26px; object-fit: contain; opacity: 0.9; pointer-events: none; }
+.skill-icon { width: 22px; height: 22px; object-fit: contain; }

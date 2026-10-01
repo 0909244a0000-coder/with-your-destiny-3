@@ -259,6 +259,7 @@ WYD.ui = {
       const canUp = s.player.skillPoints > 0 && lv < def.maxLevel;
       return `<div class="skill">
         <div class="skill-head">
+          ${WYD.data.skillIcons[id] ? `<img class="skill-icon" src="${WYD.data.skillIcons[id]}" alt="" onerror="this.remove()">` : ""}
           <b style="color:${def.color}">${def.name}</b>
           <span>Lv ${lv}/${def.maxLevel}</span>
           <button data-skill="${id}" data-action="up" ${canUp ? "" : "disabled"}>＋</button>
@@ -274,7 +275,7 @@ WYD.ui = {
       const item = s.equipment[slot];
       return `<div class="cell slot" data-slot="${slot}" ${item ? `style="border-color:${this.color(item)}"` : ""}>
         <small>${slots[slot]}${item ? this.fxMark(item) : ""}</small>
-        ${item ? `<span style="color:${this.color(item)}">${item.name}</span>` : `<span class="empty">なし</span>`}
+        ${item ? `<span style="color:${this.color(item)}">${item.name}</span>${this.iconImg(item)}` : `<span class="empty">なし</span>`}
       </div>`;
     }).join("");
 
@@ -293,12 +294,18 @@ WYD.ui = {
       const item = s.inventory[i];
       html += item
         ? `<div class="cell" data-index="${i}" style="border-color:${this.color(item)}">
-             <small>${slots[item.slot]}${this.fxMark(item)}</small><span style="color:${this.color(item)}">${item.name}</span>
+             <small>${slots[item.slot]}${this.fxMark(item)}</small><span style="color:${this.color(item)}">${item.name}</span>${this.iconImg(item)}
            </div>`
         : `<div class="cell blank"></div>`;
     }
     this.$("inventory").innerHTML = html;
     this.hideTooltip();
+  },
+
+  // 装備のアイコン（絵が用意されているときだけ）。読めなかったら消す
+  iconImg(item) {
+    const src = WYD.loot.iconOf(item);
+    return src ? `<img class="item-icon" src="${src}" alt="" onerror="this.remove()">` : "";
   },
 
   // マスの右上に出す特殊効果の数の印（例：✦2）

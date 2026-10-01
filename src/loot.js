@@ -45,6 +45,7 @@ WYD.loot = {
       id: state.nextItemId++,
       name,
       slot: base.slot,
+      base: base.id,
       rarity: rarity.id,
       level: itemLevel,
       stats,
@@ -72,6 +73,19 @@ WYD.loot = {
 
   effectInfo(id) {
     return WYD.data.effects.list.find((x) => x.id === id);
+  },
+
+  // 装備の種類（古いセーブの装備は名前から探す）
+  baseOf(item) {
+    const bases = WYD.data.items.bases;
+    return bases.find((b) => b.id === item.base) ||
+      bases.find((b) => b.slot === item.slot && item.name.endsWith(b.name)) || null;
+  },
+
+  // 装備のアイコンの絵のファイル（なければ null）
+  iconOf(item) {
+    const base = this.baseOf(item);
+    return (base && WYD.data.items.icons[base.id]) || null;
   },
 
   rarityInfo(id) {

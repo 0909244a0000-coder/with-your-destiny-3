@@ -92,6 +92,9 @@ WYD.data.skills = {
   },
 };
 
+// スキルのアイコンの絵（スキル名 → ファイル）。例: whirl: "assets/skills/whirl.png"
+WYD.data.skillIcons = {};
+
 // 同時にONにできるスキルの数（ここでビルドを選ぶ）
 WYD.data.skillSlots = 3;
 

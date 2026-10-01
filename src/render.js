@@ -16,6 +16,12 @@ WYD.render = {
     return img.complete && img.naturalWidth > 0 ? img : null;
   },
 
+  patterns: {},
+  patternFor(ctx, img) {
+    if (!this.patterns[img.src]) this.patterns[img.src] = ctx.createPattern(img, "repeat");
+    return this.patterns[img.src];
+  },
+
   makeDecorations() {
     const map = WYD.data.map;
     const rnd = WYD.util.seededRandom(map.decorationSeed);
@@ -34,9 +40,12 @@ WYD.render = {
     const area = WYD.world.area(state);
     if (!this.decorations) this.decorations = this.makeDecorations();
 
-    ctx.fillStyle = area.bgColor;
+    // 地面：絵があれば敷きつめる、なければ色でぬる
+    const ground = this.getImage(area.groundImage);
+    ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
-    for (const d of this.decorations) {
+    // 地面の絵がないときだけ、草や石の飾りを描く
+    for (const d of ground ? [] : this.decorations) {
       ctx.fillStyle = d.kind === "grass" ? area.grassColor : area.stoneColor;
       ctx.beginPath();
       ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
