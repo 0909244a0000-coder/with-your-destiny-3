@@ -596,6 +596,7 @@ WYD.world = {
       }
       const reach = def.range + WYD.data.player.radius;
       const d = WYD.util.dist(e, p);
+      if (def.barrage) this.updateBarrage(w, e, def.barrage, dt);
       if (def.slam && this.updateSlam(w, e, def.slam, stats, d, dt)) {
         if (p.dead) return;
         continue;   // 大技の準備中は動かない
@@ -716,6 +717,23 @@ WYD.world = {
       if (p.hp <= 0) this.playerDied(w);
     }
     w.projectiles = w.projectiles.filter((b) => b.life > 0);
+  },
+
+  // ボスの弾幕：一定時間ごとに、まわりへ弾をたくさん撃つ（怒ると間隔が短くなる）
+  updateBarrage(w, e, b, dt) {
+    e.barrageTimer = (e.barrageTimer == null ? b.interval : e.barrageTimer) - dt;
+    if (e.barrageTimer > 0) return;
+    e.barrageTimer = b.interval * (e.slamIntervalMult || 1);
+    const offset = Math.random() * Math.PI * 2;
+    for (let i = 0; i < b.count; i++) {
+      const ang = offset + (i / b.count) * Math.PI * 2;
+      w.projectiles.push({
+        x: e.x, y: e.y, vx: Math.cos(ang) * b.speed, vy: Math.sin(ang) * b.speed,
+        size: b.size, color: b.color, attack: e.attack * b.damageMult, ownerId: e.id,
+        life: WYD.data.map.projectileLifetime,
+      });
+    }
+    WYD.sound.play("thunder");
   },
 
   // ボスの大技：予告の輪が出たあと、範囲内にいると大ダメージ。準備中なら true を返す

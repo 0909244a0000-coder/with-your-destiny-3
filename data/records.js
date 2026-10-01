@@ -31,7 +31,7 @@ WYD.data.records = {
     { id: "elite500", name: "精鋭の天敵", desc: "精鋭を500体倒す", check: "counter", key: "eliteKills", value: 500, reward: 100 },
     { id: "boss1", name: "王殺し", desc: "ボスを初めて倒す", check: "counter", key: "bossKills", value: 1, reward: 15 },
     { id: "boss25", name: "王たちの墓標", desc: "ボス・守護者を25体倒す", check: "counter", key: "bossKills", value: 25, reward: 60 },
-    { id: "cleared", name: "運命の果て", desc: "3つのエリアのボスを倒してクリア", check: "cleared", value: 1, reward: 50 },
+    { id: "cleared", name: "運命の果て", desc: "すべてのエリアのボスを倒してクリア", check: "cleared", value: 1, reward: 50 },
     { id: "lv25", name: "一人前", desc: "レベル25になる", check: "level", value: 25, reward: 20 },
     { id: "lv50", name: "極めし者", desc: "レベル50（上限）になる", check: "level", value: 50, reward: 60 },
     { id: "paragon10", name: "修練の道", desc: "修練レベル10になる", check: "paragon", value: 10, reward: 60 },

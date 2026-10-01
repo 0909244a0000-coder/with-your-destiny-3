@@ -60,6 +60,27 @@ WYD.data.areas = [
     floors: 3,
     killsPerFloor: 53,
   },
+  {
+    // 4つ目：西洋の闇。地面の絵はまだないので、火葬場の絵に紫の色をかぶせて仮に使う（groundTint）
+    id: "cathedral",
+    name: "奈落の大聖堂",
+    bgColor: "#1f1a26",
+    grassColor: "#2c2438",
+    stoneColor: "#4a4458",
+    groundImage: "assets/areas/smashana.png",
+    groundTint: "rgba(70,30,110,0.45)",   // 地面にかぶせる色（本番の絵が来たら消す）
+    powerMult: 4.8,
+    itemLevelBonus: 11,
+    enemies: [
+      { kind: "fallenKnight", weight: 35 },
+      { kind: "shadowBeast", weight: 35 },
+      { kind: "wailingSpirit", weight: 30 },
+      { kind: "boneCleric", weight: 20 },
+    ],
+    boss: "archbishop",
+    floors: 3,
+    killsPerFloor: 60,
+  },
 ];
 
 // ボス戦の共通設定

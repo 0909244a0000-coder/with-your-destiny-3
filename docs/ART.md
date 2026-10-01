@@ -112,6 +112,24 @@ A single full-body sprite, 3/4 top-down view, facing right, transparent backgrou
 A single sprite sheet image, 2048x1024, arranged as an exact 4 columns by 2 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Necromancer spell icons, left-to-right, top-to-bottom: 1 Raise Skeleton: a skeletal hand rising from the ground with green light, 2 Bone Storm: bone shards bursting outward in a ring, 3 Bone Armor: a ribcage-shaped shield of bones, 4 Bone Spear: a long sharp bone spear flying, 5 Plague Fog: a sickly green poison cloud, 6 Blood Pact: a dripping red rune in a circle, 7 Grasping Dead: many undead hands reaching out of dark earth, 8 (leave this cell empty).
 ```
 
+### 4つ目のエリア「奈落の大聖堂」の絵
+今は地面＝火葬場の絵に紫をかぶせたもの、敵とボス＝今ある絵の色を変えたもの（`data/areas.js` の `groundTint`、`data/enemies.js` の `imageFilter`）。届いたら `image` を差し替え、`groundTint`・`imageFilter` を消す。世界観は西洋の闇（崩れた大聖堂、堕ちた聖職者、亡霊）。
+
+**地面（1枚）** → `assets/areas/cathedral.png`（つなぎ目のないタイル、1024px）
+```
+A seamless tileable top-down floor texture for a dark fantasy game: cracked black and purple marble cathedral floor, scattered bones, faded holy symbols, dried blood, candle wax. Painterly, dark, low contrast so characters stand out. No text.
+```
+
+**敵とボス（5枚。512px以上・透明背景・3/4見下ろし・右向き）** → `assets/enemies/<名前>.png`
+```
+1 fallenKnight: a corrupted holy knight in tarnished silver plate armor with a cracked tabard and a black greatsword.
+2 shadowBeast: a lean four-legged shadow hound made of black smoke with glowing violet eyes.
+3 wailingSpirit: a pale translucent ghost of a nun with long hair, screaming, wisps trailing.
+4 boneCleric: a skeletal priest in ragged purple vestments holding a censer of violet fire.
+5 archbishop (BOSS, larger and more detailed): a towering fallen archbishop with a tall cracked mitre, six thin bone wings, a golden staff topped with an inverted cross of violet flame.
+Western dark fantasy (Diablo-like), painterly, high contrast. No text, no frame.
+```
+
 ## 制作済みの仕様・再制作用プロンプト
 
 以下は今回制作した絵の仕様です。再制作のために元のプロンプトとIDを残しています。

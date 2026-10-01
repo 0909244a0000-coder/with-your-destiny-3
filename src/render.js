@@ -52,6 +52,10 @@ WYD.render = {
     if (ground) {
       ctx.fillStyle = `rgba(0,0,0,${map.groundDim})`;
       ctx.fillRect(0, 0, map.width, map.height);
+      if (area.groundTint) {
+        ctx.fillStyle = area.groundTint;   // 仮の地面の色
+        ctx.fillRect(0, 0, map.width, map.height);
+      }
     }
     // 地面の絵がないときだけ、草や石の飾りを描く
     for (const d of ground ? [] : this.decorations) {
@@ -411,7 +415,7 @@ WYD.render = {
       ctx.stroke();
     }
     this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, this.poseImage(e, def), e.hitFlash > 0,
-      this.pose(e, this.playerPos, this.clock));
+      this.pose(e, this.playerPos, this.clock), def.imageFilter);
     if (e.shielded) {
       // 精鋭の「守護」：光の盾
       ctx.strokeStyle = E.affixes.find((a) => a.id === "shielding").color;

@@ -18,11 +18,12 @@ WYD.data.trial = {
   rewardRarityPerStage: 0.1, // ごほうび装備のレアの出やすさが段階ごとに何割上がるか
   dropSpread: 30,          // ごほうび装備が散らばる広さ
   nextDelay: 3,            // 終わってから次の段階（またはふつうの冒険）へ移るまでの秒数
-  guardians: ["ravana", "asuraKing", "mahisha"], // 守護者（ボスの中から選ばれる）
+  guardians: ["ravana", "asuraKing", "mahisha", "archbishop"], // 守護者（ボスの中から選ばれる）
   enemies: [               // 出てくる敵（全部のエリアから）
     { kind: "preta", weight: 10 }, { kind: "yaksha", weight: 10 }, { kind: "rakshasa", weight: 6 },
     { kind: "yakshaArcher", weight: 8 }, { kind: "vetala", weight: 10 }, { kind: "pishacha", weight: 10 },
     { kind: "bhuta", weight: 8 }, { kind: "naga", weight: 10 }, { kind: "daitya", weight: 10 }, { kind: "nagaCaster", weight: 8 },
+    { kind: "fallenKnight", weight: 8 }, { kind: "shadowBeast", weight: 8 }, { kind: "wailingSpirit", weight: 8 }, { kind: "boneCleric", weight: 6 },
   ],
   // 見た目（地面）
   bgColor: "#1d1a24", grassColor: "#2c2838", stoneColor: "#4a4458", groundImage: "assets/areas/patala.png",

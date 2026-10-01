@@ -74,6 +74,10 @@ WYD.save = {
       state.unlockedAreas = state.unlockedAreas.filter((id) => areaIds.includes(id));
       if (!state.unlockedAreas.includes(areaIds[0])) state.unlockedAreas.unshift(areaIds[0]);
       if (!state.unlockedAreas.includes(state.area)) state.area = areaIds[0];
+      // 新しいエリアが増える前にクリアしていたセーブは、増えたエリアにも行けるようにする
+      if (state.cleared) {
+        for (const a of WYD.data.areas) if (!state.unlockedAreas.includes(a.id)) state.unlockedAreas.push(a.id);
+      }
       // 階がなかった頃のセーブは地下1階から
       const curArea = WYD.data.areas.find((a) => a.id === state.area);
       if (!(state.floor >= 1 && state.floor <= curArea.floors + 1)) state.floor = 1;
