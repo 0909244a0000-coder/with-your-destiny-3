@@ -43,6 +43,7 @@ WYD.render = {
       ctx.fill();
     }
 
+    for (const f of w.fields) this.drawField(ctx, f);
     for (const drop of w.drops) this.drawDrop(ctx, drop);
     for (const e of w.enemies) this.drawEnemy(ctx, e);
     this.drawPlayer(ctx, w.player);
@@ -109,8 +110,27 @@ WYD.render = {
     ctx.fill();
   },
 
+  // 炎の陣：消える前にだんだん薄くなる円
+  drawField(ctx, f) {
+    ctx.fillStyle = f.color;
+    ctx.globalAlpha = 0.25 * Math.min(1, f.timeLeft / (f.duration * 0.3));
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  },
+
   drawPlayer(ctx, p) {
     const P = WYD.data.player;
+    if (p.haste) {
+      ctx.strokeStyle = p.haste.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, P.radius + 11, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     if (p.buff) {
       ctx.strokeStyle = p.buff.color;
       ctx.lineWidth = 3;
@@ -165,6 +185,14 @@ WYD.render = {
     ctx.fillStyle = "#e33";
     ctx.fillRect(bx, by, bw * Math.max(0, e.hp / e.maxHp), bh);
 
+    if (e.stunTimer > 0) {
+      // 縛られている敵：緑の縄
+      ctx.strokeStyle = WYD.data.skills.nagapasha.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, def.radius + 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     if (e.slamCharge != null) {
       // ボスの大技の予告：だんだん濃くなる赤い円
       const t = 1 - e.slamCharge / e.slamWindup;
@@ -220,6 +248,22 @@ WYD.render = {
       ctx.beginPath();
       ctx.arc(ef.x, ef.y, ef.radius * (0.4 + 0.6 * t), 0, Math.PI * 2);
       ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (ef.type === "chain") {
+      // 円盤の通り道
+      ctx.strokeStyle = ef.color;
+      ctx.globalAlpha = 1 - ef.time / ef.duration;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(ef.points[0].x, ef.points[0].y);
+      for (const pt of ef.points.slice(1)) ctx.lineTo(pt.x, pt.y);
+      ctx.stroke();
+      for (const pt of ef.points.slice(1)) {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
+        ctx.stroke();
+      }
       ctx.globalAlpha = 1;
     }
     if (ef.type === "bolt") {

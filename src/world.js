@@ -8,8 +8,9 @@ WYD.world = {
       player: {
         x: map.width / 2, y: map.height / 2,
         hp: null, dead: false, respawnTimer: 0,
-        attackTimer: 0, skillCooldowns: {}, buff: null, swing: 0,
+        attackTimer: 0, skillCooldowns: {}, buff: null, haste: null, swing: 0,
       },
+      fields: [],   // 地面に残る炎の陣など
       enemies: [],
       drops: [],
       effects: [],
@@ -39,6 +40,11 @@ WYD.world = {
       p.buff.timeLeft -= dt;
       if (p.buff.timeLeft <= 0) p.buff = null;
     }
+    if (p.haste) {
+      p.haste.timeLeft -= dt;
+      if (p.haste.timeLeft <= 0) p.haste = null;
+    }
+    this.updateFields(w, state, stats, dt);
     for (const id in p.skillCooldowns) p.skillCooldowns[id] = Math.max(0, p.skillCooldowns[id] - dt);
 
     this.updateSpawns(w, state, dt);
@@ -103,6 +109,7 @@ WYD.world = {
       attackSpeedMult: 1,
       attackTimer: 1,
       hitFlash: 0,
+      stunTimer: 0,
     };
     w.enemies.push(e);
     return e;
@@ -195,7 +202,7 @@ WYD.world = {
 
     p.attackTimer -= dt;
     if (d <= reach && p.attackTimer <= 0) {
-      p.attackTimer = 1 / stats.attackSpeed;
+      p.attackTimer = 1 / (stats.attackSpeed * (1 + (p.haste ? p.haste.percent : 0) / 100));
       p.swing = 0.15;
       p.swingTarget = { x: target.x, y: target.y };
       this.playerHit(w, state, stats, target, stats.attack);
@@ -237,6 +244,82 @@ WYD.world = {
       this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
       return true;
     },
+    // 敵から敵へ飛び移る円盤
+    sudarshana(w, state, stats, s, lv) {
+      const p = w.player;
+      let cur = this.nearestEnemy(w, p);
+      if (!cur || WYD.util.dist(p, cur) > s.range) return false;
+      const maxTargets = Math.floor(s.targetsBase + s.targetsPerLevel * (lv - 1));
+      const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
+      const hitList = [];
+      const points = [{ x: p.x, y: p.y }];
+      while (cur && hitList.length < maxTargets) {
+        hitList.push(cur);
+        points.push({ x: cur.x, y: cur.y });
+        let next = null, best = s.jumpRange;
+        for (const e of w.enemies) {
+          if (hitList.includes(e)) continue;
+          const d = WYD.util.dist(cur, e);
+          if (d <= best) { best = d; next = e; }
+        }
+        cur = next;
+      }
+      for (const e of hitList) this.playerHit(w, state, stats, e, stats.attack * mult);
+      w.effects.push({ type: "chain", points, color: s.color, time: 0, duration: 0.3 });
+      return true;
+    },
+    // 敵の多い場所に炎の陣を張る
+    agni(w, state, stats, s, lv) {
+      const p = w.player;
+      let best = null, bestCount = 0;
+      for (const e of w.enemies) {
+        if (WYD.util.dist(p, e) > s.range) continue;
+        const count = w.enemies.filter((x) => WYD.util.dist(e, x) <= s.radius).length;
+        if (count > bestCount) { best = e; bestCount = count; }
+      }
+      if (!best) return false;
+      const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
+      w.fields.push({ x: best.x, y: best.y, radius: s.radius, timeLeft: s.duration, duration: s.duration,
+        tick: s.tick, tickTimer: 0, mult, color: s.color });
+      return true;
+    },
+    // しばらく攻撃速度アップ
+    hanuman(w, state, stats, s, lv) {
+      const p = w.player;
+      const near = w.enemies.some((e) => WYD.util.dist(p, e) <= s.triggerRange);
+      if (!near) return false;
+      p.haste = { percent: s.hasteBase + s.hastePerLevel * (lv - 1), timeLeft: s.duration, color: s.color };
+      this.addText(w, p.x, p.y - 24, "剛力！", s.color);
+      return true;
+    },
+    // 周りの敵を縛る
+    nagapasha(w, state, stats, s, lv) {
+      const p = w.player;
+      const targets = w.enemies.filter((e) => WYD.util.dist(p, e) <= s.radius + WYD.data.enemies[e.kind].radius);
+      if (targets.length < s.minTargets) return false;
+      const bind = s.bindBase + s.bindPerLevel * (lv - 1);
+      const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
+      for (const e of targets) {
+        e.stunTimer = Math.max(e.stunTimer || 0, e.boss ? bind * s.bossBindMult : bind);
+        this.playerHit(w, state, stats, e, stats.attack * mult);
+      }
+      w.effects.push({ type: "ring", x: p.x, y: p.y, radius: s.radius, color: s.color, time: 0, duration: 0.4 });
+      return true;
+    },
+  },
+
+  // 炎の陣：一定時間ごとに中の敵へダメージ
+  updateFields(w, state, stats, dt) {
+    for (const f of w.fields) {
+      f.timeLeft -= dt;
+      f.tickTimer -= dt;
+      if (f.tickTimer > 0) continue;
+      f.tickTimer = f.tick;
+      for (const e of w.enemies.slice()) {
+        if (WYD.util.dist(f, e) <= f.radius) this.playerHit(w, state, stats, e, stats.attack * f.mult);
+      }
+    }
+    w.fields = w.fields.filter((f) => f.timeLeft > 0);
   },
 
   // ---------- 敵の行動 ----------
@@ -246,6 +329,10 @@ WYD.world = {
       if (e.hp <= 0) continue;
       const def = WYD.data.enemies[e.kind];
       e.hitFlash = Math.max(0, e.hitFlash - dt);
+      if (e.stunTimer > 0) {
+        e.stunTimer -= dt;   // 縛られている間は何もできない
+        continue;
+      }
       if (e.elite) {
         this.updateElite(w, state, e, dt);
         if (p.dead) return;
@@ -486,6 +573,8 @@ WYD.world = {
     p.x = map.width / 2;
     p.y = map.height / 2;
     p.buff = null;
+    p.haste = null;
+    w.fields = [];
     w.enemies = [];
     w.spawnTimer = 1;
   },

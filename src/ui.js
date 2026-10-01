@@ -84,7 +84,7 @@ WYD.ui = {
       if (!btn) return;
       const id = btn.dataset.skill;
       if (btn.dataset.action === "up") this.levelUpSkill(id);
-      if (btn.dataset.action === "toggle") s.player.skillEnabled[id] = !s.player.skillEnabled[id];
+      if (btn.dataset.action === "toggle") this.toggleSkill(id);
       this.changed();
     };
   },
@@ -130,11 +130,28 @@ WYD.ui = {
     this.changed();
   },
 
+  // 今ONになっている（覚えていて使う）スキルの数
+  activeSkillCount() {
+    const pl = this.state.player;
+    return Object.keys(WYD.data.skills).filter((id) => (pl.skills[id] || 0) > 0 && pl.skillEnabled[id]).length;
+  },
+
+  toggleSkill(id) {
+    const pl = this.state.player;
+    if (!pl.skillEnabled[id] && this.activeSkillCount() >= WYD.data.skillSlots) {
+      this.log(`スキルは同時に${WYD.data.skillSlots}つまで。先にどれかをOFFにしてください`, "#ff6b6b");
+      return;
+    }
+    pl.skillEnabled[id] = !pl.skillEnabled[id];
+  },
+
   levelUpSkill(id) {
     const pl = this.state.player;
     const def = WYD.data.skills[id];
     if (pl.skillPoints <= 0 || pl.skills[id] >= def.maxLevel) return;
-    pl.skills[id]++;
+    // 新しく覚えたスキルは、枠が空いていればON、いっぱいならOFFにする
+    if ((pl.skills[id] || 0) === 0) pl.skillEnabled[id] = this.activeSkillCount() < WYD.data.skillSlots;
+    pl.skills[id] = (pl.skills[id] || 0) + 1;
     pl.skillPoints--;
     this.log(`${def.name}が Lv${pl.skills[id]} になった`, def.color);
   },
@@ -209,6 +226,7 @@ WYD.ui = {
 
     // スキル
     this.$("skill-points").textContent = s.player.skillPoints;
+    this.$("skill-slots").textContent = `${this.activeSkillCount()} / ${WYD.data.skillSlots}`;
     this.$("skills").innerHTML = Object.keys(WYD.data.skills).map((id) => {
       const def = WYD.data.skills[id];
       const lv = s.player.skills[id] || 0;
@@ -219,7 +237,7 @@ WYD.ui = {
           <b style="color:${def.color}">${def.name}</b>
           <span>Lv ${lv}/${def.maxLevel}</span>
           <button data-skill="${id}" data-action="up" ${canUp ? "" : "disabled"}>＋</button>
-          <button data-skill="${id}" data-action="toggle" class="${on ? "on" : "off"}" ${lv > 0 ? "" : "disabled"}>${on ? "ON" : "OFF"}</button>
+          <button data-skill="${id}" data-action="toggle" class="${on && lv > 0 ? "on" : "off"}" ${lv > 0 ? "" : "disabled"}>${lv > 0 ? (on ? "ON" : "OFF") : "未習得"}</button>
         </div>
         <div class="skill-desc">${def.desc}（${def.cooldown}秒ごと）</div>
       </div>`;
