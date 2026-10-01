@@ -73,9 +73,11 @@ for (let i = 0; i < 14; i++) {
 }
 
 // ---------- 演出の設定（画面のチェックで切り替え） ----------
-const opt = { hitStop: true, shake: true, knock: true, fx: true, slow: false };
+const opt = { hitStop: true, shake: true, knock: true, fx: true, slow: false, sharp: true, tall: false };
 for (const k of ["hitStop", "shake", "knock", "fx"]) $(k).onchange = (e) => (opt[k] = e.target.checked);
 $("slow").onchange = (e) => (opt.slow = e.target.checked);
+$("sharp").onchange = (e) => (opt.sharp = e.target.checked);
+$("tall").onchange = (e) => { opt.tall = e.target.checked; applyProportions(player); };
 
 // ---------- キャラ ----------
 // 右手の武器を付ける骨（読み込むと名前の「.」が消えて handslotr になる）
@@ -102,11 +104,12 @@ function makeActor(root, clips, cfg) {
 }
 
 // アニメーションを切り替える（なめらかにつなぐ）
-function play(a, name, { once = false, fade = 0.15, speed = 1 } = {}) {
+function play(a, name, { once = false, fade = 0.15, speed = 1, start = 0 } = {}) {
   const act = a.actions[name];
   if (!act) return;
   if (a.current === act && !once) return;
   act.reset();
+  act.time = start * act.getClip().duration;
   act.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity);
   act.clampWhenFinished = once;
   act.timeScale = speed;
@@ -117,6 +120,70 @@ function play(a, name, { once = false, fade = 0.15, speed = 1 } = {}) {
 const progress = (a) => (a.current ? a.current.time / a.current.getClip().duration : 1);
 
 let player, enemy, enemyAsset, swordAsset, attachedWeapon = null, weaponKey = "dual";
+
+// ---------- 頭身を上げる実験 ----------
+// 骨の大きさを変えるので、アニメの中の「骨の大きさ」の動きは消しておく
+const PROP_BONES = ["head", "upperlegl", "upperlegr", "lowerlegl", "lowerlegr", "footl", "footr"];
+function stripScaleTracks(clips) {
+  for (const clip of clips) {
+    clip.tracks = clip.tracks.filter((t) => !PROP_BONES.some((b) => t.name === `${b}.scale`));
+  }
+}
+function applyProportions(a) {
+  const P = C.proportions, on = opt.tall;
+  const bone = (n) => a.root.getObjectByName(n);
+  const footBefore = new THREE.Vector3();
+  a.root.updateMatrixWorld(true);
+  bone("footl").getWorldPosition(footBefore);
+  bone("head").scale.setScalar(on ? P.head : 1);
+  for (const s of ["l", "r"]) {
+    bone(`upperleg${s}`).scale.set(1, on ? P.upperLeg : 1, 1);
+    bone(`lowerleg${s}`).scale.set(1, on ? P.shin / P.upperLeg : 1, 1);   // 太ももののびを引きつがないように戻す
+    bone(`foot${s}`).scale.set(1, on ? 1 / P.shin : 1, 1);
+  }
+  a.root.updateMatrixWorld(true);
+  const footAfter = new THREE.Vector3();
+  bone("footl").getWorldPosition(footAfter);
+  // 足がのびたぶん、体ごと持ち上げて床にめりこまないようにする
+  a.yOffset = (a.yOffset || 0) + (footBefore.y - footAfter.y);
+}
+
+// ---------- 武器の軌跡（振っているあいだ、刃の通り道に光の帯を残す） ----------
+function makeTrail() {
+  const n = C.trail.length;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 2 * 3), 3));
+  geo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(n * 2 * 3), 3));
+  const idx = [];
+  for (let i = 0; i < n - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  geo.setIndex(idx);
+  const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending, depthWrite: false }));
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+  return { mesh, pts: [] };
+}
+const trailColor = new THREE.Color(C.trail.color);
+function updateTrail(a, dt) {
+  if (!a.trail) a.trail = makeTrail();
+  const t = a.trail;
+  for (const p of t.pts) p.age += dt;
+  const hand = handSlot(a.root);
+  if (a.trailOn && hand) {
+    hand.updateWorldMatrix(true, false);
+    t.pts.unshift({ base: hand.localToWorld(new THREE.Vector3(0, 0.15, 0)), tip: hand.localToWorld(new THREE.Vector3(0, C.trail.tip, 0)), age: 0 });
+  }
+  t.pts = t.pts.filter((p) => p.age < C.trail.life).slice(0, C.trail.length);
+  const pos = t.mesh.geometry.attributes.position, col = t.mesh.geometry.attributes.color;
+  for (let i = 0; i < C.trail.length; i++) {
+    const p = t.pts[Math.min(i, t.pts.length - 1)];
+    const k = p && opt.fx ? (1 - p.age / C.trail.life) * (1 - i / C.trail.length) : 0;
+    if (p) { pos.setXYZ(i * 2, p.base.x, p.base.y, p.base.z); pos.setXYZ(i * 2 + 1, p.tip.x, p.tip.y, p.tip.z); }
+    col.setXYZ(i * 2, trailColor.r * k * 0.3, trailColor.g * k * 0.3, trailColor.b * k * 0.3);
+    col.setXYZ(i * 2 + 1, trailColor.r * k, trailColor.g * k, trailColor.b * k);
+  }
+  pos.needsUpdate = col.needsUpdate = true;
+}
 
 // 主人公の武器を差し替える
 function setWeapon(key) {
@@ -182,24 +249,52 @@ function think(a, foe, dt) {
   }
   const d = a.root.position.distanceTo(foe.root.position);
   if (a.state === "attack") {
+    const pr = progress(a);
+    if (opt.sharp) {
+      // 攻撃の中で速さを変える（構え → 一気に振る → 戻り）
+      const ph = C.attackCurve.find((c) => pr <= c.until) || C.attackCurve[C.attackCurve.length - 1];
+      a.current.timeScale = ph.speed * a.attackSpeed;
+      // 振るあいだ、半歩ふみこむ
+      const swing = C.attackCurve[1];
+      if (pr > C.attackCurve[0].until && pr <= swing.until && a.lunged < C.lunge) {
+        const step = Math.min(C.lunge - a.lunged, C.lunge * dt * 8);
+        a.lunged += step;
+        const dir = foe.root.position.clone().sub(a.root.position).setY(0).normalize();
+        if (d > 0.9) a.root.position.addScaledVector(dir, step);
+      }
+      a.trailOn = pr > C.attackCurve[0].until - 0.05 && pr <= swing.until + 0.05;
+    } else {
+      a.current.timeScale = a.attackSpeed;
+      a.trailOn = false;
+    }
     // 決まったところで当たる
-    if (!a.hitDone && progress(a) >= C.hitAt) {
+    if (!a.hitDone && progress(a) >= (opt.sharp ? C.hitAtSharp : C.hitAt)) {
       a.hitDone = true;
       if (d <= a.cfg.reach + 0.6) strike(a, foe);
     }
-    if (progress(a) >= 0.97) { a.state = "idle"; a.cooldown = a.cfg.cooldown; play(a, A.idle); }
+    if (progress(a) >= 0.97) {
+      a.state = "idle"; a.cooldown = a.cfg.cooldown; a.trailOn = false;
+      play(a, A.idle, { fade: opt.sharp ? C.fadeOut : C.oldFeel.fade });
+    }
     return;
   }
+  a.trailOn = false;
   face(a, foe.root.position);
   if (d > a.cfg.reach) {
     a.state = "move";
     play(a, A.run);
+    // 走りアニメの速さを、移動の速さに合わせる（足のすべり対策）
+    if (a.current) a.current.timeScale = opt.sharp ? a.cfg.speed / C.runAnimSpeed : 1;
     const dir = foe.root.position.clone().sub(a.root.position).setY(0).normalize();
     a.root.position.addScaledVector(dir, Math.min(a.cfg.speed * dt, d - a.cfg.reach * 0.9));
   } else if (a.cooldown <= 0) {
     a.state = "attack";
     a.hitDone = false;
-    play(a, A.attacks[Math.floor(Math.random() * A.attacks.length)], { once: true, fade: 0.08, speed: A.speed || 1 });
+    const sharp = opt.sharp;
+    play(a, A.attacks[Math.floor(Math.random() * A.attacks.length)], {
+      once: true, fade: sharp ? C.fadeIn : C.oldFeel.fade, speed: A.speed || 1, start: sharp ? C.attackStart : 0 });
+    a.attackSpeed = A.speed || 1;
+    a.lunged = 0;
   } else if (a.state !== "idle") {
     a.state = "idle";
     play(a, A.idle);
@@ -342,6 +437,8 @@ function frame(now) {
     a.root.position.addScaledVector(a.vel, simDt);
     a.vel.multiplyScalar(Math.max(0, 1 - 9 * simDt));
     a.mixer.update(simDt);
+    a.root.position.y = a.yOffset || 0;
+    updateTrail(a, simDt);
     a.flash = Math.max(0, a.flash - dt);
     const f = a.flash > 0 ? 1.4 : 0;
     for (const m of a.mats) m.emissive.setRGB(f, f, f);
@@ -374,6 +471,7 @@ async function start() {
     loader.loadAsync(C.enemy.weapon), loader.loadAsync(C.weapons.sword.attach),
   ]);
   swordAsset = sword.scene;
+  stripScaleTracks(pg.animations);
   enemyAsset = { scene: eg.scene, animations: eg.animations, blade: blade.scene };
   player = makeActor(pg.scene, pg.animations, C.player);
   $("weapons").innerHTML = Object.entries(C.weapons)
