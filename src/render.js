@@ -162,5 +162,20 @@ WYD.render = {
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
+    if (ef.type === "bolt") {
+      // 雷：上から落ちるギザギザの線
+      const t = ef.time / ef.duration;
+      ctx.strokeStyle = ef.color;
+      ctx.globalAlpha = 1 - t;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(ef.x + 6, ef.y - 70);
+      ctx.lineTo(ef.x - 6, ef.y - 45);
+      ctx.lineTo(ef.x + 5, ef.y - 35);
+      ctx.lineTo(ef.x - 4, ef.y - 12);
+      ctx.lineTo(ef.x, ef.y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
   },
 };

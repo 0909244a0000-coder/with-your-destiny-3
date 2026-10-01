@@ -104,8 +104,8 @@ WYD.world = {
       p.attackTimer = 1 / stats.attackSpeed;
       p.swing = 0.15;
       p.swingTarget = { x: target.x, y: target.y };
-      const hit = this.calcDamage(stats.attack, target.defense, stats.critChance);
-      this.damageEnemy(w, state, target, hit.damage, hit.crit);
+      this.playerHit(w, state, stats, target, stats.attack);
+      this.tryThunder(w, state, stats, target);
     }
   },
 
@@ -116,7 +116,7 @@ WYD.world = {
       if (lv <= 0 || !state.player.skillEnabled[id]) continue;
       if ((p.skillCooldowns[id] || 0) > 0) continue;
       const used = this.skillHandlers[id].call(this, w, state, stats, WYD.data.skills[id], lv);
-      if (used) p.skillCooldowns[id] = WYD.data.skills[id].cooldown;
+      if (used) p.skillCooldowns[id] = WYD.data.skills[id].cooldown * (1 - stats.effects.cooldown / 100);
     }
   },
 
@@ -128,8 +128,7 @@ WYD.world = {
       if (targets.length < s.minTargets) return false;
       const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
       for (const e of targets) {
-        const hit = this.calcDamage(stats.attack * mult, e.defense, stats.critChance);
-        this.damageEnemy(w, state, e, hit.damage, hit.crit);
+        this.playerHit(w, state, stats, e, stats.attack * mult);
       }
       w.effects.push({ type: "ring", x: p.x, y: p.y, radius: s.radius, color: s.color, time: 0, duration: 0.35 });
       return true;
@@ -163,6 +162,11 @@ WYD.world = {
         const hit = this.calcDamage(e.attack, defense, 0);
         p.hp -= hit.damage;
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
+        // 特殊効果：ナーガの鱗（受けたダメージを返す）
+        if (stats.effects.thorns > 0) {
+          const back = Math.round(hit.damage * stats.effects.thorns / 100);
+          if (back > 0) this.damageEnemy(w, state, e, back, false);
+        }
         if (p.hp <= 0) {
           this.playerDied(w);
           return;
@@ -212,13 +216,37 @@ WYD.world = {
   },
 
   // ---------- 共通の処理 ----------
-  calcDamage(attack, defense, critChance) {
+  calcDamage(attack, defense, critChance, critMultiplier) {
     const C = WYD.data.combat;
     let dmg = attack - defense * C.defenseFactor;
     dmg *= 1 + WYD.util.rand(-C.damageVariance, C.damageVariance);
     const crit = Math.random() * 100 < critChance;
-    if (crit) dmg *= WYD.data.player.critMultiplier;
+    if (crit) dmg *= critMultiplier || WYD.data.player.critMultiplier;
     return { damage: Math.max(C.minDamage, Math.round(dmg)), crit };
+  },
+
+  // プレイヤーの攻撃が当たったとき（特殊効果：カーリーの憤怒・ラクタビージャの渇き）
+  playerHit(w, state, stats, e, attack) {
+    if (e.hp <= 0) return;
+    const p = w.player;
+    const fx = stats.effects;
+    const wrath = WYD.loot.effectInfo("wrath");
+    if (fx.wrath > 0 && wrath && p.hp / stats.maxHp * 100 <= wrath.hpPercent) attack *= 1 + fx.wrath / 100;
+    const hit = this.calcDamage(attack, e.defense, stats.critChance, stats.critMultiplier);
+    this.damageEnemy(w, state, e, hit.damage, hit.crit);
+    if (fx.lifesteal > 0 && !p.dead) {
+      p.hp = Math.min(stats.maxHp, p.hp + hit.damage * fx.lifesteal / 100);
+    }
+  },
+
+  // 特殊効果：インドラの雷（通常攻撃のときに確率で発動）
+  tryThunder(w, state, stats, e) {
+    const chance = stats.effects.thunder;
+    if (e.hp <= 0 || chance <= 0 || Math.random() * 100 >= chance) return;
+    const def = WYD.loot.effectInfo("thunder");
+    w.effects.push({ type: "bolt", x: e.x, y: e.y, color: def.color, time: 0, duration: 0.25 });
+    const hit = this.calcDamage(stats.attack * def.power, e.defense, 0);
+    this.damageEnemy(w, state, e, hit.damage, false);
   },
 
   damageEnemy(w, state, e, damage, crit) {
@@ -236,6 +264,15 @@ WYD.world = {
     w.enemies = w.enemies.filter((x) => x !== e);
 
     this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d)));
+
+    // 特殊効果：チャームンダーの饗宴（倒すとHP回復）
+    const stats = WYD.stats.compute(state);
+    const p = w.player;
+    if (stats.effects.killHeal > 0 && !p.dead) {
+      const heal = Math.round(stats.maxHp * stats.effects.killHeal / 100);
+      p.hp = Math.min(stats.maxHp, p.hp + heal);
+      this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
+    }
 
     // 最高危険度で倒すと、次の危険度に近づく
     if (state.difficulty === state.maxDifficulty && state.maxDifficulty < diff.max) {

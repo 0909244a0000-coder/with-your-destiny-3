@@ -206,7 +206,7 @@ WYD.ui = {
     this.$("equipment").innerHTML = Object.keys(slots).map((slot) => {
       const item = s.equipment[slot];
       return `<div class="cell slot" data-slot="${slot}" ${item ? `style="border-color:${this.color(item)}"` : ""}>
-        <small>${slots[slot]}</small>
+        <small>${slots[slot]}${item ? this.fxMark(item) : ""}</small>
         ${item ? `<span style="color:${this.color(item)}">${item.name}</span>` : `<span class="empty">なし</span>`}
       </div>`;
     }).join("");
@@ -219,12 +219,18 @@ WYD.ui = {
       const item = s.inventory[i];
       html += item
         ? `<div class="cell" data-index="${i}" style="border-color:${this.color(item)}">
-             <small>${slots[item.slot]}</small><span style="color:${this.color(item)}">${item.name}</span>
+             <small>${slots[item.slot]}${this.fxMark(item)}</small><span style="color:${this.color(item)}">${item.name}</span>
            </div>`
         : `<div class="cell blank"></div>`;
     }
     this.$("inventory").innerHTML = html;
     this.hideTooltip();
+  },
+
+  // マスの右上に出す特殊効果の数の印（例：✦2）
+  fxMark(item) {
+    const n = this.itemEffects(item).length;
+    return n ? ` <b class="fx-mark" style="color:${WYD.data.effects.color}">✦${n}</b>` : "";
   },
 
   color(item) {
@@ -237,11 +243,57 @@ WYD.ui = {
     const lines = item.stats.map((l) =>
       `<div class="${l.main ? "main" : "affix"}">${WYD.util.formatStat(l.stat, l.value)}</div>`
     ).join("");
+    const fxLines = this.itemEffects(item).map(({ def, value }) =>
+      `<div class="effect" style="color:${WYD.data.effects.color}">✦ ${def.name}<br><small>${WYD.util.formatEffect(def, value)}</small></div>`
+    ).join("");
     return `<div class="tip-item">
       ${title ? `<div class="tip-title">${title}</div>` : ""}
       <div style="color:${r.color};font-weight:bold">${item.name}</div>
       <div class="tip-sub">${r.name}・${WYD.data.items.slots[item.slot]}・アイテムLv ${item.level}</div>
       ${lines}
+      ${fxLines}
+    </div>`;
+  },
+
+  // 装備の特殊効果（古いセーブの装備や、data から消えた効果は無視する）
+  itemEffects(item) {
+    const list = [];
+    for (const fx of item.effects || []) {
+      const def = WYD.loot.effectInfo(fx.id);
+      if (def) list.push({ def, value: fx.value });
+    }
+    return list;
+  },
+
+  // 今の装備と取り替えたら、何がどれだけ変わるか
+  compareHtml(item, cur) {
+    const sum = (it) => {
+      const total = { stats: {}, effects: {} };
+      if (!it) return total;
+      for (const l of it.stats) total.stats[l.stat] = (total.stats[l.stat] || 0) + l.value;
+      for (const { def, value } of this.itemEffects(it)) total.effects[def.id] = (total.effects[def.id] || 0) + value;
+      return total;
+    };
+    const a = sum(item), b = sum(cur);
+    const rows = [];
+    const row = (label, diff) => {
+      const up = diff > 0;
+      rows.push(`<div class="${up ? "up" : "down"}">${up ? "▲" : "▼"} ${label}</div>`);
+    };
+    for (const stat in WYD.data.items.stats) {
+      const diff = (a.stats[stat] || 0) - (b.stats[stat] || 0);
+      if (Math.abs(diff) > 1e-9) row(WYD.util.formatStat(stat, diff), diff);
+    }
+    for (const def of WYD.data.effects.list) {
+      const diff = (a.effects[def.id] || 0) - (b.effects[def.id] || 0);
+      if (Math.abs(diff) > 1e-9) {
+        const sign = diff > 0 ? "+" : "";
+        row(`${def.name} ${sign}${diff.toFixed(def.decimals)}%`, diff);
+      }
+    }
+    return `<div class="tip-item tip-compare">
+      <div class="tip-title">装備するとこう変わる</div>
+      ${rows.length ? rows.join("") : `<div class="tip-sub">変化なし</div>`}
     </div>`;
   },
 
@@ -255,6 +307,7 @@ WYD.ui = {
         html = this.itemHtml(item);
         const cur = s.equipment[item.slot];
         html += cur ? this.itemHtml(cur, "いま装備中") : `<div class="tip-item tip-sub">この部位は何も装備していない</div>`;
+        html += this.compareHtml(item, cur);
         html += `<div class="tip-help">左クリック：装備する／右クリック：捨てる</div>`;
       }
     } else {

@@ -14,4 +14,4 @@
 リポジトリの Settings → Pages → 「Deploy from a branch」で `main` ／ `/(root)` を選ぶ。
 
 ## 数値を変えたいとき
-`data/` の中のファイルを書きかえます（例：敵の強さは `data/enemies.js`）。
+`data/` の中のファイルを書きかえます（例：敵の強さは `data/enemies.js`、装備の特殊効果は `data/effects.js`）。

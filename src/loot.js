@@ -48,7 +48,30 @@ WYD.loot = {
       rarity: rarity.id,
       level: itemLevel,
       stats,
+      effects: this.rollEffects(rarity.id),
     };
+  },
+
+  // 特殊効果をランダムに決める（同じ効果は2回つかない）
+  rollEffects(rarityId) {
+    const E = WYD.data.effects;
+    const u = WYD.util;
+    const range = E.countByRarity[rarityId] || [0, 0];
+    const count = u.randInt(range[0], range[1]);
+    const pool = E.list.slice();
+    const effects = [];
+    for (let i = 0; i < count && pool.length > 0; i++) {
+      const def = u.pickWeighted(pool, (x) => x.weight);
+      pool.splice(pool.indexOf(def), 1);
+      const p = Math.pow(10, def.decimals);
+      const value = Math.round(u.rand(def.range[0], def.range[1]) * p) / p;
+      effects.push({ id: def.id, value });
+    }
+    return effects;
+  },
+
+  effectInfo(id) {
+    return WYD.data.effects.list.find((x) => x.id === id);
   },
 
   rarityInfo(id) {

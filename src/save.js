@@ -36,6 +36,10 @@ WYD.save = {
       state.player.skills = Object.assign(this.newState().player.skills, saved.player && saved.player.skills);
       state.player.skillEnabled = Object.assign(this.newState().player.skillEnabled, saved.player && saved.player.skillEnabled);
       state.settings = Object.assign(this.newState().settings, saved.settings);
+      // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
+      for (const item of state.inventory.concat(Object.values(state.equipment))) {
+        if (item && !Array.isArray(item.effects)) item.effects = [];
+      }
       return state;
     } catch (e) {
       console.warn("セーブデータを読めませんでした。新しく始めます。", e);
