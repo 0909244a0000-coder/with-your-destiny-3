@@ -22,6 +22,33 @@ WYD.inventory = {
     if (old) state.inventory.splice(index, 0, old);
   },
 
+  // 装備1つの点数（data/items.js の autoEquip）
+  itemScore(item) {
+    if (!item) return 0;
+    const A = WYD.data.items.autoEquip;
+    const st = WYD.loot.statTotals(item);
+    let score = (item.effects || []).length * A.perEffect;
+    for (const k in st) score += st[k] * (A.weights[k] || 0);
+    return score;
+  },
+
+  // 自動で着替えないほうがいい装備（自分で選んだはずのもの）
+  keepEquipped(item) {
+    return !!item && (item.rarity === "unique" || item.rarity === "set" || item.plus > 0 || (item.sockets || []).some((x) => x));
+  },
+
+  // 拾った装備が強ければ着替える。着替えたら true
+  autoEquip(state, item) {
+    const cur = state.equipment[item.slot];
+    if (this.keepEquipped(cur)) return false;
+    const before = this.itemScore(cur);
+    if (cur && this.itemScore(item) <= before * (1 + WYD.data.items.autoEquip.minGain)) return false;
+    const index = state.inventory.indexOf(item);
+    if (index < 0) return false;
+    this.equip(state, index);
+    return true;
+  },
+
   unequip(state, slot) {
     const item = state.equipment[slot];
     if (!item || this.isFull(state)) return false;

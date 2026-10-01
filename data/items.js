@@ -102,6 +102,15 @@ WYD.data.items = {
     "シヴァの": "熾天使の", "ヴィシュヌの": "冥王の", "インドラの": "雷帝の",
     "アグニの": "焔王の", "ヴァーユの": "嵐の",
   },
+
+  // 自動で装備：拾った装備の点数が、今その部位につけている装備より高ければ着替える（上のバーの「自動装備」）
+  //   ユニーク・セット・強化した装備・宝石をはめた装備を着ているときは、その部位は着替えない
+  //   点数 = 能力ごとの weights × 数値 の合計 + perEffect × 特殊効果の数（tools/balance-sim.js と同じ考え方）
+  autoEquip: {
+    weights: { attack: 4, defense: 2.5, maxHp: 0.4, hpRegen: 4, attackSpeed: 1.5, critChance: 1.5, moveSpeed: 0.3, skillDamage: 0.8 },
+    perEffect: 6,
+    minGain: 0.02,           // 点数がこの割合以上上がるときだけ着替える
+  },
 };
 
 // 戦闘の計算

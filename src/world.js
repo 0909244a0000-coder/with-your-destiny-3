@@ -667,6 +667,9 @@ WYD.world = {
       if (WYD.inventory.add(state, drop.item)) {
         drop.picked = true;
         WYD.records.found(state, drop.item);
+        if (state.settings.autoEquip && WYD.inventory.autoEquip(state, drop.item)) {
+          WYD.ui.log(`${WYD.loot.label(drop.item)}のほうが強いので、自動で装備した`, "#7dff8a");
+        }
         WYD.records.check(state);
         const r = WYD.loot.rarityInfo(drop.item.rarity);
         WYD.ui.log(`${drop.item.name}（${r.name}）を拾った`, r.color);

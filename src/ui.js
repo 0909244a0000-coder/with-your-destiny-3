@@ -95,6 +95,10 @@ WYD.ui = {
     };
     this.$("auto-salvage").innerHTML = WYD.data.crafting.autoSalvageOptions
       .map((o) => `<option value="${o.id}">${o.label}</option>`).join("");
+    this.$("auto-equip").onchange = (e) => {
+      s.settings.autoEquip = e.target.checked;
+      this.changed();
+    };
     this.$("auto-salvage").onchange = (e) => {
       s.settings.autoSalvage = e.target.value;
       this.changed();
@@ -439,6 +443,7 @@ WYD.ui = {
       btn.classList.toggle("active", Number(btn.dataset.speed) === s.settings.speed);
     }
     this.$("auto-salvage").value = s.settings.autoSalvage;
+    this.$("auto-equip").checked = !!s.settings.autoEquip;
     this.$("sound-toggle").textContent = `音：${s.settings.sound ? "ON" : "OFF"}`;
     this.$("auto-diff").checked = s.settings.autoDifficulty;
     const inTrial = WYD.trial.active(s);
