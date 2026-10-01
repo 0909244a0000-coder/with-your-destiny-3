@@ -126,6 +126,36 @@ WYD.inventory = {
     return n;
   },
 
+  // 振り直しの素材
+  respecCost(state) {
+    const C = WYD.data.crafting;
+    return C.respecBase + C.respecPerLevel * state.player.level;
+  },
+
+  // スキルと修練の振り直し。もどしたポイントの数 { skill, paragon } か、素材が足りなければ null
+  respec(state) {
+    const cost = this.respecCost(state);
+    if (state.materials < cost) return null;
+    state.materials -= cost;
+    const pl = state.player;
+    let skill = 0;
+    for (const id in WYD.data.skills) {
+      const start = WYD.data.skills[id].startLevel;
+      const lv = pl.skills[id] || 0;
+      if (lv > start) skill += lv - start;
+      pl.skills[id] = start;
+      if (start <= 0) pl.skillEnabled[id] = false;
+    }
+    pl.skillPoints += skill;
+    pl.runes = {};
+    const pg = pl.paragon;
+    let paragon = 0;
+    for (const k in pg.alloc) paragon += pg.alloc[k];
+    pg.alloc = {};
+    pg.points += paragon;
+    return { skill, paragon };
+  },
+
   // 次の強化に必要な素材（もう上げられなければ null）
   enhanceCost(item) {
     const E = WYD.data.crafting.enhance;

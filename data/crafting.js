@@ -21,6 +21,10 @@ WYD.data.crafting = {
 
   rerollCost: { normal: 0, magic: 10, rare: 25, legend: 60, unique: 40, set: 35 },
 
+  // スキルと修練の振り直し：使ったポイントを全部もどす。素材 = respecBase + respecPerLevel × レベル
+  respecBase: 20,
+  respecPerLevel: 2,
+
   // 装備の強化（+1, +2, …）。素材を使って、装備の能力（宝石はのぞく）を少しずつ上げる
   enhance: {
     max: 10,                 // 最大で +10
