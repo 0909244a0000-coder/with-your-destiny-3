@@ -6,8 +6,10 @@ WYD.data.player = {
   className: "バーバリアン",    // 職業名
   weaponName: "双剣",           // 初期の武器種（表示用）
   color: "#4fa3ff",             // 絵がないときの丸の色
-  image: null,                  // 例: "assets/player.png"（あとで絵に差し替える用）
+  image: "assets/player.png",    // バーバリアンの透過スプライト（立ち姿）
+  poses: { attack: null },       // ポーズ違いの絵（例: attack: "assets/player_attack.png"）。攻撃の瞬間に差し替える
   radius: 14,                   // 体の大きさ（当たり判定・表示）
+  escapeDirections: 16,         // 爆発の輪から逃げるとき、何方向を試すか
 
   // レベル1のときの能力
   base: {
@@ -36,7 +38,29 @@ WYD.data.player = {
   respawnSeconds: 3,      // 倒れてから復活するまでの秒数
 
   // 経験値：次のレベルまでに必要な量 = expBase × expGrowth^(レベル-1)
+  // ただし expLateFrom 以降は、増え方を expGrowthLate にゆるめる（上限まで届くように）
   expBase: 30,
   expGrowth: 1.25,
+  expLateFrom: 20,
+  expGrowthLate: 1.1,
   maxLevel: 50,
+
+  // 修練（レベル上限のあとのやり込み）：上限のあとの経験値で「修練レベル」が上がり、
+  // 1つ上がるごとに修練ポイント。ポイントで能力を少しずつ上げられる（上限なし）
+  paragon: {
+    expBase: 40000,      // 修練レベル1つぶんに必要な経験値
+    expGrowth: 1.03,     // 修練レベルが上がるごとに必要な量が何倍になるか
+    pointsPerLevel: 1,
+    // ポイント1つで上がる量。max = 振れるポイントの上限（なければ上限なし）
+    stats: {
+      attack:      { name: "攻撃力", per: 2 },
+      defense:     { name: "防御力", per: 1.5 },
+      maxHp:       { name: "最大HP", per: 10 },
+      critChance:  { name: "会心率", per: 0.25, percent: true, max: 80 },
+      attackSpeed: { name: "攻撃速度", per: 0.5, percent: true, max: 60 },
+      skillDamage: { name: "スキル威力", per: 1, percent: true },
+      hpRegen:     { name: "HP回復/秒", per: 0.3 },
+      magicFind:   { name: "レア発見", per: 2, percent: true, max: 100 },   // 落ちる装備のレアの出やすさ
+    },
+  },
 };
