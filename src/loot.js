@@ -41,7 +41,7 @@ WYD.loot = {
     if (rarity.id === "rare") name = u.pick(D.rarePrefixes) + base.name;
     if (rarity.id === "legend") name = u.pick(D.legendPrefixes) + base.name;
 
-    return {
+    return WYD.gems.rollSockets({
       id: state.nextItemId++,
       name,
       slot: base.slot,
@@ -50,13 +50,13 @@ WYD.loot = {
       level: itemLevel,
       stats,
       effects: this.rollEffects(rarity.id),
-    };
+    });
   },
 
   // ユニーク装備を作る（def を省くとランダムに選ぶ）
   createUnique(state, itemLevel, def) {
     const U = WYD.data.uniques;
-    def = def || WYD.util.pickWeighted(U.list, (x) => x.weight);
+    def = def || WYD.util.pickWeighted(this.forClass(U.list), (x) => x.weight);
     const base = WYD.data.items.bases.find((b) => b.id === def.base);
     const stats = [];
     for (const stat in base.main) {
@@ -65,7 +65,7 @@ WYD.loot = {
     for (const stat in def.stats) {
       stats.push({ stat, value: this.rollValue(stat, def.stats[stat], itemLevel), main: false });
     }
-    return {
+    return WYD.gems.rollSockets({
       id: state.nextItemId++,
       name: def.name,
       slot: base.slot,
@@ -75,7 +75,59 @@ WYD.loot = {
       level: itemLevel,
       stats,
       effects: this.rollEffects("unique"),
-    };
+    });
+  },
+
+  // セット装備を作る（setId・pieceId を省くとランダム）
+  createSetPiece(state, itemLevel, setId, pieceId) {
+    const S = WYD.data.sets;
+    const set = setId ? S.list.find((x) => x.id === setId) : WYD.util.pick(this.forClass(S.list));
+    const piece = pieceId ? set.pieces.find((x) => x.id === pieceId) : WYD.util.pick(set.pieces);
+    const base = WYD.data.items.bases.find((b) => b.id === piece.base);
+    const stats = [];
+    for (const stat in base.main) stats.push({ stat, value: this.rollValue(stat, base.main[stat], itemLevel), main: true });
+    for (const stat in piece.stats) stats.push({ stat, value: this.rollValue(stat, piece.stats[stat], itemLevel), main: false });
+    return WYD.gems.rollSockets({
+      id: state.nextItemId++, name: piece.name, slot: base.slot, base: base.id,
+      rarity: "set", set: set.id, piece: piece.id, level: itemLevel, stats,
+      effects: this.rollEffects("set"),
+    });
+  },
+
+  // 今の職業で出るものだけ（classOnly がほかの職業のものを除く）
+  forClass(list) {
+    return list.filter((x) => !x.classOnly || x.classOnly === WYD.classes.id);
+  },
+
+  // 装備の表示名（強化していれば「+3 名前」）
+  label(item) {
+    return item.plus > 0 ? `+${item.plus} ${item.name}` : item.name;
+  },
+
+  // 強化を入れた、能力1行の数値
+  lineValue(item, line) {
+    return line.value * (1 + (item.plus || 0) * WYD.data.crafting.enhance.statPerLevel);
+  },
+
+  // 装備1つで上がる能力の合計（強化と宝石もふくむ）
+  statTotals(item) {
+    const out = {};
+    if (!item) return out;
+    for (const line of item.stats) out[line.stat] = (out[line.stat] || 0) + this.lineValue(item, line);
+    for (const key of item.sockets || []) {
+      if (!key) continue;
+      const st = WYD.gems.statsFor(key, item.slot);
+      for (const k in st) out[k] = (out[k] || 0) + st[k];
+    }
+    return out;
+  },
+
+  // セット装備なら { set, piece }、ちがえば null
+  setInfo(item) {
+    if (!item || !item.set) return null;
+    const set = WYD.data.sets.list.find((x) => x.id === item.set);
+    const piece = set && set.pieces.find((x) => x.id === item.piece);
+    return set && piece ? { set, piece } : null;
   },
 
   uniqueInfo(item) {
@@ -84,7 +136,9 @@ WYD.loot = {
 
   // 固有能力の説明文（{名前} を params の数値に置きかえる）
   uniqueDesc(def) {
-    return def.desc.replace(/\{(\w+)\}/g, (all, key) => (key in def.params ? String(def.params[key]) : all));
+    return def.desc
+      .replace(/\{skill:(\w+)\}/g, (all, kind) => WYD.classes.skillNameByKind(kind))
+      .replace(/\{(\w+)\}/g, (all, key) => (key in def.params ? String(def.params[key]) : all));
   },
 
   // 特殊効果をランダムに決める（同じ効果は2回つかない）
