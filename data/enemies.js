@@ -58,7 +58,7 @@ WYD.data.enemies = {
   yakshaArcher: {
     name: "夜叉の弓兵",
     color: "#d89a5a",
-    image: null,
+    image: "assets/enemies/yakshaArcher.png",
     radius: 12,
     hp: 40,
     attack: 7,
@@ -76,7 +76,7 @@ WYD.data.enemies = {
   vetala: {
     name: "ヴェーターラ",
     color: "#c9c9a8",
-    image: null,
+    image: "assets/enemies/vetala.png",
     radius: 11,
     hp: 40,
     attack: 6,
@@ -91,7 +91,7 @@ WYD.data.enemies = {
   pishacha: {
     name: "ピシャーチャ",
     color: "#5f8f6a",
-    image: null,
+    image: "assets/enemies/pishacha.png",
     radius: 15,
     hp: 95,
     attack: 9,
@@ -107,7 +107,7 @@ WYD.data.enemies = {
   bhuta: {
     name: "鬼火のブータ",
     color: "#7fb0c9",
-    image: null,
+    image: "assets/enemies/bhuta.png",
     radius: 12,
     hp: 50,
     attack: 9,
@@ -140,7 +140,7 @@ WYD.data.enemies = {
   daitya: {
     name: "ダイティヤ",
     color: "#b04a6a",
-    image: null,
+    image: "assets/enemies/daitya.png",
     radius: 15,
     hp: 100,
     attack: 13,
@@ -156,7 +156,7 @@ WYD.data.enemies = {
   nagaCaster: {
     name: "ナーガの呪術師",
     color: "#7ad16a",
-    image: null,
+    image: "assets/enemies/nagaCaster.png",
     radius: 14,
     hp: 80,
     attack: 12,
@@ -176,6 +176,7 @@ WYD.data.enemies = {
     name: "羅刹王ラーヴァナ",
     color: "#7a1fb0",
     image: "assets/enemies/ravana.png",
+    poses: { attack: null, windup: null },   // ポーズ違いの絵（攻撃・大技の溜め）
     radius: 30,
     hp: 900,
     attack: 14,
@@ -193,6 +194,7 @@ WYD.data.enemies = {
     name: "阿修羅王",
     color: "#3f5fd0",
     image: "assets/enemies/asuraKing.png",
+    poses: { attack: null, windup: null },   // ポーズ違いの絵（攻撃・大技の溜め）
     radius: 30,
     hp: 1100,
     attack: 15,
@@ -209,7 +211,8 @@ WYD.data.enemies = {
   mahisha: {
     name: "水牛魔マヒシャ",
     color: "#4a3a2a",
-    image: null,
+    image: "assets/enemies/mahisha.png",
+    poses: { attack: null, windup: null },   // ポーズ違いの絵（攻撃・大技の溜め）
     radius: 34,
     hp: 1300,
     attack: 18,

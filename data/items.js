@@ -4,6 +4,7 @@ WYD.data = WYD.data || {};
 
 WYD.data.items = {
   inventorySize: 30,
+  stashSize: 30,        // 倉庫に入る数
   pickupDelay: 0.8,     // 落ちてから拾うまでの秒数
   groundLifetime: 30,   // 拾えなかった装備が消えるまでの秒数
   levelScaling: 0.12,   // アイテムレベル+1ごとに数値が何割増えるか
@@ -45,6 +46,7 @@ WYD.data.items = {
     { slot: "weapon", id: "dual_blades", name: "双剣",       main: { attack: [5, 8] } },
     { slot: "weapon", id: "great_blade", name: "大剣",       main: { attack: [8, 12], attackSpeed: [-10, -10] } },
     { slot: "weapon", id: "chakram", name: "ダガー",     main: { attack: [4, 6], critChance: [3, 5] } },
+    { slot: "weapon", id: "staff", name: "杖",         main: { attack: [3, 5], skillDamage: [8, 14] } },
     { slot: "head",   id: "turban", name: "兜",         main: { defense: [2, 4] } },
     { slot: "head",   id: "crown", name: "サークレット", main: { defense: [1, 2], maxHp: [10, 20] } },
     { slot: "body",   id: "chainmail", name: "鎖帷子",     main: { defense: [4, 7] } },
@@ -58,7 +60,21 @@ WYD.data.items = {
   ],
 
   // 装備のアイコンの絵（id → ファイル）。例: dual_blades: "assets/items/dual_blades.png"
-  icons: {},
+  icons: {
+    dual_blades: "assets/items/dual_blades.png",
+    great_blade: "assets/items/great_blade.png",
+    chakram: "assets/items/chakram.png",
+    turban: "assets/items/turban.png",
+    crown: "assets/items/crown.png",
+    chainmail: "assets/items/chainmail.png",
+    robe: "assets/items/robe.png",
+    gauntlets: "assets/items/gauntlets.png",
+    bracelet: "assets/items/bracelet.png",
+    leggings: "assets/items/leggings.png",
+    sandals: "assets/items/sandals.png",
+    ring: "assets/items/ring.png",
+    rosary: "assets/items/rosary.png",
+  },
 
   // 追加能力（マジック以上に付く）
   affixes: [
