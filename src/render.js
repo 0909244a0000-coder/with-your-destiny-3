@@ -44,6 +44,10 @@ WYD.render = {
     const ground = this.getImage(area.groundImage);
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
+    if (ground) {
+      ctx.fillStyle = `rgba(0,0,0,${map.groundDim})`;
+      ctx.fillRect(0, 0, map.width, map.height);
+    }
     // 地面の絵がないときだけ、草や石の飾りを描く
     for (const d of ground ? [] : this.decorations) {
       ctx.fillStyle = d.kind === "grass" ? area.grassColor : area.stoneColor;
@@ -58,6 +62,7 @@ WYD.render = {
     this.drawPlayer(ctx, w.player);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
     for (const ef of w.effects) this.drawEffect(ctx, ef);
+    this.drawLight(ctx, w.player);
 
     ctx.textAlign = "center";
     ctx.font = "bold 14px sans-serif";
@@ -86,6 +91,17 @@ WYD.render = {
       ctx.fillStyle = "#ffffff";
       ctx.fillText(`${Math.ceil(w.player.respawnTimer)} 秒後に復活`, map.width / 2, map.height / 2 + 24);
     }
+  },
+
+  // 明かり：主人公から離れるほど暗くする
+  drawLight(ctx, p) {
+    const map = WYD.data.map;
+    const L = map.light;
+    const g = ctx.createRadialGradient(p.x, p.y, L.inner, p.x, p.y, L.outer);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(1, `rgba(0,0,0,${L.darkness})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, map.width, map.height);
   },
 
   // ボスがいるときは、画面の上にボスのHPを大きく出す
@@ -171,12 +187,28 @@ WYD.render = {
       ctx.arc(p.x, p.y, P.radius + 6, 0, Math.PI * 2);
       ctx.stroke();
     }
+    const img = this.getImage(P.image);
+    if (img) {
+      // 絵があるとき：足元に主人公の色の輪（どこにいるか分かるように）
+      const size = P.radius * WYD.data.map.spriteScale;
+      ctx.strokeStyle = P.color;
+      ctx.globalAlpha = WYD.data.map.playerRing;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + size * 0.38, size * 0.38, size * 0.13, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (p.dead && img) ctx.globalAlpha = 0.4;
     this.drawCircleOrImage(ctx, p.x, p.y, P.radius, p.dead ? "#555" : P.color, P.image);
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, P.radius, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.globalAlpha = 1;
+    if (!img) {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, P.radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     // 攻撃の線
     if (p.swing > 0 && p.swingTarget) {
@@ -239,10 +271,7 @@ WYD.render = {
       ctx.globalAlpha = 1;
     }
     if (e.boss) {
-      ctx.textAlign = "center";
-      ctx.font = "bold 13px sans-serif";
-      ctx.fillStyle = WYD.data.boss.nameColor;
-      ctx.fillText(def.name, e.x, by - 4);
+      // ボスの名前は画面の上の大きなHPバーに出すので、頭の上には出さない
     } else if (e.elite) {
       ctx.textAlign = "center";
       ctx.font = "bold 12px sans-serif";

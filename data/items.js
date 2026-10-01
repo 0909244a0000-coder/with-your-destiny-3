@@ -58,7 +58,21 @@ WYD.data.items = {
   ],
 
   // 装備のアイコンの絵（id → ファイル）。例: dual_blades: "assets/items/dual_blades.png"
-  icons: {},
+  icons: {
+    dual_blades: "assets/items/dual_blades.png",
+    great_blade: "assets/items/great_blade.png",
+    chakram: "assets/items/chakram.png",
+    turban: "assets/items/turban.png",
+    crown: "assets/items/crown.png",
+    chainmail: "assets/items/chainmail.png",
+    robe: "assets/items/robe.png",
+    gauntlets: "assets/items/gauntlets.png",
+    bracelet: "assets/items/bracelet.png",
+    leggings: "assets/items/leggings.png",
+    sandals: "assets/items/sandals.png",
+    ring: "assets/items/ring.png",
+    rosary: "assets/items/rosary.png",
+  },
 
   // 追加能力（マジック以上に付く）
   affixes: [
