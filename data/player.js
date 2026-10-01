@@ -51,12 +51,16 @@ WYD.data.player = {
     expBase: 40000,      // 修練レベル1つぶんに必要な経験値
     expGrowth: 1.03,     // 修練レベルが上がるごとに必要な量が何倍になるか
     pointsPerLevel: 1,
-    // ポイント1つで上がる量
+    // ポイント1つで上がる量。max = 振れるポイントの上限（なければ上限なし）
     stats: {
-      attack:     { name: "攻撃力", per: 2 },
-      defense:    { name: "防御力", per: 1.5 },
-      maxHp:      { name: "最大HP", per: 10 },
-      critChance: { name: "会心率", per: 0.25, percent: true },
+      attack:      { name: "攻撃力", per: 2 },
+      defense:     { name: "防御力", per: 1.5 },
+      maxHp:       { name: "最大HP", per: 10 },
+      critChance:  { name: "会心率", per: 0.25, percent: true, max: 80 },
+      attackSpeed: { name: "攻撃速度", per: 0.5, percent: true, max: 60 },
+      skillDamage: { name: "スキル威力", per: 1, percent: true },
+      hpRegen:     { name: "HP回復/秒", per: 0.3 },
+      magicFind:   { name: "レア発見", per: 2, percent: true, max: 100 },   // 落ちる装備のレアの出やすさ
     },
   },
 };

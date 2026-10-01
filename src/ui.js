@@ -61,7 +61,8 @@ WYD.ui = {
       const btn = e.target.closest("button[data-paragon]");
       if (!btn) return;
       const pg = s.player.paragon;
-      if (pg.points <= 0) return;
+      const st = WYD.data.player.paragon.stats[btn.dataset.paragon];
+      if (pg.points <= 0 || (st.max != null && (pg.alloc[btn.dataset.paragon] || 0) >= st.max)) return;
       pg.points--;
       pg.alloc[btn.dataset.paragon] = (pg.alloc[btn.dataset.paragon] || 0) + 1;
       this.changed();
@@ -757,8 +758,9 @@ WYD.ui = {
       const st = G.stats[k];
       const n = pg.alloc[k] || 0;
       const v = n * st.per;
-      return `<div class="paragon-row"><span>${st.name} +${Number.isInteger(v) ? v : v.toFixed(2)}${st.percent ? "%" : ""}</span>
-        <button data-paragon="${k}" ${pg.points > 0 ? "" : "disabled"}>＋</button></div>`;
+      const full = st.max != null && n >= st.max;
+      return `<div class="paragon-row"><span>${st.name} +${Number.isInteger(v) ? v : v.toFixed(2)}${st.percent ? "%" : ""}${full ? "（上限）" : ""}</span>
+        <button data-paragon="${k}" ${pg.points > 0 && !full ? "" : "disabled"}>＋</button></div>`;
     }).join("");
     return `<div class="build-title">修練ポイント：<b style="color:var(--accent)">${pg.points}</b>（レベル上限のあとの経験値でたまる）</div>${rows}`;
   },

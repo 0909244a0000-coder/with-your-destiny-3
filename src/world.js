@@ -1020,7 +1020,7 @@ WYD.world = {
     // 精鋭は必ず数個落とし、レアも出やすい
     const E = WYD.data.elites;
     const bonus = def.rarityBonus * (1 + diff.rarityGrowth * d) * (e.elite ? E.rarityBonusMult : 1) *
-      (inTrial ? WYD.data.trial.rarityBonus : 1);
+      (inTrial ? WYD.data.trial.rarityBonus : 1) * (1 + stats.magicFind / 100);
     let count = e.elite ? E.dropCount : (Math.random() < def.dropChance ? 1 : 0);
     if (e.boss) count = WYD.data.boss.dropCount;
     if (e.elite) WYD.ui.log(`精鋭「${e.name}」を倒した！`, E.color);
