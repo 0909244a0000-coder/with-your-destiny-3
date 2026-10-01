@@ -34,5 +34,5 @@ WYD.data.fx = {
   },
 
   // 落ちている装備の光の柱（レア度 → 柱の高さ。書いていないレア度は柱なし）
-  lootBeam: { rare: 40, legend: 90, unique: 110 },
+  lootBeam: { rare: 40, legend: 90, unique: 110, set: 110 },
 };

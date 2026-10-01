@@ -78,6 +78,30 @@ WYD.loot = {
     };
   },
 
+  // セット装備を作る（setId・pieceId を省くとランダム）
+  createSetPiece(state, itemLevel, setId, pieceId) {
+    const S = WYD.data.sets;
+    const set = setId ? S.list.find((x) => x.id === setId) : WYD.util.pick(S.list);
+    const piece = pieceId ? set.pieces.find((x) => x.id === pieceId) : WYD.util.pick(set.pieces);
+    const base = WYD.data.items.bases.find((b) => b.id === piece.base);
+    const stats = [];
+    for (const stat in base.main) stats.push({ stat, value: this.rollValue(stat, base.main[stat], itemLevel), main: true });
+    for (const stat in piece.stats) stats.push({ stat, value: this.rollValue(stat, piece.stats[stat], itemLevel), main: false });
+    return {
+      id: state.nextItemId++, name: piece.name, slot: base.slot, base: base.id,
+      rarity: "set", set: set.id, piece: piece.id, level: itemLevel, stats,
+      effects: this.rollEffects("set"),
+    };
+  },
+
+  // セット装備なら { set, piece }、ちがえば null
+  setInfo(item) {
+    if (!item || !item.set) return null;
+    const set = WYD.data.sets.list.find((x) => x.id === item.set);
+    const piece = set && set.pieces.find((x) => x.id === item.piece);
+    return set && piece ? { set, piece } : null;
+  },
+
   uniqueInfo(item) {
     return (item && item.unique && WYD.data.uniques.list.find((u) => u.id === item.unique)) || null;
   },

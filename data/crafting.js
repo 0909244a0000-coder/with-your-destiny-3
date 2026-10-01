@@ -7,7 +7,7 @@ WYD.data.crafting = {
   materialColor: "#c9a0ff",
 
   // 装備を捨てる（分解する）ともらえる素材の数（レア度ごと）
-  salvage: { normal: 1, magic: 3, rare: 8, legend: 20, unique: 30 },
+  salvage: { normal: 1, magic: 3, rare: 8, legend: 20, unique: 30, set: 25 },
 
   // 特殊効果をつけ直すのに必要な素材の数（レア度ごと）。0 = つけ直せない
   // 自動分解：拾う前に、選んだレア度以下の装備をその場で素材にする（レジェンドとユニークは対象外）
@@ -19,5 +19,5 @@ WYD.data.crafting = {
     { id: "rare",   label: "レア以下",     upTo: "rare" },
   ],
 
-  rerollCost: { normal: 0, magic: 10, rare: 25, legend: 60, unique: 40 },
+  rerollCost: { normal: 0, magic: 10, rare: 25, legend: 60, unique: 40, set: 35 },
 };

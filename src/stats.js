@@ -15,9 +15,34 @@ WYD.stats = {
   },
 
   // 装備についている特殊効果を合計する（上限つき）
+  // 身につけているセット装備の数（セット名 → 数）
+  setCounts(state) {
+    const out = {};
+    for (const slot in state.equipment) {
+      const info = WYD.loot.setInfo(state.equipment[slot]);
+      if (info) out[info.set.id] = (out[info.set.id] || 0) + 1;
+    }
+    return out;
+  },
+
+  // 今効いているセットのボーナスの一覧 [{ set, need, bonus }]
+  activeSetBonuses(state) {
+    const counts = this.setCounts(state);
+    const out = [];
+    for (const set of WYD.data.sets.list) {
+      for (const need in set.bonuses) {
+        if ((counts[set.id] || 0) >= Number(need)) out.push({ set, need: Number(need), bonus: set.bonuses[need] });
+      }
+    }
+    return out;
+  },
+
   effectTotals(state) {
     const totals = {};
     for (const def of WYD.data.effects.list) totals[def.id] = 0;
+    for (const a of this.activeSetBonuses(state)) {
+      for (const id in a.bonus.effects || {}) if (id in totals) totals[id] += a.bonus.effects[id];
+    }
     for (const slot in state.equipment) {
       const item = state.equipment[slot];
       if (!item || !Array.isArray(item.effects)) continue;
@@ -36,6 +61,9 @@ WYD.stats = {
       const def = WYD.loot.uniqueInfo(state.equipment[slot]);
       if (def) out[def.power] = def.params;
     }
+    for (const a of this.activeSetBonuses(state)) {
+      if (a.bonus.power && !out[a.bonus.power]) out[a.bonus.power] = a.bonus.params;
+    }
     return out;
   },
 
@@ -43,6 +71,10 @@ WYD.stats = {
     const P = WYD.data.player;
     const lv = state.player.level - 1;
     const b = this.equipmentBonus(state);
+    // セットのボーナスの能力を足す
+    for (const sb of this.activeSetBonuses(state)) {
+      for (const k in sb.bonus.stats || {}) b[k] = (b[k] || 0) + sb.bonus.stats[k];
+    }
     const fx = this.effectTotals(state);
     const pb = this.paragonBonus(state);
     const powers = this.powers(state);

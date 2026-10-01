@@ -154,7 +154,7 @@ WYD.world = {
     w.enemies = [];
     w.projectiles = [];
     w.fields = [];
-    w.drops = w.drops.filter((d) => d.item.rarity === "unique" || d.item.rarity === "legend");
+    w.drops = w.drops.filter((d) => ["unique", "set", "legend"].includes(d.item.rarity));
     w.spawnTimer = 1;
     w.bossTimer = null;
     w.bossDone = false;
@@ -809,6 +809,15 @@ WYD.world = {
       const item = WYD.loot.createUnique(state, state.difficulty + area.itemLevelBonus);
       w.drops.push({ x: e.x, y: e.y, item, age: 0 });
       WYD.ui.log(`ユニーク装備「${item.name}」が落ちた！`, U.color);
+      WYD.sound.play("uniqueDrop");
+    }
+    // ボスと精鋭は、まれにセット装備を落とす
+    const SE = WYD.data.sets;
+    const setChance = e.boss ? SE.chanceFromBoss : e.elite ? SE.chanceFromElite : 0;
+    if (Math.random() < setChance) {
+      const item = WYD.loot.createSetPiece(state, state.difficulty + area.itemLevelBonus);
+      w.drops.push({ x: e.x + 12, y: e.y + 8, item, age: 0 });
+      WYD.ui.log(`セット装備「${item.name}」が落ちた！`, SE.color);
       WYD.sound.play("uniqueDrop");
     }
     for (let i = 0; i < count; i++) {

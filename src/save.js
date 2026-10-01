@@ -96,6 +96,11 @@ WYD.save = {
       item.name = u.name;
       return;
     }
+    const st = WYD.loot.setInfo(item);
+    if (st) {
+      item.name = st.piece.name;
+      return;
+    }
     const words = WYD.data.items.renamedWords || {};
     for (const old in words) item.name = item.name.split(old).join(words[old]);
   },

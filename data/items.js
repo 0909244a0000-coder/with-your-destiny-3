@@ -17,6 +17,8 @@ WYD.data.items = {
     { id: "legend", name: "レジェンド", color: "#ff8a2a", weight: 2,  affixes: [5, 6] },
     // ユニークはふつうには出ない（weight 0）。ボスと精鋭がまれに落とす。data/uniques.js
     { id: "unique", name: "ユニーク",   color: "#e8c46a", weight: 0,  affixes: [0, 0] },
+    // セットもふつうには出ない（weight 0）。ボスと精鋭がまれに落とす。data/sets.js
+    { id: "set",    name: "セット",     color: "#3fd06a", weight: 0,  affixes: [0, 0] },
   ],
 
   slots: {

@@ -454,6 +454,31 @@ WYD.ui = {
     return html;
   },
 
+  // セットのボーナスの説明文
+  bonusText(bonus) {
+    const parts = [];
+    for (const k in bonus.stats || {}) parts.push(WYD.util.formatStat(k, bonus.stats[k]));
+    for (const id in bonus.effects || {}) {
+      const def = WYD.loot.effectInfo(id);
+      if (def) parts.push(`${def.name}（${WYD.util.formatEffect(def, bonus.effects[id])}）`);
+    }
+    if (bonus.power) parts.push(WYD.loot.uniqueDesc(bonus));
+    return parts.join("、");
+  },
+
+  // セット装備の説明（そろっている数と、ボーナス）
+  setHtml(item) {
+    const info = WYD.loot.setInfo(item);
+    if (!info) return "";
+    const C = WYD.data.sets.color;
+    const have = WYD.stats.setCounts(this.state)[info.set.id] || 0;
+    const owned = (p) => Object.values(this.state.equipment).some((it) => it && it.piece === p.id);
+    const pieces = info.set.pieces.map((p) => `<span style="color:${owned(p) ? C : "#777"}">${p.name}</span>`).join("・");
+    const bon = Object.keys(info.set.bonuses).map((need) =>
+      `<div style="color:${have >= Number(need) ? C : "#777"}">（${need}つ）${this.bonusText(info.set.bonuses[need])}</div>`).join("");
+    return `<div class="unique-power"><span style="color:${C}">■ ${info.set.name}（装備中 ${have}/${info.set.pieces.length}）</span><br><small>${pieces}</small><small>${bon}</small></div>`;
+  },
+
   // スキルの型（ルーン）を選ぶ欄。覚えていないスキルには出さない
   runeHtml(id, lv) {
     const list = WYD.runes.list(id);
@@ -495,6 +520,9 @@ WYD.ui = {
       const u = WYD.loot.uniqueInfo(this.state.equipment[slot]);
       if (u) lines.push(`<div style="color:${WYD.data.uniques.color}">◆ ${u.name}：<small>${WYD.loot.uniqueDesc(u)}</small></div>`);
     }
+    for (const a of WYD.stats.activeSetBonuses(this.state)) {
+      lines.push(`<div style="color:${WYD.data.sets.color}">■ ${a.set.name}（${a.need}つ）：<small>${this.bonusText(a.bonus)}</small></div>`);
+    }
     return lines.length
       ? `<div class="build-title">装備の効果</div>${lines.join("")}`
       : `<div class="build-title">装備の効果：なし</div>`;
@@ -528,9 +556,9 @@ WYD.ui = {
       `<div class="${l.main ? "main" : "affix"}">${WYD.util.formatStat(l.stat, l.value)}</div>`
     ).join("");
     const u = WYD.loot.uniqueInfo(item);
-    const uniqueLine = u
+    const uniqueLine = (u
       ? `<div class="unique-power" style="color:${WYD.data.uniques.color}">◆ 固有能力<br><small>${WYD.loot.uniqueDesc(u)}</small></div>`
-      : "";
+      : "") + this.setHtml(item);
     const fxLines = this.itemEffects(item).map(({ def, value }) =>
       `<div class="effect" style="color:${WYD.data.effects.color}">✦ ${def.name}<br><small>${WYD.util.formatEffect(def, value)}</small></div>`
     ).join("");
