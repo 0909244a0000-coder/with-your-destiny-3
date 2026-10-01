@@ -259,3 +259,6 @@ button.danger { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px #
 .gem-chip button { font-size: 11px; padding: 0 4px; margin-left: 2px; }
 .tip-item .socket { font-size: 12px; margin-top: 2px; }
 .tip-item .socket.empty { color: #8a7d66; }
+
+/* 今より強い装備の印 */
+.cell .up-mark { float: right; font-size: 10px; color: #5dff7a; margin-left: 2px; }

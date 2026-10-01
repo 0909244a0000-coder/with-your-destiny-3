@@ -552,11 +552,28 @@ WYD.ui = {
       const item = list[i];
       html += item
         ? `<div class="cell" data-index="${i}" style="border-color:${this.color(item)};--r:${this.glow(item)}">
-             <small>${slots[item.slot]}${this.fxMark(item)}</small><span style="color:${this.color(item)}">${WYD.loot.label(item)}</span>${this.iconImg(item)}
+             <small>${slots[item.slot]}${this.upgradeMark(item)}${this.fxMark(item)}</small><span style="color:${this.color(item)}">${WYD.loot.label(item)}</span>${this.iconImg(item)}
            </div>`
         : `<div class="cell blank"></div>`;
     }
     return html;
+  },
+
+  // 今つけている装備より点数が高ければ「▲」（点数は自動装備と同じ）
+  upgradeMark(item) {
+    const cur = this.state.equipment[item.slot];
+    const gain = WYD.inventory.itemScore(item) - WYD.inventory.itemScore(cur);
+    if (cur && gain <= WYD.inventory.itemScore(cur) * WYD.data.items.autoEquip.minGain) return "";
+    return ` <b class="up-mark" title="いま装備しているものより強い（自動装備と同じ点数で比べた目安）">▲</b>`;
+  },
+
+  // 装備を変えたときの点数の変わり方（％）
+  scoreChangeText(item, cur) {
+    const a = WYD.inventory.itemScore(item), b = WYD.inventory.itemScore(cur);
+    if (!cur || b <= 0) return `<div class="up">総合の目安：この部位が空いているので強くなる</div>`;
+    const pct = Math.round((a - b) / b * 100);
+    if (pct === 0) return `<div class="tip-sub">総合の目安：ほぼ同じ</div>`;
+    return `<div class="${pct > 0 ? "up" : "down"}">総合の目安：${pct > 0 ? "▲" : "▼"} ${pct > 0 ? "+" : ""}${pct}%</div>`;
   },
 
   // セットのボーナスの説明文
@@ -804,6 +821,7 @@ WYD.ui = {
     }
     return `<div class="tip-item tip-compare">
       <div class="tip-title">装備するとこう変わる</div>
+      ${this.scoreChangeText(item, cur)}
       ${rows.length ? rows.join("") : `<div class="tip-sub">変化なし</div>`}
     </div>`;
   },
