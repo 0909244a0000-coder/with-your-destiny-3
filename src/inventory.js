@@ -30,6 +30,30 @@ WYD.inventory = {
     return true;
   },
 
+  // 持ち物 → 倉庫。できたら true
+  toStash(state, index) {
+    const item = state.inventory[index];
+    if (!item || state.stash.length >= WYD.data.items.stashSize) return false;
+    state.inventory.splice(index, 1);
+    state.stash.push(item);
+    return true;
+  },
+
+  // 倉庫 → 持ち物。できたら true
+  fromStash(state, index) {
+    const item = state.stash[index];
+    if (!item || this.isFull(state)) return false;
+    state.stash.splice(index, 1);
+    state.inventory.push(item);
+    return true;
+  },
+
+  // 倉庫の装備を捨てる（分解）。もらった素材の数を返す
+  discardFromStash(state, index) {
+    const item = state.stash.splice(index, 1)[0];
+    return item ? this.salvage(state, item) : 0;
+  },
+
   // 捨てる（分解して素材をもらう）。もらった素材の数を返す
   discard(state, index) {
     const item = state.inventory.splice(index, 1)[0];

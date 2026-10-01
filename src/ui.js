@@ -6,6 +6,7 @@ WYD.ui = {
   world: null,
   dirty: true,
   craftMode: false,   // つけ直しモード（クリックで特殊効果をつけ直す）
+  stashOpen: false,   // 倉庫を開いているか
 
   $(id) {
     return document.getElementById(id);
@@ -64,8 +65,11 @@ WYD.ui = {
     inv.onclick = (e) => {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
-      if (this.craftMode) this.rerollItem(s.inventory[Number(cell.dataset.index)]);
-      else WYD.inventory.equip(s, Number(cell.dataset.index));
+      const index = Number(cell.dataset.index);
+      if (this.craftMode) this.rerollItem(s.inventory[index]);
+      else if (e.shiftKey) {
+        if (!WYD.inventory.toStash(s, index)) this.log("倉庫がいっぱいで入れられない", "#ff6b6b");
+      } else WYD.inventory.equip(s, index);
       this.changed();
     };
     inv.oncontextmenu = (e) => {
@@ -79,6 +83,31 @@ WYD.ui = {
     };
     inv.onmouseover = (e) => this.showTooltipFor(e, "inv");
     inv.onmouseleave = () => this.hideTooltip();
+
+    // 倉庫：クリックで持ち物へ、右クリックで捨てる
+    this.$("stash-toggle").onclick = () => {
+      this.stashOpen = !this.stashOpen;
+      this.markDirty();
+    };
+    const stash = this.$("stash");
+    stash.onclick = (e) => {
+      const cell = e.target.closest("[data-index]");
+      if (!cell) return;
+      if (this.craftMode) this.rerollItem(s.stash[Number(cell.dataset.index)]);
+      else if (!WYD.inventory.fromStash(s, Number(cell.dataset.index))) this.log("持ち物がいっぱいで戻せない", "#ff6b6b");
+      this.changed();
+    };
+    stash.oncontextmenu = (e) => {
+      e.preventDefault();
+      const cell = e.target.closest("[data-index]");
+      if (!cell) return;
+      const item = s.stash[Number(cell.dataset.index)];
+      const gained = WYD.inventory.discardFromStash(s, Number(cell.dataset.index));
+      if (item) this.log(`${item.name}を捨てた（${C.materialName} +${gained}）`);
+      this.changed();
+    };
+    stash.onmouseover = (e) => this.showTooltipFor(e, "stash");
+    stash.onmouseleave = () => this.hideTooltip();
 
     // 装備欄：クリックで外す
     const eq = this.$("equipment");
@@ -297,18 +326,31 @@ WYD.ui = {
     this.$("craft-mode").classList.toggle("active", this.craftMode);
     this.$("inv-help").textContent = this.craftMode
       ? "つけ直しモード：持ち物や装備をクリックすると、素材を使って特殊効果をつけ直す"
-      : "左クリック：装備する／右クリック：捨てる（捨てると素材になる）";
+      : "左クリック：装備する／右クリック：捨てる（捨てると素材になる）／Shift＋クリック：倉庫へ";
+    this.$("inventory").innerHTML = this.cellsHtml(s.inventory, size);
+
+    // 倉庫
+    const stashSize = WYD.data.items.stashSize;
+    this.$("stash-count").textContent = `${s.stash.length} / ${stashSize}`;
+    this.$("stash-toggle").textContent = this.stashOpen ? "閉じる" : "開く";
+    this.$("stash-body").hidden = !this.stashOpen;
+    if (this.stashOpen) this.$("stash").innerHTML = this.cellsHtml(s.stash, stashSize);
+    this.hideTooltip();
+  },
+
+  // 持ち物・倉庫のマス目
+  cellsHtml(list, size) {
+    const slots = WYD.data.items.slots;
     let html = "";
     for (let i = 0; i < size; i++) {
-      const item = s.inventory[i];
+      const item = list[i];
       html += item
         ? `<div class="cell" data-index="${i}" style="border-color:${this.color(item)}">
              <small>${slots[item.slot]}${this.fxMark(item)}</small><span style="color:${this.color(item)}">${item.name}</span>${this.iconImg(item)}
            </div>`
         : `<div class="cell blank"></div>`;
     }
-    this.$("inventory").innerHTML = html;
-    this.hideTooltip();
+    return html;
   },
 
   // 装備から今効いている特殊効果（合計）と固有能力のまとめ
@@ -413,9 +455,9 @@ WYD.ui = {
   showTooltipFor(e, where) {
     const s = this.state;
     let item = null, html = "";
-    if (where === "inv") {
+    if (where === "inv" || where === "stash") {
       const cell = e.target.closest("[data-index]");
-      item = cell && s.inventory[Number(cell.dataset.index)];
+      item = cell && (where === "inv" ? s.inventory : s.stash)[Number(cell.dataset.index)];
       if (item) {
         html = this.itemHtml(item);
         const cur = s.equipment[item.slot];
@@ -423,7 +465,7 @@ WYD.ui = {
         html += this.compareHtml(item, cur);
         html += this.craftMode
           ? this.rerollHelp(item)
-          : `<div class="tip-help">左クリック：装備する／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.data.crafting.salvage[item.rarity] || 0}）</div>`;
+          : `<div class="tip-help">${where === "inv" ? "左クリック：装備する／Shift＋クリック：倉庫へ" : "クリック：持ち物へ戻す"}／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.data.crafting.salvage[item.rarity] || 0}）</div>`;
       }
     } else {
       const cell = e.target.closest("[data-slot]");

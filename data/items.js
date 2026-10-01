@@ -4,6 +4,7 @@ WYD.data = WYD.data || {};
 
 WYD.data.items = {
   inventorySize: 30,
+  stashSize: 30,        // 倉庫に入る数
   pickupDelay: 0.8,     // 落ちてから拾うまでの秒数
   groundLifetime: 30,   // 拾えなかった装備が消えるまでの秒数
   levelScaling: 0.12,   // アイテムレベル+1ごとに数値が何割増えるか

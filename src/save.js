@@ -16,6 +16,7 @@ WYD.save = {
       player: { level: 1, exp: 0, skillPoints: 0, skills, skillEnabled: enabled },
       equipment: {},   // slot -> item
       inventory: [],   // item の配列
+      stash: [],       // 倉庫（item の配列）
       nextItemId: 1,
       difficulty: 1,
       maxDifficulty: 1,
@@ -50,7 +51,8 @@ WYD.save = {
       // 「ノーマルを拾わない」だった頃のセーブは、「ノーマルを自動分解」にする
       if (saved.settings && saved.settings.skipNormal && !saved.settings.autoSalvage) state.settings.autoSalvage = "normal";
       delete state.settings.skipNormal;
-      for (const item of state.inventory.concat(Object.values(state.equipment))) {
+      if (!Array.isArray(state.stash)) state.stash = [];
+      for (const item of state.inventory.concat(state.stash, Object.values(state.equipment))) {
         if (!item) continue;
         // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
         if (!Array.isArray(item.effects)) item.effects = [];
