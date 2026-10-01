@@ -6,6 +6,7 @@ WYD.ui = {
   world: null,
   dirty: true,
   craftMode: false,   // つけ直しモード（クリックで特殊効果をつけ直す）
+  paused: false,      // 一時停止中か（セーブしない）
   enhanceMode: false, // 強化モード（クリックで +1 する）
   gemSelected: null,  // はめるために選んだ宝石（"種類:段階"）
   stashOpen: false,   // 倉庫を開いているか
@@ -90,6 +91,18 @@ WYD.ui = {
       s.trial.autoNext = e.target.checked;
       this.changed();
     };
+    this.$("pause").onclick = () => this.togglePause();
+    // キーボード：スペース＝一時停止、1・2・4＝速度（文字を入力している所では効かない）
+    document.addEventListener("keydown", (e) => {
+      if (e.target.closest && e.target.closest("input, select, textarea")) return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        this.togglePause();
+      } else if (["1", "2", "4"].includes(e.key)) {
+        s.settings.speed = Number(e.key);
+        this.changed();
+      }
+    });
     this.$("auto-diff").onchange = (e) => {
       s.settings.autoDifficulty = e.target.checked;
       this.changed();
@@ -328,6 +341,11 @@ WYD.ui = {
     this.changed();
   },
 
+  togglePause() {
+    this.paused = !this.paused;
+    this.markDirty();
+  },
+
   // 試練の段階を選ぶ（最高記録の次の段階まで）
   changeTrialLevel(delta) {
     const s = this.state;
@@ -445,6 +463,8 @@ WYD.ui = {
     }
     this.$("auto-salvage").value = s.settings.autoSalvage;
     this.$("auto-equip").checked = !!s.settings.autoEquip;
+    this.$("pause").textContent = this.paused ? "再開" : "停止";
+    this.$("pause").classList.toggle("active", this.paused);
     this.$("sound-toggle").textContent = `音：${s.settings.sound ? "ON" : "OFF"}`;
     this.$("auto-diff").checked = s.settings.autoDifficulty;
     const inTrial = WYD.trial.active(s);

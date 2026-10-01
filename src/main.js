@@ -42,7 +42,7 @@ window.WYD = window.WYD || {};
     // タブを切り替えたあと等に一気に進みすぎないよう、1回の経過時間に上限をつける
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    const steps = state.settings.speed;
+    const steps = WYD.ui.paused ? 0 : state.settings.speed;   // 一時停止中は進めない
     for (let i = 0; i < steps; i++) WYD.world.update(world, state, dt);
     WYD.render.draw(ctx, world, state);
     WYD.ui.frame();

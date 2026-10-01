@@ -119,6 +119,16 @@ WYD.render = {
     ctx.fillText(`${area.name}　${WYD.world.floorName(state)}${WYD.trial.active(state) ? "" : `　危険度 ${state.difficulty}`}`, 12, 24);
     this.drawBossBar(ctx, w);
     WYD.trial.draw(ctx, w, state);
+    if (WYD.ui.paused) {
+      // 一時停止中の表示
+      const map = WYD.data.map;
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.fillRect(0, 0, map.width, map.height);
+      ctx.textAlign = "center";
+      ctx.font = "bold 28px serif";
+      ctx.fillStyle = "#e8d8a8";
+      ctx.fillText("一時停止中（スペースで再開）", map.width / 2, map.height / 2);
+    }
     this.drawBanner(ctx, w);
 
     if (w.player.dead) {
