@@ -30,6 +30,8 @@ WYD.world = {
     if (p.hp === null) p.hp = stats.maxHp;
     p.hp = Math.min(p.hp, stats.maxHp);
 
+    w.time = (w.time || 0) + dt;   // 絵の動きに使う時計
+    this.trackMotion(w, dt);
     this.updateEffects(w, dt);
     WYD.offline.tick(state, dt);
 
@@ -56,6 +58,21 @@ WYD.world = {
     this.updateEnemies(w, state, stats, dt);
     if (!p.dead) this.updateProjectiles(w, state, stats, dt);
     this.updateDrops(w, state, dt);
+  },
+
+  // 絵の動きのために、動いた量・向き・攻撃してからの時間を覚えておく
+  trackMotion(w, dt) {
+    for (const o of [w.player].concat(w.enemies)) {
+      if (o.lastX != null && dt > 0) {
+        const vx = (o.x - o.lastX) / dt, vy = (o.y - o.lastY) / dt;
+        o.moving = Math.hypot(vx, vy) > 5;
+        if (Math.abs(vx) > 5) o.face = vx > 0 ? 1 : -1;
+      }
+      o.lastX = o.x;
+      o.lastY = o.y;
+      o.atkAnim = Math.max(0, (o.atkAnim || 0) - dt);
+      o.slamAfter = Math.max(0, (o.slamAfter || 0) - dt);
+    }
   },
 
   // ---------- 敵の出現 ----------
@@ -210,6 +227,8 @@ WYD.world = {
       p.attackTimer = 1 / (stats.attackSpeed * (1 + (p.haste ? p.haste.percent : 0) / 100));
       p.swing = 0.15;
       p.swingTarget = { x: target.x, y: target.y };
+      p.atkAnim = WYD.data.anim.attack.time;
+      p.face = target.x >= p.x ? 1 : -1;
       this.playerHit(w, state, stats, target, stats.attack);
       this.tryThunder(w, state, stats, target);
       // 固有能力：狂王の籠手（狂戦士の怒りの間、周りにも当たる）
@@ -373,6 +392,8 @@ WYD.world = {
       e.attackTimer -= dt;
       if (d <= reach && e.attackTimer <= 0) {
         e.attackTimer = 1 / (def.attackSpeed * e.attackSpeedMult);
+        e.atkAnim = WYD.data.anim.attack.time;
+        e.face = p.x >= e.x ? 1 : -1;
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
         const hit = this.calcDamage(e.attack, defense, 0);
         p.hp -= hit.damage;
@@ -430,6 +451,8 @@ WYD.world = {
     e.attackTimer -= dt;
     if (d <= r.range && e.attackTimer <= 0) {
       e.attackTimer = 1 / (def.attackSpeed * e.attackSpeedMult);
+      e.atkAnim = WYD.data.anim.attack.time;
+      e.face = p.x >= e.x ? 1 : -1;
       w.projectiles.push({
         x: e.x, y: e.y,
         vx: (p.x - e.x) / d * r.speed, vy: (p.y - e.y) / d * r.speed,
@@ -470,6 +493,7 @@ WYD.world = {
       e.slamCharge -= dt;
       if (e.slamCharge > 0) return true;
       e.slamCharge = null;
+      e.slamAfter = 0.3;
       w.effects.push({ type: "ring", x: e.x, y: e.y, radius: slam.radius, color: WYD.data.boss.warnColor, time: 0, duration: 0.4 });
       w.effects.push({ type: "shock", x: e.x, y: e.y, radius: slam.radius, color: WYD.data.boss.warnColor, time: 0, duration: 0.5 });
       WYD.fx.burst(w, e.x, e.y, { ...WYD.data.fx.slamDust, speed: slam.radius * 2.4 }, null, {});

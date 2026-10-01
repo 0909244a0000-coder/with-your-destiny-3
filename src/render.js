@@ -62,7 +62,10 @@ WYD.render = {
     }
 
     for (const f of w.fields) this.drawField(ctx, f);
-    for (const e of w.enemies) this.drawEnemy(ctx, e);
+    this.clock = w.time || 0;
+    this.playerPos = w.player;
+    // 奥（画面の上）にいるものから描く（手前のキャラが奥のキャラにかぶさるように）
+    for (const e of w.enemies.slice().sort((a, b) => a.y - b.y)) this.drawEnemy(ctx, e);
     this.drawPlayer(ctx, w.player);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
     this.drawLight(ctx, w.player);
@@ -139,20 +142,72 @@ WYD.render = {
     ctx.fillText(def.name, map.width / 2, by - 6);
   },
 
-  // flash = true のときは白く光らせる（攻撃が当たったとき）
-  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash) {
+  // 1枚の絵の動き（呼吸・歩くはずみ・攻撃の踏み込み・ボスの溜め）を計算する
+  // o = 主人公か敵、target = 攻撃の相手（踏み込む向き）、t = 時計
+  pose(o, target, t) {
+    const A = WYD.data.anim;
+    const seed = (o.id || 0) * 1.7;   // 敵ごとに動きのタイミングをずらす
+    const pose = { dx: 0, dy: 0, sx: 1, sy: 1, rot: 0, flip: A.faceTarget ? (o.face || 1) : 1 };
+    if (o.moving) {
+      const ph = t * A.walk.speed + seed;
+      pose.dy -= Math.abs(Math.sin(ph)) * A.walk.bob;
+      pose.rot += Math.sin(ph) * A.walk.tilt;
+    } else {
+      const b = Math.sin(t * A.breath.speed + seed) * A.breath.amount;
+      pose.sy += b;
+      pose.sx -= b * 0.5;
+    }
+    if (o.atkAnim > 0 && target) {
+      const k = Math.sin((1 - o.atkAnim / A.attack.time) * Math.PI);   // 0 → 1 → 0
+      const d = Math.hypot(target.x - o.x, target.y - o.y) || 1;
+      pose.dx += (target.x - o.x) / d * A.attack.lunge * k;
+      pose.dy += (target.y - o.y) / d * A.attack.lunge * k;
+      pose.rot += (target.x >= o.x ? 1 : -1) * A.attack.tilt * k;
+    }
+    if (o.hitFlash > 0 && target) {
+      const d = Math.hypot(o.x - target.x, o.y - target.y) || 1;
+      pose.dx += (o.x - target.x) / d * A.hitKnock;
+      pose.dy += (o.y - target.y) / d * A.hitKnock;
+    }
+    if (o.boss) {
+      const B = A.boss;
+      pose.rot += Math.sin(t * 1.3) * B.idleSway;
+      if (o.slamCharge != null) {
+        const k = 1 - o.slamCharge / o.slamWindup;
+        pose.sx *= 1 + B.windupGrow * k;
+        pose.sy *= 1 + B.windupGrow * k;
+        pose.dx += WYD.util.rand(-1, 1) * B.windupShake * k;
+        pose.dy += WYD.util.rand(-1, 1) * B.windupShake * k - 8 * k;
+      }
+      if (o.slamAfter > 0) {
+        const k = o.slamAfter / 0.3;
+        pose.sx *= 1 + B.slamSquash * k;
+        pose.sy *= 1 - B.slamSquash * k;
+      }
+    }
+    return pose;
+  },
+
+  // flash = true のときは白く光らせる（攻撃が当たったとき）、pose = 絵の動き
+  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash, pose) {
     const img = this.getImage(imageSrc);
     if (img) {
       const M = WYD.data.map;
       const size = r * M.spriteScale;
-      // 足元の影（暗い地面でも絵が浮いて見えるように）
+      const p = pose || { dx: 0, dy: 0, sx: 1, sy: 1, rot: 0, flip: 1 };
+      // 足元の影（暗い地面でも絵が浮いて見えるように）。影は地面にあるので動きに合わせない
       ctx.fillStyle = `rgba(0,0,0,${M.spriteShadow})`;
       ctx.beginPath();
-      ctx.ellipse(x, y + size * 0.38, size * 0.32, size * 0.1, 0, 0, Math.PI * 2);
+      ctx.ellipse(x + p.dx, y + size * 0.38, size * 0.32 * p.sx, size * 0.1, 0, 0, Math.PI * 2);
       ctx.fill();
+      ctx.save();
+      // 足元を中心にのび縮み・かたむきをつける
+      ctx.translate(x + p.dx, y + p.dy + size * 0.4);
+      ctx.rotate(p.rot);
+      ctx.scale(p.sx * p.flip, p.sy);
       if (flash) ctx.filter = "brightness(2.2)";
-      ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
-      ctx.filter = "none";
+      ctx.drawImage(img, -size / 2, -size * 0.9, size, size);
+      ctx.restore();
       return;
     }
     ctx.fillStyle = color;
@@ -215,7 +270,8 @@ WYD.render = {
       ctx.globalAlpha = 1;
     }
     if (p.dead && img) ctx.globalAlpha = 0.4;
-    this.drawCircleOrImage(ctx, p.x, p.y, P.radius, p.dead ? "#555" : P.color, P.image);
+    this.drawCircleOrImage(ctx, p.x, p.y, P.radius, p.dead ? "#555" : P.color, P.image, false,
+      this.pose(p, p.swingTarget, this.clock));
     ctx.globalAlpha = 1;
     if (!img) {
       ctx.strokeStyle = "#ffffff";
@@ -256,7 +312,8 @@ WYD.render = {
       ctx.arc(e.x, e.y, def.radius + 4, 0, Math.PI * 2);
       ctx.stroke();
     }
-    this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, def.image, e.hitFlash > 0);
+    this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, def.image, e.hitFlash > 0,
+      this.pose(e, this.playerPos, this.clock));
 
     // HPバー：絵があるときは絵の上に出す
     const top = this.getImage(def.image) ? def.radius * WYD.data.map.spriteScale / 2 : def.radius;
