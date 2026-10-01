@@ -76,6 +76,7 @@ WYD.gems = {
     for (let i = 0; i < count; i++) {
       const key = this.key(WYD.util.pick(WYD.data.gems.gems).id, this.dropTier(state));
       this.add(state, key);
+      WYD.offline.record("gems", 1);
       WYD.world.addText(w, e.x, e.y - 40 - i * 14, `◆${this.name(key)}`, this.color(key));
       WYD.ui.log(`宝石「${this.name(key)}」を手に入れた`, this.color(key));
     }
