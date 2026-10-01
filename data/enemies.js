@@ -50,6 +50,28 @@ WYD.data.enemies = {
     showName: true,    // 頭の上に名前を出す
   },
 
+  // 遠くから弾を撃つ敵
+  //   ranged.keepDistance … プレイヤーとこの距離を保とうとする
+  //   ranged.range        … この距離に入ったら撃つ
+  //   ranged.speed        … 弾の速さ（1秒あたりのピクセル）
+  //   ranged.size         … 弾の大きさ
+  yakshaArcher: {
+    name: "夜叉の弓兵",
+    color: "#d89a5a",
+    image: null,
+    radius: 12,
+    hp: 40,
+    attack: 7,
+    defense: 1,
+    attackSpeed: 0.6,
+    moveSpeed: 70,
+    range: 22,
+    exp: 8,
+    dropChance: 0.2,
+    rarityBonus: 1.2,
+    ranged: { keepDistance: 180, range: 260, speed: 240, size: 4, color: "#ffe0a0" },
+  },
+
   // ---- シュマシャーナ（火葬場） ----
   vetala: {
     name: "ヴェーターラ",
@@ -82,6 +104,23 @@ WYD.data.enemies = {
     rarityBonus: 1.4,
   },
 
+  bhuta: {
+    name: "鬼火のブータ",
+    color: "#7fb0c9",
+    image: null,
+    radius: 12,
+    hp: 50,
+    attack: 9,
+    defense: 1,
+    attackSpeed: 0.5,
+    moveSpeed: 80,
+    range: 22,
+    exp: 10,
+    dropChance: 0.2,
+    rarityBonus: 1.3,
+    ranged: { keepDistance: 200, range: 280, speed: 180, size: 7, color: "#8fe8ff" },
+  },
+
   // ---- パーターラ（地底界） ----
   naga: {
     name: "ナーガ",
@@ -112,6 +151,23 @@ WYD.data.enemies = {
     exp: 18,
     dropChance: 0.3,
     rarityBonus: 1.5,
+  },
+
+  nagaCaster: {
+    name: "ナーガの呪術師",
+    color: "#7ad16a",
+    image: null,
+    radius: 14,
+    hp: 80,
+    attack: 12,
+    defense: 3,
+    attackSpeed: 0.55,
+    moveSpeed: 60,
+    range: 22,
+    exp: 16,
+    dropChance: 0.3,
+    rarityBonus: 1.5,
+    ranged: { keepDistance: 200, range: 300, speed: 220, size: 6, color: "#b6ff6a" },
   },
 
   // ---- ボス ----

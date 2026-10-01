@@ -11,6 +11,7 @@ WYD.world = {
         attackTimer: 0, skillCooldowns: {}, buff: null, haste: null, swing: 0,
       },
       fields: [],   // 地面に残る炎の陣など
+      projectiles: [], // 敵が撃った弾
       enemies: [],
       drops: [],
       effects: [],
@@ -50,6 +51,7 @@ WYD.world = {
     this.updateSpawns(w, state, dt);
     this.updatePlayer(w, state, stats, dt);
     this.updateEnemies(w, state, stats, dt);
+    if (!p.dead) this.updateProjectiles(w, state, stats, dt);
     this.updateDrops(w, state, dt);
   },
 
@@ -343,6 +345,10 @@ WYD.world = {
         if (p.dead) return;
         continue;   // 大技の準備中は動かない
       }
+      if (def.ranged) {
+        this.updateRanged(w, e, def, d, dt);
+        continue;
+      }
       if (d > reach) this.moveToward(e, p, def.moveSpeed * e.moveSpeedMult * dt, reach * 0.8);
 
       e.attackTimer -= dt;
@@ -381,6 +387,50 @@ WYD.world = {
         }
       }
     }
+  },
+
+  // 遠くから撃つ敵：距離をとりながら、届いたら弾を撃つ
+  updateRanged(w, e, def, d, dt) {
+    const p = w.player;
+    const r = def.ranged;
+    if (d > r.keepDistance) this.moveToward(e, p, def.moveSpeed * e.moveSpeedMult * dt, r.keepDistance);
+    e.attackTimer -= dt;
+    if (d <= r.range && e.attackTimer <= 0) {
+      e.attackTimer = 1 / (def.attackSpeed * e.attackSpeedMult);
+      w.projectiles.push({
+        x: e.x, y: e.y,
+        vx: (p.x - e.x) / d * r.speed, vy: (p.y - e.y) / d * r.speed,
+        size: r.size, color: r.color, attack: e.attack, ownerId: e.id,
+        life: WYD.data.map.projectileLifetime,
+      });
+    }
+  },
+
+  // 弾を動かして、プレイヤーに当たったらダメージ
+  updateProjectiles(w, state, stats, dt) {
+    const p = w.player;
+    const map = WYD.data.map;
+    for (const b of w.projectiles) {
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.life -= dt;
+      if (b.x < 0 || b.y < 0 || b.x > map.width || b.y > map.height) b.life = 0;
+      if (b.life <= 0 || p.dead) continue;
+      if (WYD.util.dist(b, p) > WYD.data.player.radius + b.size) continue;
+      b.life = 0;
+      const defense = stats.defense + (p.buff ? p.buff.defense : 0);
+      const hit = this.calcDamage(b.attack, defense, 0);
+      p.hp -= hit.damage;
+      this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
+      // 特殊効果：ナーガの鱗（撃った敵が生きていれば返す）
+      const owner = w.enemies.find((e) => e.id === b.ownerId);
+      if (owner && stats.effects.thorns > 0) {
+        const back = Math.round(hit.damage * stats.effects.thorns / 100);
+        if (back > 0) this.damageEnemy(w, state, owner, back, false);
+      }
+      if (p.hp <= 0) this.playerDied(w);
+    }
+    w.projectiles = w.projectiles.filter((b) => b.life > 0);
   },
 
   // ボスの大技：予告の輪が出たあと、範囲内にいると大ダメージ。準備中なら true を返す
@@ -575,6 +625,7 @@ WYD.world = {
     p.buff = null;
     p.haste = null;
     w.fields = [];
+    w.projectiles = [];
     w.enemies = [];
     w.spawnTimer = 1;
   },
@@ -584,6 +635,7 @@ WYD.world = {
   resetEnemies(w, state, keepBoss) {
     if (keepBoss) this.keepBoss(w, state);
     w.enemies = [];
+    w.projectiles = [];
     w.spawnTimer = 0.5;
   },
 

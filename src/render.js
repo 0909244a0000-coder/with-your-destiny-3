@@ -56,6 +56,7 @@ WYD.render = {
     for (const drop of w.drops) this.drawDrop(ctx, drop);
     for (const e of w.enemies) this.drawEnemy(ctx, e);
     this.drawPlayer(ctx, w.player);
+    for (const b of w.projectiles) this.drawProjectile(ctx, b);
     for (const ef of w.effects) this.drawEffect(ctx, ef);
 
     ctx.textAlign = "center";
@@ -127,6 +128,19 @@ WYD.render = {
     ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
+  },
+
+  // 敵の弾：光る玉
+  drawProjectile(ctx, b) {
+    ctx.fillStyle = b.color;
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.size * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+    ctx.fill();
   },
 
   drawPlayer(ctx, p) {

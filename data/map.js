@@ -8,6 +8,7 @@ WYD.data.map = {
   maxEnemies: 6,        // 同時に出る敵の最大数
   spawnInterval: 1.2,   // 敵が出てくる間隔（秒）
   spawnMinDistance: 220,// プレイヤーからこれ以上離れた場所に出る
+  projectileLifetime: 3,// 弾が消えるまでの秒数
   decorationCount: 40,  // 飾り（草・石）の数
   decorationSeed: 7,
 };

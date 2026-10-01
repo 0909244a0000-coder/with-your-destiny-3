@@ -16,6 +16,7 @@ WYD.data.areas = [
       { kind: "preta", weight: 60 },
       { kind: "yaksha", weight: 30 },
       { kind: "rakshasa", weight: 8 },
+      { kind: "yakshaArcher", weight: 15 },
     ],
     boss: "ravana",          // ボス
     killsForBoss: 40,        // この数倒すとボスが出る
@@ -33,6 +34,7 @@ WYD.data.areas = [
       { kind: "vetala", weight: 50 },
       { kind: "pishacha", weight: 35 },
       { kind: "rakshasa", weight: 12 },
+      { kind: "bhuta", weight: 18 },
     ],
     boss: "bhairava",
     killsForBoss: 50,
@@ -50,6 +52,7 @@ WYD.data.areas = [
       { kind: "naga", weight: 45 },
       { kind: "daitya", weight: 40 },
       { kind: "pishacha", weight: 15 },
+      { kind: "nagaCaster", weight: 20 },
     ],
     boss: "mahisha",
     killsForBoss: 60,
