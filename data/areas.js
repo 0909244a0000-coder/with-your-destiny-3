@@ -9,7 +9,7 @@ WYD.data.areas = [
     bgColor: "#2b3a2a",
     grassColor: "#34482f",   // 飾り（草）の色
     stoneColor: "#4a4f47",   // 飾り（石）の色
-    groundImage: null,       // 地面の絵（例: "assets/areas/forest.png"）。あれば色の代わりに敷きつめる
+    groundImage: "assets/areas/forest.png", // 地面の絵を敷きつめる
     powerMult: 1,            // 敵のHP・攻撃力・防御力・経験値の倍率
     itemLevelBonus: 0,       // 落ちる装備のアイテムレベルに足す数
     enemies: [               // 出てくる敵と出やすさ（data/enemies.js の名前）
@@ -27,7 +27,7 @@ WYD.data.areas = [
     bgColor: "#3a2c26",
     grassColor: "#5a3a2a",
     stoneColor: "#6b6258",
-    groundImage: null,
+    groundImage: "assets/areas/smashana.png",
     powerMult: 2.0,
     itemLevelBonus: 3,
     enemies: [
@@ -45,7 +45,7 @@ WYD.data.areas = [
     bgColor: "#232a3a",
     grassColor: "#2f3f5a",
     stoneColor: "#55506b",
-    groundImage: null,
+    groundImage: "assets/areas/patala.png",
     powerMult: 3.5,
     itemLevelBonus: 7,
     enemies: [

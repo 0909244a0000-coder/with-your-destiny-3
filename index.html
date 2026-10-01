@@ -28,7 +28,7 @@
       <button data-speed="2">×2</button>
       <button data-speed="4">×4</button>
       <span class="sep"></span>
-      <label><input type="checkbox" id="skip-normal"> ノーマルを拾わない</label>
+      <label>自動分解 <select id="auto-salvage" title="選んだレア度以下の装備は、拾わずにその場で素材にする"></select></label>
       <span class="sep"></span>
       <button id="reset" class="danger">最初から</button>
     </div>
@@ -49,6 +49,7 @@
         <div class="bar"><div id="hp-bar" class="fill hp"></div><span id="hp-text"></span></div>
         <div class="bar"><div id="exp-bar" class="fill exp"></div><span id="exp-text"></span></div>
         <div id="stats" class="stats"></div>
+        <div id="build" class="build"></div>
       </section>
 
       <section class="panel">
@@ -70,6 +71,14 @@
           <button id="craft-mode">つけ直しモード：OFF</button>
         </div>
         <p class="muted" id="inv-help">左クリック：装備する／右クリック：捨てる（捨てると素材になる）</p>
+      </section>
+
+      <section class="panel">
+        <h2>倉庫 <small id="stash-count"></small> <button id="stash-toggle">開く</button></h2>
+        <div id="stash-body" hidden>
+          <div id="stash" class="grid"></div>
+          <p class="muted">クリック：持ち物へ戻す／右クリック：捨てる。持ち物を倉庫に入れるときは Shift＋クリック</p>
+        </div>
       </section>
     </aside>
   </main>

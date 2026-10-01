@@ -16,6 +16,7 @@ WYD.save = {
       player: { level: 1, exp: 0, skillPoints: 0, skills, skillEnabled: enabled },
       equipment: {},   // slot -> item
       inventory: [],   // item の配列
+      stash: [],       // 倉庫（item の配列）
       nextItemId: 1,
       difficulty: 1,
       maxDifficulty: 1,
@@ -23,7 +24,7 @@ WYD.save = {
       area: WYD.data.areas[0].id,               // 今いるエリア
       unlockedAreas: [WYD.data.areas[0].id],    // 行けるエリア
       bossProgress: 0,                          // ボスが出るまでに倒した数
-      settings: { speed: 1, skipNormal: false, autoDifficulty: false },
+      settings: { speed: 1, autoSalvage: "none", autoDifficulty: false },
       materials: 0,    // 素材（装備を捨てるともらえる。名前は data/crafting.js）
     };
   },
@@ -47,7 +48,11 @@ WYD.save = {
       if (!state.unlockedAreas.includes(areaIds[0])) state.unlockedAreas.unshift(areaIds[0]);
       if (!state.unlockedAreas.includes(state.area)) state.area = areaIds[0];
       if (typeof state.materials !== "number") state.materials = 0;
-      for (const item of state.inventory.concat(Object.values(state.equipment))) {
+      // 「ノーマルを拾わない」だった頃のセーブは、「ノーマルを自動分解」にする
+      if (saved.settings && saved.settings.skipNormal && !saved.settings.autoSalvage) state.settings.autoSalvage = "normal";
+      delete state.settings.skipNormal;
+      if (!Array.isArray(state.stash)) state.stash = [];
+      for (const item of state.inventory.concat(state.stash, Object.values(state.equipment))) {
         if (!item) continue;
         // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
         if (!Array.isArray(item.effects)) item.effects = [];
