@@ -100,6 +100,15 @@ WYD.world = {
         w.bossTimer = null;
         const boss = this.spawnEnemy(w, state, area.boss, this.farPosition(w));
         boss.boss = true;
+        // 何度も倒されていたら、すこし弱くする
+        const B = WYD.data.boss;
+        const ease = Math.min(B.easeMax, B.easePerDeath * (state.bossDeaths[area.id] || 0));
+        if (ease > 0) {
+          boss.maxHp = Math.round(boss.maxHp * (1 - ease));
+          boss.hp = boss.maxHp;
+          boss.attack *= 1 - ease;
+          WYD.ui.log(`（何度も挑んだので、ボスが弱っている：-${Math.round(ease * 100)}%）`, "#c9b48a");
+        }
         boss.slamTimer = WYD.data.enemies[area.boss].slam.interval;
         WYD.ui.log(`ボス「${WYD.data.enemies[area.boss].name}」が現れた！`, WYD.data.boss.nameColor);
         WYD.sound.play("bossAppear");
@@ -960,6 +969,7 @@ WYD.world = {
       WYD.trial.onKill(w, state, e);
     } else if (e.boss) {
       w.bossDone = true;
+      delete state.bossDeaths[area.id];
       this.bossDefeated(state, area, def);
       // ボスを倒したら、すこしして地下1階にもどる（もう一度もぐって集められる）
       w.returnTimer = WYD.data.boss.bossAppearDelay * 2;
@@ -1158,6 +1168,7 @@ WYD.world = {
     // ボスの間で倒れたら、1つ上の階にもどる（すこし倒せばまた降りられる）
     if (this.isBossRoom(state)) {
       const area = this.area(state);
+      state.bossDeaths[area.id] = (state.bossDeaths[area.id] || 0) + 1;
       this.changeFloor(w, state, -1);
       state.bossProgress = Math.floor(area.killsPerFloor * WYD.data.boss.retryProgressRatio);
     }
