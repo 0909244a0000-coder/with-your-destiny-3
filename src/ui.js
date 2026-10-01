@@ -419,6 +419,8 @@ WYD.ui = {
 
   updateBars() {
     const s = this.state;
+    const dps = Math.round(WYD.world.dps(this.world));
+    this.$("dps").textContent = `秒間ダメージ（直近${WYD.data.combat.dpsWindow}秒）：${dps.toLocaleString()}`;
     const stats = WYD.stats.compute(s);
     const hp = Math.max(0, Math.round(this.world.player.hp || 0));
     this.$("hp-bar").style.width = `${(hp / stats.maxHp) * 100}%`;

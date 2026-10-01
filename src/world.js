@@ -857,10 +857,29 @@ WYD.world = {
     }
     e.hp -= damage;
     e.hitFlash = 0.1;
+    this.logDamage(w, damage);
     this.addText(w, e.x, e.y - 16, crit ? `${damage}!` : `${damage}`, crit ? "#ffd447" : "#ffffff", crit);
     WYD.fx.hit(w, e, crit);
     if (e.boss && !e.enraged && e.hp > 0 && e.hp <= e.maxHp * WYD.data.boss.enrage.hpRatio) this.enrage(w, state, e);
     if (e.hp <= 0) this.enemyDied(w, state, e);
+  },
+
+  // 与えたダメージを記録する（秒間ダメージの表示用。手下や燃える地面もふくむ）
+  logDamage(w, damage) {
+    const win = WYD.data.combat.dpsWindow;
+    w.dmgLog = w.dmgLog || [];
+    w.dmgLog.push({ t: w.time || 0, d: damage });
+    while (w.dmgLog.length && w.dmgLog[0].t < (w.time || 0) - win) w.dmgLog.shift();
+  },
+
+  // 直近の秒間ダメージ
+  dps(w) {
+    const win = WYD.data.combat.dpsWindow;
+    const now = w.time || 0;
+    const log = (w.dmgLog || []).filter((x) => x.t >= now - win);
+    if (!log.length) return 0;
+    const span = Math.max(1, Math.min(win, now - log[0].t));
+    return log.reduce((a, x) => a + x.d, 0) / span;
   },
 
   // ボスの怒り：強くなり、手下を呼ぶ（data/areas.js の boss.enrage）

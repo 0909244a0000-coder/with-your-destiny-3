@@ -120,4 +120,5 @@ WYD.data.combat = {
   defenseFactor: 0.5,   // ダメージ = 攻撃力 − 防御力×これ
   damageVariance: 0.1,  // ダメージのブレ（±10%）
   minDamage: 1,
+  dpsWindow: 10,        // 秒間ダメージを、直近の何秒で計るか
 };
