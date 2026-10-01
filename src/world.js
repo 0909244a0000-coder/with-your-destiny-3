@@ -343,9 +343,22 @@ WYD.world = {
       if (lv <= 0 || !state.player.skillEnabled[id]) continue;
       if ((p.skillCooldowns[id] || 0) > 0) continue;
       this.castingId = id;
-      const used = this.skillHandlers[WYD.classes.kindOf(id)].call(this, w, state, stats, WYD.data.skills[id], lv);
-      if (used) WYD.vfx.cast(w, id, p.x, p.y, WYD.data.skills[id].radius);
-      if (used) p.skillCooldowns[id] = WYD.data.skills[id].cooldown * (1 - stats.effects.cooldown / 100);
+      // スキルの型（ルーン）を反映した数値と、おまけの効果
+      const def = WYD.runes.effectiveDef(state, id);
+      this.castExtra = WYD.runes.extra(state, id);
+      const used = this.skillHandlers[WYD.classes.kindOf(id)].call(this, w, state, stats, def, lv);
+      const extra = this.castExtra;
+      this.castExtra = null;
+      if (used) {
+        WYD.vfx.cast(w, id, p.x, p.y, def.radius);
+        p.skillCooldowns[id] = def.cooldown * (1 - stats.effects.cooldown / 100);
+        // 型のおまけ：足元に燃える地面などを残す
+        const lf = extra && extra.leaveField;
+        if (lf) {
+          w.fields.push({ x: p.x, y: p.y, radius: lf.radius, timeLeft: lf.duration, duration: lf.duration,
+            tick: lf.tick, tickTimer: lf.tick, mult: lf.mult * (1 + stats.skillDamage / 100), color: lf.color });
+        }
+      }
     }
   },
 
@@ -680,6 +693,12 @@ WYD.world = {
     if (fx.wrath > 0 && wrath && p.hp / stats.maxHp * 100 <= wrath.hpPercent) attack *= 1 + fx.wrath / 100;
     const hit = this.calcDamage(attack, e.defense, stats.critChance, stats.critMultiplier);
     this.damageEnemy(w, state, e, hit.damage, hit.crit);
+    // スキルの型のおまけ：吸血・縛る（スキルを使っている最中だけ）
+    const ex = this.castExtra;
+    if (ex) {
+      if (ex.lifesteal && !p.dead) p.hp = Math.min(stats.maxHp, p.hp + hit.damage * ex.lifesteal / 100);
+      if (ex.bind && e.hp > 0) e.stunTimer = Math.max(e.stunTimer || 0, e.boss ? ex.bind * 0.3 : ex.bind);
+    }
     if (fx.lifesteal > 0 && !p.dead) {
       p.hp = Math.min(stats.maxHp, p.hp + hit.damage * fx.lifesteal / 100);
     }

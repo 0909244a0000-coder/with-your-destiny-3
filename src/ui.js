@@ -170,6 +170,14 @@ WYD.ui = {
     eq.onmouseover = (e) => this.showTooltipFor(e, "eq");
     eq.onmouseleave = () => this.hideTooltip();
 
+    // スキルの型を選ぶ
+    this.$("skills").onchange = (e) => {
+      const sel = e.target.closest("select[data-rune-skill]");
+      if (!sel) return;
+      s.player.runes[sel.dataset.runeSkill] = sel.value || undefined;
+      if (!sel.value) delete s.player.runes[sel.dataset.runeSkill];
+      this.changed();
+    };
     // スキル：＋ボタンとON/OFF
     this.$("skills").onclick = (e) => {
       const btn = e.target.closest("button");
@@ -377,7 +385,7 @@ WYD.ui = {
     // スキル
     this.$("skill-points").textContent = s.player.skillPoints;
     this.$("skill-slots").textContent = `${this.activeSkillCount()} / ${WYD.data.skillSlots}`;
-    this.$("skills").innerHTML = Object.keys(WYD.data.skills).map((id) => {
+    const skillsHtml = Object.keys(WYD.data.skills).map((id) => {
       const def = WYD.data.skills[id];
       const lv = s.player.skills[id] || 0;
       const on = s.player.skillEnabled[id];
@@ -390,9 +398,15 @@ WYD.ui = {
           <button data-skill="${id}" data-action="up" ${canUp ? "" : "disabled"}>＋</button>
           <button data-skill="${id}" data-action="toggle" class="${on && lv > 0 ? "on" : "off"}" ${lv > 0 ? "" : "disabled"}>${lv > 0 ? (on ? "ON" : "OFF") : "未習得"}</button>
         </div>
-        <div class="skill-desc">${def.desc}（${def.cooldown}秒ごと）</div>
+        <div class="skill-desc">${def.desc}（${Math.round(WYD.runes.effectiveDef(s, id).cooldown * 10) / 10}秒ごと）</div>
+        ${this.runeHtml(id, lv)}
       </div>`;
     }).join("");
+    // 中身が変わったときだけ作り直す（選択欄を開いている最中に閉じないように）
+    if (skillsHtml !== this.lastSkillsHtml) {
+      this.$("skills").innerHTML = skillsHtml;
+      this.lastSkillsHtml = skillsHtml;
+    }
 
     // 装備
     const slots = WYD.data.items.slots;
@@ -438,6 +452,20 @@ WYD.ui = {
         : `<div class="cell blank"></div>`;
     }
     return html;
+  },
+
+  // スキルの型（ルーン）を選ぶ欄。覚えていないスキルには出さない
+  runeHtml(id, lv) {
+    const list = WYD.runes.list(id);
+    if (!list.length || lv <= 0) return "";
+    const cur = WYD.runes.selected(this.state, id);
+    const opts = [`<option value="">基本の型</option>`].concat(list.map((r, i) => {
+      const need = WYD.runes.unlockLevel(i);
+      const locked = lv < need;
+      return `<option value="${r.id}" ${cur && cur.id === r.id ? "selected" : ""} ${locked ? "disabled" : ""}>${r.name}${locked ? `（Lv${need}で解放）` : ""}</option>`;
+    }));
+    return `<div class="skill-rune">型：<select data-rune-skill="${id}">${opts.join("")}</select>
+      <span class="skill-rune-desc">${cur ? cur.desc : ""}</span></div>`;
   },
 
   // 修練ポイントの振り分け
