@@ -30,8 +30,10 @@ WYD.ui = {
       s.settings.autoDifficulty = e.target.checked;
       this.changed();
     };
-    this.$("skip-normal").onchange = (e) => {
-      s.settings.skipNormal = e.target.checked;
+    this.$("auto-salvage").innerHTML = WYD.data.crafting.autoSalvageOptions
+      .map((o) => `<option value="${o.id}">${o.label}</option>`).join("");
+    this.$("auto-salvage").onchange = (e) => {
+      s.settings.autoSalvage = e.target.value;
       this.changed();
     };
     this.$("reset").onclick = () => {
@@ -238,7 +240,7 @@ WYD.ui = {
     for (const btn of document.querySelectorAll("[data-speed]")) {
       btn.classList.toggle("active", Number(btn.dataset.speed) === s.settings.speed);
     }
-    this.$("skip-normal").checked = s.settings.skipNormal;
+    this.$("auto-salvage").value = s.settings.autoSalvage;
     this.$("auto-diff").checked = s.settings.autoDifficulty;
 
     // キャラ
@@ -251,8 +253,10 @@ WYD.ui = {
       ["HP回復", `${stats.hpRegen.toFixed(1)} /秒`],
       ["移動速度", Math.round(stats.moveSpeed)],
       ["スキル威力", `+${Math.round(stats.skillDamage)}%`],
+      ["会心ダメージ", `×${stats.critMultiplier.toFixed(2)}`],
     ];
     this.$("stats").innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("");
+    this.$("build").innerHTML = this.buildHtml(stats);
 
     // スキル
     this.$("skill-points").textContent = s.player.skillPoints;
@@ -305,6 +309,24 @@ WYD.ui = {
     }
     this.$("inventory").innerHTML = html;
     this.hideTooltip();
+  },
+
+  // 装備から今効いている特殊効果（合計）と固有能力のまとめ
+  buildHtml(stats) {
+    const lines = [];
+    for (const def of WYD.data.effects.list) {
+      const v = stats.effects[def.id];
+      if (!v) continue;
+      const capped = v >= def.cap ? "（上限）" : "";
+      lines.push(`<div style="color:${WYD.data.effects.color}">✦ ${def.name}：<small>${WYD.util.formatEffect(def, v)}${capped}</small></div>`);
+    }
+    for (const slot in this.state.equipment) {
+      const u = WYD.loot.uniqueInfo(this.state.equipment[slot]);
+      if (u) lines.push(`<div style="color:${WYD.data.uniques.color}">◆ ${u.name}：<small>${WYD.loot.uniqueDesc(u)}</small></div>`);
+    }
+    return lines.length
+      ? `<div class="build-title">装備の効果</div>${lines.join("")}`
+      : `<div class="build-title">装備の効果：なし</div>`;
   },
 
   // 装備のアイコン（絵が用意されているときだけ）。読めなかったら消す
