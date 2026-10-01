@@ -101,7 +101,9 @@ WYD.loot = {
 
   // 装備の表示名（強化していれば「+3 名前」）
   label(item) {
-    return item.plus > 0 ? `+${item.plus} ${item.name}` : item.name;
+    const rw = WYD.gems.runeword(item);
+    const name = rw ? `「${rw.name}」${item.name}` : item.name;
+    return item.plus > 0 ? `+${item.plus} ${name}` : name;
   },
 
   // 強化を入れた、能力1行の数値
@@ -119,6 +121,9 @@ WYD.loot = {
       const st = WYD.gems.statsFor(key, item.slot);
       for (const k in st) out[k] = (out[k] || 0) + st[k];
     }
+    // ルーンワードの能力
+    const rw = WYD.gems.runeword(item);
+    if (rw) for (const k in rw.bonus.stats || {}) out[k] = (out[k] || 0) + rw.bonus.stats[k];
     return out;
   },
 

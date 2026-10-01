@@ -109,6 +109,8 @@ WYD.inventory = {
   shouldAutoSalvage(state, item) {
     const opt = WYD.data.crafting.autoSalvageOptions.find((o) => o.id === state.settings.autoSalvage);
     if (!opt || !opt.upTo) return false;
+    // ソケットが2つ以上のノーマル装備はルーンワードの土台になるので残す
+    if (item.rarity === "normal" && (item.sockets || []).length >= 2) return false;
     const order = WYD.data.items.rarities.map((r) => r.id);
     return order.indexOf(item.rarity) <= order.indexOf(opt.upTo);
   },

@@ -708,12 +708,30 @@ WYD.ui = {
     }).join("");
   },
 
+  // ルーンワードの表示（発動していれば効果、ノーマル装備でルーンがはまっていれば作れる候補）
+  runewordHtml(item) {
+    const G = WYD.data.gems;
+    const rw = WYD.gems.runeword(item);
+    if (rw) return `<div class="unique-power" style="color:${G.runewordColor}">ᚱ ルーンワード「${rw.name}」<br><small>${this.bonusText(rw.bonus)}</small></div>`;
+    if (item.rarity !== "normal" || !(item.sockets || []).length) return "";
+    const n = item.sockets.length, group = G.slotGroup[item.slot];
+    const fits = G.runewords.filter((x) => x.group === group && x.runes.length === n);
+    if (!fits.length) return "";
+    return `<div class="tip-sub">この装備で作れるルーンワード：${fits.map((x) => `「${x.name}」${x.runes.map((id) => G.runes.find((r) => r.id === id).name).join("＋")}`).join("／")}</div>`;
+  },
+
   // 装備のソケットの表示
   socketsHtml(item) {
     if (!item.sockets || item.sockets.length === 0) return "";
     return item.sockets.map((key) => key
       ? `<div class="socket" style="color:${WYD.gems.color(key)}">◆ ${WYD.gems.name(key)}：${WYD.gems.statsText(key, item.slot)}</div>`
       : `<div class="socket empty">◇ 空いたソケット</div>`).join("");
+  },
+
+  runewordListHtml() {
+    const G = WYD.data.gems;
+    return G.runewords.map((rw) => `<div class="codex-item"><b style="color:${G.runewordColor}">「${rw.name}」</b> <small class="muted">${G.groupName[rw.group]}・ソケット${rw.runes.length}つ</small><br>
+      <small>${rw.runes.map((id) => G.runes.find((r) => r.id === id).name).join(" → ")}：${this.bonusText(rw.bonus)}</small></div>`).join("");
   },
 
   // 図鑑と記録の画面
@@ -757,7 +775,8 @@ WYD.ui = {
     }).join("");
     return `<div class="codex-cols">
       <div><h3>記録</h3>${counters}<h3>実績 <small>${done}/${R.achievements.length}</small></h3>${achievements}</div>
-      <div><h3>ユニーク図鑑 <small>${uFound}/${uList.length}</small></h3>${uniques}<h3>セット図鑑</h3>${sets}</div>
+      <div><h3>ルーンワード <small>ノーマル装備のソケットを、この順番でうめる</small></h3>${this.runewordListHtml()}
+      <h3>ユニーク図鑑 <small>${uFound}/${uList.length}</small></h3>${uniques}<h3>セット図鑑</h3>${sets}</div>
     </div>`;
   },
 
@@ -876,12 +895,13 @@ WYD.ui = {
     ).join("");
     return `<div class="tip-item">
       ${title ? `<div class="tip-title">${title}</div>` : ""}
-      <div style="color:${r.color};font-weight:bold">${item.plus > 0 ? `<span style="color:${WYD.data.crafting.enhance.color}">+${item.plus}</span> ` : ""}${item.name}</div>
+      <div style="color:${WYD.gems.runeword(item) ? WYD.data.gems.runewordColor : r.color};font-weight:bold">${item.plus > 0 ? `<span style="color:${WYD.data.crafting.enhance.color}">+${item.plus}</span> ` : ""}${WYD.gems.runeword(item) ? `「${WYD.gems.runeword(item).name}」` : ""}${item.name}</div>
       <div class="tip-sub">${r.name}・${WYD.data.items.slots[item.slot]}・アイテムLv ${item.level}</div>
       ${lines}
       ${uniqueLine}
       ${fxLines}
       ${this.socketsHtml(item)}
+      ${this.runewordHtml(item)}
     </div>`;
   },
 

@@ -46,6 +46,11 @@ WYD.stats = {
       for (const id in a.bonus.effects || {}) if (id in totals) totals[id] += a.bonus.effects[id];
     }
     for (const slot in state.equipment) {
+      // ルーンワードの特殊効果
+      const rw = WYD.gems.runeword(state.equipment[slot]);
+      if (rw) for (const id in rw.bonus.effects || {}) if (id in totals) totals[id] += rw.bonus.effects[id];
+    }
+    for (const slot in state.equipment) {
       const item = state.equipment[slot];
       if (!item || !Array.isArray(item.effects)) continue;
       for (const fx of item.effects) {
@@ -65,6 +70,11 @@ WYD.stats = {
     }
     for (const a of this.activeSetBonuses(state)) {
       if (a.bonus.power && !out[a.bonus.power]) out[a.bonus.power] = a.bonus.params;
+    }
+    // ルーンワードの固有能力
+    for (const slot in state.equipment) {
+      const rw = WYD.gems.runeword(state.equipment[slot]);
+      if (rw && rw.bonus.power && !out[rw.bonus.power]) out[rw.bonus.power] = rw.bonus.params;
     }
     // カナイの箱に入れた能力（装備と同じ能力なら装備のほうが効く）
     for (const def of WYD.cube.active(state)) if (!out[def.power]) out[def.power] = def.params;

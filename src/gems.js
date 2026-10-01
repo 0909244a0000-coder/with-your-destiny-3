@@ -10,6 +10,11 @@ WYD.gems = {
   info(key) {
     const [id, t] = String(key).split(":");
     const G = WYD.data.gems;
+    // ルーン（"rune:el"）は段階なし
+    if (id === "rune") {
+      const def = G.runes.find((r) => r.id === t);
+      return def ? { def, tier: 0, tierDef: { name: "", mult: 1 }, rune: true, index: G.runes.indexOf(def) } : null;
+    }
     const def = G.gems.find((g) => g.id === id);
     const tier = Number(t);
     if (!def || !G.tiers[tier]) return null;
@@ -18,7 +23,42 @@ WYD.gems = {
 
   name(key) {
     const i = this.info(key);
+    if (i && i.rune) return `ルーン「${i.def.name}」`;
     return i ? `${i.tierDef.name ? i.tierDef.name + " " : ""}${i.def.name}` : "？";
+  },
+
+  // そのルーンを1つ上にしたもの（なければ null）
+  nextKey(key) {
+    const i = this.info(key);
+    if (!i) return null;
+    if (i.rune) {
+      const next = WYD.data.gems.runes[i.index + 1];
+      return next ? `rune:${next.id}` : null;
+    }
+    return WYD.data.gems.tiers[i.tier + 1] ? this.key(i.def.id, i.tier + 1) : null;
+  },
+
+  // ノーマル装備のソケットのルーンが、ルーンワードとぴったり合えばその定義
+  runeword(item) {
+    const G = WYD.data.gems;
+    const so = item && item.sockets;
+    if (!so || !so.length || item.rarity !== "normal" || so.some((k) => !k || !String(k).startsWith("rune:"))) return null;
+    const seq = so.map((k) => k.slice(5)).join(",");
+    const group = G.slotGroup[item.slot];
+    return G.runewords.find((rw) => rw.group === group && rw.runes.join(",") === seq) || null;
+  },
+
+  // 敵を倒したとき、ルーンを落とすことがある
+  dropRune(w, state, e) {
+    const D = WYD.data.gems.runeDrop;
+    const chance = e.boss ? D.chanceBoss : e.elite ? D.chanceElite : D.chanceNormal;
+    if (Math.random() >= chance) return;
+    const r = WYD.util.pickWeighted(WYD.data.gems.runes, (x) => x.weight);
+    const key = `rune:${r.id}`;
+    this.add(state, key);
+    WYD.world.addText(w, e.x, e.y - 52, `ᚱ${r.name}`, r.color);
+    WYD.ui.log(`${this.name(key)}を手に入れた`, r.color);
+    WYD.ui.markDirty();
   },
 
   color(key) {
@@ -81,6 +121,7 @@ WYD.gems = {
       WYD.ui.log(`宝石「${this.name(key)}」を手に入れた`, this.color(key));
     }
     if (count > 0) WYD.ui.markDirty();
+    this.dropRune(w, state, e);
   },
 
   freeSocket(item) {
@@ -103,7 +144,8 @@ WYD.gems = {
 
   combineCost(key) {
     const i = this.info(key);
-    return i ? WYD.data.gems.combineCost[i.tier] : null;
+    if (!i || !this.nextKey(key)) return null;
+    return i.rune ? WYD.data.gems.runeUpgradeCost * (i.index + 1) : WYD.data.gems.combineCost[i.tier];
   },
 
   // 同じ宝石をまとめて1つ上の段階に。できたら true
@@ -114,7 +156,7 @@ WYD.gems = {
     if (cost == null || (state.gems[key] || 0) < G.combineCount || state.materials < cost) return false;
     state.materials -= cost;
     this.add(state, key, -G.combineCount);
-    this.add(state, this.key(i.def.id, i.tier + 1));
+    this.add(state, this.nextKey(key));
     return true;
   },
 };
