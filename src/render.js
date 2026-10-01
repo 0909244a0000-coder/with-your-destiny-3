@@ -116,6 +116,24 @@ WYD.render = {
 
   drawEnemy(ctx, e) {
     const def = WYD.data.enemies[e.kind];
+    const E = WYD.data.elites;
+    if (e.elite) {
+      // 精鋭：業火の範囲と、青い輪
+      if (e.elite.affixes.includes("burning")) {
+        const burning = E.affixes.find((a) => a.id === "burning");
+        ctx.fillStyle = burning.auraColor;
+        ctx.globalAlpha = 0.12;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, burning.auraRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      ctx.strokeStyle = E.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, def.radius + 4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, def.image);
 
     const bw = def.radius * 2.2, bh = 4;
@@ -125,7 +143,12 @@ WYD.render = {
     ctx.fillStyle = "#e33";
     ctx.fillRect(bx, by, bw * Math.max(0, e.hp / e.maxHp), bh);
 
-    if (def.showName) {
+    if (e.elite) {
+      ctx.textAlign = "center";
+      ctx.font = "bold 12px sans-serif";
+      ctx.fillStyle = E.color;
+      ctx.fillText(e.name, e.x, by - 4);
+    } else if (def.showName) {
       ctx.textAlign = "center";
       ctx.font = "12px sans-serif";
       ctx.fillStyle = "#e6c7ff";

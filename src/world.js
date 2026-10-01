@@ -56,9 +56,6 @@ WYD.world = {
 
     const kinds = Object.keys(WYD.data.enemies);
     const kind = WYD.util.pickWeighted(kinds, (k) => WYD.data.enemies[k].spawnWeight);
-    const def = WYD.data.enemies[kind];
-    const diff = WYD.data.difficulty;
-    const d = state.difficulty - 1;
 
     // プレイヤーから離れた場所を探す
     let pos;
@@ -67,15 +64,92 @@ WYD.world = {
       if (WYD.util.dist(pos, w.player) >= map.spawnMinDistance) break;
     }
 
+    const e = this.spawnEnemy(w, state, kind, pos);
+    if (Math.random() < WYD.data.elites.chance) this.makeElite(e);
+  },
+
+  // 敵を1体出す（危険度に合わせて強くする）
+  spawnEnemy(w, state, kind, pos) {
+    const def = WYD.data.enemies[kind];
+    const diff = WYD.data.difficulty;
+    const d = state.difficulty - 1;
     const maxHp = Math.round(def.hp * (1 + diff.hpGrowth * d));
-    w.enemies.push({
+    const e = {
       id: w.nextId++, kind, x: pos.x, y: pos.y,
       hp: maxHp, maxHp,
       attack: def.attack * (1 + diff.attackGrowth * d),
       defense: def.defense * (1 + diff.defenseGrowth * d),
+      moveSpeedMult: 1,
+      attackSpeedMult: 1,
       attackTimer: 1,
       hitFlash: 0,
-    });
+    };
+    w.enemies.push(e);
+    return e;
+  },
+
+  // 敵を精鋭にする（能力をランダムに選んで強くする）
+  makeElite(e) {
+    const E = WYD.data.elites;
+    const u = WYD.util;
+    const count = u.randInt(E.affixCount[0], E.affixCount[1]);
+    const pool = E.affixes.slice();
+    const affixes = [];
+    for (let i = 0; i < count && pool.length > 0; i++) {
+      const a = u.pickWeighted(pool, (x) => x.weight);
+      pool.splice(pool.indexOf(a), 1);
+      affixes.push(a);
+    }
+    let hpMult = E.hpMult, attackMult = E.attackMult;
+    for (const a of affixes) {
+      hpMult *= a.hpMult || 1;
+      attackMult *= a.attackMult || 1;
+      e.defense *= a.defenseMult || 1;
+      e.moveSpeedMult *= a.moveSpeedMult || 1;
+      e.attackSpeedMult *= a.attackSpeedMult || 1;
+    }
+    e.maxHp = Math.round(e.maxHp * hpMult);
+    e.hp = e.maxHp;
+    e.attack *= attackMult;
+    e.elite = { affixes: affixes.map((a) => a.id), summonTimer: 2 };
+    e.name = affixes.map((a) => a.name).join("・") + "の" + WYD.data.enemies[e.kind].name;
+  },
+
+  eliteAffix(id) {
+    return WYD.data.elites.affixes.find((a) => a.id === id);
+  },
+
+  hasAffix(e, id) {
+    return !!(e.elite && e.elite.affixes.includes(id));
+  },
+
+  // 精鋭の能力（業火・眷属使い）を毎コマ動かす
+  updateElite(w, state, e, dt) {
+    const p = w.player;
+    const burning = this.eliteAffix("burning");
+    if (this.hasAffix(e, "burning") && !p.dead && WYD.util.dist(e, p) <= burning.auraRadius) {
+      p.hp -= e.attack * burning.auraDamage * dt;
+      if (p.hp <= 0) {
+        this.playerDied(w);
+        return;
+      }
+    }
+    const summoner = this.eliteAffix("summoner");
+    if (this.hasAffix(e, "summoner")) {
+      e.elite.summonTimer -= dt;
+      const alive = w.enemies.filter((x) => x.summonedBy === e.id).length;
+      if (e.elite.summonTimer <= 0 && alive < summoner.summonMax) {
+        e.elite.summonTimer = summoner.summonInterval;
+        const map = WYD.data.map;
+        const pos = {
+          x: WYD.util.clamp(e.x + WYD.util.rand(-30, 30), 20, map.width - 20),
+          y: WYD.util.clamp(e.y + WYD.util.rand(-30, 30), 20, map.height - 20),
+        };
+        const minion = this.spawnEnemy(w, state, summoner.summonKind, pos);
+        minion.summonedBy = e.id;
+        w.effects.push({ type: "ring", x: pos.x, y: pos.y, radius: 24, color: WYD.data.elites.color, time: 0, duration: 0.3 });
+      }
+    }
   },
 
   // ---------- プレイヤーの自動行動 ----------
@@ -148,20 +222,29 @@ WYD.world = {
   // ---------- 敵の行動 ----------
   updateEnemies(w, state, stats, dt) {
     const p = w.player;
-    for (const e of w.enemies) {
+    for (const e of w.enemies.slice()) {
+      if (e.hp <= 0) continue;
       const def = WYD.data.enemies[e.kind];
       e.hitFlash = Math.max(0, e.hitFlash - dt);
+      if (e.elite) {
+        this.updateElite(w, state, e, dt);
+        if (p.dead) return;
+      }
       const reach = def.range + WYD.data.player.radius;
       const d = WYD.util.dist(e, p);
-      if (d > reach) this.moveToward(e, p, def.moveSpeed * dt, reach * 0.8);
+      if (d > reach) this.moveToward(e, p, def.moveSpeed * e.moveSpeedMult * dt, reach * 0.8);
 
       e.attackTimer -= dt;
       if (d <= reach && e.attackTimer <= 0) {
-        e.attackTimer = 1 / def.attackSpeed;
+        e.attackTimer = 1 / (def.attackSpeed * e.attackSpeedMult);
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
         const hit = this.calcDamage(e.attack, defense, 0);
         p.hp -= hit.damage;
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
+        // 精鋭の能力：吸血
+        if (this.hasAffix(e, "vampiric")) {
+          e.hp = Math.min(e.maxHp, e.hp + hit.damage * this.eliteAffix("vampiric").lifestealPercent / 100);
+        }
         // 特殊効果：ナーガの鱗（受けたダメージを返す）
         if (stats.effects.thorns > 0) {
           const back = Math.round(hit.damage * stats.effects.thorns / 100);
@@ -263,7 +346,8 @@ WYD.world = {
     const d = state.difficulty - 1;
     w.enemies = w.enemies.filter((x) => x !== e);
 
-    this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d)));
+    const expMult = e.elite ? WYD.data.elites.expMult : 1;
+    this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult));
 
     // 特殊効果：チャームンダーの饗宴（倒すとHP回復）
     const stats = WYD.stats.compute(state);
@@ -285,11 +369,16 @@ WYD.world = {
       WYD.ui.markDirty();
     }
 
-    if (Math.random() < def.dropChance) {
-      const bonus = def.rarityBonus * (1 + diff.rarityGrowth * d);
+    // 精鋭は必ず数個落とし、レアも出やすい
+    const E = WYD.data.elites;
+    const bonus = def.rarityBonus * (1 + diff.rarityGrowth * d) * (e.elite ? E.rarityBonusMult : 1);
+    const count = e.elite ? E.dropCount : (Math.random() < def.dropChance ? 1 : 0);
+    if (e.elite) WYD.ui.log(`精鋭「${e.name}」を倒した！`, E.color);
+    for (let i = 0; i < count; i++) {
       const item = WYD.loot.create(state, state.difficulty, bonus);
-      if (item.rarity === "normal" && state.settings.skipNormal) return;
-      w.drops.push({ x: e.x, y: e.y, item, age: 0 });
+      if (item.rarity === "normal" && state.settings.skipNormal) continue;
+      const spread = count > 1 ? 14 : 0;
+      w.drops.push({ x: e.x + WYD.util.rand(-spread, spread), y: e.y + WYD.util.rand(-spread, spread), item, age: 0 });
     }
   },
 
