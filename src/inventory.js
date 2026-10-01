@@ -35,7 +35,7 @@ WYD.inventory = {
 
   // 自動で着替えないほうがいい装備（自分で選んだはずのもの）
   keepEquipped(item) {
-    return !!item && (item.rarity === "unique" || item.rarity === "set" || item.plus > 0 || (item.sockets || []).some((x) => x));
+    return !!item && (item.locked || item.rarity === "unique" || item.rarity === "set" || item.plus > 0 || (item.sockets || []).some((x) => x));
   },
 
   // 拾った装備が強ければ着替える。着替えたら true
@@ -78,12 +78,15 @@ WYD.inventory = {
 
   // 倉庫の装備を捨てる（分解）。もらった素材の数を返す
   discardFromStash(state, index) {
+    if (state.stash[index] && state.stash[index].locked) return -1;
     const item = state.stash.splice(index, 1)[0];
     return item ? this.salvage(state, item) : 0;
   },
 
   // 捨てる（分解して素材をもらう）。もらった素材の数を返す
+  // ロックした装備は捨てられない（捨てたら素材の数、捨てなかったら -1）
   discard(state, index) {
+    if (state.inventory[index] && state.inventory[index].locked) return -1;
     const item = state.inventory.splice(index, 1)[0];
     return item ? this.salvage(state, item) : 0;
   },
@@ -94,7 +97,7 @@ WYD.inventory = {
     state.inventory = state.inventory.filter((it) => {
       if (!rarityIds.includes(it.rarity)) return true;
       // 強化した装備と、宝石をはめた装備は、まとめて捨てる対象にしない
-      if (it.plus > 0 || (it.sockets || []).some((x) => x)) return true;
+      if (it.locked || it.plus > 0 || (it.sockets || []).some((x) => x)) return true;
       count++;
       gained += this.salvage(state, it);
       return false;
