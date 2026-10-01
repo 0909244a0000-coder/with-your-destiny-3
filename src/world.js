@@ -11,6 +11,7 @@ WYD.world = {
         attackTimer: 0, skillCooldowns: {}, buff: null, haste: null, swing: 0,
       },
       fields: [],   // 地面に残る炎の陣など
+      hazards: [],  // 少しして爆発する場所（精鋭の「爆砕」）
       projectiles: [], // 敵が撃った弾
       particles: [],   // エフェクトの粒（src/fx.js）
       bolts: [],       // 主人公が撃った火の玉（遠くから攻撃する職業）
@@ -54,6 +55,8 @@ WYD.world = {
       if (p.haste.timeLeft <= 0) p.haste = null;
     }
     this.updateFields(w, state, stats, dt);
+    this.updateHazards(w, stats, dt);
+    if (p.chill > 0) p.chill = Math.max(0, p.chill - dt);
     for (const id in p.skillCooldowns) p.skillCooldowns[id] = Math.max(0, p.skillCooldowns[id] - dt);
 
     this.updateFloors(w, state, dt);
@@ -166,6 +169,7 @@ WYD.world = {
     w.enemies = [];
     w.projectiles = [];
     w.fields = [];
+    w.hazards = [];
     w.drops = w.drops.filter((d) => ["unique", "set", "legend"].includes(d.item.rarity));
     w.spawnTimer = 1;
     w.bossTimer = null;
@@ -244,9 +248,28 @@ WYD.world = {
     return !!(e.elite && e.elite.affixes.includes(id));
   },
 
-  // 精鋭の能力（業火・眷属使い）を毎コマ動かす
+  // 精鋭の能力（業火・眷属使い・守護・瞬身）を毎コマ動かす
   updateElite(w, state, e, dt) {
     const p = w.player;
+    if (this.hasAffix(e, "shielding")) {
+      const A = this.eliteAffix("shielding");
+      e.elite.shieldCycle = (e.elite.shieldCycle == null ? A.interval * Math.random() : e.elite.shieldCycle) + dt;
+      if (e.elite.shieldCycle >= A.interval) e.elite.shieldCycle = 0;
+      e.shielded = e.elite.shieldCycle < A.duration;
+    }
+    if (this.hasAffix(e, "blink") && !p.dead && !(e.stunTimer > 0)) {
+      const A = this.eliteAffix("blink");
+      e.elite.blinkTimer = (e.elite.blinkTimer == null ? A.interval : e.elite.blinkTimer) - dt;
+      if (e.elite.blinkTimer <= 0 && WYD.util.dist(e, p) > A.minDistance) {
+        e.elite.blinkTimer = A.interval;
+        const map = WYD.data.map;
+        w.effects.push({ type: "ring", x: e.x, y: e.y, radius: 26, color: A.color, time: 0, duration: 0.3 });
+        const ang = Math.random() * Math.PI * 2;
+        e.x = WYD.util.clamp(p.x + Math.cos(ang) * A.landDistance, 20, map.width - 20);
+        e.y = WYD.util.clamp(p.y + Math.sin(ang) * A.landDistance, 20, map.height - 20);
+        w.effects.push({ type: "ring", x: e.x, y: e.y, radius: 26, color: A.color, time: 0, duration: 0.3 });
+      }
+    }
     const burning = this.eliteAffix("burning");
     if (this.hasAffix(e, "burning") && !p.dead && WYD.util.dist(e, p) <= burning.auraRadius) {
       p.hp -= e.attack * burning.auraDamage * dt;
@@ -273,6 +296,26 @@ WYD.world = {
     }
   },
 
+  // 爆砕：時間がたったら爆発し、輪の中にいればダメージ
+  updateHazards(w, stats, dt) {
+    const p = w.player;
+    for (const h of w.hazards) {
+      h.timer -= dt;
+      if (h.timer > 0) continue;
+      w.effects.push({ type: "shock", x: h.x, y: h.y, radius: h.radius, color: h.color, time: 0, duration: 0.45 });
+      WYD.fx.shake(w, WYD.data.fx.shakeEliteDeath);
+      WYD.sound.play("slam");
+      if (!p.dead && WYD.util.dist(h, p) <= h.radius) {
+        const defense = stats.defense + (p.buff ? p.buff.defense : 0);
+        const hit = this.calcDamage(h.damage, defense, 0);
+        p.hp -= hit.damage;
+        this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
+        if (p.hp <= 0) this.playerDied(w);
+      }
+    }
+    w.hazards = w.hazards.filter((h) => h.timer > 0);
+  },
+
   // ---------- プレイヤーの自動行動 ----------
   updatePlayer(w, state, stats, dt) {
     const p = w.player;
@@ -290,6 +333,15 @@ WYD.world = {
 
     const ranged = WYD.data.player.rangedAttack;
     const reach = ranged ? ranged.range : WYD.data.player.attackRange + WYD.data.enemies[target.kind].radius;
+    // 精鋭の「氷結」で遅くなっている
+    const slow = p.chill > 0 ? this.eliteAffix("frozen").slowMult : 1;
+    dt *= slow;
+    // 爆発の輪の中にいたら、まず外へ逃げる
+    const danger = w.hazards.find((h) => WYD.util.dist(h, p) < h.radius + WYD.data.player.radius);
+    if (danger) {
+      this.moveAway(p, danger, stats.moveSpeed * dt);
+      return;
+    }
     const d = WYD.util.dist(p, target);
     if (ranged) {
       // 遠くから撃つ職業：近づきすぎたら下がり、遠すぎたら近づく
@@ -542,6 +594,8 @@ WYD.world = {
         if (this.hasAffix(e, "vampiric")) {
           e.hp = Math.min(e.maxHp, e.hp + hit.damage * this.eliteAffix("vampiric").lifestealPercent / 100);
         }
+        // 精鋭の能力：氷結
+        if (this.hasAffix(e, "frozen")) p.chill = this.eliteAffix("frozen").chillSeconds;
         this.reflect(w, state, stats, e, hit.damage);
         if (p.hp <= 0) {
           this.playerDied(w);
@@ -737,6 +791,14 @@ WYD.world = {
 
   damageEnemy(w, state, e, damage, crit) {
     if (e.hp <= 0) return;
+    // 精鋭の「守護」：盾の間はダメージを受けない
+    if (e.shielded) {
+      if (!e.blockTextCd || w.time - e.blockTextCd > 0.4) {
+        e.blockTextCd = w.time;
+        this.addText(w, e.x, e.y - 16, "無効", this.eliteAffix("shielding").color);
+      }
+      return;
+    }
     e.hp -= damage;
     e.hitFlash = 0.1;
     this.addText(w, e.x, e.y - 16, crit ? `${damage}!` : `${damage}`, crit ? "#ffd447" : "#ffffff", crit);
@@ -782,6 +844,10 @@ WYD.world = {
     this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult));
 
     WYD.records.add(state, "kills");
+    if (this.hasAffix(e, "explosive")) {
+      const A = this.eliteAffix("explosive");
+      w.hazards.push({ x: e.x, y: e.y, radius: A.radius, timer: A.delay, delay: A.delay, damage: e.attack * A.damageMult, color: A.color });
+    }
     if (e.elite) WYD.records.add(state, "eliteKills");
     if (e.boss) WYD.records.add(state, "bossKills");
 
@@ -978,7 +1044,9 @@ WYD.world = {
     p.y = map.height / 2;
     p.buff = null;
     p.haste = null;
+    p.chill = 0;
     w.fields = [];
+    w.hazards = [];
     w.projectiles = [];
     w.bolts = [];
     w.enemies = [];

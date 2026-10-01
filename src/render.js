@@ -62,6 +62,7 @@ WYD.render = {
     }
 
     for (const f of w.fields) this.drawField(ctx, f);
+    for (const h of w.hazards || []) this.drawHazard(ctx, h);
     this.clock = w.time || 0;
     this.playerPos = w.player;
     // 奥（画面の上）にいるものから描く（手前のキャラが奥のキャラにかぶさるように）
@@ -289,8 +290,33 @@ WYD.render = {
     ctx.fill();
   },
 
+  // 爆発の予告：輪の中がだんだん埋まっていく
+  drawHazard(ctx, h) {
+    const k = 1 - Math.max(0, h.timer / h.delay);
+    ctx.strokeStyle = h.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 0.15 + 0.2 * k;
+    ctx.fillStyle = h.color;
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.radius * k, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  },
+
   drawPlayer(ctx, p) {
     const P = WYD.data.player;
+    if (p.chill > 0) {
+      // 精鋭の「氷結」で遅くなっている
+      ctx.fillStyle = WYD.data.elites.affixes.find((a) => a.id === "frozen").color;
+      ctx.globalAlpha = 0.3;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, P.radius + 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
     if (p.haste) {
       ctx.strokeStyle = p.haste.color;
       ctx.lineWidth = 2;
@@ -383,6 +409,16 @@ WYD.render = {
     }
     this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, this.poseImage(e, def), e.hitFlash > 0,
       this.pose(e, this.playerPos, this.clock));
+    if (e.shielded) {
+      // 精鋭の「守護」：光の盾
+      ctx.strokeStyle = E.affixes.find((a) => a.id === "shielding").color;
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.6 + 0.3 * Math.sin((this.clock || 0) * 10);
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, def.radius + 9, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
 
     // HPバー：絵があるときは絵の上に出す
     const top = this.getImage(def.image) ? def.radius * WYD.data.map.spriteScale / 2 : def.radius;
