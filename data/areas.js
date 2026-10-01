@@ -73,4 +73,18 @@ WYD.data.boss = {
   floorPowerStep: 0.15,    // 1階深くなるごとに敵が何割強くなるか
   bossRoomMaxEnemies: 3,   // ボスの間に同時にいるふつうの敵の数
   bossAppearDelay: 1.5,    // ボスの間に入ってからボスが出るまでの秒数
+
+  // ボスの怒り：HPが hpRatio を切ると1回だけ怒り、強くなって手下を呼ぶ（試練の守護者も同じ）
+  enrage: {
+    hpRatio: 0.5,
+    attackMult: 1.1,         // 攻撃力
+    attackSpeedMult: 1.25,   // 攻撃の速さ
+    moveSpeedMult: 1.25,     // 動く速さ
+    slamIntervalMult: 0.65,  // 大技の間隔（小さいほど多く使う）
+    firstSlamDelay: 1.5,     // 怒ってから最初の大技までの秒数（これより長ければ縮める）
+    summonCount: 2,          // 呼ぶ手下の数
+    summonSpread: 70,        // 手下が出る広さ
+    color: "#ff2a2a",        // 怒りのオーラの色
+    auraRadius: 1.6,         // オーラの大きさ（ボスの大きさの何倍か）
+  },
 };

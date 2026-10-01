@@ -650,7 +650,7 @@ WYD.world = {
     }
     e.slamTimer -= dt;
     if (e.slamTimer <= 0 && d <= slam.radius) {
-      e.slamTimer = slam.interval;
+      e.slamTimer = slam.interval * (e.slamIntervalMult || 1);
       e.slamCharge = slam.windup;
       e.slamWindup = slam.windup;
       return true;
@@ -714,7 +714,7 @@ WYD.world = {
     const ex = this.castExtra;
     if (ex) {
       if (ex.lifesteal && !p.dead) p.hp = Math.min(stats.maxHp, p.hp + hit.damage * ex.lifesteal / 100);
-      if (ex.bind && e.hp > 0) e.stunTimer = Math.max(e.stunTimer || 0, e.boss ? ex.bind * 0.3 : ex.bind);
+      if (ex.bind && e.hp > 0) e.stunTimer = Math.max(e.stunTimer || 0, e.boss ? ex.bind * WYD.data.runes.bossBindMult : ex.bind);
     }
     if (fx.lifesteal > 0 && !p.dead) {
       p.hp = Math.min(stats.maxHp, p.hp + hit.damage * fx.lifesteal / 100);
@@ -740,7 +740,32 @@ WYD.world = {
     e.hitFlash = 0.1;
     this.addText(w, e.x, e.y - 16, crit ? `${damage}!` : `${damage}`, crit ? "#ffd447" : "#ffffff", crit);
     WYD.fx.hit(w, e, crit);
+    if (e.boss && !e.enraged && e.hp > 0 && e.hp <= e.maxHp * WYD.data.boss.enrage.hpRatio) this.enrage(w, state, e);
     if (e.hp <= 0) this.enemyDied(w, state, e);
+  },
+
+  // ボスの怒り：強くなり、手下を呼ぶ（data/areas.js の boss.enrage）
+  enrage(w, state, e) {
+    const R = WYD.data.boss.enrage;
+    const def = WYD.data.enemies[e.kind];
+    e.enraged = true;
+    e.attack *= R.attackMult;
+    e.attackSpeedMult *= R.attackSpeedMult;
+    e.moveSpeedMult *= R.moveSpeedMult;
+    e.slamIntervalMult = R.slamIntervalMult;
+    if (e.slamCharge == null) e.slamTimer = Math.min(e.slamTimer, R.firstSlamDelay);
+    const pool = this.area(state).enemies;
+    for (let i = 0; i < R.summonCount; i++) {
+      const pick = WYD.util.pickWeighted(pool, (x) => x.weight);
+      this.spawnEnemy(w, state, pick.kind, {
+        x: WYD.util.clamp(e.x + WYD.util.rand(-R.summonSpread, R.summonSpread), 20, WYD.data.map.width - 20),
+        y: WYD.util.clamp(e.y + WYD.util.rand(-R.summonSpread, R.summonSpread), 20, WYD.data.map.height - 20),
+      });
+    }
+    w.effects.push({ type: "shock", x: e.x, y: e.y, radius: def.radius * 4, color: R.color, time: 0, duration: 0.6 });
+    WYD.fx.shake(w, WYD.data.fx.shakeSlam);
+    WYD.sound.play("bossAppear");
+    WYD.ui.log(`${def.name}が怒り狂った！（速く・強くなり、手下を呼んだ）`, R.color);
   },
 
   enemyDied(w, state, e) {

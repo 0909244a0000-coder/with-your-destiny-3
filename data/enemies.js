@@ -214,7 +214,7 @@ WYD.data.enemies = {
     image: "assets/enemies/mahisha.png",
     poses: { attack: null, windup: null },   // ポーズ違いの絵（攻撃・大技の溜め）
     radius: 34,
-    hp: 1300,
+    hp: 1150,   // 怒り（HP半分で強くなる）があるので、少し低め
     attack: 18,
     defense: 9,
     attackSpeed: 0.6,

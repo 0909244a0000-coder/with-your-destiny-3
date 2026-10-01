@@ -172,12 +172,15 @@ WYD.render = {
     ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
     ctx.fillStyle = "#5a0000";
     ctx.fillRect(bx, by, bw, bh);
-    ctx.fillStyle = WYD.data.boss.nameColor;
+    ctx.fillStyle = boss.enraged ? WYD.data.boss.enrage.color : WYD.data.boss.nameColor;
     ctx.fillRect(bx, by, bw * Math.max(0, boss.hp / boss.maxHp), bh);
+    // 怒りになるHPの位置に印
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(bx + bw * WYD.data.boss.enrage.hpRatio - 1, by, 2, bh);
     ctx.textAlign = "center";
     ctx.font = "bold 15px sans-serif";
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(def.name, map.width / 2, by - 6);
+    ctx.fillText(boss.enraged ? `${def.name}（怒り）` : def.name, map.width / 2, by - 6);
   },
 
   // 1枚の絵の動き（呼吸・歩くはずみ・攻撃の踏み込み・ボスの溜め）を計算する
@@ -347,6 +350,20 @@ WYD.render = {
   drawEnemy(ctx, e) {
     const def = WYD.data.enemies[e.kind];
     const E = WYD.data.elites;
+    if (e.enraged) {
+      // 怒ったボス：脈打つ赤いオーラ
+      const R = WYD.data.boss.enrage;
+      const pulse = 0.5 + 0.5 * Math.sin((this.clock || 0) * 6);
+      const g = ctx.createRadialGradient(e.x, e.y, def.radius * 0.3, e.x, e.y, def.radius * R.auraRadius);
+      g.addColorStop(0, R.color);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.globalAlpha = 0.25 + 0.2 * pulse;
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, def.radius * R.auraRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
     if (e.elite) {
       // 精鋭：業火の範囲と、青い輪
       if (e.elite.affixes.includes("burning")) {

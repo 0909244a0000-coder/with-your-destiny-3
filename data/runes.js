@@ -10,6 +10,7 @@ WYD.data = WYD.data || {};
 
 WYD.data.runes = {
   unlockLevels: [2, 4, 6],   // 1つ目・2つ目・3つ目の型が選べるスキルレベル
+  bossBindMult: 0.3,         // おまけの「縛る」がボスに効く時間の倍率
 
   skills: {
     // ---- バーバリアン ----

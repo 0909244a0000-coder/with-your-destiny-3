@@ -15,6 +15,7 @@
 - 各エリアは地下1〜3階＋ボスの間。修練（レベル上限のあと）
 - セーブの書き出し・読み込み（自動の控えつき）、スキルの型（ルーン、`data/runes.js`）、セット装備（`data/sets.js`）
 - 図鑑と記録と実績（`data/records.js`・`src/records.js`）。図鑑は拾った時に載る。図鑑がなかった頃のセーブは、持っている装備から図鑑を埋める
+- ボスの怒り（`WYD.world.enrage`）。入れたぶん、水牛魔マヒシャのHPを1300→1150に下げた（自動プレイで15分以内に全部倒せる）
 - 自動装備（`WYD.inventory.autoEquip`、点数は `itemScore`）。自動プレイで試したら、手で選んだときと同じくらいの進み方
 - 装備の強化（`item.plus`・`item.enhanceSpent`）。能力の計算は `WYD.loot.statTotals(item)`（強化と宝石こみ）にまとめた
 - ソケットと宝石（`data/gems.js`・`src/gems.js`）。宝石は持ち物の枠を使わず `state.gems`（"種類:段階" → 数）で持つ。ソケットがなかった頃の装備はソケットなし
