@@ -108,10 +108,20 @@ WYD.render = {
     ctx.fillText(def.name, map.width / 2, by - 6);
   },
 
-  drawCircleOrImage(ctx, x, y, r, color, imageSrc) {
+  // flash = true のときは白く光らせる（攻撃が当たったとき）
+  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash) {
     const img = this.getImage(imageSrc);
     if (img) {
-      ctx.drawImage(img, x - r * 1.5, y - r * 1.5, r * 3, r * 3);
+      const M = WYD.data.map;
+      const size = r * M.spriteScale;
+      // 足元の影（暗い地面でも絵が浮いて見えるように）
+      ctx.fillStyle = `rgba(0,0,0,${M.spriteShadow})`;
+      ctx.beginPath();
+      ctx.ellipse(x, y + size * 0.38, size * 0.32, size * 0.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+      if (flash) ctx.filter = "brightness(2.2)";
+      ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
+      ctx.filter = "none";
       return;
     }
     ctx.fillStyle = color;
@@ -199,10 +209,12 @@ WYD.render = {
       ctx.arc(e.x, e.y, def.radius + 4, 0, Math.PI * 2);
       ctx.stroke();
     }
-    this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, def.image);
+    this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, def.image, e.hitFlash > 0);
 
+    // HPバー：絵があるときは絵の上に出す
+    const top = this.getImage(def.image) ? def.radius * WYD.data.map.spriteScale / 2 : def.radius;
     const bw = def.radius * 2.2, bh = 4;
-    const bx = e.x - bw / 2, by = e.y - def.radius - 9;
+    const bx = e.x - bw / 2, by = e.y - top - 9;
     ctx.fillStyle = "#300";
     ctx.fillRect(bx, by, bw, bh);
     ctx.fillStyle = "#e33";

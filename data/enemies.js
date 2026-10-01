@@ -6,7 +6,7 @@ WYD.data.enemies = {
   preta: {
     name: "餓鬼",
     color: "#9aa86a",
-    image: null,
+    image: "assets/enemies/preta.png",
     radius: 11,
     hp: 30,
     attack: 4,
@@ -21,7 +21,7 @@ WYD.data.enemies = {
   yaksha: {
     name: "夜叉",
     color: "#c0653a",
-    image: null,
+    image: "assets/enemies/yaksha.png",
     radius: 14,
     hp: 75,
     attack: 8,
@@ -36,7 +36,7 @@ WYD.data.enemies = {
   rakshasa: {
     name: "羅刹",
     color: "#8e3bd1",
-    image: null,
+    image: "assets/enemies/rakshasa.png",
     radius: 20,
     hp: 240,
     attack: 14,
@@ -125,7 +125,7 @@ WYD.data.enemies = {
   naga: {
     name: "ナーガ",
     color: "#3fa7a0",
-    image: null,
+    image: "assets/enemies/naga.png",
     radius: 16,
     hp: 130,
     attack: 10,
@@ -175,7 +175,7 @@ WYD.data.enemies = {
   ravana: {
     name: "羅刹王ラーヴァナ",
     color: "#7a1fb0",
-    image: null,
+    image: "assets/enemies/ravana.png",
     radius: 30,
     hp: 900,
     attack: 14,
