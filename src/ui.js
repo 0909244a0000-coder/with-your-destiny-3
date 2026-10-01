@@ -182,7 +182,11 @@ WYD.ui = {
 
   onLevelUp() {
     const stats = WYD.stats.compute(this.state);
-    if (this.world && !this.world.player.dead) this.world.player.hp = stats.maxHp;
+    if (this.world && !this.world.player.dead) {
+      this.world.player.hp = stats.maxHp;
+      const p = this.world.player;
+      WYD.fx.burst(this.world, p.x, p.y + 10, WYD.data.fx.levelUp, null, { angle: -Math.PI / 2, spread: 0.6, glow: true });
+    }
     WYD.save.write(this.state);
   },
 

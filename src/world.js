@@ -12,6 +12,8 @@ WYD.world = {
       },
       fields: [],   // 地面に残る炎の陣など
       projectiles: [], // 敵が撃った弾
+      particles: [],   // エフェクトの粒（src/fx.js）
+      shake: null,     // 画面の揺れ
       enemies: [],
       drops: [],
       effects: [],
@@ -242,6 +244,7 @@ WYD.world = {
         this.playerHit(w, state, stats, e, stats.attack * mult);
       }
       w.effects.push({ type: "ring", x: p.x, y: p.y, radius: s.radius, color: s.color, time: 0, duration: 0.35 });
+      WYD.fx.burst(w, p.x, p.y, { ...WYD.data.fx.whirl, speed: s.radius * 2.2 }, s.color, { glow: true });
       // 固有能力：劫火の腕輪（足元の地面が燃える）
       const fire = stats.powers.whirlFire;
       if (fire) {
@@ -374,6 +377,7 @@ WYD.world = {
         const hit = this.calcDamage(e.attack, defense, 0);
         p.hp -= hit.damage;
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
+        WYD.fx.burst(w, p.x, p.y, WYD.data.fx.playerHit, null, { gravity: true });
         // 精鋭の能力：吸血
         if (this.hasAffix(e, "vampiric")) {
           e.hp = Math.min(e.maxHp, e.hp + hit.damage * this.eliteAffix("vampiric").lifestealPercent / 100);
@@ -467,6 +471,9 @@ WYD.world = {
       if (e.slamCharge > 0) return true;
       e.slamCharge = null;
       w.effects.push({ type: "ring", x: e.x, y: e.y, radius: slam.radius, color: WYD.data.boss.warnColor, time: 0, duration: 0.4 });
+      w.effects.push({ type: "shock", x: e.x, y: e.y, radius: slam.radius, color: WYD.data.boss.warnColor, time: 0, duration: 0.5 });
+      WYD.fx.burst(w, e.x, e.y, { ...WYD.data.fx.slamDust, speed: slam.radius * 2.4 }, null, {});
+      WYD.fx.shake(w, WYD.data.fx.shakeSlam);
       if (WYD.util.dist(e, p) <= slam.radius) {
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
         const hit = this.calcDamage(e.attack * slam.damageMult, defense, 0);
@@ -508,8 +515,10 @@ WYD.world = {
   updateEffects(w, dt) {
     for (const ef of w.effects) ef.time += dt;
     w.effects = w.effects.filter((ef) => ef.time < ef.duration);
-    for (const t of w.texts) { t.time += dt; t.y -= 30 * dt; }
-    w.texts = w.texts.filter((t) => t.time < 0.8);
+    const T = WYD.data.fx.text;
+    for (const t of w.texts) { t.time += dt; t.y -= T.rise * dt; }
+    w.texts = w.texts.filter((t) => t.time < T.life);
+    WYD.fx.update(w, dt);
   },
 
   // ---------- 共通の処理 ----------
@@ -550,12 +559,14 @@ WYD.world = {
     if (e.hp <= 0) return;
     e.hp -= damage;
     e.hitFlash = 0.1;
-    this.addText(w, e.x, e.y - 16, crit ? `${damage}!` : `${damage}`, crit ? "#ffd447" : "#ffffff");
+    this.addText(w, e.x, e.y - 16, crit ? `${damage}!` : `${damage}`, crit ? "#ffd447" : "#ffffff", crit);
+    WYD.fx.hit(w, e, crit);
     if (e.hp <= 0) this.enemyDied(w, state, e);
   },
 
   enemyDied(w, state, e) {
     const def = WYD.data.enemies[e.kind];
+    WYD.fx.death(w, e);
     const diff = WYD.data.difficulty;
     const d = state.difficulty - 1;
     w.enemies = w.enemies.filter((x) => x !== e);
@@ -747,7 +758,7 @@ WYD.world = {
     obj.y += (target.y - obj.y) / d * s;
   },
 
-  addText(w, x, y, text, color) {
-    w.texts.push({ x: x + WYD.util.rand(-6, 6), y, text, color, time: 0 });
+  addText(w, x, y, text, color, big) {
+    w.texts.push({ x: x + WYD.util.rand(-6, 6), y, text, color, time: 0, big: !!big });
   },
 };

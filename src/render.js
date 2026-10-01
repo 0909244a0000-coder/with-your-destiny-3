@@ -40,6 +40,11 @@ WYD.render = {
     const area = WYD.world.area(state);
     if (!this.decorations) this.decorations = this.makeDecorations();
 
+    // 画面の揺れ：地面とキャラだけずらす（文字やバーはずらさない）
+    const sh = WYD.fx.shakeOffset(w);
+    ctx.save();
+    ctx.translate(sh.x, sh.y);
+
     // 地面：絵があれば敷きつめる、なければ色でぬる
     const ground = this.getImage(area.groundImage);
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
@@ -57,21 +62,31 @@ WYD.render = {
     }
 
     for (const f of w.fields) this.drawField(ctx, f);
-    for (const drop of w.drops) this.drawDrop(ctx, drop);
     for (const e of w.enemies) this.drawEnemy(ctx, e);
     this.drawPlayer(ctx, w.player);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
-    for (const ef of w.effects) this.drawEffect(ctx, ef);
     this.drawLight(ctx, w.player);
+    // 光るものと落ちている装備は、明かりの暗さの上に描く（暗がりでも見えるように）
+    for (const drop of w.drops) this.drawDrop(ctx, drop);
+    for (const ef of w.effects) this.drawEffect(ctx, ef);
+    WYD.fx.draw(ctx, w);
 
+    // ダメージの数字：出た瞬間にふくらんで、上にのぼりながら消える
+    const T = WYD.data.fx.text;
     ctx.textAlign = "center";
-    ctx.font = "bold 14px sans-serif";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(0,0,0,0.75)";
     for (const t of w.texts) {
-      ctx.globalAlpha = 1 - t.time / 0.8;
+      const k = t.time / T.life;
+      const pop = 1 + (T.pop - 1) * Math.max(0, 1 - t.time / 0.12);
+      ctx.globalAlpha = Math.min(1, (1 - k) * 2);
+      ctx.font = `bold ${Math.round((t.big ? T.critSize : T.size) * pop)}px sans-serif`;
+      ctx.strokeText(t.text, t.x, t.y);
       ctx.fillStyle = t.color;
       ctx.fillText(t.text, t.x, t.y);
     }
     ctx.globalAlpha = 1;
+    ctx.restore();
 
     // 左上：マップ名と危険度
     ctx.textAlign = "left";
@@ -288,6 +303,20 @@ WYD.render = {
   drawDrop(ctx, drop) {
     const r = WYD.loot.rarityInfo(drop.item.rarity);
     const bounce = Math.max(0, 1 - drop.age * 3) * 10;
+    // 良い装備は光の柱で知らせる（ディアブロの「ドロップの光」）
+    const beam = WYD.data.fx.lootBeam[drop.item.rarity];
+    if (beam) {
+      const g = ctx.createLinearGradient(0, drop.y - beam, 0, drop.y);
+      g.addColorStop(0, "rgba(0,0,0,0)");
+      g.addColorStop(1, r.color);
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = 0.7 + 0.2 * Math.sin(drop.age * 6);
+      ctx.fillStyle = g;
+      ctx.fillRect(drop.x - 4, drop.y - beam, 8, beam);
+      ctx.fillRect(drop.x - 1.5, drop.y - beam * 1.2, 3, beam * 1.2);
+      ctx.restore();
+    }
     ctx.save();
     ctx.translate(drop.x, drop.y - bounce);
     ctx.rotate(Math.PI / 4);
@@ -312,6 +341,16 @@ WYD.render = {
       ctx.beginPath();
       ctx.arc(ef.x, ef.y, ef.radius * (0.4 + 0.6 * t), 0, Math.PI * 2);
       ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (ef.type === "shock") {
+      // ボスの大技の衝撃：一気に広がる赤い円
+      const t = ef.time / ef.duration;
+      ctx.fillStyle = ef.color;
+      ctx.globalAlpha = 0.35 * (1 - t);
+      ctx.beginPath();
+      ctx.arc(ef.x, ef.y, ef.radius * (0.3 + 0.9 * t), 0, Math.PI * 2);
+      ctx.fill();
       ctx.globalAlpha = 1;
     }
     if (ef.type === "chain") {
@@ -343,6 +382,14 @@ WYD.render = {
       ctx.lineTo(ef.x - 4, ef.y - 12);
       ctx.lineTo(ef.x, ef.y);
       ctx.stroke();
+      // 落ちたところが光る
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = ef.color;
+      ctx.globalAlpha = 0.5 * (1 - t);
+      ctx.beginPath();
+      ctx.arc(ef.x, ef.y, 26 * (1 - t * 0.5), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
       ctx.globalAlpha = 1;
     }
   },
