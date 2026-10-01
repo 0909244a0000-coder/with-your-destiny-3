@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WYD3 3Dデモ</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b0a09; color: #ddd1b6; overflow: hidden;
+      font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; }
+    #stage canvas { display: block; }
+    #ui { position: fixed; top: 12px; left: 12px; background: rgba(10, 8, 6, 0.85); border: 1px solid #4a3d2a;
+      padding: 10px 12px; border-radius: 3px; font-size: 13px; max-width: 360px; z-index: 2; }
+    #ui h1 { margin: 0 0 6px; font-size: 16px; color: #d8b45c; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; }
+    #ui p { margin: 4px 0 8px; color: #9a8b6f; font-size: 12px; line-height: 1.5; }
+    #weapons { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    button { background: linear-gradient(#3a3125, #241e16); color: #e3d5b5; border: 1px solid #000;
+      box-shadow: 0 0 0 1px #4a3d2a; padding: 3px 8px; border-radius: 2px; cursor: pointer; font: inherit; }
+    button.on { background: linear-gradient(#d8b45c, #9c7a33); color: #140f08; }
+    label { margin-right: 10px; white-space: nowrap; }
+    #overlay { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+    .dmg { position: absolute; font-weight: bold; font-size: 18px; color: #fff; text-shadow: 0 2px 2px #000, 0 0 3px #000; }
+    .dmg.crit { color: #ffd447; font-size: 26px; }
+    .dmg.hurt { color: #ff6b6b; }
+    .hp { position: absolute; width: 60px; height: 6px; background: #300; border: 1px solid #000; transform: translate(-50%, -50%); }
+    .hp div { height: 100%; background: linear-gradient(#e0473f, #8e1612); }
+    #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #d8b45c; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="overlay">
+    <div class="hp" id="hp-player"><div></div></div>
+    <div class="hp" id="hp-enemy"><div></div></div>
+  </div>
+  <div id="ui">
+    <h1>3D 見た目のお試し</h1>
+    <p>本編とは別のお試しページです。骨入りの3Dキャラ（無料素材 KayKit、CC0）が自動で戦います。武器を変えると、見た目と動きが変わります。</p>
+    <div id="weapons"></div>
+    <div>
+      <label><input type="checkbox" id="hitStop" checked> ヒットストップ</label>
+      <label><input type="checkbox" id="shake" checked> 画面の揺れ</label><br>
+      <label><input type="checkbox" id="knock" checked> のけぞり</label>
+      <label><input type="checkbox" id="fx" checked> 火花・斬撃の光</label>
+      <label><input type="checkbox" id="slow"> スロー（0.3倍）</label>
+    </div>
+  </div>
+  <div id="loading">読み込み中…</div>
+
+  <script type="importmap">
+    { "imports": { "three": "./lib/three/three.module.js", "three/addons/": "./lib/three/addons/" } }
+  </script>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
