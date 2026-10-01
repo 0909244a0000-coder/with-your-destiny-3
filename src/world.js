@@ -29,6 +29,7 @@ WYD.world = {
     p.hp = Math.min(p.hp, stats.maxHp);
 
     this.updateEffects(w, dt);
+    WYD.offline.tick(state, dt);
 
     if (p.dead) {
       p.respawnTimer -= dt;
@@ -631,7 +632,14 @@ WYD.world = {
     }
     for (let i = 0; i < count; i++) {
       const item = WYD.loot.create(state, state.difficulty + area.itemLevelBonus, bonus);
-      if (item.rarity === "normal" && state.settings.skipNormal) continue;
+      // 自動分解：拾わずにその場で素材にする
+      if (WYD.inventory.shouldAutoSalvage(state, item)) {
+        const n = WYD.inventory.salvage(state, item);
+        WYD.offline.record("mats", n);
+        if (n > 0) this.addText(w, e.x, e.y - 30, `+${n}`, WYD.data.crafting.materialColor);
+        WYD.ui.markDirty();
+        continue;
+      }
       const spread = count > 1 ? 10 + count * 4 : 0;
       w.drops.push({ x: e.x + WYD.util.rand(-spread, spread), y: e.y + WYD.util.rand(-spread, spread), item, age: 0 });
     }
@@ -644,7 +652,12 @@ WYD.world = {
     const next = list[list.indexOf(area) + 1];
     if (next && !state.unlockedAreas.includes(next.id)) {
       state.unlockedAreas.push(next.id);
-      WYD.ui.log(`新しいエリア「${next.name}」に行けるようになった！`, "#ff8a2a");
+      WYD.ui.log(`新しいエリア「${next.name}」に行けるようになった！（上の「エリア ▶」で移動）`, "#ff8a2a");
+    }
+    // 最後のエリアのボスを初めて倒したらクリア
+    if (!next && !state.cleared) {
+      state.cleared = true;
+      WYD.ui.showStory("clear");
     }
     WYD.ui.changed();
   },
@@ -653,6 +666,7 @@ WYD.world = {
     const pl = state.player;
     const P = WYD.data.player;
     if (pl.level >= P.maxLevel) return;
+    WYD.offline.record("exp", amount);
     pl.exp += amount;
     while (pl.level < P.maxLevel && pl.exp >= WYD.stats.expToNext(pl.level)) {
       pl.exp -= WYD.stats.expToNext(pl.level);
