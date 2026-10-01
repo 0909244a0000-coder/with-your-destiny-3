@@ -90,3 +90,43 @@ WYD.data.runes = {
     targets: ["targetsBase"],
   },
 };
+
+// ネクロマンサーのスキルの型
+Object.assign(WYD.data.runes.skills, {
+  nec_raise: [
+    { id: "army", name: "骸の軍勢", desc: "呼べる数 +2。1体ずつは弱くなる", mods: { countBase: ["add", 2], attackBase: ["mul", 0.7], hpRatio: ["mul", 0.8] } },
+    { id: "golem", name: "骨の巨人", desc: "1体だけ、とても強い巨人を呼ぶ", mods: { countBase: ["set", 1], countPerLevel: ["set", 0], hpRatio: ["mul", 4], attackBase: ["mul", 2.8], radius: ["mul", 1.6] } },
+    { id: "undying", name: "不死の兵", desc: "手下がいられる時間2倍、HP1.3倍", mods: { duration: ["mul", 2], hpRatio: ["mul", 1.3] } },
+  ],
+  nec_nova: [
+    { id: "wide", name: "広がる骨", desc: "範囲1.4倍。威力は少し下がる", mods: { radius: ["mul", 1.4], damage: ["mul", 0.85] } },
+    { id: "leech", name: "生命吸収", desc: "与えたダメージの5%を回復", extra: { lifesteal: 5 } },
+    { id: "rot", name: "腐敗の地", desc: "使ったあと、足元に毒の地面が残る",
+      extra: { leaveField: { radius: 90, duration: 3, tick: 0.5, mult: 0.3, color: "#7dff6a" } } },
+  ],
+  nec_armor: [
+    { id: "steel", name: "厚い骨", desc: "防御1.6倍。回復は減る", mods: { defense: ["mul", 1.6], heal: ["mul", 0.6] } },
+    { id: "regen", name: "死者の癒し", desc: "回復1.6倍。防御は下がる", mods: { heal: ["mul", 1.6], defense: ["mul", 0.6] } },
+    { id: "early", name: "先回り", desc: "HP80%で早めに発動。使える間隔は少し長い", mods: { triggerHpPercent: ["set", 80], cooldown: ["mul", 1.2] } },
+  ],
+  nec_spear: [
+    { id: "multi", name: "骨の雨", desc: "当たる数 +2。威力は少し下がる", mods: { targets: ["add", 2], damage: ["mul", 0.8] } },
+    { id: "heavy", name: "大槍", desc: "当たる数 -1。威力1.6倍", mods: { targets: ["add", -1], damage: ["mul", 1.6] } },
+    { id: "pin", name: "串刺し", desc: "当てた敵を0.6秒縛る", extra: { bind: 0.6 } },
+  ],
+  nec_plague: [
+    { id: "big", name: "大疫病", desc: "範囲1.35倍", mods: { radius: ["mul", 1.35] } },
+    { id: "long", name: "長い霧", desc: "時間1.8倍。1回の威力は少し下がる", mods: { duration: ["mul", 1.8], damage: ["mul", 0.8] } },
+    { id: "rapid", name: "連続感染", desc: "使える間隔0.6倍。威力は下がる", mods: { cooldown: ["mul", 0.6], damage: ["mul", 0.75] } },
+  ],
+  nec_pact: [
+    { id: "frenzy", name: "狂乱の契約", desc: "攻撃速度がもっと上がる（1.4倍）。時間は短い", mods: { haste: ["mul", 1.4], duration: ["mul", 0.7] } },
+    { id: "endure", name: "長い契約", desc: "時間1.8倍。上がり方は少し小さい", mods: { duration: ["mul", 1.8], haste: ["mul", 0.8] } },
+    { id: "quick", name: "即応", desc: "使える間隔0.65倍", mods: { cooldown: ["mul", 0.65] } },
+  ],
+  nec_grasp: [
+    { id: "long", name: "離さぬ手", desc: "縛る時間1.6倍", mods: { bind: ["mul", 1.6] } },
+    { id: "net", name: "亡者の群れ", desc: "範囲1.4倍。敵が1体でも使う", mods: { radius: ["mul", 1.4], minTargets: ["set", 1] } },
+    { id: "crush", name: "握りつぶし", desc: "威力2倍。縛る時間は短い", mods: { damage: ["mul", 2], bind: ["mul", 0.6] } },
+  ],
+});

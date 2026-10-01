@@ -12,6 +12,7 @@ WYD.world = {
       },
       fields: [],   // 地面に残る炎の陣など
       hazards: [],  // 少しして爆発する場所（精鋭の「爆砕」）
+      allies: [],   // 味方の手下（ネクロマンサーの骸骨。src/allies.js）
       projectiles: [], // 敵が撃った弾
       particles: [],   // エフェクトの粒（src/fx.js）
       bolts: [],       // 主人公が撃った火の玉（遠くから攻撃する職業）
@@ -63,6 +64,7 @@ WYD.world = {
     this.updateSpawns(w, state, dt);
     this.updatePlayer(w, state, stats, dt);
     this.updateBolts(w, state, stats, dt);
+    WYD.allies.update(w, state, stats, dt);
     this.updateEnemies(w, state, stats, dt);
     if (!p.dead) this.updateProjectiles(w, state, stats, dt);
     this.updateDrops(w, state, dt);
@@ -429,6 +431,10 @@ WYD.world = {
 
   // スキルごとの処理。使ったら true を返す
   skillHandlers: {
+    // 骸骨召喚（src/allies.js）
+    raise(w, state, stats, s, lv) {
+      return WYD.allies.summon(w, state, stats, s, lv);
+    },
     whirl(w, state, stats, s, lv) {
       const p = w.player;
       const targets = w.enemies.filter((e) => WYD.util.dist(p, e) <= s.radius + WYD.data.enemies[e.kind].radius);
@@ -577,10 +583,21 @@ WYD.world = {
         this.updateRanged(w, e, def, d, dt);
         continue;
       }
-      if (d > reach) this.moveToward(e, p, def.moveSpeed * e.moveSpeedMult * dt, reach * 0.8);
+      // 近接の敵は、主人公より近い手下がいれば手下をねらう
+      const tgt = WYD.allies.targetFor(w, e);
+      const tReach = tgt === p ? reach : def.range + tgt.radius;
+      const td = tgt === p ? d : WYD.util.dist(e, tgt);
+      if (td > tReach) this.moveToward(e, tgt, def.moveSpeed * e.moveSpeedMult * dt, tReach * 0.8);
 
       e.attackTimer -= dt;
-      if (d <= reach && e.attackTimer <= 0) {
+      if (tgt !== p && td <= tReach && e.attackTimer <= 0) {
+        e.attackTimer = 1 / (def.attackSpeed * e.attackSpeedMult);
+        e.atkAnim = WYD.data.anim.attack.time;
+        e.face = tgt.x >= e.x ? 1 : -1;
+        WYD.allies.hit(w, e, tgt);
+        continue;
+      }
+      if (tgt === p && d <= reach && e.attackTimer <= 0) {
         e.attackTimer = 1 / (def.attackSpeed * e.attackSpeedMult);
         e.atkAnim = WYD.data.anim.attack.time;
         e.face = p.x >= e.x ? 1 : -1;
@@ -1045,6 +1062,7 @@ WYD.world = {
     p.buff = null;
     p.haste = null;
     p.chill = 0;
+    w.allies = [];
     w.fields = [];
     w.hazards = [];
     w.projectiles = [];

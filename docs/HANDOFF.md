@@ -21,7 +21,7 @@
 - 装備の強化（`item.plus`・`item.enhanceSpent`）。能力の計算は `WYD.loot.statTotals(item)`（強化と宝石こみ）にまとめた
 - ソケットと宝石（`data/gems.js`・`src/gems.js`）。宝石は持ち物の枠を使わず `state.gems`（"種類:段階" → 数）で持つ。ソケットがなかった頃の装備はソケットなし
 - 終わりのない試練（クリア後、上のバーの「試練」から。`data/trial.js`・`src/trial.js`）。試練の最中かどうかはセーブしない（読み直すとふつうの冒険にもどる）。`node tools/balance-sim.js 25 barbarian 20` でクリア後に20分試練を続けた結果も出る
-- 職業2つ：バーバリアン（近接）、ソーサレス（火の玉で遠くから。`data/classes.js`）。キャラごとにセーブは別（バーバリアンは `wyd3-save-v1`、ほかは `wyd3-save-v1-<職業>`）
+- 職業3つ：バーバリアン（近接）、ソーサレス（火の玉で遠くから）、ネクロマンサー（骨の槍で遠くから＋骸骨の手下。`data/classes.js`）。手下のしくみは `src/allies.js`（新しいスキルのしくみ `raise`）。近くの敵は、主人公より近い手下をねらう。ネクロマンサーの絵はまだ仮（`docs/ART.md`）。キャラごとにセーブは別（バーバリアンは `wyd3-save-v1`、ほかは `wyd3-save-v1-<職業>`）
 - エフェクト（`src/fx.js`）、絵の動き（`src/render.js` の `pose`）、ディアブロ風パネル（`src/style.css` の後半）、効果音（`src/sound.js`）
 - 絵：主人公、地面3枚、装備13個・スキル6個のアイコン、全13種類の敵・ボス（`docs/ART.md` の「受け取り済み」）。アイコンの切り出し用シートも `assets/sheets/` に保存
 

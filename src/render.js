@@ -67,6 +67,7 @@ WYD.render = {
     this.playerPos = w.player;
     // 奥（画面の上）にいるものから描く（手前のキャラが奥のキャラにかぶさるように）
     for (const e of w.enemies.slice().sort((a, b) => a.y - b.y)) this.drawEnemy(ctx, e);
+    WYD.allies.draw(ctx, w);
     this.drawPlayer(ctx, w.player);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
     const R = WYD.data.player.rangedAttack;
@@ -239,7 +240,8 @@ WYD.render = {
   },
 
   // flash = true のときは白く光らせる（攻撃が当たったとき）、pose = 絵の動き
-  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash, pose) {
+  // filter = 絵の色を変える（仮の絵に使う。例 "grayscale(1)"）
+  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash, pose, filter) {
     const img = this.getImage(imageSrc);
     if (img) {
       const M = WYD.data.map;
@@ -256,6 +258,7 @@ WYD.render = {
       ctx.rotate(p.rot);
       ctx.scale(p.sx * p.flip, p.sy);
       if (flash) ctx.filter = "brightness(2.2)";
+      else if (filter) ctx.filter = filter;
       ctx.drawImage(img, -size / 2, -size * 0.9, size, size);
       ctx.restore();
       return;
@@ -347,7 +350,7 @@ WYD.render = {
     }
     if (p.dead && img) ctx.globalAlpha = 0.4;
     this.drawCircleOrImage(ctx, p.x, p.y, P.radius, p.dead ? "#555" : P.color, this.poseImage(p, P), false,
-      this.pose(p, p.swingTarget, this.clock));
+      this.pose(p, p.swingTarget, this.clock), P.imageFilter);
     // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
     if (p.buff && !p.dead) {
       const size = P.radius * WYD.data.map.spriteScale * 1.3;

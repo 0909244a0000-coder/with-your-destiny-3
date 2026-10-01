@@ -94,6 +94,24 @@ A single sprite sheet image, 1536x1024, arranged as an exact 3 columns by 2 rows
 A single game item icon: a dark wooden mage staff topped with a glowing ember crystal.
 ```
 
+### ネクロマンサー（3つ目の職業）の絵
+今はソーサレスの絵の色を変えて仮に使っています（`data/classes.js` の `necromancer.player.imageFilter`）。手下の骸骨も、亡者（preta）の絵を白くして仮に使っています。
+
+**主人公（1枚）** → `assets/player_necromancer.png`（512px以上・透明背景・`prepare_sprite.py` で256pxに）。置いたら `necromancer.player.image` をこの名前にし、`imageFilter` を `null` にする
+```
+A single full-body character sprite for a dark fantasy action RPG, 3/4 top-down view, facing right, transparent background: a gaunt necromancer in tattered black and bone-white robes, a hood, a staff topped with a small skull glowing pale green, bone ornaments on the shoulders. Western dark fantasy (Diablo-like), painterly, high contrast, accent color pale green #7dff9a. No text, no frame.
+```
+
+**手下の骸骨（1枚）** → `assets/ally_skeleton.png`。置いたら `necromancer.skills.nec_raise.image` をこの名前にし、`imageFilter` を `null` にする
+```
+A single full-body sprite, 3/4 top-down view, facing right, transparent background: a skeleton warrior with a rusty sword and a broken round shield, faint green glow in the eye sockets. Western dark fantasy (Diablo-like), painterly. No text, no frame.
+```
+
+**スキル（4列×2行。最後の1マスは空き）** → `--grid 4x2 --names nec_raise,nec_nova,nec_armor,nec_spear,nec_plague,nec_pact,nec_grasp`、置いたら `necromancer.skillIcons` に書く
+```
+A single sprite sheet image, 2048x1024, arranged as an exact 4 columns by 2 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Necromancer spell icons, left-to-right, top-to-bottom: 1 Raise Skeleton: a skeletal hand rising from the ground with green light, 2 Bone Storm: bone shards bursting outward in a ring, 3 Bone Armor: a ribcage-shaped shield of bones, 4 Bone Spear: a long sharp bone spear flying, 5 Plague Fog: a sickly green poison cloud, 6 Blood Pact: a dripping red rune in a circle, 7 Grasping Dead: many undead hands reaching out of dark earth, 8 (leave this cell empty).
+```
+
 ## 制作済みの仕様・再制作用プロンプト
 
 以下は今回制作した絵の仕様です。再制作のために元のプロンプトとIDを残しています。
