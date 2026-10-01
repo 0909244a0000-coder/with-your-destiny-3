@@ -238,6 +238,25 @@ WYD.data.enemies = {
     ranged: { keepDistance: 210, range: 310, speed: 230, size: 6, color: "#c08aff" },
   },
 
+  // ---- 宝物ゴブリン（まれに出て逃げ回る。data/elites.js の goblin も見る）----
+  goblin: {
+    name: "宝物ゴブリン",
+    color: "#ffd447",
+    image: "assets/enemies/yaksha.png",
+    imageFilter: "sepia(1) saturate(3) brightness(1.15)",   // 仮の絵（金色にした夜叉）
+    radius: 12,
+    hp: 200,
+    attack: 0,
+    defense: 3,
+    attackSpeed: 0,
+    moveSpeed: 95,      // 主人公（120）より少し遅い。追いかければ追いつける
+    range: 0,
+    exp: 60,
+    dropChance: 1.0,
+    rarityBonus: 5,
+    treasure: true,     // 逃げ回り、倒すと宝をたくさん落とす
+  },
+
   // ---- ボス ----
   //   slam… 大技：予告のあと、周りにまとめてダメージ
   ravana: {

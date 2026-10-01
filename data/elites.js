@@ -54,3 +54,16 @@ WYD.data.elites = {
       color: "#b070ff" },
   ],
 };
+
+// 宝物ゴブリン：ふつうの敵が出るときに、まれに代わりに出る。逃げ回り、時間がたつと消える
+WYD.data.goblin = {
+  chance: 0.006,          // ふつうの敵が出るときに、代わりにゴブリンが出る確率
+  fleeTime: 14,           // この秒数で逃げてしまう
+  dropCount: 6,           // 倒すと落とす装備の数（ふつうのぶんに足す）
+  rarityBonus: 5,         // その装備のレアの出やすさ
+  materials: 15,          // もらえる素材（危険度ごとに materialsPerDifficulty を足す）
+  materialsPerDifficulty: 4,
+  gems: 2,                // もらえる宝石の数
+  dropSpread: 40,         // 装備が散らばる広さ
+  color: "#ffd447",
+};

@@ -111,6 +111,15 @@ WYD.world = {
     if (w.spawnTimer > 0 || w.enemies.length >= maxEnemies) return;
     w.spawnTimer = map.spawnInterval;
 
+    // まれに宝物ゴブリン（同時に1体まで、ボスの間には出ない）
+    const G = WYD.data.goblin;
+    if (!bossRoom && Math.random() < G.chance && !w.enemies.some((x) => WYD.data.enemies[x.kind].treasure)) {
+      const g = this.spawnEnemy(w, state, "goblin", this.farPosition(w));
+      g.fleeTimer = G.fleeTime;
+      WYD.ui.log("宝物ゴブリンが現れた！ 逃げられる前に倒せ！", G.color);
+      WYD.sound.play("rareDrop");
+      return;
+    }
     const pick = WYD.util.pickWeighted(area.enemies, (x) => x.weight);
     const e = this.spawnEnemy(w, state, pick.kind, this.farPosition(w));
     if (Math.random() < WYD.data.elites.chance) this.makeElite(e);
@@ -356,7 +365,8 @@ WYD.world = {
       return;
     }
 
-    const target = this.nearestEnemy(w, p);
+    // 宝物ゴブリンがいれば、まずそれを追いかける
+    const target = w.enemies.find((e) => WYD.data.enemies[e.kind].treasure) || this.nearestEnemy(w, p);
     if (!target) {
       // 敵がいないときは真ん中へ戻る
       this.moveToward(p, { x: map.width / 2, y: map.height / 2 }, stats.moveSpeed * 0.5 * dt, 4);
@@ -593,6 +603,17 @@ WYD.world = {
       if (e.elite) {
         this.updateElite(w, state, e, dt);
         if (p.dead) return;
+      }
+      if (def.treasure) {
+        // 宝物ゴブリン：主人公から逃げ、時間がたつと消える
+        this.moveAway(e, p, def.moveSpeed * e.moveSpeedMult * dt);
+        e.fleeTimer -= dt;
+        if (e.fleeTimer <= 0) {
+          w.enemies = w.enemies.filter((x) => x !== e);
+          w.effects.push({ type: "ring", x: e.x, y: e.y, radius: def.radius * 2.5, color: WYD.data.goblin.color, time: 0, duration: 0.4 });
+          WYD.ui.log("宝物ゴブリンに逃げられた…", "#c9b48a");
+        }
+        continue;
       }
       const reach = def.range + WYD.data.player.radius;
       const d = WYD.util.dist(e, p);
@@ -1035,8 +1056,25 @@ WYD.world = {
       const spread = count > 1 ? 10 + count * 4 : 0;
       w.drops.push({ x: e.x + WYD.util.rand(-spread, spread), y: e.y + WYD.util.rand(-spread, spread), item, age: 0 });
     }
+    if (def.treasure) this.goblinTreasure(w, state, e);
     WYD.gems.onKill(w, state, e);
     WYD.records.check(state);
+  },
+
+  // 宝物ゴブリンを倒したときのごほうび
+  goblinTreasure(w, state, e) {
+    const G = WYD.data.goblin;
+    for (let i = 0; i < G.dropCount; i++) {
+      const item = WYD.loot.create(state, this.itemLevel(state), G.rarityBonus);
+      w.drops.push({ x: e.x + WYD.util.rand(-G.dropSpread, G.dropSpread), y: e.y + WYD.util.rand(-G.dropSpread, G.dropSpread), item, age: 0 });
+    }
+    const mats = G.materials + G.materialsPerDifficulty * (state.difficulty - 1);
+    state.materials += mats;
+    for (let i = 0; i < G.gems; i++) WYD.gems.add(state, WYD.gems.key(WYD.util.pick(WYD.data.gems.gems).id, WYD.gems.dropTier(state)));
+    WYD.records.add(state, "goblinKills");
+    WYD.fx.burst(w, e.x, e.y, WYD.data.fx.levelUp, G.color, { glow: true });
+    WYD.sound.play("uniqueDrop");
+    WYD.ui.log(`宝物ゴブリンを倒した！ 装備${G.dropCount}個・${WYD.data.crafting.materialName} +${mats}・宝石${G.gems}個`, G.color);
   },
 
   // ボスを倒したら次のエリアを解放する

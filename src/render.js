@@ -393,6 +393,16 @@ WYD.render = {
   drawEnemy(ctx, e) {
     const def = WYD.data.enemies[e.kind];
     const E = WYD.data.elites;
+    if (def.treasure) {
+      // 宝物ゴブリン：金色にきらめく輪
+      ctx.strokeStyle = WYD.data.goblin.color;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.5 + 0.4 * Math.sin((this.clock || 0) * 8);
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, def.radius + 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
     if (e.enraged) {
       // 怒ったボス：脈打つ赤いオーラ
       const R = WYD.data.boss.enrage;
