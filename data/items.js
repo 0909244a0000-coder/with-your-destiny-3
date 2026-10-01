@@ -4,6 +4,7 @@ WYD.data = WYD.data || {};
 
 WYD.data.items = {
   inventorySize: 30,
+  stashSize: 30,        // 倉庫に入る数
   pickupDelay: 0.8,     // 落ちてから拾うまでの秒数
   groundLifetime: 30,   // 拾えなかった装備が消えるまでの秒数
   levelScaling: 0.12,   // アイテムレベル+1ごとに数値が何割増えるか
@@ -16,6 +17,8 @@ WYD.data.items = {
     { id: "legend", name: "レジェンド", color: "#ff8a2a", weight: 2,  affixes: [5, 6] },
     // ユニークはふつうには出ない（weight 0）。ボスと精鋭がまれに落とす。data/uniques.js
     { id: "unique", name: "ユニーク",   color: "#e8c46a", weight: 0,  affixes: [0, 0] },
+    // セットもふつうには出ない（weight 0）。ボスと精鋭がまれに落とす。data/sets.js
+    { id: "set",    name: "セット",     color: "#3fd06a", weight: 0,  affixes: [0, 0] },
   ],
 
   slots: {
@@ -45,6 +48,7 @@ WYD.data.items = {
     { slot: "weapon", id: "dual_blades", name: "双剣",       main: { attack: [5, 8] } },
     { slot: "weapon", id: "great_blade", name: "大剣",       main: { attack: [8, 12], attackSpeed: [-10, -10] } },
     { slot: "weapon", id: "chakram", name: "ダガー",     main: { attack: [4, 6], critChance: [3, 5] } },
+    { slot: "weapon", id: "staff", name: "杖",         main: { attack: [3, 5], skillDamage: [8, 14] } },
     { slot: "head",   id: "turban", name: "兜",         main: { defense: [2, 4] } },
     { slot: "head",   id: "crown", name: "サークレット", main: { defense: [1, 2], maxHp: [10, 20] } },
     { slot: "body",   id: "chainmail", name: "鎖帷子",     main: { defense: [4, 7] } },
@@ -58,7 +62,21 @@ WYD.data.items = {
   ],
 
   // 装備のアイコンの絵（id → ファイル）。例: dual_blades: "assets/items/dual_blades.png"
-  icons: {},
+  icons: {
+    dual_blades: "assets/items/dual_blades.png",
+    great_blade: "assets/items/great_blade.png",
+    chakram: "assets/items/chakram.png",
+    turban: "assets/items/turban.png",
+    crown: "assets/items/crown.png",
+    chainmail: "assets/items/chainmail.png",
+    robe: "assets/items/robe.png",
+    gauntlets: "assets/items/gauntlets.png",
+    bracelet: "assets/items/bracelet.png",
+    leggings: "assets/items/leggings.png",
+    sandals: "assets/items/sandals.png",
+    ring: "assets/items/ring.png",
+    rosary: "assets/items/rosary.png",
+  },
 
   // 追加能力（マジック以上に付く）
   affixes: [
@@ -83,6 +101,17 @@ WYD.data.items = {
     "法衣": "ローブ", "脚絆": "グリーブ", "サンダル": "ブーツ", "数珠": "印章指輪",
     "シヴァの": "熾天使の", "ヴィシュヌの": "冥王の", "インドラの": "雷帝の",
     "アグニの": "焔王の", "ヴァーユの": "嵐の",
+  },
+
+  // 自動で装備：拾った装備の点数が、今その部位につけている装備より高ければ着替える（上のバーの「自動装備」）
+  //   ユニーク・セット・強化した装備・宝石をはめた装備を着ているときは、その部位は着替えない
+  //   点数 = 能力ごとの weights × 数値 の合計 + perEffect × 特殊効果の数（tools/balance-sim.js と同じ考え方）
+  autoEquip: {
+    weights: { attack: 4, defense: 2.5, maxHp: 0.4, hpRegen: 4, attackSpeed: 1.5, critChance: 1.5, moveSpeed: 0.3, skillDamage: 0.8 },
+    perEffect: 6,
+    uniqueBonus: 30,         // ユニークの固有能力のぶん（数字で比べられないので目安）
+    setBonus: 20,            // セット装備のぶん（そろえるボーナスの目安）
+    minGain: 0.02,           // 点数がこの割合以上上がるときだけ着替える
   },
 };
 
