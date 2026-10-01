@@ -31,12 +31,13 @@ WYD.render = {
 
   draw(ctx, w, state) {
     const map = WYD.data.map;
+    const area = WYD.world.area(state);
     if (!this.decorations) this.decorations = this.makeDecorations();
 
-    ctx.fillStyle = map.bgColor;
+    ctx.fillStyle = area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
     for (const d of this.decorations) {
-      ctx.fillStyle = d.kind === "grass" ? "#34482f" : "#4a4f47";
+      ctx.fillStyle = d.kind === "grass" ? area.grassColor : area.stoneColor;
       ctx.beginPath();
       ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
       ctx.fill();
@@ -60,7 +61,8 @@ WYD.render = {
     ctx.textAlign = "left";
     ctx.font = "bold 16px sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillText(`${map.name}　危険度 ${state.difficulty}`, 12, 24);
+    ctx.fillText(`${area.name}　危険度 ${state.difficulty}`, 12, 24);
+    this.drawBossBar(ctx, w);
 
     if (w.player.dead) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
@@ -73,6 +75,26 @@ WYD.render = {
       ctx.fillStyle = "#ffffff";
       ctx.fillText(`${Math.ceil(w.player.respawnTimer)} 秒後に復活`, map.width / 2, map.height / 2 + 24);
     }
+  },
+
+  // ボスがいるときは、画面の上にボスのHPを大きく出す
+  drawBossBar(ctx, w) {
+    const boss = w.enemies.find((e) => e.boss);
+    if (!boss) return;
+    const map = WYD.data.map;
+    const def = WYD.data.enemies[boss.kind];
+    const bw = map.width * 0.5, bh = 12;
+    const bx = (map.width - bw) / 2, by = 40;
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+    ctx.fillStyle = "#5a0000";
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = WYD.data.boss.nameColor;
+    ctx.fillRect(bx, by, bw * Math.max(0, boss.hp / boss.maxHp), bh);
+    ctx.textAlign = "center";
+    ctx.font = "bold 15px sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(def.name, map.width / 2, by - 6);
   },
 
   drawCircleOrImage(ctx, x, y, r, color, imageSrc) {
@@ -143,7 +165,22 @@ WYD.render = {
     ctx.fillStyle = "#e33";
     ctx.fillRect(bx, by, bw * Math.max(0, e.hp / e.maxHp), bh);
 
-    if (e.elite) {
+    if (e.slamCharge != null) {
+      // ボスの大技の予告：だんだん濃くなる赤い円
+      const t = 1 - e.slamCharge / e.slamWindup;
+      ctx.fillStyle = WYD.data.boss.warnColor;
+      ctx.globalAlpha = 0.1 + 0.25 * t;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, def.slam.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    if (e.boss) {
+      ctx.textAlign = "center";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillStyle = WYD.data.boss.nameColor;
+      ctx.fillText(def.name, e.x, by - 4);
+    } else if (e.elite) {
       ctx.textAlign = "center";
       ctx.font = "bold 12px sans-serif";
       ctx.fillStyle = E.color;

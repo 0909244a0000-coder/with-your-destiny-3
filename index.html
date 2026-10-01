@@ -10,6 +10,12 @@
   <header>
     <h1>With Your Destiny Ⅲ <small>最小版</small></h1>
     <div class="controls">
+      <span>エリア</span>
+      <button id="area-down" title="前のエリアへ">◀</button>
+      <b id="area-name"></b>
+      <button id="area-up" title="次のエリアへ">▶</button>
+      <span id="boss-progress" class="muted"></span>
+      <span class="sep"></span>
       <span>危険度</span>
       <button id="diff-down" title="危険度を下げる">◀</button>
       <b id="diff-value">1</b>
@@ -74,6 +80,7 @@
   <script src="data/enemies.js"></script>
   <script src="data/elites.js"></script>
   <script src="data/map.js"></script>
+  <script src="data/areas.js"></script>
   <script src="data/items.js"></script>
   <script src="data/effects.js"></script>
   <!-- しくみと画面（src/） -->

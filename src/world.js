@@ -30,7 +30,7 @@ WYD.world = {
 
     if (p.dead) {
       p.respawnTimer -= dt;
-      if (p.respawnTimer <= 0) this.respawn(w, stats);
+      if (p.respawnTimer <= 0) this.respawn(w, state, stats);
       return;
     }
 
@@ -50,22 +50,41 @@ WYD.world = {
   // ---------- 敵の出現 ----------
   updateSpawns(w, state, dt) {
     const map = WYD.data.map;
+    const area = this.area(state);
     w.spawnTimer -= dt;
+
+    // 決まった数を倒したらボスが出る
+    if (state.bossProgress >= area.killsForBoss && !w.enemies.some((e) => e.boss)) {
+      state.bossProgress = 0;
+      const boss = this.spawnEnemy(w, state, area.boss, this.farPosition(w));
+      boss.boss = true;
+      boss.slamTimer = WYD.data.enemies[area.boss].slam.interval;
+      WYD.ui.log(`ボス「${WYD.data.enemies[area.boss].name}」が現れた！`, WYD.data.boss.nameColor);
+      WYD.ui.markDirty();
+    }
+
     if (w.spawnTimer > 0 || w.enemies.length >= map.maxEnemies) return;
     w.spawnTimer = map.spawnInterval;
 
-    const kinds = Object.keys(WYD.data.enemies);
-    const kind = WYD.util.pickWeighted(kinds, (k) => WYD.data.enemies[k].spawnWeight);
+    const pick = WYD.util.pickWeighted(area.enemies, (x) => x.weight);
+    const e = this.spawnEnemy(w, state, pick.kind, this.farPosition(w));
+    if (Math.random() < WYD.data.elites.chance) this.makeElite(e);
+  },
 
-    // プレイヤーから離れた場所を探す
+  // 今いるエリアの設定
+  area(state) {
+    return WYD.data.areas.find((a) => a.id === state.area) || WYD.data.areas[0];
+  },
+
+  // プレイヤーから離れた場所を探す
+  farPosition(w) {
+    const map = WYD.data.map;
     let pos;
     for (let i = 0; i < 20; i++) {
       pos = { x: WYD.util.rand(30, map.width - 30), y: WYD.util.rand(30, map.height - 30) };
       if (WYD.util.dist(pos, w.player) >= map.spawnMinDistance) break;
     }
-
-    const e = this.spawnEnemy(w, state, kind, pos);
-    if (Math.random() < WYD.data.elites.chance) this.makeElite(e);
+    return pos;
   },
 
   // 敵を1体出す（危険度に合わせて強くする）
@@ -73,12 +92,13 @@ WYD.world = {
     const def = WYD.data.enemies[kind];
     const diff = WYD.data.difficulty;
     const d = state.difficulty - 1;
-    const maxHp = Math.round(def.hp * (1 + diff.hpGrowth * d));
+    const power = this.area(state).powerMult;
+    const maxHp = Math.round(def.hp * (1 + diff.hpGrowth * d) * power);
     const e = {
       id: w.nextId++, kind, x: pos.x, y: pos.y,
       hp: maxHp, maxHp,
-      attack: def.attack * (1 + diff.attackGrowth * d),
-      defense: def.defense * (1 + diff.defenseGrowth * d),
+      attack: def.attack * (1 + diff.attackGrowth * d) * power,
+      defense: def.defense * (1 + diff.defenseGrowth * d) * power,
       moveSpeedMult: 1,
       attackSpeedMult: 1,
       attackTimer: 1,
@@ -232,6 +252,10 @@ WYD.world = {
       }
       const reach = def.range + WYD.data.player.radius;
       const d = WYD.util.dist(e, p);
+      if (def.slam && this.updateSlam(w, e, def.slam, stats, d, dt)) {
+        if (p.dead) return;
+        continue;   // 大技の準備中は動かない
+      }
       if (d > reach) this.moveToward(e, p, def.moveSpeed * e.moveSpeedMult * dt, reach * 0.8);
 
       e.attackTimer -= dt;
@@ -270,6 +294,33 @@ WYD.world = {
         }
       }
     }
+  },
+
+  // ボスの大技：予告の輪が出たあと、範囲内にいると大ダメージ。準備中なら true を返す
+  updateSlam(w, e, slam, stats, d, dt) {
+    const p = w.player;
+    if (e.slamCharge != null) {
+      e.slamCharge -= dt;
+      if (e.slamCharge > 0) return true;
+      e.slamCharge = null;
+      w.effects.push({ type: "ring", x: e.x, y: e.y, radius: slam.radius, color: WYD.data.boss.warnColor, time: 0, duration: 0.4 });
+      if (WYD.util.dist(e, p) <= slam.radius) {
+        const defense = stats.defense + (p.buff ? p.buff.defense : 0);
+        const hit = this.calcDamage(e.attack * slam.damageMult, defense, 0);
+        p.hp -= hit.damage;
+        this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
+        if (p.hp <= 0) this.playerDied(w);
+      }
+      return true;
+    }
+    e.slamTimer -= dt;
+    if (e.slamTimer <= 0 && d <= slam.radius) {
+      e.slamTimer = slam.interval;
+      e.slamCharge = slam.windup;
+      e.slamWindup = slam.windup;
+      return true;
+    }
+    return false;
   },
 
   // ---------- 落ちている装備 ----------
@@ -346,8 +397,15 @@ WYD.world = {
     const d = state.difficulty - 1;
     w.enemies = w.enemies.filter((x) => x !== e);
 
-    const expMult = e.elite ? WYD.data.elites.expMult : 1;
+    const area = this.area(state);
+    const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult;
     this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult));
+
+    if (e.boss) {
+      this.bossDefeated(state, area, def);
+    } else if (!w.enemies.some((x) => x.boss)) {
+      state.bossProgress = Math.min(area.killsForBoss, state.bossProgress + 1);
+    }
 
     // 特殊効果：チャームンダーの饗宴（倒すとHP回復）
     const stats = WYD.stats.compute(state);
@@ -372,14 +430,27 @@ WYD.world = {
     // 精鋭は必ず数個落とし、レアも出やすい
     const E = WYD.data.elites;
     const bonus = def.rarityBonus * (1 + diff.rarityGrowth * d) * (e.elite ? E.rarityBonusMult : 1);
-    const count = e.elite ? E.dropCount : (Math.random() < def.dropChance ? 1 : 0);
+    let count = e.elite ? E.dropCount : (Math.random() < def.dropChance ? 1 : 0);
+    if (e.boss) count = WYD.data.boss.dropCount;
     if (e.elite) WYD.ui.log(`精鋭「${e.name}」を倒した！`, E.color);
     for (let i = 0; i < count; i++) {
-      const item = WYD.loot.create(state, state.difficulty, bonus);
+      const item = WYD.loot.create(state, state.difficulty + area.itemLevelBonus, bonus);
       if (item.rarity === "normal" && state.settings.skipNormal) continue;
-      const spread = count > 1 ? 14 : 0;
+      const spread = count > 1 ? 10 + count * 4 : 0;
       w.drops.push({ x: e.x + WYD.util.rand(-spread, spread), y: e.y + WYD.util.rand(-spread, spread), item, age: 0 });
     }
+  },
+
+  // ボスを倒したら次のエリアを解放する
+  bossDefeated(state, area, def) {
+    WYD.ui.log(`ボス「${def.name}」を倒した！`, WYD.data.boss.nameColor);
+    const list = WYD.data.areas;
+    const next = list[list.indexOf(area) + 1];
+    if (next && !state.unlockedAreas.includes(next.id)) {
+      state.unlockedAreas.push(next.id);
+      WYD.ui.log(`新しいエリア「${next.name}」に行けるようになった！`, "#ff8a2a");
+    }
+    WYD.ui.changed();
   },
 
   gainExp(state, amount) {
@@ -406,9 +477,10 @@ WYD.world = {
     WYD.ui.log("倒れてしまった…", "#ff6b6b");
   },
 
-  respawn(w, stats) {
+  respawn(w, state, stats) {
     const map = WYD.data.map;
     const p = w.player;
+    this.keepBoss(w, state);
     p.dead = false;
     p.hp = stats.maxHp;
     p.x = map.width / 2;
@@ -419,9 +491,16 @@ WYD.world = {
   },
 
   // 危険度を変えたら敵を入れ替える
-  resetEnemies(w) {
+  // keepBoss = true のときは、いたボスがすぐまた出てくる（エリアを変えたときは false）
+  resetEnemies(w, state, keepBoss) {
+    if (keepBoss) this.keepBoss(w, state);
     w.enemies = [];
     w.spawnTimer = 0.5;
+  },
+
+  // 敵を消す前に呼ぶ：ボスがいたら、すぐまた出てくるようにする
+  keepBoss(w, state) {
+    if (w.enemies.some((e) => e.boss)) state.bossProgress = this.area(state).killsForBoss;
   },
 
   nearestEnemy(w, from) {

@@ -15,6 +15,8 @@ WYD.ui = {
     this.world = world;
     const s = state;
 
+    this.$("area-down").onclick = () => this.changeArea(-1);
+    this.$("area-up").onclick = () => this.changeArea(1);
     this.$("diff-down").onclick = () => this.changeDifficulty(-1);
     this.$("diff-up").onclick = () => this.changeDifficulty(1);
     for (const btn of document.querySelectorAll("[data-speed]")) {
@@ -108,8 +110,23 @@ WYD.ui = {
     const next = WYD.util.clamp(s.difficulty + delta, 1, s.maxDifficulty);
     if (next === s.difficulty) return;
     s.difficulty = next;
-    WYD.world.resetEnemies(this.world);
+    WYD.world.resetEnemies(this.world, s, true);
     this.log(`危険度を ${next} にした`);
+    this.changed();
+  },
+
+  // 行けるエリアの中で、前／次のエリアへ移動する
+  changeArea(delta) {
+    const s = this.state;
+    const list = WYD.data.areas.filter((a) => s.unlockedAreas.includes(a.id));
+    const i = list.findIndex((a) => a.id === s.area);
+    const next = list[i + delta];
+    if (!next) return;
+    s.area = next.id;
+    s.bossProgress = 0;
+    WYD.world.resetEnemies(this.world, s, false);
+    this.world.drops = [];
+    this.log(`「${next.name}」へ移動した`, "#ff8a2a");
     this.changed();
   },
 
@@ -160,6 +177,13 @@ WYD.ui = {
     const diff = WYD.data.difficulty;
 
     // 上のバー
+    const area = WYD.world.area(s);
+    const opened = WYD.data.areas.filter((a) => s.unlockedAreas.includes(a.id));
+    const ai = opened.indexOf(area);
+    this.$("area-name").textContent = area.name;
+    this.$("area-down").disabled = ai <= 0;
+    this.$("area-up").disabled = ai >= opened.length - 1;
+    this.$("boss-progress").textContent = `（ボスまで ${s.bossProgress}/${area.killsForBoss}体）`;
     this.$("diff-value").textContent = s.difficulty;
     this.$("diff-progress").textContent =
       s.maxDifficulty >= diff.max

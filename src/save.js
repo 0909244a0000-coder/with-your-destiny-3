@@ -20,6 +20,9 @@ WYD.save = {
       difficulty: 1,
       maxDifficulty: 1,
       killsAtMax: 0,
+      area: WYD.data.areas[0].id,               // 今いるエリア
+      unlockedAreas: [WYD.data.areas[0].id],    // 行けるエリア
+      bossProgress: 0,                          // ボスが出るまでに倒した数
       settings: { speed: 1, skipNormal: false },
     };
   },
@@ -36,6 +39,12 @@ WYD.save = {
       state.player.skills = Object.assign(this.newState().player.skills, saved.player && saved.player.skills);
       state.player.skillEnabled = Object.assign(this.newState().player.skillEnabled, saved.player && saved.player.skillEnabled);
       state.settings = Object.assign(this.newState().settings, saved.settings);
+      // エリアがなかった頃のセーブや、消えたエリアにいた場合は最初のエリアにする
+      const areaIds = WYD.data.areas.map((a) => a.id);
+      if (!Array.isArray(state.unlockedAreas)) state.unlockedAreas = [areaIds[0]];
+      state.unlockedAreas = state.unlockedAreas.filter((id) => areaIds.includes(id));
+      if (!state.unlockedAreas.includes(areaIds[0])) state.unlockedAreas.unshift(areaIds[0]);
+      if (!state.unlockedAreas.includes(state.area)) state.area = areaIds[0];
       // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
       for (const item of state.inventory.concat(Object.values(state.equipment))) {
         if (item && !Array.isArray(item.effects)) item.effects = [];
