@@ -24,7 +24,7 @@ WYD.save = {
       unlockedAreas: [WYD.data.areas[0].id],    // 行けるエリア
       bossProgress: 0,                          // ボスが出るまでに倒した数
       settings: { speed: 1, skipNormal: false, autoDifficulty: false },
-      materials: 0,    // カルマの欠片（装備を捨てるともらえる）
+      materials: 0,    // 素材（装備を捨てるともらえる。名前は data/crafting.js）
     };
   },
 
@@ -47,15 +47,28 @@ WYD.save = {
       if (!state.unlockedAreas.includes(areaIds[0])) state.unlockedAreas.unshift(areaIds[0]);
       if (!state.unlockedAreas.includes(state.area)) state.area = areaIds[0];
       if (typeof state.materials !== "number") state.materials = 0;
-      // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
       for (const item of state.inventory.concat(Object.values(state.equipment))) {
-        if (item && !Array.isArray(item.effects)) item.effects = [];
+        if (!item) continue;
+        // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
+        if (!Array.isArray(item.effects)) item.effects = [];
+        this.renameItem(item);
       }
       return state;
     } catch (e) {
       console.warn("セーブデータを読めませんでした。新しく始めます。", e);
       return this.newState();
     }
+  },
+
+  // 名前を変えた装備を、今の名前に直す（data/items.js の renamedWords）
+  renameItem(item) {
+    const u = WYD.loot.uniqueInfo(item);
+    if (u) {
+      item.name = u.name;
+      return;
+    }
+    const words = WYD.data.items.renamedWords || {};
+    for (const old in words) item.name = item.name.split(old).join(words[old]);
   },
 
   write(state) {

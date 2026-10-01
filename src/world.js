@@ -209,7 +209,7 @@ WYD.world = {
       p.swingTarget = { x: target.x, y: target.y };
       this.playerHit(w, state, stats, target, stats.attack);
       this.tryThunder(w, state, stats, target);
-      // 固有能力：猿王ハヌマーンの籠手（剛力の間、周りにも当たる）
+      // 固有能力：狂王の籠手（狂戦士の怒りの間、周りにも当たる）
       const cleave = stats.powers.hasteCleave;
       if (cleave && p.haste) {
         for (const e of w.enemies.slice()) {
@@ -241,7 +241,7 @@ WYD.world = {
         this.playerHit(w, state, stats, e, stats.attack * mult);
       }
       w.effects.push({ type: "ring", x: p.x, y: p.y, radius: s.radius, color: s.color, time: 0, duration: 0.35 });
-      // 固有能力：火神アグニの腕輪（足元に炎の陣）
+      // 固有能力：劫火の腕輪（足元の地面が燃える）
       const fire = stats.powers.whirlFire;
       if (fire) {
         w.fields.push({ x: p.x, y: p.y, radius: fire.radius, timeLeft: fire.duration, duration: fire.duration,
@@ -259,12 +259,12 @@ WYD.world = {
       this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
       return true;
     },
-    // 敵から敵へ飛び移る円盤
+    // 敵から敵へ跳ね返る投げ斧
     sudarshana(w, state, stats, s, lv) {
       const p = w.player;
       let cur = this.nearestEnemy(w, p);
       if (!cur || WYD.util.dist(p, cur) > s.range) return false;
-      const bounce = stats.powers.chakraBounce;   // 固有能力：ヴィシュヌの円盤
+      const bounce = stats.powers.chakraBounce;   // 固有能力：彷徨う刃
       const maxTargets = Math.floor(s.targetsBase + s.targetsPerLevel * (lv - 1)) + (bounce ? bounce.extraTargets : 0);
       const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100) *
         (bounce ? 1 + bounce.damagePercent / 100 : 1);
@@ -400,7 +400,7 @@ WYD.world = {
     }
   },
 
-  // 受けたダメージを敵に返す（特殊効果：ナーガの鱗、固有能力：インドラの金剛環）
+  // 受けたダメージを敵に返す（特殊効果：茨の鎧、固有能力：不壊の指輪）
   reflect(w, state, stats, e, damage) {
     let percent = stats.effects.thorns;
     const vt = stats.powers.vajraThorns;
@@ -450,7 +450,7 @@ WYD.world = {
       const hit = this.calcDamage(b.attack, defense, 0);
       p.hp -= hit.damage;
       this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
-      // 特殊効果：ナーガの鱗（撃った敵が生きていれば返す）
+      // 特殊効果：茨の鎧（撃った敵が生きていれば返す）
       const owner = w.enemies.find((e) => e.id === b.ownerId);
       if (owner) this.reflect(w, state, stats, owner, hit.damage);
       if (p.hp <= 0) this.playerDied(w);
@@ -521,7 +521,7 @@ WYD.world = {
     return { damage: Math.max(C.minDamage, Math.round(dmg)), crit };
   },
 
-  // プレイヤーの攻撃が当たったとき（特殊効果：カーリーの憤怒・ラクタビージャの渇き）
+  // プレイヤーの攻撃が当たったとき（特殊効果：背水の怒り・吸血）
   playerHit(w, state, stats, e, attack) {
     if (e.hp <= 0) return;
     const p = w.player;
@@ -535,7 +535,7 @@ WYD.world = {
     }
   },
 
-  // 特殊効果：インドラの雷（通常攻撃のときに確率で発動）
+  // 特殊効果：雷鳴（通常攻撃のときに確率で発動）
   tryThunder(w, state, stats, e) {
     const chance = stats.effects.thunder;
     if (e.hp <= 0 || chance <= 0 || Math.random() * 100 >= chance) return;
@@ -569,7 +569,7 @@ WYD.world = {
       state.bossProgress = Math.min(area.killsForBoss, state.bossProgress + 1);
     }
 
-    // 特殊効果：チャームンダーの饗宴（倒すとHP回復）
+    // 特殊効果：血の饗宴（倒すとHP回復）
     const stats = WYD.stats.compute(state);
     const p = w.player;
     if (stats.effects.killHeal > 0 && !p.dead) {
@@ -578,7 +578,7 @@ WYD.world = {
       this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
     }
 
-    // 固有能力：蛇王ヴァースキの冠（縛られた敵が爆発）／カーリーの髑髏の数珠（死体が爆発）
+    // 固有能力：鎖の王冠（縛られた敵が爆発）／屍爆の印章（死体が爆発）
     const be = stats.powers.bindExplode;
     if (be && e.stunTimer > 0 && !p.dead) this.explode(w, state, stats, e.x, e.y, be.radius, be.mult, be.color);
     const kn = stats.powers.killNova;

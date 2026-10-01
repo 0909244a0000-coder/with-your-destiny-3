@@ -23,45 +23,45 @@ WYD.data.effects = {
   //   cap      … 複数の装備で重ねたときの合計の上限
   list: [
     {
-      id: "thunder", name: "インドラの雷",
+      id: "thunder", name: "雷鳴",
       desc: "攻撃時 {v}% の確率で雷が落ち、攻撃力×{power}倍のダメージ",
       range: [8, 15], decimals: 0, weight: 10, cap: 50,
       power: 1.2,          // 雷ダメージの倍率（攻撃力×これ）
       color: "#9fd8ff",
     },
     {
-      id: "lifesteal", name: "ラクタビージャの渇き",
+      id: "lifesteal", name: "吸血",
       desc: "与えたダメージの {v}% をHPとして吸収",
       range: [2, 5], decimals: 1, weight: 10, cap: 20,
     },
     {
-      id: "cooldown", name: "カーラチャクラ",
+      id: "cooldown", name: "刻の加速",
       desc: "スキルのクールダウン {v}% 短縮",
       range: [5, 12], decimals: 0, weight: 8, cap: 50,
     },
     {
-      id: "killHeal", name: "チャームンダーの饗宴",
+      id: "killHeal", name: "血の饗宴",
       desc: "敵を倒すと最大HPの {v}% を回復",
       range: [2, 5], decimals: 0, weight: 10, cap: 25,
     },
     {
-      id: "critDamage", name: "シヴァの第三の眼",
+      id: "critDamage", name: "処刑人の眼",
       desc: "会心ダメージ +{v}%",
       range: [10, 30], decimals: 0, weight: 10, cap: 200,
     },
     {
-      id: "moveSpeed", name: "ガルダの翼",
+      id: "moveSpeed", name: "疾駆",
       desc: "移動速度 +{v}%",
       range: [8, 15], decimals: 0, weight: 10, cap: 60,
     },
     {
-      id: "wrath", name: "カーリーの憤怒",
+      id: "wrath", name: "背水の怒り",
       desc: "HPが{hpPercent}%以下のとき、与ダメージ +{v}%",
       range: [15, 30], decimals: 0, weight: 8, cap: 100,
       hpPercent: 50,       // この%以下で発動
     },
     {
-      id: "thorns", name: "ナーガの鱗",
+      id: "thorns", name: "茨の鎧",
       desc: "受けたダメージの {v}% を相手に返す",
       range: [15, 40], decimals: 0, weight: 8, cap: 200,
     },

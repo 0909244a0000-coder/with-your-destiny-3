@@ -3,7 +3,7 @@ window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
 WYD.data.crafting = {
-  materialName: "カルマの欠片",   // 素材の名前
+  materialName: "魂の欠片",       // 素材の名前
   materialColor: "#c9a0ff",
 
   // 装備を捨てる（分解する）ともらえる素材の数（レア度ごと）

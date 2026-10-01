@@ -18,7 +18,7 @@ WYD.data.skills = {
   },
   // 守りスキル：HPが減ったら防御アップ＋回復
   vajra: {
-    name: "金剛身",
+    name: "鉄の皮膚",
     desc: "HPが減ると発動。しばらく防御力アップし、HPを回復。",
     startLevel: 0,        // 0 = 最初は覚えていない（スキルポイントで覚える）
     maxLevel: 10,
@@ -31,10 +31,10 @@ WYD.data.skills = {
     triggerHpPercent: 60, // HPがこの%以下になったら使う
     color: "#ffd75e",
   },
-  // 攻撃スキル：敵から敵へ飛び移る円盤
+  // 攻撃スキル：敵から敵へ跳ね返る投げ斧
   sudarshana: {
-    name: "スダルシャナ・チャクラ",
-    desc: "円盤が敵から敵へ飛び移り、何体もまとめて切り裂く。",
+    name: "連鎖の投げ斧",
+    desc: "投げた斧が敵から敵へ跳ね返り、何体もまとめて切り裂く。",
     startLevel: 0,
     maxLevel: 10,
     cooldown: 5,
@@ -48,8 +48,8 @@ WYD.data.skills = {
   },
   // 攻撃スキル：地面に炎を残す
   agni: {
-    name: "アグニの火炎陣",
-    desc: "敵の多い場所に炎の陣を張り、中の敵を焼き続ける。",
+    name: "焦土",
+    desc: "敵の多い場所の地面を燃やし、中の敵を焼き続ける。",
     startLevel: 0,
     maxLevel: 10,
     cooldown: 8,
@@ -63,7 +63,7 @@ WYD.data.skills = {
   },
   // 強化スキル：攻撃速度アップ
   hanuman: {
-    name: "ハヌマーンの剛力",
+    name: "狂戦士の怒り",
     desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
     startLevel: 0,
     maxLevel: 10,
@@ -76,8 +76,8 @@ WYD.data.skills = {
   },
   // 足止めスキル：周りの敵を縛る
   nagapasha: {
-    name: "ナーガパーシャ",
-    desc: "蛇の縄で周りの敵を縛り、しばらく動けなくしてダメージ。ボスには効きにくい。",
+    name: "鉄鎖の束縛",
+    desc: "鉄の鎖で周りの敵を縛り、しばらく動けなくしてダメージ。ボスには効きにくい。",
     startLevel: 0,
     maxLevel: 10,
     cooldown: 10,

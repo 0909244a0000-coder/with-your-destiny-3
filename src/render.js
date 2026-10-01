@@ -286,7 +286,7 @@ WYD.render = {
       ctx.globalAlpha = 1;
     }
     if (ef.type === "chain") {
-      // 円盤の通り道
+      // 投げ斧の通り道
       ctx.strokeStyle = ef.color;
       ctx.globalAlpha = 1 - ef.time / ef.duration;
       ctx.lineWidth = 3;
