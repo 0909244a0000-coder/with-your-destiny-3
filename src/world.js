@@ -298,6 +298,7 @@ WYD.world = {
         return;
       }
       p.swing = 0.15;
+      WYD.vfx.spawn(w, "slash", target.x, target.y, { angle: Math.atan2(target.y - p.y, target.x - p.x) });
       this.playerHit(w, state, stats, target, stats.attack);
       this.tryThunder(w, state, stats, target);
       // 固有能力：狂王の籠手（狂戦士の怒りの間、周りにも当たる）
@@ -341,7 +342,9 @@ WYD.world = {
       const lv = state.player.skills[id] || 0;
       if (lv <= 0 || !state.player.skillEnabled[id]) continue;
       if ((p.skillCooldowns[id] || 0) > 0) continue;
+      this.castingId = id;
       const used = this.skillHandlers[WYD.classes.kindOf(id)].call(this, w, state, stats, WYD.data.skills[id], lv);
+      if (used) WYD.vfx.cast(w, id, p.x, p.y, WYD.data.skills[id].radius);
       if (used) p.skillCooldowns[id] = WYD.data.skills[id].cooldown * (1 - stats.effects.cooldown / 100);
     }
   },
@@ -400,7 +403,15 @@ WYD.world = {
         cur = next;
       }
       for (const e of hitList) this.playerHit(w, state, stats, e, stats.attack * mult);
-      w.effects.push({ type: "chain", points, color: s.color, time: 0, duration: 0.3 });
+      // 絵があれば、稲妻の線や投げ斧の絵で見せる（なければ今までの線）
+      const style = WYD.data.vfx.chainStyle[this.castingId];
+      let drawn = false;
+      if (style && style.mode === "segment") {
+        for (let i = 1; i < points.length; i++) drawn = WYD.vfx.segment(w, style.key, points[i - 1], points[i]) || drawn;
+      } else if (style && style.mode === "hit") {
+        for (let i = 1; i < points.length; i++) drawn = WYD.vfx.spawn(w, style.key, points[i].x, points[i].y, { delay: i * 0.05 }) || drawn;
+      }
+      if (!drawn || style.mode === "hit") w.effects.push({ type: "chain", points, color: s.color, time: 0, duration: 0.3 });
       return true;
     },
     // 敵の多い場所に炎の陣を張る
@@ -414,6 +425,12 @@ WYD.world = {
       }
       if (!best) return false;
       const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
+      // メテオ：隕石が落ちてきて、着地で爆発する（絵があるときだけ）
+      if (this.castingId === "sorc_meteor" && WYD.vfx.spawn(w, "meteor", best.x, best.y, { size: s.radius, fall: 240, duration: WYD.data.vfx.meteorFall })) {
+        WYD.vfx.spawn(w, "fireBurst", best.x, best.y, { size: s.radius * 2.2, delay: WYD.data.vfx.meteorFall });
+      } else {
+        WYD.vfx.spawn(w, "fireBurst", best.x, best.y, { size: s.radius * 2 });
+      }
       w.fields.push({ x: best.x, y: best.y, radius: s.radius, timeLeft: s.duration, duration: s.duration,
         tick: s.tick, tickTimer: 0, mult, color: s.color });
       return true;
@@ -534,6 +551,7 @@ WYD.world = {
   // まわりの敵にまとめてダメージ（爆発）
   explode(w, state, stats, x, y, radius, mult, color) {
     w.effects.push({ type: "ring", x, y, radius, color, time: 0, duration: 0.3 });
+    WYD.vfx.spawn(w, "fireBurst", x, y, { size: radius * 2 });
     for (const e of w.enemies.slice()) {
       if (WYD.util.dist({ x, y }, e) <= radius) this.playerHit(w, state, stats, e, stats.attack * mult);
     }
@@ -592,6 +610,7 @@ WYD.world = {
       e.slamAfter = 0.3;
       w.effects.push({ type: "ring", x: e.x, y: e.y, radius: slam.radius, color: WYD.data.boss.warnColor, time: 0, duration: 0.4 });
       w.effects.push({ type: "shock", x: e.x, y: e.y, radius: slam.radius, color: WYD.data.boss.warnColor, time: 0, duration: 0.5 });
+      WYD.vfx.spawn(w, "shockwave", e.x, e.y, { size: slam.radius * 2.2 });
       WYD.fx.burst(w, e.x, e.y, { ...WYD.data.fx.slamDust, speed: slam.radius * 2.4 }, null, {});
       WYD.fx.shake(w, WYD.data.fx.shakeSlam);
       WYD.sound.play("slam");
@@ -671,7 +690,9 @@ WYD.world = {
     const chance = stats.effects.thunder;
     if (e.hp <= 0 || chance <= 0 || Math.random() * 100 >= chance) return;
     const def = WYD.loot.effectInfo("thunder");
-    w.effects.push({ type: "bolt", x: e.x, y: e.y, color: def.color, time: 0, duration: 0.25 });
+    if (!WYD.vfx.segment(w, "lightning", { x: e.x + 8, y: e.y - 110 }, { x: e.x, y: e.y })) {
+      w.effects.push({ type: "bolt", x: e.x, y: e.y, color: def.color, time: 0, duration: 0.25 });
+    }
     WYD.sound.play("thunder");
     const hit = this.calcDamage(stats.attack * def.power, e.defense, 0);
     this.damageEnemy(w, state, e, hit.damage, false);

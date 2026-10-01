@@ -23,6 +23,7 @@ WYD.data.classes = {
       weaponName: "杖",
       color: "#ff8a4a",
       image: "assets/player_sorceress.png",
+      poses: { attack: null },   // 例: "assets/player_sorceress_attack.png"
       base: { maxHp: 95, attack: 11, defense: 1, attackSpeed: 1.0, critChance: 6, hpRegen: 1, moveSpeed: 120 },
       perLevel: { maxHp: 11, attack: 2.3, defense: 0.7 },
       // 通常攻撃を「火の玉」にする（敵と距離をとって撃つ）

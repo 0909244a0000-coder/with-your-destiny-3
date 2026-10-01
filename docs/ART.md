@@ -33,6 +33,52 @@
 
 ## まだの絵（上から順に優先）
 
+### 第3回の発注：エフェクトの絵とポーズ違い（上から順に優先）
+
+ゲーム側の受け口はできています。絵を置いて、下の「書く場所」に場所を書けば、すぐゲームに出ます（書かなければ今の見た目のまま）。
+
+#### A. エフェクトの絵（13枚）→ `assets/vfx/<名前>.png`、書く場所は `data/vfx.js` の `textures`
+- 形式：PNG。**背景は真っ黒でよい**（光を重ねる描き方をするので、黒は透けて見える）。透明でもよい
+- 大きさ：正方形は 512×512。`lightning` は横長 1024×256、`fireball` は横長 512×256
+- 真上から見た絵。真ん中に置く。文字・枠なし
+- 入れるときは `python3 tools/prepare_sprite.py 元.png assets/vfx/<名前>.png --size 512`（横長の2枚は、そのまま置いてよい）
+
+共通の指定（各プロンプトのあとにつける）：
+```
+Game visual effect texture for a dark fantasy action RPG seen from a top-down view, glowing and bright on a pure black background, centered, no text, no frame, no characters.
+```
+| 名前 | 何に使うか | プロンプト |
+|---|---|---|
+| `slash` | 通常攻撃の斬撃 | A single curved crescent sword slash arc, bright white-steel core with a pale blue edge, motion-blurred, pointing right. |
+| `whirl` | 旋風斬 | A circular whirlwind of grey-white wind streaks and steel glints spinning around an empty center, seen from above. |
+| `iceNova` | フロストノヴァ・凍てつく檻 | A ring of sharp ice shards and frost mist bursting outward in a circle, pale cyan, seen from above. |
+| `fireBurst` | 爆発・隕石の着地 | A round fiery explosion burst with orange and yellow flames and sparks, seen from above. |
+| `fireGround` | 燃える地面 | A circular patch of burning ground: cracked glowing embers and low orange flames, soft edges, seen from above. |
+| `lightning` | チェインライトニング・雷鳴（1024×256） | A jagged horizontal lightning bolt running from the left edge to the right edge, white-blue core with branching sparks. |
+| `axe` | 連鎖の投げ斧 | A single spinning throwing axe seen from above with a faint circular motion blur, steel blade and wooden handle. |
+| `meteor` | メテオの隕石 | A flaming meteor rock falling straight down, glowing molten cracks, trailing fire upward. |
+| `magicCircle` | スキルを使ったときの足元 | A glowing circular magic sigil with runes and concentric rings, golden-white light, seen from above. |
+| `shield` | 鉄の皮膚・マナシールドの間 | A translucent glowing protective bubble sphere with a hexagonal energy pattern, pale blue-gold. |
+| `chains` | 縛られた敵 | Heavy glowing iron chains coiled into a tight ring, seen from above, faint green-white glow. |
+| `shockwave` | ボスの大技の衝撃 | An expanding circular shockwave ring of dust and red energy cracking the ground, seen from above. |
+| `fireball` | ソーサレスの火の玉（512×256） | A fireball comet flying to the right: bright yellow-white head and a long orange flame trail to the left. |
+
+#### B. 主人公とボスのポーズ違い（8枚）
+**今ゲームに入っている絵（`assets/` の同じキャラの絵）を見本にして、顔・体・装備・色は同じまま、ポーズだけ変えてください。** 形式はほかのキャラの絵と同じ（透明背景、余白なしで `prepare_sprite.py` を通す）。
+
+| ファイル | 見本 | ポーズ | 書く場所 |
+|---|---|---|---|
+| `assets/player_attack.png` | `assets/player.png` | 両手の剣を大きく振り下ろす瞬間 | `data/player.js` の `poses.attack` |
+| `assets/player_sorceress_attack.png` | `assets/player_sorceress.png` | 杖を前に突き出し、先から火を放つ瞬間 | `data/classes.js` の `sorceress.player.poses.attack` |
+| `assets/enemies/ravana_attack.png` | `assets/enemies/ravana.png` | 武器を一斉に振り下ろす瞬間 | `data/enemies.js` の `ravana.poses.attack` |
+| `assets/enemies/ravana_windup.png` | 同上 | 全部の腕を高く振り上げ、力をためる | `ravana.poses.windup` |
+| `assets/enemies/asuraKing_attack.png` | `assets/enemies/asuraKing.png` | 双剣を交差させて斬りつける瞬間 | `asuraKing.poses.attack` |
+| `assets/enemies/asuraKing_windup.png` | 同上 | 双剣を頭上に掲げ、力をためる | `asuraKing.poses.windup` |
+| `assets/enemies/mahisha_attack.png` | `assets/enemies/mahisha.png` | 棍棒を叩きつける瞬間 | `mahisha.poses.attack` |
+| `assets/enemies/mahisha_windup.png` | 同上 | 角を下げ、棍棒を振りかぶって力をためる | `mahisha.poses.windup` |
+
+ポーズ違いは、顔や装備が少し変わってしまいやすいです。見本と並べて、同じキャラに見えないものは作り直してください。
+
 ### ソーサレス（2つ目の職業）のアイコン
 主人公の絵は、保管していた女性の術者の絵を使っています（`assets/player_sorceress.png`。持ち主の判断で、いったんこの絵）。
 

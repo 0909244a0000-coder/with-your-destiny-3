@@ -176,6 +176,7 @@ WYD.data.enemies = {
     name: "羅刹王ラーヴァナ",
     color: "#7a1fb0",
     image: "assets/enemies/ravana.png",
+    poses: { attack: null, windup: null },   // ポーズ違いの絵（攻撃・大技の溜め）
     radius: 30,
     hp: 900,
     attack: 14,
@@ -193,6 +194,7 @@ WYD.data.enemies = {
     name: "阿修羅王",
     color: "#3f5fd0",
     image: "assets/enemies/asuraKing.png",
+    poses: { attack: null, windup: null },   // ポーズ違いの絵（攻撃・大技の溜め）
     radius: 30,
     hp: 1100,
     attack: 15,
@@ -210,6 +212,7 @@ WYD.data.enemies = {
     name: "水牛魔マヒシャ",
     color: "#4a3a2a",
     image: "assets/enemies/mahisha.png",
+    poses: { attack: null, windup: null },   // ポーズ違いの絵（攻撃・大技の溜め）
     radius: 34,
     hp: 1300,
     attack: 18,

@@ -69,7 +69,20 @@ WYD.render = {
     this.drawPlayer(ctx, w.player);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
     const R = WYD.data.player.rangedAttack;
-    if (R) for (const b of w.bolts) this.drawProjectile(ctx, { x: b.x, y: b.y, size: R.size, color: R.color });
+    if (R) for (const b of w.bolts) {
+      // 火の玉の絵があれば、飛ぶ向きに回して描く
+      const fb = WYD.vfx.img("fireball");
+      if (fb) {
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(Math.atan2(b.ty - b.y, b.tx - b.x));
+        ctx.globalCompositeOperation = "lighter";
+        ctx.drawImage(fb, -R.size * 4, -R.size * 2, R.size * 8, R.size * 4);
+        ctx.restore();
+      } else {
+        this.drawProjectile(ctx, { x: b.x, y: b.y, size: R.size, color: R.color });
+      }
+    }
     this.drawLight(ctx, w.player, state);
     // 光るものと落ちている装備は、明かりの暗さの上に描く（暗がりでも見えるように）
     for (const drop of w.drops) this.drawDrop(ctx, drop);
@@ -212,6 +225,14 @@ WYD.render = {
     return pose;
   },
 
+  // ポーズ違いの絵を選ぶ（大技の溜め → 攻撃 → ふだんの絵の順。届いていない絵はとばす）
+  poseImage(o, def) {
+    const poses = def.poses || {};
+    if (o.slamCharge != null && this.getImage(poses.windup)) return poses.windup;
+    if ((o.atkAnim > 0 || o.slamAfter > 0) && this.getImage(poses.attack)) return poses.attack;
+    return def.image;
+  },
+
   // flash = true のときは白く光らせる（攻撃が当たったとき）、pose = 絵の動き
   drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash, pose) {
     const img = this.getImage(imageSrc);
@@ -242,6 +263,7 @@ WYD.render = {
 
   // 炎の陣：消える前にだんだん薄くなる円
   drawField(ctx, f) {
+    if (WYD.vfx.drawGround(ctx, f, this.clock || 0)) return;   // 燃える地面の絵があればそれで描く
     ctx.fillStyle = f.color;
     ctx.globalAlpha = 0.25 * Math.min(1, f.timeLeft / (f.duration * 0.3));
     ctx.beginPath();
@@ -294,8 +316,13 @@ WYD.render = {
       ctx.globalAlpha = 1;
     }
     if (p.dead && img) ctx.globalAlpha = 0.4;
-    this.drawCircleOrImage(ctx, p.x, p.y, P.radius, p.dead ? "#555" : P.color, P.image, false,
+    this.drawCircleOrImage(ctx, p.x, p.y, P.radius, p.dead ? "#555" : P.color, this.poseImage(p, P), false,
       this.pose(p, p.swingTarget, this.clock));
+    // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
+    if (p.buff && !p.dead) {
+      const size = P.radius * WYD.data.map.spriteScale * 1.3;
+      WYD.vfx.drawOn(ctx, "shield", p.x, p.y, size, 0.45 + 0.15 * Math.sin((this.clock || 0) * 5));
+    }
     ctx.globalAlpha = 1;
     if (!img) {
       ctx.strokeStyle = "#ffffff";
@@ -336,7 +363,7 @@ WYD.render = {
       ctx.arc(e.x, e.y, def.radius + 4, 0, Math.PI * 2);
       ctx.stroke();
     }
-    this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, def.image, e.hitFlash > 0,
+    this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, this.poseImage(e, def), e.hitFlash > 0,
       this.pose(e, this.playerPos, this.clock));
 
     // HPバー：絵があるときは絵の上に出す
@@ -348,8 +375,8 @@ WYD.render = {
     ctx.fillStyle = "#e33";
     ctx.fillRect(bx, by, bw * Math.max(0, e.hp / e.maxHp), bh);
 
-    if (e.stunTimer > 0) {
-      // 縛られている敵：緑の縄
+    if (e.stunTimer > 0 && !WYD.vfx.drawOn(ctx, "chains", e.x, e.y, def.radius * 3, 0.9)) {
+      // 縛られている敵：緑の縄（鎖の絵がないとき）
       ctx.strokeStyle = WYD.data.anim.bindColor;
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -424,6 +451,7 @@ WYD.render = {
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
+    if (ef.type === "sprite") WYD.vfx.draw(ctx, ef);
     if (ef.type === "shock") {
       // ボスの大技の衝撃：一気に広がる赤い円
       const t = ef.time / ef.duration;

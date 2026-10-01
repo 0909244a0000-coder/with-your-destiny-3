@@ -6,7 +6,8 @@ WYD.data.player = {
   className: "バーバリアン",    // 職業名
   weaponName: "双剣",           // 初期の武器種（表示用）
   color: "#4fa3ff",             // 絵がないときの丸の色
-  image: "assets/player.png",    // バーバリアンの透過スプライト
+  image: "assets/player.png",    // バーバリアンの透過スプライト（立ち姿）
+  poses: { attack: null },       // ポーズ違いの絵（例: attack: "assets/player_attack.png"）。攻撃の瞬間に差し替える
   radius: 14,                   // 体の大きさ（当たり判定・表示）
 
   // レベル1のときの能力
