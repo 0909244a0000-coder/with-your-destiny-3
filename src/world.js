@@ -678,9 +678,11 @@ WYD.world = {
     w.spawnTimer = 0.5;
   },
 
-  // 敵を消す前に呼ぶ：ボスがいたら、すぐまた出てくるようにする
+  // 敵を消す前に呼ぶ：ボスがいたら、少し倒せばまた出てくるようにする
   keepBoss(w, state) {
-    if (w.enemies.some((e) => e.boss)) state.bossProgress = this.area(state).killsForBoss;
+    if (!w.enemies.some((e) => e.boss)) return;
+    const need = this.area(state).killsForBoss;
+    state.bossProgress = Math.max(state.bossProgress, Math.floor(need * WYD.data.boss.retryProgressRatio));
   },
 
   nearestEnemy(w, from) {

@@ -19,7 +19,7 @@ WYD.data.areas = [
       { kind: "yakshaArcher", weight: 15 },
     ],
     boss: "ravana",          // ボス
-    killsForBoss: 40,        // この数倒すとボスが出る
+    killsForBoss: 80,        // この数倒すとボスが出る
   },
   {
     id: "smashana",
@@ -28,7 +28,7 @@ WYD.data.areas = [
     grassColor: "#5a3a2a",
     stoneColor: "#6b6258",
     groundImage: null,
-    powerMult: 2.2,
+    powerMult: 2.0,
     itemLevelBonus: 3,
     enemies: [
       { kind: "vetala", weight: 50 },
@@ -37,7 +37,7 @@ WYD.data.areas = [
       { kind: "bhuta", weight: 18 },
     ],
     boss: "bhairava",
-    killsForBoss: 50,
+    killsForBoss: 120,
   },
   {
     id: "patala",
@@ -46,7 +46,7 @@ WYD.data.areas = [
     grassColor: "#2f3f5a",
     stoneColor: "#55506b",
     groundImage: null,
-    powerMult: 4.5,
+    powerMult: 3.5,
     itemLevelBonus: 7,
     enemies: [
       { kind: "naga", weight: 45 },
@@ -55,7 +55,7 @@ WYD.data.areas = [
       { kind: "nagaCaster", weight: 20 },
     ],
     boss: "mahisha",
-    killsForBoss: 60,
+    killsForBoss: 160,
   },
 ];
 
@@ -64,4 +64,7 @@ WYD.data.boss = {
   dropCount: 4,          // 必ず落とす装備の数
   nameColor: "#ff5a5a",  // 名前の色
   warnColor: "#ff3030",  // 大技の予告の色
+  // ボスに負けたり危険度を変えたりしたとき、ボスまでの数をどれだけ残すか（0〜1）
+  // 0.75 なら、あと 25% 倒すとまたボスが出る（その間にレベルを上げられる）
+  retryProgressRatio: 0.75,
 };
