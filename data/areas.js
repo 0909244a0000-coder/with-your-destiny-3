@@ -36,7 +36,7 @@ WYD.data.areas = [
       { kind: "rakshasa", weight: 12 },
       { kind: "bhuta", weight: 18 },
     ],
-    boss: "bhairava",
+    boss: "asuraKing",
     killsForBoss: 120,
   },
   {

@@ -189,16 +189,16 @@ WYD.data.enemies = {
     boss: true,
     slam: { interval: 6, windup: 1.0, radius: 110, damageMult: 2.2 },
   },
-  bhairava: {
-    name: "屍林の主バイラヴァ",
-    color: "#2a2a2a",
-    image: null,
+  asuraKing: {
+    name: "阿修羅王",
+    color: "#3f5fd0",
+    image: "assets/enemies/asuraKing.png",
     radius: 30,
     hp: 1100,
-    attack: 17,
+    attack: 15,
     defense: 7,
-    attackSpeed: 0.8,
-    moveSpeed: 70,
+    attackSpeed: 1.1,   // 双剣使いなので、ほかのボスより手数が多い
+    moveSpeed: 90,
     range: 40,
     exp: 380,
     dropChance: 1.0,
