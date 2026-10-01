@@ -318,6 +318,24 @@ WYD.world = {
     w.hazards = w.hazards.filter((h) => h.timer > 0);
   },
 
+  // 爆発の輪から逃げる先：いろいろな向きを試し、画面の中で輪からいちばん遠くなる所
+  escapePoint(p, h) {
+    const map = WYD.data.map;
+    const dirs = WYD.data.player.escapeDirections;
+    const need = h.radius + WYD.data.player.radius * 2;
+    let best = null, bestD = -1;
+    for (let i = 0; i < dirs; i++) {
+      const ang = (i / dirs) * Math.PI * 2;
+      const q = {
+        x: WYD.util.clamp(p.x + Math.cos(ang) * need, 20, map.width - 20),
+        y: WYD.util.clamp(p.y + Math.sin(ang) * need, 20, map.height - 20),
+      };
+      const d = WYD.util.dist(q, h);
+      if (d > bestD) { bestD = d; best = q; }
+    }
+    return best;
+  },
+
   // ---------- プレイヤーの自動行動 ----------
   updatePlayer(w, state, stats, dt) {
     const p = w.player;
@@ -325,6 +343,18 @@ WYD.world = {
     p.swing = Math.max(0, p.swing - dt);
 
     this.tryUseSkills(w, state, stats);
+
+    // 精鋭の「氷結」で遅くなっている
+    const slow = p.chill > 0 ? this.eliteAffix("frozen").slowMult : 1;
+    dt *= slow;
+    // 爆発の輪の中にいたら、まず外へ逃げる
+    const danger = w.hazards.find((h) => WYD.util.dist(h, p) < h.radius + WYD.data.player.radius);
+    if (danger) {
+      // 逃げる先は、爆発ごとに1回だけ決める（壁ぎわでも輪の外に出られる所）
+      if (!danger.escape) danger.escape = this.escapePoint(p, danger);
+      this.moveToward(p, danger.escape, stats.moveSpeed * dt, 0);
+      return;
+    }
 
     const target = this.nearestEnemy(w, p);
     if (!target) {
@@ -335,15 +365,6 @@ WYD.world = {
 
     const ranged = WYD.data.player.rangedAttack;
     const reach = ranged ? ranged.range : WYD.data.player.attackRange + WYD.data.enemies[target.kind].radius;
-    // 精鋭の「氷結」で遅くなっている
-    const slow = p.chill > 0 ? this.eliteAffix("frozen").slowMult : 1;
-    dt *= slow;
-    // 爆発の輪の中にいたら、まず外へ逃げる
-    const danger = w.hazards.find((h) => WYD.util.dist(h, p) < h.radius + WYD.data.player.radius);
-    if (danger) {
-      this.moveAway(p, danger, stats.moveSpeed * dt);
-      return;
-    }
     const d = WYD.util.dist(p, target);
     if (ranged) {
       // 遠くから撃つ職業：近づきすぎたら下がり、遠すぎたら近づく

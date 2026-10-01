@@ -109,6 +109,8 @@ WYD.data.items = {
   autoEquip: {
     weights: { attack: 4, defense: 2.5, maxHp: 0.4, hpRegen: 4, attackSpeed: 1.5, critChance: 1.5, moveSpeed: 0.3, skillDamage: 0.8 },
     perEffect: 6,
+    uniqueBonus: 30,         // ユニークの固有能力のぶん（数字で比べられないので目安）
+    setBonus: 20,            // セット装備のぶん（そろえるボーナスの目安）
     minGain: 0.02,           // 点数がこの割合以上上がるときだけ着替える
   },
 };

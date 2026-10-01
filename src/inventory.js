@@ -27,7 +27,8 @@ WYD.inventory = {
     if (!item) return 0;
     const A = WYD.data.items.autoEquip;
     const st = WYD.loot.statTotals(item);
-    let score = (item.effects || []).length * A.perEffect;
+    let score = (item.effects || []).length * A.perEffect +
+      (item.rarity === "unique" ? A.uniqueBonus : 0) + (item.rarity === "set" ? A.setBonus : 0);
     for (const k in st) score += st[k] * (A.weights[k] || 0);
     return score;
   },
