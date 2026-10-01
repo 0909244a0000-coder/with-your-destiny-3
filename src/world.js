@@ -12,6 +12,9 @@ WYD.world = {
       },
       fields: [],   // 地面に残る炎の陣など
       projectiles: [], // 敵が撃った弾
+      particles: [],   // エフェクトの粒（src/fx.js）
+      bolts: [],       // 主人公が撃った火の玉（遠くから攻撃する職業）
+      shake: null,     // 画面の揺れ
       enemies: [],
       drops: [],
       effects: [],
@@ -28,7 +31,12 @@ WYD.world = {
     if (p.hp === null) p.hp = stats.maxHp;
     p.hp = Math.min(p.hp, stats.maxHp);
 
+    w.time = (w.time || 0) + dt;   // 絵の動きに使う時計
+    this.trackMotion(w, dt);
     this.updateEffects(w, dt);
+    WYD.offline.tick(state, dt);
+    WYD.trial.tick(w, state, dt);
+    WYD.records.add(state, "playSeconds", dt);
 
     if (p.dead) {
       p.respawnTimer -= dt;
@@ -48,30 +56,54 @@ WYD.world = {
     this.updateFields(w, state, stats, dt);
     for (const id in p.skillCooldowns) p.skillCooldowns[id] = Math.max(0, p.skillCooldowns[id] - dt);
 
+    this.updateFloors(w, state, dt);
     this.updateSpawns(w, state, dt);
     this.updatePlayer(w, state, stats, dt);
+    this.updateBolts(w, state, stats, dt);
     this.updateEnemies(w, state, stats, dt);
     if (!p.dead) this.updateProjectiles(w, state, stats, dt);
     this.updateDrops(w, state, dt);
   },
 
+  // 絵の動きのために、動いた量・向き・攻撃してからの時間を覚えておく
+  trackMotion(w, dt) {
+    for (const o of [w.player].concat(w.enemies)) {
+      if (o.lastX != null && dt > 0) {
+        const vx = (o.x - o.lastX) / dt, vy = (o.y - o.lastY) / dt;
+        o.moving = Math.hypot(vx, vy) > 5;
+        if (Math.abs(vx) > 5) o.face = vx > 0 ? 1 : -1;
+      }
+      o.lastX = o.x;
+      o.lastY = o.y;
+      o.atkAnim = Math.max(0, (o.atkAnim || 0) - dt);
+      o.slamAfter = Math.max(0, (o.slamAfter || 0) - dt);
+    }
+  },
+
   // ---------- 敵の出現 ----------
   updateSpawns(w, state, dt) {
     const map = WYD.data.map;
+    if (WYD.trial.active(state)) return WYD.trial.updateSpawns(w, state, dt);
     const area = this.area(state);
     w.spawnTimer -= dt;
 
-    // 決まった数を倒したらボスが出る
-    if (state.bossProgress >= area.killsForBoss && !w.enemies.some((e) => e.boss)) {
-      state.bossProgress = 0;
-      const boss = this.spawnEnemy(w, state, area.boss, this.farPosition(w));
-      boss.boss = true;
-      boss.slamTimer = WYD.data.enemies[area.boss].slam.interval;
-      WYD.ui.log(`ボス「${WYD.data.enemies[area.boss].name}」が現れた！`, WYD.data.boss.nameColor);
-      WYD.ui.markDirty();
+    const bossRoom = this.isBossRoom(state);
+    // ボスの間：入ってすこしたつとボスが出る
+    if (bossRoom && !w.bossDone && !w.enemies.some((e) => e.boss)) {
+      w.bossTimer = (w.bossTimer == null ? WYD.data.boss.bossAppearDelay : w.bossTimer) - dt;
+      if (w.bossTimer <= 0) {
+        w.bossTimer = null;
+        const boss = this.spawnEnemy(w, state, area.boss, this.farPosition(w));
+        boss.boss = true;
+        boss.slamTimer = WYD.data.enemies[area.boss].slam.interval;
+        WYD.ui.log(`ボス「${WYD.data.enemies[area.boss].name}」が現れた！`, WYD.data.boss.nameColor);
+        WYD.sound.play("bossAppear");
+        WYD.ui.markDirty();
+      }
     }
 
-    if (w.spawnTimer > 0 || w.enemies.length >= map.maxEnemies) return;
+    const maxEnemies = bossRoom ? WYD.data.boss.bossRoomMaxEnemies : map.maxEnemies;
+    if (w.spawnTimer > 0 || w.enemies.length >= maxEnemies) return;
     w.spawnTimer = map.spawnInterval;
 
     const pick = WYD.util.pickWeighted(area.enemies, (x) => x.weight);
@@ -81,7 +113,66 @@ WYD.world = {
 
   // 今いるエリアの設定
   area(state) {
+    if (WYD.trial.active(state)) return WYD.trial.area(state);
     return WYD.data.areas.find((a) => a.id === state.area) || WYD.data.areas[0];
+  },
+
+  // 落ちる装備のアイテムレベル
+  itemLevel(state) {
+    return WYD.trial.active(state) ? WYD.trial.itemLevel(state) : state.difficulty + this.area(state).itemLevelBonus;
+  },
+
+  // 今いるのがボスの間か（ふつうの階の次）
+  isBossRoom(state) {
+    if (WYD.trial.active(state)) return false;
+    return state.floor > this.area(state).floors;
+  },
+
+  // 今いる階の名前（例：地下2階、ボスの間）
+  floorName(state) {
+    if (WYD.trial.active(state)) return `段階${state.trialRun.level}`;
+    return this.isBossRoom(state) ? "ボスの間" : `地下${state.floor}階`;
+  },
+
+  // 深い階ほど敵が強い
+  floorPower(state) {
+    if (WYD.trial.active(state)) return 1;
+    return 1 + WYD.data.boss.floorPowerStep * (state.floor - 1);
+  },
+
+  // 階の移り変わり：数を倒したら降りる、ボスを倒したらしばらくして地下1階へ
+  updateFloors(w, state, dt) {
+    if (w.banner) {
+      w.banner.time += dt;
+      if (w.banner.time > 2.5) w.banner = null;
+    }
+    if (w.descendNext) {
+      w.descendNext = false;
+      this.changeFloor(w, state, 1);
+    }
+    if (w.returnTimer != null) {
+      w.returnTimer -= dt;
+      if (w.returnTimer <= 0) {
+        w.returnTimer = null;
+        this.changeFloor(w, state, 1 - state.floor);
+      }
+    }
+  },
+
+  // 次の階へ降りる（delta = -1 なら上がる）
+  changeFloor(w, state, delta) {
+    const area = this.area(state);
+    state.floor = WYD.util.clamp(state.floor + delta, 1, area.floors + 1);
+    w.enemies = [];
+    w.projectiles = [];
+    w.fields = [];
+    w.drops = w.drops.filter((d) => ["unique", "set", "legend"].includes(d.item.rarity));
+    w.spawnTimer = 1;
+    w.bossTimer = null;
+    w.bossDone = false;
+    w.banner = { text: `${area.name}　${this.floorName(state)}`, time: 0 };
+    WYD.ui.log(`${this.floorName(state)}へ${delta > 0 ? "降りた" : "もどった"}`, "#c9b48a");
+    WYD.ui.markDirty();
   },
 
   // プレイヤーから離れた場所を探す
@@ -99,8 +190,8 @@ WYD.world = {
   spawnEnemy(w, state, kind, pos) {
     const def = WYD.data.enemies[kind];
     const diff = WYD.data.difficulty;
-    const d = state.difficulty - 1;
-    const power = this.area(state).powerMult;
+    const d = WYD.trial.active(state) ? 0 : state.difficulty - 1;   // 試練は危険度ではなく段階で強さが決まる
+    const power = this.area(state).powerMult * this.floorPower(state);
     const maxHp = Math.round(def.hp * (1 + diff.hpGrowth * d) * power);
     const e = {
       id: w.nextId++, kind, x: pos.x, y: pos.y,
@@ -113,6 +204,7 @@ WYD.world = {
       hitFlash: 0,
       stunTimer: 0,
     };
+    WYD.daily.modifyEnemy(state, e);   // 日替わりの試練の条件
     w.enemies.push(e);
     return e;
   },
@@ -196,17 +288,30 @@ WYD.world = {
       return;
     }
 
-    const reach = WYD.data.player.attackRange + WYD.data.enemies[target.kind].radius;
+    const ranged = WYD.data.player.rangedAttack;
+    const reach = ranged ? ranged.range : WYD.data.player.attackRange + WYD.data.enemies[target.kind].radius;
     const d = WYD.util.dist(p, target);
-    if (d > reach) {
+    if (ranged) {
+      // 遠くから撃つ職業：近づきすぎたら下がり、遠すぎたら近づく
+      if (d > ranged.range * 0.9) this.moveToward(p, target, stats.moveSpeed * dt, ranged.range * 0.8);
+      else if (d < ranged.keepDistance) this.moveAway(p, target, stats.moveSpeed * 0.8 * dt);
+    } else if (d > reach) {
       this.moveToward(p, target, stats.moveSpeed * dt, reach * 0.8);
     }
 
     p.attackTimer -= dt;
     if (d <= reach && p.attackTimer <= 0) {
       p.attackTimer = 1 / (stats.attackSpeed * (1 + (p.haste ? p.haste.percent : 0) / 100));
-      p.swing = 0.15;
+      p.atkAnim = WYD.data.anim.attack.time;
+      p.face = target.x >= p.x ? 1 : -1;
       p.swingTarget = { x: target.x, y: target.y };
+      if (ranged) {
+        // 火の玉を撃つ（当たったときに通常攻撃と同じ処理をする）
+        w.bolts.push({ x: p.x, y: p.y - 10, targetId: target.id, tx: target.x, ty: target.y });
+        return;
+      }
+      p.swing = 0.15;
+      WYD.vfx.spawn(w, "slash", target.x, target.y, { angle: Math.atan2(target.y - p.y, target.x - p.x) });
       this.playerHit(w, state, stats, target, stats.attack);
       this.tryThunder(w, state, stats, target);
       // 固有能力：狂王の籠手（狂戦士の怒りの間、周りにも当たる）
@@ -219,14 +324,54 @@ WYD.world = {
     }
   },
 
+  // 主人公の火の玉を動かす。狙った敵を追いかけ、届いたら当たる
+  updateBolts(w, state, stats, dt) {
+    const R = WYD.data.player.rangedAttack;
+    if (!R) return;
+    for (const b of w.bolts) {
+      const e = w.enemies.find((x) => x.id === b.targetId);
+      if (e) { b.tx = e.x; b.ty = e.y; }
+      const d = Math.hypot(b.tx - b.x, b.ty - b.y);
+      const step = R.speed * dt;
+      if (d <= step + 4) {
+        b.done = true;
+        if (e && e.hp > 0) {
+          this.playerHit(w, state, stats, e, stats.attack);
+          this.tryThunder(w, state, stats, e);
+        }
+        WYD.fx.burst(w, b.tx, b.ty, { ...WYD.data.fx.hit, count: 8 }, R.color, { glow: true });
+        continue;
+      }
+      b.x += (b.tx - b.x) / d * step;
+      b.y += (b.ty - b.y) / d * step;
+      if (Math.random() < 0.6) WYD.fx.burst(w, b.x, b.y, { ...WYD.data.fx.ember, count: 1, life: 0.3 }, R.color, { glow: true });
+    }
+    w.bolts = w.bolts.filter((b) => !b.done);
+  },
+
   tryUseSkills(w, state, stats) {
     const p = w.player;
     for (const id of WYD.data.skillOrder) {
       const lv = state.player.skills[id] || 0;
       if (lv <= 0 || !state.player.skillEnabled[id]) continue;
       if ((p.skillCooldowns[id] || 0) > 0) continue;
-      const used = this.skillHandlers[id].call(this, w, state, stats, WYD.data.skills[id], lv);
-      if (used) p.skillCooldowns[id] = WYD.data.skills[id].cooldown * (1 - stats.effects.cooldown / 100);
+      this.castingId = id;
+      // スキルの型（ルーン）を反映した数値と、おまけの効果
+      const def = WYD.runes.effectiveDef(state, id);
+      this.castExtra = WYD.runes.extra(state, id);
+      const used = this.skillHandlers[WYD.classes.kindOf(id)].call(this, w, state, stats, def, lv);
+      const extra = this.castExtra;
+      this.castExtra = null;
+      if (used) {
+        WYD.vfx.cast(w, id, p.x, p.y, def.radius);
+        p.skillCooldowns[id] = def.cooldown * (1 - stats.effects.cooldown / 100);
+        // 型のおまけ：足元に燃える地面などを残す
+        const lf = extra && extra.leaveField;
+        if (lf) {
+          w.fields.push({ x: p.x, y: p.y, radius: lf.radius, timeLeft: lf.duration, duration: lf.duration,
+            tick: lf.tick, tickTimer: lf.tick, mult: lf.mult * (1 + stats.skillDamage / 100), color: lf.color });
+        }
+      }
     }
   },
 
@@ -241,6 +386,8 @@ WYD.world = {
         this.playerHit(w, state, stats, e, stats.attack * mult);
       }
       w.effects.push({ type: "ring", x: p.x, y: p.y, radius: s.radius, color: s.color, time: 0, duration: 0.35 });
+      WYD.fx.burst(w, p.x, p.y, { ...WYD.data.fx.whirl, speed: s.radius * 2.2 }, s.color, { glow: true });
+      WYD.sound.play("whirl");
       // 固有能力：劫火の腕輪（足元の地面が燃える）
       const fire = stats.powers.whirlFire;
       if (fire) {
@@ -282,7 +429,15 @@ WYD.world = {
         cur = next;
       }
       for (const e of hitList) this.playerHit(w, state, stats, e, stats.attack * mult);
-      w.effects.push({ type: "chain", points, color: s.color, time: 0, duration: 0.3 });
+      // 絵があれば、稲妻の線や投げ斧の絵で見せる（なければ今までの線）
+      const style = WYD.data.vfx.chainStyle[this.castingId];
+      let drawn = false;
+      if (style && style.mode === "segment") {
+        for (let i = 1; i < points.length; i++) drawn = WYD.vfx.segment(w, style.key, points[i - 1], points[i]) || drawn;
+      } else if (style && style.mode === "hit") {
+        for (let i = 1; i < points.length; i++) drawn = WYD.vfx.spawn(w, style.key, points[i].x, points[i].y, { delay: i * 0.05 }) || drawn;
+      }
+      if (!drawn || style.mode === "hit") w.effects.push({ type: "chain", points, color: s.color, time: 0, duration: 0.3 });
       return true;
     },
     // 敵の多い場所に炎の陣を張る
@@ -296,6 +451,12 @@ WYD.world = {
       }
       if (!best) return false;
       const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
+      // メテオ：隕石が落ちてきて、着地で爆発する（絵があるときだけ）
+      if (this.castingId === "sorc_meteor" && WYD.vfx.spawn(w, "meteor", best.x, best.y, { size: s.radius, fall: 240, duration: WYD.data.vfx.meteorFall })) {
+        WYD.vfx.spawn(w, "fireBurst", best.x, best.y, { size: s.radius * 2.2, delay: WYD.data.vfx.meteorFall });
+      } else {
+        WYD.vfx.spawn(w, "fireBurst", best.x, best.y, { size: s.radius * 2 });
+      }
       w.fields.push({ x: best.x, y: best.y, radius: s.radius, timeLeft: s.duration, duration: s.duration,
         tick: s.tick, tickTimer: 0, mult, color: s.color });
       return true;
@@ -369,10 +530,14 @@ WYD.world = {
       e.attackTimer -= dt;
       if (d <= reach && e.attackTimer <= 0) {
         e.attackTimer = 1 / (def.attackSpeed * e.attackSpeedMult);
+        e.atkAnim = WYD.data.anim.attack.time;
+        e.face = p.x >= e.x ? 1 : -1;
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
         const hit = this.calcDamage(e.attack, defense, 0);
         p.hp -= hit.damage;
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
+        WYD.fx.burst(w, p.x, p.y, WYD.data.fx.playerHit, null, { gravity: true });
+        WYD.sound.play("hurt");
         // 精鋭の能力：吸血
         if (this.hasAffix(e, "vampiric")) {
           e.hp = Math.min(e.maxHp, e.hp + hit.damage * this.eliteAffix("vampiric").lifestealPercent / 100);
@@ -412,6 +577,7 @@ WYD.world = {
   // まわりの敵にまとめてダメージ（爆発）
   explode(w, state, stats, x, y, radius, mult, color) {
     w.effects.push({ type: "ring", x, y, radius, color, time: 0, duration: 0.3 });
+    WYD.vfx.spawn(w, "fireBurst", x, y, { size: radius * 2 });
     for (const e of w.enemies.slice()) {
       if (WYD.util.dist({ x, y }, e) <= radius) this.playerHit(w, state, stats, e, stats.attack * mult);
     }
@@ -425,6 +591,8 @@ WYD.world = {
     e.attackTimer -= dt;
     if (d <= r.range && e.attackTimer <= 0) {
       e.attackTimer = 1 / (def.attackSpeed * e.attackSpeedMult);
+      e.atkAnim = WYD.data.anim.attack.time;
+      e.face = p.x >= e.x ? 1 : -1;
       w.projectiles.push({
         x: e.x, y: e.y,
         vx: (p.x - e.x) / d * r.speed, vy: (p.y - e.y) / d * r.speed,
@@ -465,7 +633,13 @@ WYD.world = {
       e.slamCharge -= dt;
       if (e.slamCharge > 0) return true;
       e.slamCharge = null;
+      e.slamAfter = 0.3;
       w.effects.push({ type: "ring", x: e.x, y: e.y, radius: slam.radius, color: WYD.data.boss.warnColor, time: 0, duration: 0.4 });
+      w.effects.push({ type: "shock", x: e.x, y: e.y, radius: slam.radius, color: WYD.data.boss.warnColor, time: 0, duration: 0.5 });
+      WYD.vfx.spawn(w, "shockwave", e.x, e.y, { size: slam.radius * 2.2 });
+      WYD.fx.burst(w, e.x, e.y, { ...WYD.data.fx.slamDust, speed: slam.radius * 2.4 }, null, {});
+      WYD.fx.shake(w, WYD.data.fx.shakeSlam);
+      WYD.sound.play("slam");
       if (WYD.util.dist(e, p) <= slam.radius) {
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
         const hit = this.calcDamage(e.attack * slam.damageMult, defense, 0);
@@ -477,7 +651,7 @@ WYD.world = {
     }
     e.slamTimer -= dt;
     if (e.slamTimer <= 0 && d <= slam.radius) {
-      e.slamTimer = slam.interval;
+      e.slamTimer = slam.interval * (e.slamIntervalMult || 1);
       e.slamCharge = slam.windup;
       e.slamWindup = slam.windup;
       return true;
@@ -493,6 +667,11 @@ WYD.world = {
       if (drop.age < D.pickupDelay || drop.picked) continue;
       if (WYD.inventory.add(state, drop.item)) {
         drop.picked = true;
+        WYD.records.found(state, drop.item);
+        if (state.settings.autoEquip && WYD.inventory.autoEquip(state, drop.item)) {
+          WYD.ui.log(`${WYD.loot.label(drop.item)}のほうが強いので、自動で装備した`, "#7dff8a");
+        }
+        WYD.records.check(state);
         const r = WYD.loot.rarityInfo(drop.item.rarity);
         WYD.ui.log(`${drop.item.name}（${r.name}）を拾った`, r.color);
         WYD.ui.markDirty();
@@ -507,8 +686,10 @@ WYD.world = {
   updateEffects(w, dt) {
     for (const ef of w.effects) ef.time += dt;
     w.effects = w.effects.filter((ef) => ef.time < ef.duration);
-    for (const t of w.texts) { t.time += dt; t.y -= 30 * dt; }
-    w.texts = w.texts.filter((t) => t.time < 0.8);
+    const T = WYD.data.fx.text;
+    for (const t of w.texts) { t.time += dt; t.y -= T.rise * dt; }
+    w.texts = w.texts.filter((t) => t.time < T.life);
+    WYD.fx.update(w, dt);
   },
 
   // ---------- 共通の処理 ----------
@@ -530,6 +711,12 @@ WYD.world = {
     if (fx.wrath > 0 && wrath && p.hp / stats.maxHp * 100 <= wrath.hpPercent) attack *= 1 + fx.wrath / 100;
     const hit = this.calcDamage(attack, e.defense, stats.critChance, stats.critMultiplier);
     this.damageEnemy(w, state, e, hit.damage, hit.crit);
+    // スキルの型のおまけ：吸血・縛る（スキルを使っている最中だけ）
+    const ex = this.castExtra;
+    if (ex) {
+      if (ex.lifesteal && !p.dead) p.hp = Math.min(stats.maxHp, p.hp + hit.damage * ex.lifesteal / 100);
+      if (ex.bind && e.hp > 0) e.stunTimer = Math.max(e.stunTimer || 0, e.boss ? ex.bind * WYD.data.runes.bossBindMult : ex.bind);
+    }
     if (fx.lifesteal > 0 && !p.dead) {
       p.hp = Math.min(stats.maxHp, p.hp + hit.damage * fx.lifesteal / 100);
     }
@@ -540,7 +727,10 @@ WYD.world = {
     const chance = stats.effects.thunder;
     if (e.hp <= 0 || chance <= 0 || Math.random() * 100 >= chance) return;
     const def = WYD.loot.effectInfo("thunder");
-    w.effects.push({ type: "bolt", x: e.x, y: e.y, color: def.color, time: 0, duration: 0.25 });
+    if (!WYD.vfx.segment(w, "lightning", { x: e.x + 8, y: e.y - 110 }, { x: e.x, y: e.y })) {
+      w.effects.push({ type: "bolt", x: e.x, y: e.y, color: def.color, time: 0, duration: 0.25 });
+    }
+    WYD.sound.play("thunder");
     const hit = this.calcDamage(stats.attack * def.power, e.defense, 0);
     this.damageEnemy(w, state, e, hit.damage, false);
   },
@@ -549,24 +739,65 @@ WYD.world = {
     if (e.hp <= 0) return;
     e.hp -= damage;
     e.hitFlash = 0.1;
-    this.addText(w, e.x, e.y - 16, crit ? `${damage}!` : `${damage}`, crit ? "#ffd447" : "#ffffff");
+    this.addText(w, e.x, e.y - 16, crit ? `${damage}!` : `${damage}`, crit ? "#ffd447" : "#ffffff", crit);
+    WYD.fx.hit(w, e, crit);
+    if (e.boss && !e.enraged && e.hp > 0 && e.hp <= e.maxHp * WYD.data.boss.enrage.hpRatio) this.enrage(w, state, e);
     if (e.hp <= 0) this.enemyDied(w, state, e);
+  },
+
+  // ボスの怒り：強くなり、手下を呼ぶ（data/areas.js の boss.enrage）
+  enrage(w, state, e) {
+    const R = WYD.data.boss.enrage;
+    const def = WYD.data.enemies[e.kind];
+    e.enraged = true;
+    e.attack *= R.attackMult;
+    e.attackSpeedMult *= R.attackSpeedMult;
+    e.moveSpeedMult *= R.moveSpeedMult;
+    e.slamIntervalMult = R.slamIntervalMult;
+    if (e.slamCharge == null) e.slamTimer = Math.min(e.slamTimer, R.firstSlamDelay);
+    const pool = this.area(state).enemies;
+    for (let i = 0; i < R.summonCount; i++) {
+      const pick = WYD.util.pickWeighted(pool, (x) => x.weight);
+      this.spawnEnemy(w, state, pick.kind, {
+        x: WYD.util.clamp(e.x + WYD.util.rand(-R.summonSpread, R.summonSpread), 20, WYD.data.map.width - 20),
+        y: WYD.util.clamp(e.y + WYD.util.rand(-R.summonSpread, R.summonSpread), 20, WYD.data.map.height - 20),
+      });
+    }
+    w.effects.push({ type: "shock", x: e.x, y: e.y, radius: def.radius * 4, color: R.color, time: 0, duration: 0.6 });
+    WYD.fx.shake(w, WYD.data.fx.shakeSlam);
+    WYD.sound.play("bossAppear");
+    WYD.ui.log(`${def.name}が怒り狂った！（速く・強くなり、手下を呼んだ）`, R.color);
   },
 
   enemyDied(w, state, e) {
     const def = WYD.data.enemies[e.kind];
+    WYD.fx.death(w, e);
     const diff = WYD.data.difficulty;
-    const d = state.difficulty - 1;
+    const inTrial = WYD.trial.active(state);
+    const d = inTrial ? 0 : state.difficulty - 1;
     w.enemies = w.enemies.filter((x) => x !== e);
 
     const area = this.area(state);
-    const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult;
+    const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult * this.floorPower(state);
     this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult));
 
-    if (e.boss) {
+    WYD.records.add(state, "kills");
+    if (e.elite) WYD.records.add(state, "eliteKills");
+    if (e.boss) WYD.records.add(state, "bossKills");
+
+    if (inTrial) {
+      WYD.trial.onKill(w, state, e);
+    } else if (e.boss) {
+      w.bossDone = true;
       this.bossDefeated(state, area, def);
-    } else if (!w.enemies.some((x) => x.boss)) {
-      state.bossProgress = Math.min(area.killsForBoss, state.bossProgress + 1);
+      // ボスを倒したら、すこしして地下1階にもどる（もう一度もぐって集められる）
+      w.returnTimer = WYD.data.boss.bossAppearDelay * 2;
+    } else if (!this.isBossRoom(state)) {
+      state.bossProgress = Math.min(area.killsPerFloor, state.bossProgress + 1);
+      if (state.bossProgress >= area.killsPerFloor) {
+        state.bossProgress = 0;
+        w.descendNext = true;   // 倒した敵の処理が終わってから降りる
+      }
     }
 
     // 特殊効果：血の饗宴（倒すとHP回復）
@@ -584,8 +815,8 @@ WYD.world = {
     const kn = stats.powers.killNova;
     if (kn && !p.dead && Math.random() * 100 < kn.chance) this.explode(w, state, stats, e.x, e.y, kn.radius, kn.mult, kn.color);
 
-    // 「自動」がONで最高より下にいるなら、しばらく倒し続けたら1つ上げる
-    if (state.settings.autoDifficulty && state.difficulty < state.maxDifficulty) {
+    // 「自動」がONで最高より下にいるなら、しばらく倒し続けたら1つ上げる（試練の最中はしない）
+    if (!inTrial && state.settings.autoDifficulty && state.difficulty < state.maxDifficulty) {
       w.autoKills = (w.autoKills || 0) + 1;
       if (w.autoKills >= diff.autoUpAfterKills) {
         w.autoKills = 0;
@@ -598,7 +829,7 @@ WYD.world = {
     }
 
     // 最高危険度で倒すと、次の危険度に近づく
-    if (state.difficulty === state.maxDifficulty && state.maxDifficulty < diff.max) {
+    if (!inTrial && state.difficulty === state.maxDifficulty && state.maxDifficulty < diff.max) {
       state.killsAtMax++;
       if (state.killsAtMax >= diff.killsToUnlockNext) {
         state.maxDifficulty++;
@@ -617,7 +848,8 @@ WYD.world = {
 
     // 精鋭は必ず数個落とし、レアも出やすい
     const E = WYD.data.elites;
-    const bonus = def.rarityBonus * (1 + diff.rarityGrowth * d) * (e.elite ? E.rarityBonusMult : 1);
+    const bonus = def.rarityBonus * (1 + diff.rarityGrowth * d) * (e.elite ? E.rarityBonusMult : 1) *
+      (inTrial ? WYD.data.trial.rarityBonus : 1);
     let count = e.elite ? E.dropCount : (Math.random() < def.dropChance ? 1 : 0);
     if (e.boss) count = WYD.data.boss.dropCount;
     if (e.elite) WYD.ui.log(`精鋭「${e.name}」を倒した！`, E.color);
@@ -625,16 +857,36 @@ WYD.world = {
     const U = WYD.data.uniques;
     const uniqueChance = e.boss ? U.chanceFromBoss : e.elite ? U.chanceFromElite : 0;
     if (Math.random() < uniqueChance) {
-      const item = WYD.loot.createUnique(state, state.difficulty + area.itemLevelBonus);
+      const item = WYD.loot.createUnique(state, this.itemLevel(state));
       w.drops.push({ x: e.x, y: e.y, item, age: 0 });
       WYD.ui.log(`ユニーク装備「${item.name}」が落ちた！`, U.color);
+      WYD.sound.play("uniqueDrop");
+    }
+    // ボスと精鋭は、まれにセット装備を落とす
+    const SE = WYD.data.sets;
+    const setChance = e.boss ? SE.chanceFromBoss : e.elite ? SE.chanceFromElite : 0;
+    if (Math.random() < setChance) {
+      const item = WYD.loot.createSetPiece(state, this.itemLevel(state));
+      w.drops.push({ x: e.x + 12, y: e.y + 8, item, age: 0 });
+      WYD.ui.log(`セット装備「${item.name}」が落ちた！`, SE.color);
+      WYD.sound.play("uniqueDrop");
     }
     for (let i = 0; i < count; i++) {
-      const item = WYD.loot.create(state, state.difficulty + area.itemLevelBonus, bonus);
-      if (item.rarity === "normal" && state.settings.skipNormal) continue;
+      const item = WYD.loot.create(state, this.itemLevel(state), bonus);
+      // 自動分解：拾わずにその場で素材にする
+      if (WYD.inventory.shouldAutoSalvage(state, item)) {
+        const n = WYD.inventory.salvage(state, item);
+        WYD.offline.record("mats", n);
+        if (n > 0) this.addText(w, e.x, e.y - 30, `+${n}`, WYD.data.crafting.materialColor);
+        WYD.ui.markDirty();
+        continue;
+      }
+      if (item.rarity === "legend") WYD.sound.play("rareDrop");
       const spread = count > 1 ? 10 + count * 4 : 0;
       w.drops.push({ x: e.x + WYD.util.rand(-spread, spread), y: e.y + WYD.util.rand(-spread, spread), item, age: 0 });
     }
+    WYD.gems.onKill(w, state, e);
+    WYD.records.check(state);
   },
 
   // ボスを倒したら次のエリアを解放する
@@ -644,7 +896,12 @@ WYD.world = {
     const next = list[list.indexOf(area) + 1];
     if (next && !state.unlockedAreas.includes(next.id)) {
       state.unlockedAreas.push(next.id);
-      WYD.ui.log(`新しいエリア「${next.name}」に行けるようになった！`, "#ff8a2a");
+      WYD.ui.log(`新しいエリア「${next.name}」に行けるようになった！（上の「エリア ▶」で移動）`, "#ff8a2a");
+    }
+    // 最後のエリアのボスを初めて倒したらクリア
+    if (!next && !state.cleared) {
+      state.cleared = true;
+      WYD.ui.showStory("clear");
     }
     WYD.ui.changed();
   },
@@ -652,7 +909,8 @@ WYD.world = {
   gainExp(state, amount) {
     const pl = state.player;
     const P = WYD.data.player;
-    if (pl.level >= P.maxLevel) return;
+    WYD.offline.record("exp", amount);
+    if (pl.level >= P.maxLevel) return this.gainParagon(state, amount);
     pl.exp += amount;
     while (pl.level < P.maxLevel && pl.exp >= WYD.stats.expToNext(pl.level)) {
       pl.exp -= WYD.stats.expToNext(pl.level);
@@ -661,7 +919,26 @@ WYD.world = {
       WYD.ui.log(`レベルアップ！ Lv${pl.level}（スキルポイント+${P.skillPointsPerLevel}）`, "#7dff8a");
       WYD.ui.onLevelUp();
     }
-    if (pl.level >= P.maxLevel) pl.exp = 0;
+    if (pl.level >= P.maxLevel) {
+      const extra = pl.exp;
+      pl.exp = 0;
+      if (extra > 0) this.gainParagon(state, extra);
+    }
+    WYD.ui.markDirty();
+  },
+
+  // レベル上限のあとの経験値：修練レベルを上げ、修練ポイントをもらう
+  gainParagon(state, amount) {
+    const pg = state.player.paragon;
+    const G = WYD.data.player.paragon;
+    pg.exp += amount;
+    while (pg.exp >= WYD.stats.paragonToNext(pg.level)) {
+      pg.exp -= WYD.stats.paragonToNext(pg.level);
+      pg.level++;
+      pg.points += G.pointsPerLevel;
+      WYD.ui.log(`修練レベル ${pg.level}！（修練ポイント+${G.pointsPerLevel}）`, "#e0c070");
+      WYD.ui.onLevelUp();
+    }
     WYD.ui.markDirty();
   },
 
@@ -674,10 +951,11 @@ WYD.world = {
   },
 
   respawn(w, state, stats) {
+    WYD.records.add(state, "deaths");
     const map = WYD.data.map;
     const p = w.player;
     // 「自動」がONなら、同じ危険度で何度も倒れたら1つ下げる
-    if (state.settings.autoDifficulty && state.difficulty > 1) {
+    if (!WYD.trial.active(state) && state.settings.autoDifficulty && state.difficulty > 1) {
       w.autoDeaths = (w.autoDeaths || 0) + 1;
       if (w.autoDeaths >= WYD.data.difficulty.autoDownAfterDeaths) {
         w.autoDeaths = 0;
@@ -687,7 +965,13 @@ WYD.world = {
         WYD.ui.changed();
       }
     }
-    this.keepBoss(w, state);
+    WYD.trial.onDeath(w, state);
+    // ボスの間で倒れたら、1つ上の階にもどる（すこし倒せばまた降りられる）
+    if (this.isBossRoom(state)) {
+      const area = this.area(state);
+      this.changeFloor(w, state, -1);
+      state.bossProgress = Math.floor(area.killsPerFloor * WYD.data.boss.retryProgressRatio);
+    }
     p.dead = false;
     p.hp = stats.maxHp;
     p.x = map.width / 2;
@@ -696,6 +980,7 @@ WYD.world = {
     p.haste = null;
     w.fields = [];
     w.projectiles = [];
+    w.bolts = [];
     w.enemies = [];
     w.spawnTimer = 1;
   },
@@ -709,12 +994,8 @@ WYD.world = {
     w.spawnTimer = 0.5;
   },
 
-  // 敵を消す前に呼ぶ：ボスがいたら、少し倒せばまた出てくるようにする
-  keepBoss(w, state) {
-    if (!w.enemies.some((e) => e.boss)) return;
-    const need = this.area(state).killsForBoss;
-    state.bossProgress = Math.max(state.bossProgress, Math.floor(need * WYD.data.boss.retryProgressRatio));
-  },
+  // （前の作り：ボスがいたら少し倒せばまた出てくる）。今はボスの間にいれば自動でまた出るので何もしない
+  keepBoss() {},
 
   nearestEnemy(w, from) {
     let best = null, bestD = Infinity;
@@ -725,6 +1006,14 @@ WYD.world = {
     return best;
   },
 
+  // target から遠ざかる（マップの外には出ない）
+  moveAway(obj, target, step) {
+    const map = WYD.data.map;
+    const d = WYD.util.dist(obj, target) || 1;
+    obj.x = WYD.util.clamp(obj.x + (obj.x - target.x) / d * step, 20, map.width - 20);
+    obj.y = WYD.util.clamp(obj.y + (obj.y - target.y) / d * step, 20, map.height - 20);
+  },
+
   moveToward(obj, target, step, stopAt) {
     const d = WYD.util.dist(obj, target);
     if (d <= stopAt) return;
@@ -733,7 +1022,7 @@ WYD.world = {
     obj.y += (target.y - obj.y) / d * s;
   },
 
-  addText(w, x, y, text, color) {
-    w.texts.push({ x: x + WYD.util.rand(-6, 6), y, text, color, time: 0 });
+  addText(w, x, y, text, color, big) {
+    w.texts.push({ x: x + WYD.util.rand(-6, 6), y, text, color, time: 0, big: !!big });
   },
 };
