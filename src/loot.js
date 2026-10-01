@@ -84,7 +84,9 @@ WYD.loot = {
 
   // 固有能力の説明文（{名前} を params の数値に置きかえる）
   uniqueDesc(def) {
-    return def.desc.replace(/\{(\w+)\}/g, (all, key) => (key in def.params ? String(def.params[key]) : all));
+    return def.desc
+      .replace(/\{skill:(\w+)\}/g, (all, kind) => WYD.classes.skillNameByKind(kind))
+      .replace(/\{(\w+)\}/g, (all, key) => (key in def.params ? String(def.params[key]) : all));
   },
 
   // 特殊効果をランダムに決める（同じ効果は2回つかない）

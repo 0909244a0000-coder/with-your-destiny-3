@@ -10,6 +10,9 @@
   <header>
     <h1>With Your Destiny Ⅲ <small>最小版</small></h1>
     <div class="controls">
+      <span>キャラ</span>
+      <select id="class-select" title="職業を切り替える（キャラごとにセーブは別々）"></select>
+      <span class="sep"></span>
       <span>エリア</span>
       <button id="area-down" title="前のエリアへ">◀</button>
       <b id="area-name"></b>
@@ -28,8 +31,10 @@
       <button data-speed="2">×2</button>
       <button data-speed="4">×4</button>
       <span class="sep"></span>
-      <label><input type="checkbox" id="skip-normal"> ノーマルを拾わない</label>
+      <label>自動分解 <select id="auto-salvage" title="選んだレア度以下の装備は、拾わずにその場で素材にする"></select></label>
       <span class="sep"></span>
+      <button id="sound-toggle" title="効果音（最初に画面をクリックすると鳴りはじめる）">音：ON</button>
+      <button id="help">遊び方</button>
       <button id="reset" class="danger">最初から</button>
     </div>
   </header>
@@ -49,6 +54,8 @@
         <div class="bar"><div id="hp-bar" class="fill hp"></div><span id="hp-text"></span></div>
         <div class="bar"><div id="exp-bar" class="fill exp"></div><span id="exp-text"></span></div>
         <div id="stats" class="stats"></div>
+        <div id="paragon" class="build" hidden></div>
+        <div id="build" class="build"></div>
       </section>
 
       <section class="panel">
@@ -71,10 +78,27 @@
         </div>
         <p class="muted" id="inv-help">左クリック：装備する／右クリック：捨てる（捨てると素材になる）</p>
       </section>
+
+      <section class="panel">
+        <h2>倉庫 <small id="stash-count"></small> <button id="stash-toggle">開く</button></h2>
+        <div id="stash-body" hidden>
+          <div id="stash" class="grid"></div>
+          <p class="muted">クリック：持ち物へ戻す／右クリック：捨てる。持ち物を倉庫に入れるときは Shift＋クリック</p>
+        </div>
+      </section>
     </aside>
   </main>
 
   <div id="tooltip"></div>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-box">
+      <h2 id="modal-title"></h2>
+      <p id="modal-text"></p>
+      <ul id="modal-list"></ul>
+      <button id="modal-ok">続ける</button>
+    </div>
+  </div>
 
   <!-- 数値（data/） -->
   <script src="data/player.js"></script>
@@ -87,13 +111,23 @@
   <script src="data/effects.js"></script>
   <script src="data/crafting.js"></script>
   <script src="data/uniques.js"></script>
+  <script src="data/offline.js"></script>
+  <script src="data/story.js"></script>
+  <script src="data/fx.js"></script>
+  <script src="data/anim.js"></script>
+  <script src="data/sound.js"></script>
+  <script src="data/classes.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>
+  <script src="src/classes.js"></script>
   <script src="src/stats.js"></script>
   <script src="src/loot.js"></script>
   <script src="src/inventory.js"></script>
   <script src="src/world.js"></script>
+  <script src="src/fx.js"></script>
+  <script src="src/sound.js"></script>
+  <script src="src/offline.js"></script>
   <script src="src/render.js"></script>
   <script src="src/ui.js"></script>
   <script src="src/main.js"></script>
