@@ -149,6 +149,15 @@ WYD.ui = {
     this.log(`${item.name}の特殊効果をつけ直した → ${names}`, WYD.data.effects.color);
   },
 
+  // 「おかえりなさい」の画面（放置中の進行）
+  showWelcome(text, items) {
+    this.$("welcome-text").textContent = text;
+    this.$("welcome-list").innerHTML = items.map((x) => `<li>${x}</li>`).join("");
+    this.$("welcome").hidden = false;
+    this.$("welcome-ok").onclick = () => { this.$("welcome").hidden = true; };
+    this.log(`${text} ${items.join("、")}`, "#ffd447");
+  },
+
   // 何かが変わったとき：画面を作り直してセーブ
   changed() {
     this.dirty = true;

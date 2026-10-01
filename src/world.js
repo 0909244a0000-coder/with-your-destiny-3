@@ -29,6 +29,7 @@ WYD.world = {
     p.hp = Math.min(p.hp, stats.maxHp);
 
     this.updateEffects(w, dt);
+    WYD.offline.tick(state, dt);
 
     if (p.dead) {
       p.respawnTimer -= dt;
@@ -634,6 +635,7 @@ WYD.world = {
       // 自動分解：拾わずにその場で素材にする
       if (WYD.inventory.shouldAutoSalvage(state, item)) {
         const n = WYD.inventory.salvage(state, item);
+        WYD.offline.record("mats", n);
         if (n > 0) this.addText(w, e.x, e.y - 30, `+${n}`, WYD.data.crafting.materialColor);
         WYD.ui.markDirty();
         continue;
@@ -659,6 +661,7 @@ WYD.world = {
     const pl = state.player;
     const P = WYD.data.player;
     if (pl.level >= P.maxLevel) return;
+    WYD.offline.record("exp", amount);
     pl.exp += amount;
     while (pl.level < P.maxLevel && pl.exp >= WYD.stats.expToNext(pl.level)) {
       pl.exp -= WYD.stats.expToNext(pl.level);

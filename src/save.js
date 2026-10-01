@@ -78,6 +78,7 @@ WYD.save = {
 
   write(state) {
     try {
+      state.lastSeen = Date.now();   // 放置中の進行に使う
       localStorage.setItem(this.KEY, JSON.stringify(state));
     } catch (e) {
       console.warn("セーブできませんでした。", e);
