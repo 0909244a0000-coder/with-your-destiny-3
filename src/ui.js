@@ -5,6 +5,7 @@ WYD.ui = {
   state: null,
   world: null,
   dirty: true,
+  craftMode: false,   // つけ直しモード（クリックで特殊効果をつけ直す）
 
   $(id) {
     return document.getElementById(id);
@@ -36,15 +37,20 @@ WYD.ui = {
         location.reload();
       }
     };
+    const C = WYD.data.crafting;
     this.$("discard-normal").onclick = () => {
-      const n = WYD.inventory.discardRarities(s, ["normal"]);
-      this.log(`ノーマル装備を${n}個捨てた`);
+      const r = WYD.inventory.discardRarities(s, ["normal"]);
+      this.log(`ノーマル装備を${r.count}個捨てた（${C.materialName} +${r.gained}）`);
       this.changed();
     };
     this.$("discard-magic").onclick = () => {
-      const n = WYD.inventory.discardRarities(s, ["normal", "magic"]);
-      this.log(`マジック以下の装備を${n}個捨てた`);
+      const r = WYD.inventory.discardRarities(s, ["normal", "magic"]);
+      this.log(`マジック以下の装備を${r.count}個捨てた（${C.materialName} +${r.gained}）`);
       this.changed();
+    };
+    this.$("craft-mode").onclick = () => {
+      this.craftMode = !this.craftMode;
+      this.markDirty();
     };
 
     // 持ち物：左クリックで装備、右クリックで捨てる
@@ -52,7 +58,8 @@ WYD.ui = {
     inv.onclick = (e) => {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
-      WYD.inventory.equip(s, Number(cell.dataset.index));
+      if (this.craftMode) this.rerollItem(s.inventory[Number(cell.dataset.index)]);
+      else WYD.inventory.equip(s, Number(cell.dataset.index));
       this.changed();
     };
     inv.oncontextmenu = (e) => {
@@ -60,8 +67,8 @@ WYD.ui = {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
       const item = s.inventory[Number(cell.dataset.index)];
-      WYD.inventory.discard(s, Number(cell.dataset.index));
-      if (item) this.log(`${item.name}を捨てた`);
+      const gained = WYD.inventory.discard(s, Number(cell.dataset.index));
+      if (item) this.log(`${item.name}を捨てた（${C.materialName} +${gained}）`);
       this.changed();
     };
     inv.onmouseover = (e) => this.showTooltipFor(e, "inv");
@@ -72,6 +79,11 @@ WYD.ui = {
     eq.onclick = (e) => {
       const cell = e.target.closest("[data-slot]");
       if (!cell || !s.equipment[cell.dataset.slot]) return;
+      if (this.craftMode) {
+        this.rerollItem(s.equipment[cell.dataset.slot]);
+        this.changed();
+        return;
+      }
       if (!WYD.inventory.unequip(s, cell.dataset.slot)) this.log("持ち物がいっぱいで外せない", "#ff6b6b");
       this.changed();
     };
@@ -87,6 +99,19 @@ WYD.ui = {
       if (btn.dataset.action === "toggle") this.toggleSkill(id);
       this.changed();
     };
+  },
+
+  // 特殊効果をつけ直す（素材が足りなければ教える）
+  rerollItem(item) {
+    if (!item) return;
+    const C = WYD.data.crafting;
+    const cost = WYD.inventory.rerollCost(item);
+    if (cost <= 0) return this.log("ノーマル装備には特殊効果をつけられない", "#ff6b6b");
+    if (!WYD.inventory.reroll(this.state, item)) {
+      return this.log(`${C.materialName}が足りない（${cost}個必要）`, "#ff6b6b");
+    }
+    const names = this.itemEffects(item).map((x) => x.def.name).join("・");
+    this.log(`${item.name}の特殊効果をつけ直した → ${names}`, WYD.data.effects.color);
   },
 
   // 何かが変わったとき：画面を作り直してセーブ
@@ -256,6 +281,13 @@ WYD.ui = {
     // 持ち物
     const size = WYD.data.items.inventorySize;
     this.$("inv-count").textContent = `${s.inventory.length} / ${size}`;
+    const C = WYD.data.crafting;
+    this.$("materials").innerHTML = `<span style="color:${C.materialColor}">${C.materialName} ${s.materials}</span>`;
+    this.$("craft-mode").textContent = `つけ直しモード：${this.craftMode ? "ON" : "OFF"}`;
+    this.$("craft-mode").classList.toggle("active", this.craftMode);
+    this.$("inv-help").textContent = this.craftMode
+      ? "つけ直しモード：持ち物や装備をクリックすると、素材を使って特殊効果をつけ直す"
+      : "左クリック：装備する／右クリック：捨てる（捨てると素材になる）";
     let html = "";
     for (let i = 0; i < size; i++) {
       const item = s.inventory[i];
@@ -350,12 +382,14 @@ WYD.ui = {
         const cur = s.equipment[item.slot];
         html += cur ? this.itemHtml(cur, "いま装備中") : `<div class="tip-item tip-sub">この部位は何も装備していない</div>`;
         html += this.compareHtml(item, cur);
-        html += `<div class="tip-help">左クリック：装備する／右クリック：捨てる</div>`;
+        html += this.craftMode
+          ? this.rerollHelp(item)
+          : `<div class="tip-help">左クリック：装備する／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.data.crafting.salvage[item.rarity] || 0}）</div>`;
       }
     } else {
       const cell = e.target.closest("[data-slot]");
       item = cell && s.equipment[cell.dataset.slot];
-      if (item) html = this.itemHtml(item) + `<div class="tip-help">クリック：外す</div>`;
+      if (item) html = this.itemHtml(item) + (this.craftMode ? this.rerollHelp(item) : `<div class="tip-help">クリック：外す</div>`);
     }
     if (!item) return this.hideTooltip();
     const tip = this.$("tooltip");
@@ -367,6 +401,14 @@ WYD.ui = {
     const y = Math.min(window.innerHeight - rect.height - 8, e.clientY + 8);
     tip.style.left = `${x}px`;
     tip.style.top = `${Math.max(8, y)}px`;
+  },
+
+  rerollHelp(item) {
+    const C = WYD.data.crafting;
+    const cost = WYD.inventory.rerollCost(item);
+    if (cost <= 0) return `<div class="tip-help">この装備は特殊効果をつけ直せない</div>`;
+    const ok = this.state.materials >= cost;
+    return `<div class="tip-help" style="color:${ok ? C.materialColor : "#ff6b6b"}">クリック：特殊効果をつけ直す（${C.materialName} ${cost}個／持っている数 ${this.state.materials}）</div>`;
   },
 
   hideTooltip() {

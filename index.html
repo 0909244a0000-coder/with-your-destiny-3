@@ -61,13 +61,14 @@
       </section>
 
       <section class="panel">
-        <h2>持ち物 <small id="inv-count"></small></h2>
+        <h2>持ち物 <small id="inv-count"></small> <small id="materials"></small></h2>
         <div id="inventory" class="grid"></div>
         <div class="inv-buttons">
           <button id="discard-normal">ノーマルを全部捨てる</button>
           <button id="discard-magic">マジック以下を全部捨てる</button>
+          <button id="craft-mode">つけ直しモード：OFF</button>
         </div>
-        <p class="muted">左クリック：装備する／右クリック：捨てる</p>
+        <p class="muted" id="inv-help">左クリック：装備する／右クリック：捨てる（捨てると素材になる）</p>
       </section>
     </aside>
   </main>
@@ -83,6 +84,7 @@
   <script src="data/areas.js"></script>
   <script src="data/items.js"></script>
   <script src="data/effects.js"></script>
+  <script src="data/crafting.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>

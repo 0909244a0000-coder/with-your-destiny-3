@@ -30,14 +30,40 @@ WYD.inventory = {
     return true;
   },
 
+  // 捨てる（分解して素材をもらう）。もらった素材の数を返す
   discard(state, index) {
-    state.inventory.splice(index, 1);
+    const item = state.inventory.splice(index, 1)[0];
+    return item ? this.salvage(state, item) : 0;
   },
 
-  // 指定したレア度の装備をまとめて捨てる
+  // 指定したレア度の装備をまとめて捨てる。{ count: 捨てた数, gained: もらった素材 } を返す
   discardRarities(state, rarityIds) {
-    const before = state.inventory.length;
-    state.inventory = state.inventory.filter((it) => !rarityIds.includes(it.rarity));
-    return before - state.inventory.length;
+    let count = 0, gained = 0;
+    state.inventory = state.inventory.filter((it) => {
+      if (!rarityIds.includes(it.rarity)) return true;
+      count++;
+      gained += this.salvage(state, it);
+      return false;
+    });
+    return { count, gained };
+  },
+
+  salvage(state, item) {
+    const n = WYD.data.crafting.salvage[item.rarity] || 0;
+    state.materials = (state.materials || 0) + n;
+    return n;
+  },
+
+  rerollCost(item) {
+    return WYD.data.crafting.rerollCost[item.rarity] || 0;
+  },
+
+  // 特殊効果をつけ直す。できたら true
+  reroll(state, item) {
+    const cost = this.rerollCost(item);
+    if (cost <= 0 || state.materials < cost) return false;
+    state.materials -= cost;
+    item.effects = WYD.loot.rollEffects(item.rarity);
+    return true;
   },
 };

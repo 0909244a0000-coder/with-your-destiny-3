@@ -24,6 +24,7 @@ WYD.save = {
       unlockedAreas: [WYD.data.areas[0].id],    // 行けるエリア
       bossProgress: 0,                          // ボスが出るまでに倒した数
       settings: { speed: 1, skipNormal: false },
+      materials: 0,    // カルマの欠片（装備を捨てるともらえる）
     };
   },
 
@@ -45,6 +46,7 @@ WYD.save = {
       state.unlockedAreas = state.unlockedAreas.filter((id) => areaIds.includes(id));
       if (!state.unlockedAreas.includes(areaIds[0])) state.unlockedAreas.unshift(areaIds[0]);
       if (!state.unlockedAreas.includes(state.area)) state.area = areaIds[0];
+      if (typeof state.materials !== "number") state.materials = 0;
       // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
       for (const item of state.inventory.concat(Object.values(state.equipment))) {
         if (item && !Array.isArray(item.effects)) item.effects = [];
