@@ -22,9 +22,22 @@
 ## 受け取り済み（ゲームに入っている）
 羅刹王ラーヴァナ（`ravana`）、阿修羅王（`asuraKing`）、羅刹（`rakshasa`）、夜叉（`yaksha`）、餓鬼（`preta`）、ナーガ（`naga`）
 
+追加済み（このPR）：
+- 主人公：バーバリアン（`assets/player.png`）
+- 地面：`forest`、`smashana`、`patala`
+- 装備アイコン13個、スキルアイコン6個
+- 敵・ボス：`mahisha`、`vetala`、`pishacha`、`daitya`、`yakshaArcher`、`bhuta`、`nagaCaster`
+- 切り出し用の透過シート：`assets/sheets/equipment.png`（2048×2048、4×4）、`assets/sheets/skills.png`（1536×1024、3×2）
+
 保管中：杖を持った女性の術者（将来の職業の候補。ダークエルフ・アークメイジなど）
 
 ## まだの絵（上から順に優先）
+
+この発注リストにある絵はすべて制作・登録済み。追加の発注はまだありません。
+
+## 制作済みの仕様・再制作用プロンプト
+
+以下は今回制作した絵の仕様です。再制作のために元のプロンプトとIDを残しています。
 
 ### 1. 主人公：バーバリアン（`assets/player.png`、差し色 #4fa3ff）
 ```
@@ -81,3 +94,17 @@ Dark fantasy action-RPG enemy sprite in the style of Tibetan thangka painting an
 2. `data/` に絵の場所を書く（`assets/README.md` を参照）
 3. ブラウザで開いて、表示とエラーがないことを確かめる
 4. この「受け取り済み」の一覧を更新して、PRを作る
+
+## 今回の制作・整形メモ
+- 制作：組み込みの ImageGen。上記プロンプトに「全体をセル内に収める」「透明な余白」「画面下向き」を補足。
+- 装備シートは大剣の欠けと余白を、スキルシートは背景の透過と余白を追加の編集指示で修正。スキルの背景に見える色は透明部分のRGBであり、アルファ合成で背景が抜けることを確認。
+- 地面はRGBの512×512に縮小。パーターラは上下の継ぎ目を目立たなくするため、大きな格子模様を控えめな不規則な石床に修正。
+- キャラは `tools/prepare_sprite.py` の `square()` を利用。出力サイズを360pxにしてから512pxの透明キャンバス中央に配置（約70%、余白76px）。ツール本体は変更していません。
+- 装備の生成シートはセルの境界にずれがあったため、透明な溝で各絵を切り分けて512pxの等間隔セルへ配置し直しました。元の1254pxシートの切り取り境界：列0/327/637/963/1254、行0/343/650/961/1254。各絵を `square()` で420pxに整え、セル内の46pxの位置へ配置。装備シートの最後の3セルは透明。
+- スキルシートも等間隔のセルごとに `square()` で420pxに整え、46pxの透明な余白を設けています。
+- シートからの最終切り出し：
+  ```sh
+  python3 tools/prepare_sprite.py assets/sheets/equipment.png assets/items --grid 4x4 --names dual_blades,great_blade,chakram,turban,crown,chainmail,robe,gauntlets,bracelet,leggings,sandals,ring,rosary
+  python3 tools/prepare_sprite.py assets/sheets/skills.png assets/skills --grid 3x2 --names whirl,vajra,sudarshana,agni,hanuman,nagapasha
+  ```
+- 新規PNG32枚の寸法・透明背景・ファイル破損を確認。画像参照36件すべての実ファイルを確認。既存のID・数値・セーブ形式を変更していません。新規セーブと、旧IDの装備を含む既存形式のセーブを読み込み、状態・能力値がmainと一致することも確認。

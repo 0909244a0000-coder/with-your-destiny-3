@@ -1,6 +1,6 @@
 # assets（画像）
 
-今は絵を使わず、丸や四角で表示しています。絵を置いて `data/` に場所を書くと、その絵で表示されます。
+主人公・敵・ボス・地面・装備・スキルの絵を登録済みです。絵を置いて `data/` に場所を書くと、その絵で表示されます。
 画像が読み込めないときは、自動で今の表示（丸や文字）に戻ります。
 
 ## 置き場所と書く場所
@@ -31,3 +31,8 @@ icons: { dual_blades: "assets/items/dual_blades.png", turban: "assets/items/turb
 - キャラ・敵：512×512px、真ん中に全体の約70%の大きさ。ゲームでは体の大きさ×4（`data/map.js` の `spriteScale`）の正方形に縮めて表示
 - アイコン：256×256px
 - 地面：512×512px、上下左右がつながる模様
+
+## アイコンのシート
+- `assets/sheets/equipment.png`：2048×2048px、4列×4行。最後の3マスは透明。
+- `assets/sheets/skills.png`：1536×1024px、3列×2行。
+- `tools/prepare_sprite.py` で個別PNGに切り出せます。順番・コマンドは `docs/ART.md` を参照。
