@@ -856,6 +856,7 @@ WYD.world = {
       const spread = count > 1 ? 10 + count * 4 : 0;
       w.drops.push({ x: e.x + WYD.util.rand(-spread, spread), y: e.y + WYD.util.rand(-spread, spread), item, age: 0 });
     }
+    WYD.gems.onKill(w, state, e);
     WYD.records.check(state);
   },
 

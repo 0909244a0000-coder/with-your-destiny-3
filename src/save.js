@@ -38,6 +38,7 @@ WYD.save = {
       records: {},     // 数えた記録（data/records.js の counters）
       codex: { uniques: {}, setPieces: {} },   // 図鑑（見つけたユニーク・セット装備の id）
       achievements: {},   // 達成した実績の id
+      gems: {},        // 持っている宝石（"種類:段階" → 数）
     };
   },
 
@@ -82,6 +83,7 @@ WYD.save = {
       state.records = Object.assign({}, saved.records);
       state.codex = Object.assign(this.newState().codex, saved.codex);
       state.achievements = Object.assign({}, saved.achievements);
+      state.gems = Object.assign({}, saved.gems);
       // 「ノーマルを拾わない」だった頃のセーブは、「ノーマルを自動分解」にする
       if (saved.settings && saved.settings.skipNormal && !saved.settings.autoSalvage) state.settings.autoSalvage = "normal";
       delete state.settings.skipNormal;
@@ -90,6 +92,8 @@ WYD.save = {
         if (!item) continue;
         // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
         if (!Array.isArray(item.effects)) item.effects = [];
+        // ソケットがなかった頃の装備は、ソケットなし
+        if (!Array.isArray(item.sockets)) item.sockets = [];
         this.renameItem(item);
       }
       WYD.records.backfill(state);

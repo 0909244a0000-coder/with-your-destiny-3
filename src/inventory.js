@@ -81,6 +81,7 @@ WYD.inventory = {
   },
 
   salvage(state, item) {
+    WYD.gems.returnGems(state, item);
     const n = WYD.data.crafting.salvage[item.rarity] || 0;
     state.materials = (state.materials || 0) + n;
     return n;

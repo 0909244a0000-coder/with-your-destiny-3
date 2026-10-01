@@ -41,7 +41,7 @@ WYD.loot = {
     if (rarity.id === "rare") name = u.pick(D.rarePrefixes) + base.name;
     if (rarity.id === "legend") name = u.pick(D.legendPrefixes) + base.name;
 
-    return {
+    return WYD.gems.rollSockets({
       id: state.nextItemId++,
       name,
       slot: base.slot,
@@ -50,7 +50,7 @@ WYD.loot = {
       level: itemLevel,
       stats,
       effects: this.rollEffects(rarity.id),
-    };
+    });
   },
 
   // ユニーク装備を作る（def を省くとランダムに選ぶ）
@@ -65,7 +65,7 @@ WYD.loot = {
     for (const stat in def.stats) {
       stats.push({ stat, value: this.rollValue(stat, def.stats[stat], itemLevel), main: false });
     }
-    return {
+    return WYD.gems.rollSockets({
       id: state.nextItemId++,
       name: def.name,
       slot: base.slot,
@@ -75,7 +75,7 @@ WYD.loot = {
       level: itemLevel,
       stats,
       effects: this.rollEffects("unique"),
-    };
+    });
   },
 
   // セット装備を作る（setId・pieceId を省くとランダム）
@@ -87,11 +87,11 @@ WYD.loot = {
     const stats = [];
     for (const stat in base.main) stats.push({ stat, value: this.rollValue(stat, base.main[stat], itemLevel), main: true });
     for (const stat in piece.stats) stats.push({ stat, value: this.rollValue(stat, piece.stats[stat], itemLevel), main: false });
-    return {
+    return WYD.gems.rollSockets({
       id: state.nextItemId++, name: piece.name, slot: base.slot, base: base.id,
       rarity: "set", set: set.id, piece: piece.id, level: itemLevel, stats,
       effects: this.rollEffects("set"),
-    };
+    });
   },
 
   // セット装備なら { set, piece }、ちがえば null

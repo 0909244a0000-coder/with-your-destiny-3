@@ -6,6 +6,7 @@ WYD.ui = {
   world: null,
   dirty: true,
   craftMode: false,   // つけ直しモード（クリックで特殊効果をつけ直す）
+  gemSelected: null,  // はめるために選んだ宝石（"種類:段階"）
   stashOpen: false,   // 倉庫を開いているか
 
   $(id) {
@@ -120,13 +121,33 @@ WYD.ui = {
       this.markDirty();
     };
 
+    // 宝石：クリックで選ぶ（もう一度で選ぶのをやめる）、「合成」で1つ上の段階に
+    this.$("gems").onclick = (e) => {
+      const btn = e.target.closest("[data-gem-combine]");
+      if (btn) {
+        const key = btn.dataset.gemCombine;
+        const info = WYD.gems.info(key);
+        const next = info && WYD.gems.key(info.def.id, info.tier + 1);
+        if (WYD.gems.combine(s, key)) this.log(`${WYD.gems.name(key)}を合成して、${WYD.gems.name(next)}にした`, WYD.gems.color(key));
+        else this.log("合成できない（宝石の数か素材が足りない）", "#ff6b6b");
+        if (!(s.gems[this.gemSelected] > 0)) this.gemSelected = null;
+        this.changed();
+        return;
+      }
+      const chip = e.target.closest("[data-gem]");
+      if (!chip) return;
+      this.gemSelected = this.gemSelected === chip.dataset.gem ? null : chip.dataset.gem;
+      this.markDirty();
+    };
+
     // 持ち物：左クリックで装備、右クリックで捨てる
     const inv = this.$("inventory");
     inv.onclick = (e) => {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
       const index = Number(cell.dataset.index);
-      if (this.craftMode) this.rerollItem(s.inventory[index]);
+      if (this.gemSelected) this.socketGem(s.inventory[index]);
+      else if (this.craftMode) this.rerollItem(s.inventory[index]);
       else if (e.shiftKey) {
         if (!WYD.inventory.toStash(s, index)) this.log("倉庫がいっぱいで入れられない", "#ff6b6b");
       } else WYD.inventory.equip(s, index);
@@ -153,7 +174,8 @@ WYD.ui = {
     stash.onclick = (e) => {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
-      if (this.craftMode) this.rerollItem(s.stash[Number(cell.dataset.index)]);
+      if (this.gemSelected) this.socketGem(s.stash[Number(cell.dataset.index)]);
+      else if (this.craftMode) this.rerollItem(s.stash[Number(cell.dataset.index)]);
       else if (!WYD.inventory.fromStash(s, Number(cell.dataset.index))) this.log("持ち物がいっぱいで戻せない", "#ff6b6b");
       this.changed();
     };
@@ -174,6 +196,11 @@ WYD.ui = {
     eq.onclick = (e) => {
       const cell = e.target.closest("[data-slot]");
       if (!cell || !s.equipment[cell.dataset.slot]) return;
+      if (this.gemSelected) {
+        this.socketGem(s.equipment[cell.dataset.slot]);
+        this.changed();
+        return;
+      }
       if (this.craftMode) {
         this.rerollItem(s.equipment[cell.dataset.slot]);
         this.changed();
@@ -463,6 +490,8 @@ WYD.ui = {
       ? "つけ直しモード：持ち物や装備をクリックすると、素材を使って特殊効果をつけ直す"
       : "左クリック：装備する／右クリック：捨てる（捨てると素材になる）／Shift＋クリック：倉庫へ";
     this.$("inventory").innerHTML = this.cellsHtml(s.inventory, size);
+    this.$("gems").innerHTML = this.gemsHtml();
+    if (this.gemSelected) this.$("inv-help").textContent = `${WYD.gems.name(this.gemSelected)}を選んでいる：持ち物・装備・倉庫の装備をクリックすると、空いたソケットにはめる（もう一度宝石をクリックでやめる）`;
 
     // 倉庫
     const stashSize = WYD.data.items.stashSize;
@@ -489,6 +518,48 @@ WYD.ui = {
   },
 
   // セットのボーナスの説明文
+  // 選んだ宝石を装備にはめる
+  socketGem(item) {
+    if (!item) return;
+    const key = this.gemSelected;
+    if (WYD.gems.socket(this.state, item, key)) {
+      this.log(`${item.name}に${WYD.gems.name(key)}をはめた（${WYD.gems.statsText(key, item.slot)}）`, WYD.gems.color(key));
+      if (!(this.state.gems[key] > 0)) this.gemSelected = null;
+    } else {
+      this.log(`${item.name}には空いたソケットがない`, "#ff6b6b");
+    }
+  },
+
+  // 宝石の欄
+  gemsHtml() {
+    const s = this.state;
+    const G = WYD.data.gems;
+    const keys = Object.keys(s.gems).filter((k) => s.gems[k] > 0 && WYD.gems.info(k))
+      .sort((a, b) => a.localeCompare(b));
+    if (keys.length === 0) return `<p class="muted">まだ宝石がない（精鋭とボスがよく落とす）</p>`;
+    return keys.map((k) => {
+      const info = WYD.gems.info(k);
+      const cost = WYD.gems.combineCost(k);
+      const canCombine = cost != null && s.gems[k] >= G.combineCount;
+      const tip = Object.keys(G.groupName).map((g) => {
+        const st = info.def[g] || {};
+        return `${G.groupName[g]}：` + Object.keys(st).map((x) => WYD.util.formatStat(x, st[x] * info.tierDef.mult)).join("、");
+      }).join("\n");
+      return `<span class="gem-chip${this.gemSelected === k ? " selected" : ""}" data-gem="${k}" title="${tip}" style="border-color:${info.def.color}">` +
+        `<b style="color:${info.def.color}">◆ ${WYD.gems.name(k)}</b> ×${s.gems[k]}` +
+        (canCombine ? ` <button data-gem-combine="${k}" title="${G.combineCount}つと${WYD.data.crafting.materialName}${cost}個で1つ上の段階に">合成</button>` : "") +
+        `</span>`;
+    }).join("");
+  },
+
+  // 装備のソケットの表示
+  socketsHtml(item) {
+    if (!item.sockets || item.sockets.length === 0) return "";
+    return item.sockets.map((key) => key
+      ? `<div class="socket" style="color:${WYD.gems.color(key)}">◆ ${WYD.gems.name(key)}：${WYD.gems.statsText(key, item.slot)}</div>`
+      : `<div class="socket empty">◇ 空いたソケット</div>`).join("");
+  },
+
   // 図鑑と記録の画面
   codexHtml() {
     const s = this.state;
@@ -614,7 +685,9 @@ WYD.ui = {
   // マスの右上に出す特殊効果の数の印（例：✦2）
   fxMark(item) {
     const n = this.itemEffects(item).length;
-    return n ? ` <b class="fx-mark" style="color:${WYD.data.effects.color}">✦${n}</b>` : "";
+    const so = item.sockets || [];
+    return (n ? ` <b class="fx-mark" style="color:${WYD.data.effects.color}">✦${n}</b>` : "") +
+      (so.length ? ` <b class="fx-mark" title="ソケット（はめた数／穴の数）">◆${so.filter((x) => x).length}/${so.length}</b>` : "");
   },
 
   // マスの内側をレア度の色でうっすら光らせる（ノーマルは光らせない）
@@ -646,6 +719,7 @@ WYD.ui = {
       ${lines}
       ${uniqueLine}
       ${fxLines}
+      ${this.socketsHtml(item)}
     </div>`;
   },
 
