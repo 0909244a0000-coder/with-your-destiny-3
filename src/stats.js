@@ -9,13 +9,9 @@ WYD.stats = {
     for (const slot in state.equipment) {
       const item = state.equipment[slot];
       if (!item) continue;
-      for (const line of item.stats) bonus[line.stat] += line.value;
-      // はめた宝石
-      for (const key of item.sockets || []) {
-        if (!key) continue;
-        const st = WYD.gems.statsFor(key, item.slot);
-        for (const k in st) bonus[k] += st[k];
-      }
+      // 能力（強化と、はめた宝石もふくむ）
+      const st = WYD.loot.statTotals(item);
+      for (const k in st) bonus[k] += st[k];
     }
     return bonus;
   },

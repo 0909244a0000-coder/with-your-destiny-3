@@ -94,6 +94,29 @@ WYD.loot = {
     });
   },
 
+  // 装備の表示名（強化していれば「+3 名前」）
+  label(item) {
+    return item.plus > 0 ? `+${item.plus} ${item.name}` : item.name;
+  },
+
+  // 強化を入れた、能力1行の数値
+  lineValue(item, line) {
+    return line.value * (1 + (item.plus || 0) * WYD.data.crafting.enhance.statPerLevel);
+  },
+
+  // 装備1つで上がる能力の合計（強化と宝石もふくむ）
+  statTotals(item) {
+    const out = {};
+    if (!item) return out;
+    for (const line of item.stats) out[line.stat] = (out[line.stat] || 0) + this.lineValue(item, line);
+    for (const key of item.sockets || []) {
+      if (!key) continue;
+      const st = WYD.gems.statsFor(key, item.slot);
+      for (const k in st) out[k] = (out[k] || 0) + st[k];
+    }
+    return out;
+  },
+
   // セット装備なら { set, piece }、ちがえば null
   setInfo(item) {
     if (!item || !item.set) return null;

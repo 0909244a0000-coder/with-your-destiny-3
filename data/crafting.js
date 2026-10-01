@@ -20,4 +20,15 @@ WYD.data.crafting = {
   ],
 
   rerollCost: { normal: 0, magic: 10, rare: 25, legend: 60, unique: 40, set: 35 },
+
+  // 装備の強化（+1, +2, …）。素材を使って、装備の能力（宝石はのぞく）を少しずつ上げる
+  enhance: {
+    max: 10,                 // 最大で +10
+    statPerLevel: 0.08,      // +1 ごとに、装備の能力が何割上がるか（+10 で 1.8倍）
+    costBase: 8,             // +0 → +1 の素材
+    costGrowth: 1.45,        // 1つ上げるごとに素材が何倍になるか
+    rarityCostMult: { normal: 0.5, magic: 0.75, rare: 1, legend: 1.5, unique: 1.5, set: 1.5 },
+    refundOnSalvage: 0.5,    // 強化した装備を捨てると、使った素材のこの割合がもどる
+    color: "#7fe0ff",        // +数字 の色
+  },
 };

@@ -65,6 +65,8 @@ WYD.inventory = {
     let count = 0, gained = 0;
     state.inventory = state.inventory.filter((it) => {
       if (!rarityIds.includes(it.rarity)) return true;
+      // 強化した装備と、宝石をはめた装備は、まとめて捨てる対象にしない
+      if (it.plus > 0 || (it.sockets || []).some((x) => x)) return true;
       count++;
       gained += this.salvage(state, it);
       return false;
@@ -80,11 +82,35 @@ WYD.inventory = {
     return order.indexOf(item.rarity) <= order.indexOf(opt.upTo);
   },
 
+  // 捨てたときにもらえる素材の数
+  salvageValue(item) {
+    const C = WYD.data.crafting;
+    return (C.salvage[item.rarity] || 0) + Math.floor((item.enhanceSpent || 0) * C.enhance.refundOnSalvage);
+  },
+
   salvage(state, item) {
     WYD.gems.returnGems(state, item);
-    const n = WYD.data.crafting.salvage[item.rarity] || 0;
+    const n = this.salvageValue(item);
     state.materials = (state.materials || 0) + n;
     return n;
+  },
+
+  // 次の強化に必要な素材（もう上げられなければ null）
+  enhanceCost(item) {
+    const E = WYD.data.crafting.enhance;
+    const plus = item.plus || 0;
+    if (plus >= E.max) return null;
+    return Math.round(E.costBase * Math.pow(E.costGrowth, plus) * (E.rarityCostMult[item.rarity] || 1));
+  },
+
+  // 強化する。できたら true
+  enhance(state, item) {
+    const cost = this.enhanceCost(item);
+    if (cost == null || state.materials < cost) return false;
+    state.materials -= cost;
+    item.plus = (item.plus || 0) + 1;
+    item.enhanceSpent = (item.enhanceSpent || 0) + cost;
+    return true;
   },
 
   rerollCost(item) {
