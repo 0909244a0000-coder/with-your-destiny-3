@@ -110,8 +110,9 @@ WYD.render = {
     ctx.textAlign = "left";
     ctx.font = "bold 16px sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillText(`${area.name}　${WYD.world.floorName(state)}　危険度 ${state.difficulty}`, 12, 24);
+    ctx.fillText(`${area.name}　${WYD.world.floorName(state)}${WYD.trial.active(state) ? "" : `　危険度 ${state.difficulty}`}`, 12, 24);
     this.drawBossBar(ctx, w);
+    WYD.trial.draw(ctx, w, state);
     this.drawBanner(ctx, w);
 
     if (w.player.dead) {

@@ -35,6 +35,7 @@ WYD.world = {
     this.trackMotion(w, dt);
     this.updateEffects(w, dt);
     WYD.offline.tick(state, dt);
+    WYD.trial.tick(w, state, dt);
 
     if (p.dead) {
       p.respawnTimer -= dt;
@@ -81,6 +82,7 @@ WYD.world = {
   // ---------- 敵の出現 ----------
   updateSpawns(w, state, dt) {
     const map = WYD.data.map;
+    if (WYD.trial.active(state)) return WYD.trial.updateSpawns(w, state, dt);
     const area = this.area(state);
     w.spawnTimer -= dt;
 
@@ -110,21 +112,30 @@ WYD.world = {
 
   // 今いるエリアの設定
   area(state) {
+    if (WYD.trial.active(state)) return WYD.trial.area(state);
     return WYD.data.areas.find((a) => a.id === state.area) || WYD.data.areas[0];
+  },
+
+  // 落ちる装備のアイテムレベル
+  itemLevel(state) {
+    return WYD.trial.active(state) ? WYD.trial.itemLevel(state) : state.difficulty + this.area(state).itemLevelBonus;
   },
 
   // 今いるのがボスの間か（ふつうの階の次）
   isBossRoom(state) {
+    if (WYD.trial.active(state)) return false;
     return state.floor > this.area(state).floors;
   },
 
   // 今いる階の名前（例：地下2階、ボスの間）
   floorName(state) {
+    if (WYD.trial.active(state)) return `段階${state.trialRun.level}`;
     return this.isBossRoom(state) ? "ボスの間" : `地下${state.floor}階`;
   },
 
   // 深い階ほど敵が強い
   floorPower(state) {
+    if (WYD.trial.active(state)) return 1;
     return 1 + WYD.data.boss.floorPowerStep * (state.floor - 1);
   },
 
@@ -178,7 +189,7 @@ WYD.world = {
   spawnEnemy(w, state, kind, pos) {
     const def = WYD.data.enemies[kind];
     const diff = WYD.data.difficulty;
-    const d = state.difficulty - 1;
+    const d = WYD.trial.active(state) ? 0 : state.difficulty - 1;   // 試練は危険度ではなく段階で強さが決まる
     const power = this.area(state).powerMult * this.floorPower(state);
     const maxHp = Math.round(def.hp * (1 + diff.hpGrowth * d) * power);
     const e = {
@@ -730,14 +741,17 @@ WYD.world = {
     const def = WYD.data.enemies[e.kind];
     WYD.fx.death(w, e);
     const diff = WYD.data.difficulty;
-    const d = state.difficulty - 1;
+    const inTrial = WYD.trial.active(state);
+    const d = inTrial ? 0 : state.difficulty - 1;
     w.enemies = w.enemies.filter((x) => x !== e);
 
     const area = this.area(state);
     const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult * this.floorPower(state);
     this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult));
 
-    if (e.boss) {
+    if (inTrial) {
+      WYD.trial.onKill(w, state, e);
+    } else if (e.boss) {
       w.bossDone = true;
       this.bossDefeated(state, area, def);
       // ボスを倒したら、すこしして地下1階にもどる（もう一度もぐって集められる）
@@ -765,8 +779,8 @@ WYD.world = {
     const kn = stats.powers.killNova;
     if (kn && !p.dead && Math.random() * 100 < kn.chance) this.explode(w, state, stats, e.x, e.y, kn.radius, kn.mult, kn.color);
 
-    // 「自動」がONで最高より下にいるなら、しばらく倒し続けたら1つ上げる
-    if (state.settings.autoDifficulty && state.difficulty < state.maxDifficulty) {
+    // 「自動」がONで最高より下にいるなら、しばらく倒し続けたら1つ上げる（試練の最中はしない）
+    if (!inTrial && state.settings.autoDifficulty && state.difficulty < state.maxDifficulty) {
       w.autoKills = (w.autoKills || 0) + 1;
       if (w.autoKills >= diff.autoUpAfterKills) {
         w.autoKills = 0;
@@ -779,7 +793,7 @@ WYD.world = {
     }
 
     // 最高危険度で倒すと、次の危険度に近づく
-    if (state.difficulty === state.maxDifficulty && state.maxDifficulty < diff.max) {
+    if (!inTrial && state.difficulty === state.maxDifficulty && state.maxDifficulty < diff.max) {
       state.killsAtMax++;
       if (state.killsAtMax >= diff.killsToUnlockNext) {
         state.maxDifficulty++;
@@ -798,7 +812,8 @@ WYD.world = {
 
     // 精鋭は必ず数個落とし、レアも出やすい
     const E = WYD.data.elites;
-    const bonus = def.rarityBonus * (1 + diff.rarityGrowth * d) * (e.elite ? E.rarityBonusMult : 1);
+    const bonus = def.rarityBonus * (1 + diff.rarityGrowth * d) * (e.elite ? E.rarityBonusMult : 1) *
+      (inTrial ? WYD.data.trial.rarityBonus : 1);
     let count = e.elite ? E.dropCount : (Math.random() < def.dropChance ? 1 : 0);
     if (e.boss) count = WYD.data.boss.dropCount;
     if (e.elite) WYD.ui.log(`精鋭「${e.name}」を倒した！`, E.color);
@@ -806,7 +821,7 @@ WYD.world = {
     const U = WYD.data.uniques;
     const uniqueChance = e.boss ? U.chanceFromBoss : e.elite ? U.chanceFromElite : 0;
     if (Math.random() < uniqueChance) {
-      const item = WYD.loot.createUnique(state, state.difficulty + area.itemLevelBonus);
+      const item = WYD.loot.createUnique(state, this.itemLevel(state));
       w.drops.push({ x: e.x, y: e.y, item, age: 0 });
       WYD.ui.log(`ユニーク装備「${item.name}」が落ちた！`, U.color);
       WYD.sound.play("uniqueDrop");
@@ -815,13 +830,13 @@ WYD.world = {
     const SE = WYD.data.sets;
     const setChance = e.boss ? SE.chanceFromBoss : e.elite ? SE.chanceFromElite : 0;
     if (Math.random() < setChance) {
-      const item = WYD.loot.createSetPiece(state, state.difficulty + area.itemLevelBonus);
+      const item = WYD.loot.createSetPiece(state, this.itemLevel(state));
       w.drops.push({ x: e.x + 12, y: e.y + 8, item, age: 0 });
       WYD.ui.log(`セット装備「${item.name}」が落ちた！`, SE.color);
       WYD.sound.play("uniqueDrop");
     }
     for (let i = 0; i < count; i++) {
-      const item = WYD.loot.create(state, state.difficulty + area.itemLevelBonus, bonus);
+      const item = WYD.loot.create(state, this.itemLevel(state), bonus);
       // 自動分解：拾わずにその場で素材にする
       if (WYD.inventory.shouldAutoSalvage(state, item)) {
         const n = WYD.inventory.salvage(state, item);
@@ -901,7 +916,7 @@ WYD.world = {
     const map = WYD.data.map;
     const p = w.player;
     // 「自動」がONなら、同じ危険度で何度も倒れたら1つ下げる
-    if (state.settings.autoDifficulty && state.difficulty > 1) {
+    if (!WYD.trial.active(state) && state.settings.autoDifficulty && state.difficulty > 1) {
       w.autoDeaths = (w.autoDeaths || 0) + 1;
       if (w.autoDeaths >= WYD.data.difficulty.autoDownAfterDeaths) {
         w.autoDeaths = 0;
@@ -911,6 +926,7 @@ WYD.world = {
         WYD.ui.changed();
       }
     }
+    WYD.trial.onDeath(w, state);
     // ボスの間で倒れたら、1つ上の階にもどる（すこし倒せばまた降りられる）
     if (this.isBossRoom(state)) {
       const area = this.area(state);

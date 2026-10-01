@@ -25,6 +25,16 @@
       <button id="diff-up" title="危険度を上げる">▶</button>
       <label title="新しい危険度が解放されたら自動で上げ、何度も倒れたら1つ下げる"><input type="checkbox" id="auto-diff"> 自動</label>
       <span id="diff-progress" class="muted"></span>
+      <span id="trial-group" hidden>
+        <span class="sep"></span>
+        <span>試練</span>
+        <button id="trial-down" title="段階を下げる">◀</button>
+        <b id="trial-level">1</b>
+        <button id="trial-up" title="段階を上げる（最高記録の次まで）">▶</button>
+        <button id="trial-start" title="制限時間内に決まった数を倒し、守護者を討つ">挑む</button>
+        <label title="成功したら次の段階、失敗したら1つ下の段階で自動で続ける"><input type="checkbox" id="trial-auto"> 連続</label>
+        <span id="trial-best" class="muted"></span>
+      </span>
       <span class="sep"></span>
       <span>速度</span>
       <button data-speed="1">×1</button>
@@ -123,6 +133,7 @@
   <script src="data/vfx.js"></script>
   <script src="data/runes.js"></script>
   <script src="data/sets.js"></script>
+  <script src="data/trial.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>
@@ -134,6 +145,7 @@
   <script src="src/fx.js"></script>
   <script src="src/vfx.js"></script>
   <script src="src/runes.js"></script>
+  <script src="src/trial.js"></script>
   <script src="src/sound.js"></script>
   <script src="src/offline.js"></script>
   <script src="src/render.js"></script>

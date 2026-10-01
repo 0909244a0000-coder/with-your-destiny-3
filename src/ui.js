@@ -72,6 +72,16 @@ WYD.ui = {
         this.changed();
       };
     }
+    this.$("trial-down").onclick = () => this.changeTrialLevel(-1);
+    this.$("trial-up").onclick = () => this.changeTrialLevel(1);
+    this.$("trial-start").onclick = () => {
+      if (WYD.trial.active(s)) WYD.trial.stop(this.world, s);
+      else WYD.trial.start(this.world, s, s.trial.level);
+    };
+    this.$("trial-auto").onchange = (e) => {
+      s.trial.autoNext = e.target.checked;
+      this.changed();
+    };
     this.$("auto-diff").onchange = (e) => {
       s.settings.autoDifficulty = e.target.checked;
       this.changed();
@@ -253,9 +263,17 @@ WYD.ui = {
     this.changed();
   },
 
+  // 試練の段階を選ぶ（最高記録の次の段階まで）
+  changeTrialLevel(delta) {
+    const s = this.state;
+    s.trial.level = WYD.util.clamp(s.trial.level + delta, 1, s.trial.best + 1);
+    this.changed();
+  },
+
   // 行けるエリアの中で、前／次のエリアへ移動する
   changeArea(delta) {
     const s = this.state;
+    if (WYD.trial.active(s)) WYD.trial.stop(this.world, s);
     const list = WYD.data.areas.filter((a) => s.unlockedAreas.includes(a.id));
     const i = list.findIndex((a) => a.id === s.area);
     const next = list[i + delta];
@@ -349,7 +367,7 @@ WYD.ui = {
     this.$("area-name").textContent = area.name;
     this.$("area-down").disabled = ai <= 0;
     this.$("area-up").disabled = ai >= opened.length - 1;
-    this.$("boss-progress").textContent = WYD.world.isBossRoom(s)
+    this.$("boss-progress").textContent = WYD.trial.active(s) ? "" : WYD.world.isBossRoom(s)
       ? `（${WYD.world.floorName(s)}）`
       : `（${WYD.world.floorName(s)}・次の階まで ${s.bossProgress}/${area.killsPerFloor}体）`;
     this.$("diff-value").textContent = s.difficulty;
@@ -363,6 +381,17 @@ WYD.ui = {
     this.$("auto-salvage").value = s.settings.autoSalvage;
     this.$("sound-toggle").textContent = `音：${s.settings.sound ? "ON" : "OFF"}`;
     this.$("auto-diff").checked = s.settings.autoDifficulty;
+    const inTrial = WYD.trial.active(s);
+    this.$("trial-group").hidden = !WYD.trial.unlocked(s);
+    this.$("trial-level").textContent = inTrial ? s.trialRun.level : s.trial.level;
+    this.$("trial-down").disabled = inTrial || s.trial.level <= 1;
+    this.$("trial-up").disabled = inTrial || s.trial.level >= s.trial.best + 1;
+    this.$("trial-start").textContent = inTrial ? "やめる" : "挑む";
+    this.$("trial-auto").checked = s.trial.autoNext;
+    this.$("trial-best").textContent = `（最高 段階${s.trial.best}）`;
+    // 試練の最中はエリアと危険度は変えられない
+    this.$("diff-down").disabled = this.$("diff-up").disabled = inTrial;
+    if (inTrial) this.$("area-down").disabled = this.$("area-up").disabled = true;
 
     // キャラ
     const pg = s.player.paragon;

@@ -32,6 +32,8 @@ WYD.save = {
       settings: { speed: 1, autoSalvage: "none", autoDifficulty: false, sound: true },
       seenHelp: false, // 遊び方を見たか（最初の1回だけ自動で出す）
       cleared: false,  // 最後のボスを倒したか
+      trial: { best: 0, level: 1, autoNext: true, runs: 0 },   // 終わりのない試練の記録
+      trialRun: null,  // 今挑んでいる試練（読み直すとふつうの冒険にもどる）
       materials: 0,    // 素材（装備を捨てるともらえる。名前は data/crafting.js）
     };
   },
@@ -72,6 +74,8 @@ WYD.save = {
       if (!(state.floor >= 1 && state.floor <= curArea.floors + 1)) state.floor = 1;
       state.bossProgress = Math.min(state.bossProgress || 0, curArea.killsPerFloor);
       if (typeof state.materials !== "number") state.materials = 0;
+      state.trial = Object.assign(this.newState().trial, saved.trial);
+      state.trialRun = null;
       // 「ノーマルを拾わない」だった頃のセーブは、「ノーマルを自動分解」にする
       if (saved.settings && saved.settings.skipNormal && !saved.settings.autoSalvage) state.settings.autoSalvage = "normal";
       delete state.settings.skipNormal;
