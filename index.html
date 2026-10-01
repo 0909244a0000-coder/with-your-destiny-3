@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>With Your Destiny Ⅲ</title>
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+  <header>
+    <h1>With Your Destiny Ⅲ <small>最小版</small></h1>
+    <div class="controls">
+      <span>危険度</span>
+      <button id="diff-down" title="危険度を下げる">◀</button>
+      <b id="diff-value">1</b>
+      <button id="diff-up" title="危険度を上げる">▶</button>
+      <span id="diff-progress" class="muted"></span>
+      <span class="sep"></span>
+      <span>速度</span>
+      <button data-speed="1">×1</button>
+      <button data-speed="2">×2</button>
+      <button data-speed="4">×4</button>
+      <span class="sep"></span>
+      <label><input type="checkbox" id="skip-normal"> ノーマルを拾わない</label>
+      <span class="sep"></span>
+      <button id="reset" class="danger">最初から</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="left">
+      <canvas id="game" width="960" height="600"></canvas>
+      <section class="panel">
+        <h2>ログ</h2>
+        <div id="log"></div>
+      </section>
+    </div>
+
+    <aside>
+      <section class="panel">
+        <h2 id="char-name">アスラ　Lv 1</h2>
+        <div class="bar"><div id="hp-bar" class="fill hp"></div><span id="hp-text"></span></div>
+        <div class="bar"><div id="exp-bar" class="fill exp"></div><span id="exp-text"></span></div>
+        <div id="stats" class="stats"></div>
+      </section>
+
+      <section class="panel">
+        <h2>スキル <small>残りポイント：<b id="skill-points">0</b></small></h2>
+        <div id="skills"></div>
+      </section>
+
+      <section class="panel">
+        <h2>装備 <small>クリックで外す</small></h2>
+        <div id="equipment" class="grid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>持ち物 <small id="inv-count"></small></h2>
+        <div id="inventory" class="grid"></div>
+        <div class="inv-buttons">
+          <button id="discard-normal">ノーマルを全部捨てる</button>
+          <button id="discard-magic">マジック以下を全部捨てる</button>
+        </div>
+        <p class="muted">左クリック：装備する／右クリック：捨てる</p>
+      </section>
+    </aside>
+  </main>
+
+  <div id="tooltip"></div>
+
+  <!-- 数値（data/） -->
+  <script src="data/player.js"></script>
+  <script src="data/skills.js"></script>
+  <script src="data/enemies.js"></script>
+  <script src="data/map.js"></script>
+  <script src="data/items.js"></script>
+  <!-- しくみと画面（src/） -->
+  <script src="src/util.js"></script>
+  <script src="src/save.js"></script>
+  <script src="src/stats.js"></script>
+  <script src="src/loot.js"></script>
+  <script src="src/inventory.js"></script>
+  <script src="src/world.js"></script>
+  <script src="src/render.js"></script>
+  <script src="src/ui.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>
