@@ -48,6 +48,14 @@ WYD.inventory = {
     return { count, gained };
   },
 
+  // 自動分解の対象か（設定で選んだレア度以下。レジェンドとユニークは対象外）
+  shouldAutoSalvage(state, item) {
+    const opt = WYD.data.crafting.autoSalvageOptions.find((o) => o.id === state.settings.autoSalvage);
+    if (!opt || !opt.upTo) return false;
+    const order = WYD.data.items.rarities.map((r) => r.id);
+    return order.indexOf(item.rarity) <= order.indexOf(opt.upTo);
+  },
+
   salvage(state, item) {
     const n = WYD.data.crafting.salvage[item.rarity] || 0;
     state.materials = (state.materials || 0) + n;

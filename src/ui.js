@@ -30,8 +30,10 @@ WYD.ui = {
       s.settings.autoDifficulty = e.target.checked;
       this.changed();
     };
-    this.$("skip-normal").onchange = (e) => {
-      s.settings.skipNormal = e.target.checked;
+    this.$("auto-salvage").innerHTML = WYD.data.crafting.autoSalvageOptions
+      .map((o) => `<option value="${o.id}">${o.label}</option>`).join("");
+    this.$("auto-salvage").onchange = (e) => {
+      s.settings.autoSalvage = e.target.value;
       this.changed();
     };
     this.$("reset").onclick = () => {
@@ -238,7 +240,7 @@ WYD.ui = {
     for (const btn of document.querySelectorAll("[data-speed]")) {
       btn.classList.toggle("active", Number(btn.dataset.speed) === s.settings.speed);
     }
-    this.$("skip-normal").checked = s.settings.skipNormal;
+    this.$("auto-salvage").value = s.settings.autoSalvage;
     this.$("auto-diff").checked = s.settings.autoDifficulty;
 
     // キャラ

@@ -631,7 +631,13 @@ WYD.world = {
     }
     for (let i = 0; i < count; i++) {
       const item = WYD.loot.create(state, state.difficulty + area.itemLevelBonus, bonus);
-      if (item.rarity === "normal" && state.settings.skipNormal) continue;
+      // 自動分解：拾わずにその場で素材にする
+      if (WYD.inventory.shouldAutoSalvage(state, item)) {
+        const n = WYD.inventory.salvage(state, item);
+        if (n > 0) this.addText(w, e.x, e.y - 30, `+${n}`, WYD.data.crafting.materialColor);
+        WYD.ui.markDirty();
+        continue;
+      }
       const spread = count > 1 ? 10 + count * 4 : 0;
       w.drops.push({ x: e.x + WYD.util.rand(-spread, spread), y: e.y + WYD.util.rand(-spread, spread), item, age: 0 });
     }
