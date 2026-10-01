@@ -584,6 +584,19 @@ WYD.world = {
     const kn = stats.powers.killNova;
     if (kn && !p.dead && Math.random() * 100 < kn.chance) this.explode(w, state, stats, e.x, e.y, kn.radius, kn.mult, kn.color);
 
+    // 「自動」がONで最高より下にいるなら、しばらく倒し続けたら1つ上げる
+    if (state.settings.autoDifficulty && state.difficulty < state.maxDifficulty) {
+      w.autoKills = (w.autoKills || 0) + 1;
+      if (w.autoKills >= diff.autoUpAfterKills) {
+        w.autoKills = 0;
+        w.autoDeaths = 0;
+        state.difficulty++;
+        this.resetEnemies(w, state, true);
+        WYD.ui.log(`危険度を自動で ${state.difficulty} に上げた`, "#ff8a2a");
+        WYD.ui.changed();
+      }
+    }
+
     // 最高危険度で倒すと、次の危険度に近づく
     if (state.difficulty === state.maxDifficulty && state.maxDifficulty < diff.max) {
       state.killsAtMax++;
@@ -591,6 +604,13 @@ WYD.world = {
         state.maxDifficulty++;
         state.killsAtMax = 0;
         WYD.ui.log(`危険度 ${state.maxDifficulty} が解放された！`, "#ff8a2a");
+        // 「自動」がONなら、解放された危険度へすぐ上げる
+        if (state.settings.autoDifficulty) {
+          state.difficulty = state.maxDifficulty;
+          w.autoDeaths = 0;
+          this.resetEnemies(w, state, true);
+          WYD.ui.log(`危険度を自動で ${state.difficulty} に上げた`, "#ff8a2a");
+        }
       }
       WYD.ui.markDirty();
     }
@@ -656,6 +676,17 @@ WYD.world = {
   respawn(w, state, stats) {
     const map = WYD.data.map;
     const p = w.player;
+    // 「自動」がONなら、同じ危険度で何度も倒れたら1つ下げる
+    if (state.settings.autoDifficulty && state.difficulty > 1) {
+      w.autoDeaths = (w.autoDeaths || 0) + 1;
+      if (w.autoDeaths >= WYD.data.difficulty.autoDownAfterDeaths) {
+        w.autoDeaths = 0;
+        w.autoKills = 0;
+        state.difficulty--;
+        WYD.ui.log(`倒れ続けたので、危険度を自動で ${state.difficulty} に下げた`, "#ff8a2a");
+        WYD.ui.changed();
+      }
+    }
     this.keepBoss(w, state);
     p.dead = false;
     p.hp = stats.maxHp;

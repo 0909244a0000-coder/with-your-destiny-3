@@ -26,6 +26,10 @@ WYD.ui = {
         this.changed();
       };
     }
+    this.$("auto-diff").onchange = (e) => {
+      s.settings.autoDifficulty = e.target.checked;
+      this.changed();
+    };
     this.$("skip-normal").onchange = (e) => {
       s.settings.skipNormal = e.target.checked;
       this.changed();
@@ -235,6 +239,7 @@ WYD.ui = {
       btn.classList.toggle("active", Number(btn.dataset.speed) === s.settings.speed);
     }
     this.$("skip-normal").checked = s.settings.skipNormal;
+    this.$("auto-diff").checked = s.settings.autoDifficulty;
 
     // キャラ
     this.$("char-name").textContent = `${P.className}　Lv ${s.player.level}`;

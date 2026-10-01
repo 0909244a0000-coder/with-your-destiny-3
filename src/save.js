@@ -23,7 +23,7 @@ WYD.save = {
       area: WYD.data.areas[0].id,               // 今いるエリア
       unlockedAreas: [WYD.data.areas[0].id],    // 行けるエリア
       bossProgress: 0,                          // ボスが出るまでに倒した数
-      settings: { speed: 1, skipNormal: false },
+      settings: { speed: 1, skipNormal: false, autoDifficulty: false },
       materials: 0,    // カルマの欠片（装備を捨てるともらえる）
     };
   },

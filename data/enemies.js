@@ -234,4 +234,6 @@ WYD.data.difficulty = {
   expGrowth: 0.4,
   rarityGrowth: 0.08,    // 危険度+1ごとのレア出やすさ増加
   killsToUnlockNext: 25, // 今の最高危険度でこの数倒すと次が解放
+  autoDownAfterDeaths: 2,// 「自動」がONのとき、同じ危険度でこの回数倒れたら1つ下げる
+  autoUpAfterKills: 80,  // 「自動」がONで最高より下にいるとき、この数倒すと1つ上げる
 };
