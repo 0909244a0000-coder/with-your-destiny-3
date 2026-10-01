@@ -338,7 +338,7 @@ WYD.ui = {
     const slots = WYD.data.items.slots;
     this.$("equipment").innerHTML = Object.keys(slots).map((slot) => {
       const item = s.equipment[slot];
-      return `<div class="cell slot" data-slot="${slot}" ${item ? `style="border-color:${this.color(item)}"` : ""}>
+      return `<div class="cell slot" data-slot="${slot}" ${item ? `style="border-color:${this.color(item)};--r:${this.glow(item)}"` : ""}>
         <small>${slots[slot]}${item ? this.fxMark(item) : ""}</small>
         ${item ? `<span style="color:${this.color(item)}">${item.name}</span>${this.iconImg(item)}` : `<span class="empty">なし</span>`}
       </div>`;
@@ -372,7 +372,7 @@ WYD.ui = {
     for (let i = 0; i < size; i++) {
       const item = list[i];
       html += item
-        ? `<div class="cell" data-index="${i}" style="border-color:${this.color(item)}">
+        ? `<div class="cell" data-index="${i}" style="border-color:${this.color(item)};--r:${this.glow(item)}">
              <small>${slots[item.slot]}${this.fxMark(item)}</small><span style="color:${this.color(item)}">${item.name}</span>${this.iconImg(item)}
            </div>`
         : `<div class="cell blank"></div>`;
@@ -408,6 +408,11 @@ WYD.ui = {
   fxMark(item) {
     const n = this.itemEffects(item).length;
     return n ? ` <b class="fx-mark" style="color:${WYD.data.effects.color}">✦${n}</b>` : "";
+  },
+
+  // マスの内側をレア度の色でうっすら光らせる（ノーマルは光らせない）
+  glow(item) {
+    return item.rarity === "normal" ? "transparent" : this.color(item) + "55";
   },
 
   color(item) {
