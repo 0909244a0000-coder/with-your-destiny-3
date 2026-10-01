@@ -53,6 +53,40 @@ WYD.loot = {
     };
   },
 
+  // ユニーク装備を作る（def を省くとランダムに選ぶ）
+  createUnique(state, itemLevel, def) {
+    const U = WYD.data.uniques;
+    def = def || WYD.util.pickWeighted(U.list, (x) => x.weight);
+    const base = WYD.data.items.bases.find((b) => b.id === def.base);
+    const stats = [];
+    for (const stat in base.main) {
+      stats.push({ stat, value: this.rollValue(stat, base.main[stat], itemLevel), main: true });
+    }
+    for (const stat in def.stats) {
+      stats.push({ stat, value: this.rollValue(stat, def.stats[stat], itemLevel), main: false });
+    }
+    return {
+      id: state.nextItemId++,
+      name: def.name,
+      slot: base.slot,
+      base: base.id,
+      rarity: "unique",
+      unique: def.id,
+      level: itemLevel,
+      stats,
+      effects: this.rollEffects("unique"),
+    };
+  },
+
+  uniqueInfo(item) {
+    return (item && item.unique && WYD.data.uniques.list.find((u) => u.id === item.unique)) || null;
+  },
+
+  // 固有能力の説明文（{名前} を params の数値に置きかえる）
+  uniqueDesc(def) {
+    return def.desc.replace(/\{(\w+)\}/g, (all, key) => (key in def.params ? String(def.params[key]) : all));
+  },
+
   // 特殊効果をランダムに決める（同じ効果は2回つかない）
   rollEffects(rarityId) {
     const E = WYD.data.effects;

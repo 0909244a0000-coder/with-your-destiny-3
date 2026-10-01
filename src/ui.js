@@ -324,6 +324,10 @@ WYD.ui = {
     const lines = item.stats.map((l) =>
       `<div class="${l.main ? "main" : "affix"}">${WYD.util.formatStat(l.stat, l.value)}</div>`
     ).join("");
+    const u = WYD.loot.uniqueInfo(item);
+    const uniqueLine = u
+      ? `<div class="unique-power" style="color:${WYD.data.uniques.color}">◆ 固有能力<br><small>${WYD.loot.uniqueDesc(u)}</small></div>`
+      : "";
     const fxLines = this.itemEffects(item).map(({ def, value }) =>
       `<div class="effect" style="color:${WYD.data.effects.color}">✦ ${def.name}<br><small>${WYD.util.formatEffect(def, value)}</small></div>`
     ).join("");
@@ -332,6 +336,7 @@ WYD.ui = {
       <div style="color:${r.color};font-weight:bold">${item.name}</div>
       <div class="tip-sub">${r.name}・${WYD.data.items.slots[item.slot]}・アイテムLv ${item.level}</div>
       ${lines}
+      ${uniqueLine}
       ${fxLines}
     </div>`;
   },

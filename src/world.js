@@ -209,6 +209,13 @@ WYD.world = {
       p.swingTarget = { x: target.x, y: target.y };
       this.playerHit(w, state, stats, target, stats.attack);
       this.tryThunder(w, state, stats, target);
+      // 固有能力：猿王ハヌマーンの籠手（剛力の間、周りにも当たる）
+      const cleave = stats.powers.hasteCleave;
+      if (cleave && p.haste) {
+        for (const e of w.enemies.slice()) {
+          if (e !== target && WYD.util.dist(target, e) <= cleave.radius) this.playerHit(w, state, stats, e, stats.attack * cleave.mult);
+        }
+      }
     }
   },
 
@@ -234,6 +241,12 @@ WYD.world = {
         this.playerHit(w, state, stats, e, stats.attack * mult);
       }
       w.effects.push({ type: "ring", x: p.x, y: p.y, radius: s.radius, color: s.color, time: 0, duration: 0.35 });
+      // 固有能力：火神アグニの腕輪（足元に炎の陣）
+      const fire = stats.powers.whirlFire;
+      if (fire) {
+        w.fields.push({ x: p.x, y: p.y, radius: fire.radius, timeLeft: fire.duration, duration: fire.duration,
+          tick: fire.tick, tickTimer: fire.tick, mult: fire.mult * (1 + stats.skillDamage / 100), color: fire.color });
+      }
       return true;
     },
     vajra(w, state, stats, s, lv) {
@@ -251,8 +264,10 @@ WYD.world = {
       const p = w.player;
       let cur = this.nearestEnemy(w, p);
       if (!cur || WYD.util.dist(p, cur) > s.range) return false;
-      const maxTargets = Math.floor(s.targetsBase + s.targetsPerLevel * (lv - 1));
-      const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
+      const bounce = stats.powers.chakraBounce;   // 固有能力：ヴィシュヌの円盤
+      const maxTargets = Math.floor(s.targetsBase + s.targetsPerLevel * (lv - 1)) + (bounce ? bounce.extraTargets : 0);
+      const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100) *
+        (bounce ? 1 + bounce.damagePercent / 100 : 1);
       const hitList = [];
       const points = [{ x: p.x, y: p.y }];
       while (cur && hitList.length < maxTargets) {
@@ -362,11 +377,7 @@ WYD.world = {
         if (this.hasAffix(e, "vampiric")) {
           e.hp = Math.min(e.maxHp, e.hp + hit.damage * this.eliteAffix("vampiric").lifestealPercent / 100);
         }
-        // 特殊効果：ナーガの鱗（受けたダメージを返す）
-        if (stats.effects.thorns > 0) {
-          const back = Math.round(hit.damage * stats.effects.thorns / 100);
-          if (back > 0) this.damageEnemy(w, state, e, back, false);
-        }
+        this.reflect(w, state, stats, e, hit.damage);
         if (p.hp <= 0) {
           this.playerDied(w);
           return;
@@ -386,6 +397,23 @@ WYD.world = {
           b.x -= nx * push; b.y -= ny * push;
         }
       }
+    }
+  },
+
+  // 受けたダメージを敵に返す（特殊効果：ナーガの鱗、固有能力：インドラの金剛環）
+  reflect(w, state, stats, e, damage) {
+    let percent = stats.effects.thorns;
+    const vt = stats.powers.vajraThorns;
+    if (vt && w.player.buff) percent += vt.percent;
+    const back = Math.round(damage * percent / 100);
+    if (back > 0) this.damageEnemy(w, state, e, back, false);
+  },
+
+  // まわりの敵にまとめてダメージ（爆発）
+  explode(w, state, stats, x, y, radius, mult, color) {
+    w.effects.push({ type: "ring", x, y, radius, color, time: 0, duration: 0.3 });
+    for (const e of w.enemies.slice()) {
+      if (WYD.util.dist({ x, y }, e) <= radius) this.playerHit(w, state, stats, e, stats.attack * mult);
     }
   },
 
@@ -424,10 +452,7 @@ WYD.world = {
       this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
       // 特殊効果：ナーガの鱗（撃った敵が生きていれば返す）
       const owner = w.enemies.find((e) => e.id === b.ownerId);
-      if (owner && stats.effects.thorns > 0) {
-        const back = Math.round(hit.damage * stats.effects.thorns / 100);
-        if (back > 0) this.damageEnemy(w, state, owner, back, false);
-      }
+      if (owner) this.reflect(w, state, stats, owner, hit.damage);
       if (p.hp <= 0) this.playerDied(w);
     }
     w.projectiles = w.projectiles.filter((b) => b.life > 0);
@@ -553,6 +578,12 @@ WYD.world = {
       this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
     }
 
+    // 固有能力：蛇王ヴァースキの冠（縛られた敵が爆発）／カーリーの髑髏の数珠（死体が爆発）
+    const be = stats.powers.bindExplode;
+    if (be && e.stunTimer > 0 && !p.dead) this.explode(w, state, stats, e.x, e.y, be.radius, be.mult, be.color);
+    const kn = stats.powers.killNova;
+    if (kn && !p.dead && Math.random() * 100 < kn.chance) this.explode(w, state, stats, e.x, e.y, kn.radius, kn.mult, kn.color);
+
     // 最高危険度で倒すと、次の危険度に近づく
     if (state.difficulty === state.maxDifficulty && state.maxDifficulty < diff.max) {
       state.killsAtMax++;
@@ -570,6 +601,14 @@ WYD.world = {
     let count = e.elite ? E.dropCount : (Math.random() < def.dropChance ? 1 : 0);
     if (e.boss) count = WYD.data.boss.dropCount;
     if (e.elite) WYD.ui.log(`精鋭「${e.name}」を倒した！`, E.color);
+    // ボスと精鋭は、まれにユニーク装備を落とす
+    const U = WYD.data.uniques;
+    const uniqueChance = e.boss ? U.chanceFromBoss : e.elite ? U.chanceFromElite : 0;
+    if (Math.random() < uniqueChance) {
+      const item = WYD.loot.createUnique(state, state.difficulty + area.itemLevelBonus);
+      w.drops.push({ x: e.x, y: e.y, item, age: 0 });
+      WYD.ui.log(`ユニーク装備「${item.name}」が落ちた！`, U.color);
+    }
     for (let i = 0; i < count; i++) {
       const item = WYD.loot.create(state, state.difficulty + area.itemLevelBonus, bonus);
       if (item.rarity === "normal" && state.settings.skipNormal) continue;
