@@ -23,7 +23,8 @@ WYD.save = {
       killsAtMax: 0,
       area: WYD.data.areas[0].id,               // 今いるエリア
       unlockedAreas: [WYD.data.areas[0].id],    // 行けるエリア
-      bossProgress: 0,                          // ボスが出るまでに倒した数
+      floor: 1,                                 // 今いる階（ふつうの階の数+1 がボスの間）
+      bossProgress: 0,                          // 次の階へ降りるまでに倒した数
       settings: { speed: 1, autoSalvage: "none", autoDifficulty: false },
       seenHelp: false, // 遊び方を見たか（最初の1回だけ自動で出す）
       cleared: false,  // 最後のボスを倒したか
@@ -49,6 +50,10 @@ WYD.save = {
       state.unlockedAreas = state.unlockedAreas.filter((id) => areaIds.includes(id));
       if (!state.unlockedAreas.includes(areaIds[0])) state.unlockedAreas.unshift(areaIds[0]);
       if (!state.unlockedAreas.includes(state.area)) state.area = areaIds[0];
+      // 階がなかった頃のセーブは地下1階から
+      const curArea = WYD.data.areas.find((a) => a.id === state.area);
+      if (!(state.floor >= 1 && state.floor <= curArea.floors + 1)) state.floor = 1;
+      state.bossProgress = Math.min(state.bossProgress || 0, curArea.killsPerFloor);
       if (typeof state.materials !== "number") state.materials = 0;
       // 「ノーマルを拾わない」だった頃のセーブは、「ノーマルを自動分解」にする
       if (saved.settings && saved.settings.skipNormal && !saved.settings.autoSalvage) state.settings.autoSalvage = "normal";

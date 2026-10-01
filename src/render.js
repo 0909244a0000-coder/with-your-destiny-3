@@ -68,7 +68,7 @@ WYD.render = {
     for (const e of w.enemies.slice().sort((a, b) => a.y - b.y)) this.drawEnemy(ctx, e);
     this.drawPlayer(ctx, w.player);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
-    this.drawLight(ctx, w.player);
+    this.drawLight(ctx, w.player, state);
     // 光るものと落ちている装備は、明かりの暗さの上に描く（暗がりでも見えるように）
     for (const drop of w.drops) this.drawDrop(ctx, drop);
     for (const ef of w.effects) this.drawEffect(ctx, ef);
@@ -95,8 +95,9 @@ WYD.render = {
     ctx.textAlign = "left";
     ctx.font = "bold 16px sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillText(`${area.name}　危険度 ${state.difficulty}`, 12, 24);
+    ctx.fillText(`${area.name}　${WYD.world.floorName(state)}　危険度 ${state.difficulty}`, 12, 24);
     this.drawBossBar(ctx, w);
+    this.drawBanner(ctx, w);
 
     if (w.player.dead) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
@@ -111,13 +112,34 @@ WYD.render = {
     }
   },
 
+  // 階を移ったとき：暗転から明るくなり、真ん中に階の名前を出す
+  drawBanner(ctx, w) {
+    const b = w.banner;
+    if (!b) return;
+    const map = WYD.data.map;
+    if (b.time < 0.6) {
+      ctx.fillStyle = `rgba(0,0,0,${1 - b.time / 0.6})`;
+      ctx.fillRect(0, 0, map.width, map.height);
+    }
+    ctx.globalAlpha = Math.min(1, b.time / 0.3, (2.5 - b.time) / 0.6);
+    ctx.textAlign = "center";
+    ctx.font = `bold 30px ${getComputedStyle(document.documentElement).getPropertyValue("--serif") || "serif"}`;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(0,0,0,0.8)";
+    ctx.strokeText(b.text, map.width / 2, map.height * 0.3);
+    ctx.fillStyle = "#e0c070";
+    ctx.fillText(b.text, map.width / 2, map.height * 0.3);
+    ctx.globalAlpha = 1;
+  },
+
   // 明かり：主人公から離れるほど暗くする
-  drawLight(ctx, p) {
+  drawLight(ctx, p, state) {
     const map = WYD.data.map;
     const L = map.light;
+    const dark = Math.min(L.maxDarkness, L.darkness + L.darknessPerFloor * ((state.floor || 1) - 1));
     const g = ctx.createRadialGradient(p.x, p.y, L.inner, p.x, p.y, L.outer);
     g.addColorStop(0, "rgba(0,0,0,0)");
-    g.addColorStop(1, `rgba(0,0,0,${L.darkness})`);
+    g.addColorStop(1, `rgba(0,0,0,${dark})`);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, map.width, map.height);
   },

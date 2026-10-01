@@ -53,6 +53,7 @@ WYD.world = {
     this.updateFields(w, state, stats, dt);
     for (const id in p.skillCooldowns) p.skillCooldowns[id] = Math.max(0, p.skillCooldowns[id] - dt);
 
+    this.updateFloors(w, state, dt);
     this.updateSpawns(w, state, dt);
     this.updatePlayer(w, state, stats, dt);
     this.updateEnemies(w, state, stats, dt);
@@ -81,17 +82,22 @@ WYD.world = {
     const area = this.area(state);
     w.spawnTimer -= dt;
 
-    // 決まった数を倒したらボスが出る
-    if (state.bossProgress >= area.killsForBoss && !w.enemies.some((e) => e.boss)) {
-      state.bossProgress = 0;
-      const boss = this.spawnEnemy(w, state, area.boss, this.farPosition(w));
-      boss.boss = true;
-      boss.slamTimer = WYD.data.enemies[area.boss].slam.interval;
-      WYD.ui.log(`ボス「${WYD.data.enemies[area.boss].name}」が現れた！`, WYD.data.boss.nameColor);
-      WYD.ui.markDirty();
+    const bossRoom = this.isBossRoom(state);
+    // ボスの間：入ってすこしたつとボスが出る
+    if (bossRoom && !w.bossDone && !w.enemies.some((e) => e.boss)) {
+      w.bossTimer = (w.bossTimer == null ? WYD.data.boss.bossAppearDelay : w.bossTimer) - dt;
+      if (w.bossTimer <= 0) {
+        w.bossTimer = null;
+        const boss = this.spawnEnemy(w, state, area.boss, this.farPosition(w));
+        boss.boss = true;
+        boss.slamTimer = WYD.data.enemies[area.boss].slam.interval;
+        WYD.ui.log(`ボス「${WYD.data.enemies[area.boss].name}」が現れた！`, WYD.data.boss.nameColor);
+        WYD.ui.markDirty();
+      }
     }
 
-    if (w.spawnTimer > 0 || w.enemies.length >= map.maxEnemies) return;
+    const maxEnemies = bossRoom ? WYD.data.boss.bossRoomMaxEnemies : map.maxEnemies;
+    if (w.spawnTimer > 0 || w.enemies.length >= maxEnemies) return;
     w.spawnTimer = map.spawnInterval;
 
     const pick = WYD.util.pickWeighted(area.enemies, (x) => x.weight);
@@ -102,6 +108,56 @@ WYD.world = {
   // 今いるエリアの設定
   area(state) {
     return WYD.data.areas.find((a) => a.id === state.area) || WYD.data.areas[0];
+  },
+
+  // 今いるのがボスの間か（ふつうの階の次）
+  isBossRoom(state) {
+    return state.floor > this.area(state).floors;
+  },
+
+  // 今いる階の名前（例：地下2階、ボスの間）
+  floorName(state) {
+    return this.isBossRoom(state) ? "ボスの間" : `地下${state.floor}階`;
+  },
+
+  // 深い階ほど敵が強い
+  floorPower(state) {
+    return 1 + WYD.data.boss.floorPowerStep * (state.floor - 1);
+  },
+
+  // 階の移り変わり：数を倒したら降りる、ボスを倒したらしばらくして地下1階へ
+  updateFloors(w, state, dt) {
+    if (w.banner) {
+      w.banner.time += dt;
+      if (w.banner.time > 2.5) w.banner = null;
+    }
+    if (w.descendNext) {
+      w.descendNext = false;
+      this.changeFloor(w, state, 1);
+    }
+    if (w.returnTimer != null) {
+      w.returnTimer -= dt;
+      if (w.returnTimer <= 0) {
+        w.returnTimer = null;
+        this.changeFloor(w, state, 1 - state.floor);
+      }
+    }
+  },
+
+  // 次の階へ降りる（delta = -1 なら上がる）
+  changeFloor(w, state, delta) {
+    const area = this.area(state);
+    state.floor = WYD.util.clamp(state.floor + delta, 1, area.floors + 1);
+    w.enemies = [];
+    w.projectiles = [];
+    w.fields = [];
+    w.drops = w.drops.filter((d) => d.item.rarity === "unique" || d.item.rarity === "legend");
+    w.spawnTimer = 1;
+    w.bossTimer = null;
+    w.bossDone = false;
+    w.banner = { text: `${area.name}　${this.floorName(state)}`, time: 0 };
+    WYD.ui.log(`${this.floorName(state)}へ${delta > 0 ? "降りた" : "もどった"}`, "#c9b48a");
+    WYD.ui.markDirty();
   },
 
   // プレイヤーから離れた場所を探す
@@ -120,7 +176,7 @@ WYD.world = {
     const def = WYD.data.enemies[kind];
     const diff = WYD.data.difficulty;
     const d = state.difficulty - 1;
-    const power = this.area(state).powerMult;
+    const power = this.area(state).powerMult * this.floorPower(state);
     const maxHp = Math.round(def.hp * (1 + diff.hpGrowth * d) * power);
     const e = {
       id: w.nextId++, kind, x: pos.x, y: pos.y,
@@ -596,13 +652,20 @@ WYD.world = {
     w.enemies = w.enemies.filter((x) => x !== e);
 
     const area = this.area(state);
-    const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult;
+    const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult * this.floorPower(state);
     this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult));
 
     if (e.boss) {
+      w.bossDone = true;
       this.bossDefeated(state, area, def);
-    } else if (!w.enemies.some((x) => x.boss)) {
-      state.bossProgress = Math.min(area.killsForBoss, state.bossProgress + 1);
+      // ボスを倒したら、すこしして地下1階にもどる（もう一度もぐって集められる）
+      w.returnTimer = WYD.data.boss.bossAppearDelay * 2;
+    } else if (!this.isBossRoom(state)) {
+      state.bossProgress = Math.min(area.killsPerFloor, state.bossProgress + 1);
+      if (state.bossProgress >= area.killsPerFloor) {
+        state.bossProgress = 0;
+        w.descendNext = true;   // 倒した敵の処理が終わってから降りる
+      }
     }
 
     // 特殊効果：血の饗宴（倒すとHP回復）
@@ -736,7 +799,12 @@ WYD.world = {
         WYD.ui.changed();
       }
     }
-    this.keepBoss(w, state);
+    // ボスの間で倒れたら、1つ上の階にもどる（すこし倒せばまた降りられる）
+    if (this.isBossRoom(state)) {
+      const area = this.area(state);
+      this.changeFloor(w, state, -1);
+      state.bossProgress = Math.floor(area.killsPerFloor * WYD.data.boss.retryProgressRatio);
+    }
     p.dead = false;
     p.hp = stats.maxHp;
     p.x = map.width / 2;
@@ -758,12 +826,8 @@ WYD.world = {
     w.spawnTimer = 0.5;
   },
 
-  // 敵を消す前に呼ぶ：ボスがいたら、少し倒せばまた出てくるようにする
-  keepBoss(w, state) {
-    if (!w.enemies.some((e) => e.boss)) return;
-    const need = this.area(state).killsForBoss;
-    state.bossProgress = Math.max(state.bossProgress, Math.floor(need * WYD.data.boss.retryProgressRatio));
-  },
+  // （前の作り：ボスがいたら少し倒せばまた出てくる）。今はボスの間にいれば自動でまた出るので何もしない
+  keepBoss() {},
 
   nearestEnemy(w, from) {
     let best = null, bestD = Infinity;

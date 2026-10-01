@@ -18,8 +18,9 @@ WYD.data.areas = [
       { kind: "rakshasa", weight: 8 },
       { kind: "yakshaArcher", weight: 15 },
     ],
-    boss: "ravana",          // ボス
-    killsForBoss: 80,        // この数倒すとボスが出る
+    boss: "ravana",          // ボス（一番下の「ボスの間」にいる）
+    floors: 3,               // ふつうの階の数（このあとに「ボスの間」がある）
+    killsPerFloor: 27,       // この数倒すと次の階へ降りる
   },
   {
     id: "smashana",
@@ -37,7 +38,8 @@ WYD.data.areas = [
       { kind: "bhuta", weight: 18 },
     ],
     boss: "asuraKing",
-    killsForBoss: 120,
+    floors: 3,
+    killsPerFloor: 40,
   },
   {
     id: "patala",
@@ -55,7 +57,8 @@ WYD.data.areas = [
       { kind: "nagaCaster", weight: 20 },
     ],
     boss: "mahisha",
-    killsForBoss: 160,
+    floors: 3,
+    killsPerFloor: 53,
   },
 ];
 
@@ -64,7 +67,10 @@ WYD.data.boss = {
   dropCount: 4,          // 必ず落とす装備の数
   nameColor: "#ff5a5a",  // 名前の色
   warnColor: "#ff3030",  // 大技の予告の色
-  // ボスに負けたり危険度を変えたりしたとき、ボスまでの数をどれだけ残すか（0〜1）
-  // 0.75 なら、あと 25% 倒すとまたボスが出る（その間にレベルを上げられる）
-  retryProgressRatio: 0.75,
+  // ボスの間で倒れたら、1つ上の階にもどる。そのとき、降りるまでの数をどれだけ残すか（0〜1）
+  // 0.5 なら、あと半分倒すとまたボスの間に降りられる（その間にレベルを上げられる）
+  retryProgressRatio: 0.5,
+  floorPowerStep: 0.15,    // 1階深くなるごとに敵が何割強くなるか
+  bossRoomMaxEnemies: 3,   // ボスの間に同時にいるふつうの敵の数
+  bossAppearDelay: 1.5,    // ボスの間に入ってからボスが出るまでの秒数
 };

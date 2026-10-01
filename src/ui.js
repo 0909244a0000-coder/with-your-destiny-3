@@ -209,6 +209,7 @@ WYD.ui = {
     if (!next) return;
     s.area = next.id;
     s.bossProgress = 0;
+    s.floor = 1;
     WYD.world.resetEnemies(this.world, s, false);
     this.world.drops = [];
     this.log(`「${next.name}」へ移動した`, "#ff8a2a");
@@ -287,7 +288,9 @@ WYD.ui = {
     this.$("area-name").textContent = area.name;
     this.$("area-down").disabled = ai <= 0;
     this.$("area-up").disabled = ai >= opened.length - 1;
-    this.$("boss-progress").textContent = `（ボスまで ${s.bossProgress}/${area.killsForBoss}体）`;
+    this.$("boss-progress").textContent = WYD.world.isBossRoom(s)
+      ? `（${WYD.world.floorName(s)}）`
+      : `（${WYD.world.floorName(s)}・次の階まで ${s.bossProgress}/${area.killsPerFloor}体）`;
     this.$("diff-value").textContent = s.difficulty;
     this.$("diff-progress").textContent =
       s.maxDifficulty >= diff.max
