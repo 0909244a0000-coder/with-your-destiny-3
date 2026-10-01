@@ -9,7 +9,7 @@
 ## 形式
 | 種類 | 大きさ | 背景 | 置き場所 |
 |---|---|---|---|
-| 主人公・敵・ボス | 512px 以上の正方形 | 透明 | `assets/player.png`、`assets/enemies/<id>.png` |
+| 主人公・敵・ボス | 512px 以上の正方形（ゲームに入れるときは `prepare_sprite.py` で余白なしの256pxに） | 透明 | `assets/player.png`、`assets/enemies/<id>.png` |
 | アイコン（装備・スキル） | シート1枚にまとめる（下を参照） | 透明か無地の黒。**枠や飾りは入れない** | 切り取って `assets/items/<id>.png`、`assets/skills/<id>.png` |
 | 地面 | 512×512、上下左右がつながる模様 | あり | `assets/areas/<id>.png` |
 
@@ -22,9 +22,80 @@
 ## 受け取り済み（ゲームに入っている）
 羅刹王ラーヴァナ（`ravana`）、阿修羅王（`asuraKing`）、羅刹（`rakshasa`）、夜叉（`yaksha`）、餓鬼（`preta`）、ナーガ（`naga`）
 
+追加済み（このPR）：
+- 主人公：バーバリアン（`assets/player.png`）
+- 地面：`forest`、`smashana`、`patala`
+- 装備アイコン13個、スキルアイコン6個
+- 敵・ボス：`mahisha`、`vetala`、`pishacha`、`daitya`、`yakshaArcher`、`bhuta`、`nagaCaster`
+- 切り出し用の透過シート：`assets/sheets/equipment.png`（2048×2048、4×4）、`assets/sheets/skills.png`（1536×1024、3×2）
+
 保管中：杖を持った女性の術者（将来の職業の候補。ダークエルフ・アークメイジなど）
 
 ## まだの絵（上から順に優先）
+
+### 第3回の発注：エフェクトの絵とポーズ違い（上から順に優先）
+
+ゲーム側の受け口はできています。絵を置いて、下の「書く場所」に場所を書けば、すぐゲームに出ます（書かなければ今の見た目のまま）。
+
+#### A. エフェクトの絵（13枚）→ `assets/vfx/<名前>.png`、書く場所は `data/vfx.js` の `textures`
+- 形式：PNG。**背景は真っ黒でよい**（光を重ねる描き方をするので、黒は透けて見える）。透明でもよい
+- 大きさ：正方形は 512×512。`lightning` は横長 1024×256、`fireball` は横長 512×256
+- 真上から見た絵。真ん中に置く。文字・枠なし
+- 入れるときは `python3 tools/prepare_sprite.py 元.png assets/vfx/<名前>.png --size 512`（横長の2枚は、そのまま置いてよい）
+
+共通の指定（各プロンプトのあとにつける）：
+```
+Game visual effect texture for a dark fantasy action RPG seen from a top-down view, glowing and bright on a pure black background, centered, no text, no frame, no characters.
+```
+| 名前 | 何に使うか | プロンプト |
+|---|---|---|
+| `slash` | 通常攻撃の斬撃 | A single curved crescent sword slash arc, bright white-steel core with a pale blue edge, motion-blurred, pointing right. |
+| `whirl` | 旋風斬 | A circular whirlwind of grey-white wind streaks and steel glints spinning around an empty center, seen from above. |
+| `iceNova` | フロストノヴァ・凍てつく檻 | A ring of sharp ice shards and frost mist bursting outward in a circle, pale cyan, seen from above. |
+| `fireBurst` | 爆発・隕石の着地 | A round fiery explosion burst with orange and yellow flames and sparks, seen from above. |
+| `fireGround` | 燃える地面 | A circular patch of burning ground: cracked glowing embers and low orange flames, soft edges, seen from above. |
+| `lightning` | チェインライトニング・雷鳴（1024×256） | A jagged horizontal lightning bolt running from the left edge to the right edge, white-blue core with branching sparks. |
+| `axe` | 連鎖の投げ斧 | A single spinning throwing axe seen from above with a faint circular motion blur, steel blade and wooden handle. |
+| `meteor` | メテオの隕石 | A flaming meteor rock falling straight down, glowing molten cracks, trailing fire upward. |
+| `magicCircle` | スキルを使ったときの足元 | A glowing circular magic sigil with runes and concentric rings, golden-white light, seen from above. |
+| `shield` | 鉄の皮膚・マナシールドの間 | A translucent glowing protective bubble sphere with a hexagonal energy pattern, pale blue-gold. |
+| `chains` | 縛られた敵 | Heavy glowing iron chains coiled into a tight ring, seen from above, faint green-white glow. |
+| `shockwave` | ボスの大技の衝撃 | An expanding circular shockwave ring of dust and red energy cracking the ground, seen from above. |
+| `fireball` | ソーサレスの火の玉（512×256） | A fireball comet flying to the right: bright yellow-white head and a long orange flame trail to the left. |
+
+#### B. 主人公とボスのポーズ違い（8枚）
+**今ゲームに入っている絵（`assets/` の同じキャラの絵）を見本にして、顔・体・装備・色は同じまま、ポーズだけ変えてください。** 形式はほかのキャラの絵と同じ（透明背景、余白なしで `prepare_sprite.py` を通す）。
+
+| ファイル | 見本 | ポーズ | 書く場所 |
+|---|---|---|---|
+| `assets/player_attack.png` | `assets/player.png` | 両手の剣を大きく振り下ろす瞬間 | `data/player.js` の `poses.attack` |
+| `assets/player_sorceress_attack.png` | `assets/player_sorceress.png` | 杖を前に突き出し、先から火を放つ瞬間 | `data/classes.js` の `sorceress.player.poses.attack` |
+| `assets/enemies/ravana_attack.png` | `assets/enemies/ravana.png` | 武器を一斉に振り下ろす瞬間 | `data/enemies.js` の `ravana.poses.attack` |
+| `assets/enemies/ravana_windup.png` | 同上 | 全部の腕を高く振り上げ、力をためる | `ravana.poses.windup` |
+| `assets/enemies/asuraKing_attack.png` | `assets/enemies/asuraKing.png` | 双剣を交差させて斬りつける瞬間 | `asuraKing.poses.attack` |
+| `assets/enemies/asuraKing_windup.png` | 同上 | 双剣を頭上に掲げ、力をためる | `asuraKing.poses.windup` |
+| `assets/enemies/mahisha_attack.png` | `assets/enemies/mahisha.png` | 棍棒を叩きつける瞬間 | `mahisha.poses.attack` |
+| `assets/enemies/mahisha_windup.png` | 同上 | 角を下げ、棍棒を振りかぶって力をためる | `mahisha.poses.windup` |
+
+ポーズ違いは、顔や装備が少し変わってしまいやすいです。見本と並べて、同じキャラに見えないものは作り直してください。
+
+### ソーサレス（2つ目の職業）のアイコン
+主人公の絵は、保管していた女性の術者の絵を使っています（`assets/player_sorceress.png`。持ち主の判断で、いったんこの絵）。
+
+**スキル（3列×2行）** → `--grid 3x2 --names sorc_nova,sorc_shield,sorc_chain,sorc_meteor,sorc_haste,sorc_freeze`、置いたら `data/classes.js` の `sorceress.skillIcons` に書く
+```
+A single sprite sheet image, 1536x1024, arranged as an exact 3 columns by 2 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Spell icons, left-to-right, top-to-bottom: 1 Frost Nova: a ring of ice shards bursting outward, 2 Mana Shield: a glowing blue magic barrier sphere, 3 Chain Lightning: a forked white-blue lightning bolt jumping between points, 4 Meteor: a flaming rock falling with a fire trail, 5 Arcane Surge: swirling violet magic energy around a hand, 6 Frozen Prison: a cage of ice crystals.
+```
+（共通の指定は上の「アイコンのシート」と同じ）
+
+**装備の「杖」（1個）** → `assets/items/staff.png`、置いたら `data/items.js` の `icons` に `staff` を足す
+```
+A single game item icon: a dark wooden mage staff topped with a glowing ember crystal.
+```
+
+## 制作済みの仕様・再制作用プロンプト
+
+以下は今回制作した絵の仕様です。再制作のために元のプロンプトとIDを残しています。
 
 ### 1. 主人公：バーバリアン（`assets/player.png`、差し色 #4fa3ff）
 ```
@@ -81,3 +152,18 @@ Dark fantasy action-RPG enemy sprite in the style of Tibetan thangka painting an
 2. `data/` に絵の場所を書く（`assets/README.md` を参照）
 3. ブラウザで開いて、表示とエラーがないことを確かめる
 4. この「受け取り済み」の一覧を更新して、PRを作る
+
+## 今回の制作・整形メモ
+- 制作：組み込みの ImageGen。上記プロンプトに「全体をセル内に収める」「透明な余白」「画面下向き」を補足。
+- 装備シートは大剣の欠けと余白を、スキルシートは背景の透過と余白を追加の編集指示で修正。スキルの背景に見える色は透明部分のRGBであり、アルファ合成で背景が抜けることを確認。
+- 地面はRGBの512×512に縮小。パーターラは上下の継ぎ目を目立たなくするため、大きな格子模様を控えめな不規則な石床に修正。
+- キャラは `tools/prepare_sprite.py` の `square()` を利用。出力サイズを360pxにしてから512pxの透明キャンバス中央に配置（約70%、余白76px）。ツール本体は変更していません。
+  - **あとで修正**：余白があると、ゲームでは余白のぶん小さく表示される（ほかの絵と大きさがそろわない）。キャラの絵は余白なしの 256×256（`prepare_sprite.py` そのまま）に作り直した。次からも余白は足さないこと。
+- 装備の生成シートはセルの境界にずれがあったため、透明な溝で各絵を切り分けて512pxの等間隔セルへ配置し直しました。元の1254pxシートの切り取り境界：列0/327/637/963/1254、行0/343/650/961/1254。各絵を `square()` で420pxに整え、セル内の46pxの位置へ配置。装備シートの最後の3セルは透明。
+- スキルシートも等間隔のセルごとに `square()` で420pxに整え、46pxの透明な余白を設けています。
+- シートからの最終切り出し：
+  ```sh
+  python3 tools/prepare_sprite.py assets/sheets/equipment.png assets/items --grid 4x4 --names dual_blades,great_blade,chakram,turban,crown,chainmail,robe,gauntlets,bracelet,leggings,sandals,ring,rosary
+  python3 tools/prepare_sprite.py assets/sheets/skills.png assets/skills --grid 3x2 --names whirl,vajra,sudarshana,agni,hanuman,nagapasha
+  ```
+- 新規PNG32枚の寸法・透明背景・ファイル破損を確認。画像参照36件すべての実ファイルを確認。既存のID・数値・セーブ形式を変更していません。新規セーブと、旧IDの装備を含む既存形式のセーブを読み込み、状態・能力値がmainと一致することも確認。

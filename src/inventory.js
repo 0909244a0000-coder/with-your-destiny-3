@@ -30,6 +30,30 @@ WYD.inventory = {
     return true;
   },
 
+  // 持ち物 → 倉庫。できたら true
+  toStash(state, index) {
+    const item = state.inventory[index];
+    if (!item || state.stash.length >= WYD.data.items.stashSize) return false;
+    state.inventory.splice(index, 1);
+    state.stash.push(item);
+    return true;
+  },
+
+  // 倉庫 → 持ち物。できたら true
+  fromStash(state, index) {
+    const item = state.stash[index];
+    if (!item || this.isFull(state)) return false;
+    state.stash.splice(index, 1);
+    state.inventory.push(item);
+    return true;
+  },
+
+  // 倉庫の装備を捨てる（分解）。もらった素材の数を返す
+  discardFromStash(state, index) {
+    const item = state.stash.splice(index, 1)[0];
+    return item ? this.salvage(state, item) : 0;
+  },
+
   // 捨てる（分解して素材をもらう）。もらった素材の数を返す
   discard(state, index) {
     const item = state.inventory.splice(index, 1)[0];
@@ -48,7 +72,16 @@ WYD.inventory = {
     return { count, gained };
   },
 
+  // 自動分解の対象か（設定で選んだレア度以下。レジェンドとユニークは対象外）
+  shouldAutoSalvage(state, item) {
+    const opt = WYD.data.crafting.autoSalvageOptions.find((o) => o.id === state.settings.autoSalvage);
+    if (!opt || !opt.upTo) return false;
+    const order = WYD.data.items.rarities.map((r) => r.id);
+    return order.indexOf(item.rarity) <= order.indexOf(opt.upTo);
+  },
+
   salvage(state, item) {
+    WYD.gems.returnGems(state, item);
     const n = WYD.data.crafting.salvage[item.rarity] || 0;
     state.materials = (state.materials || 0) + n;
     return n;
