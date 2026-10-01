@@ -1,0 +1,38 @@
+// ゲームのスタート地点。読み込み → 毎コマ更新・描画 → 定期的にセーブ。
+window.WYD = window.WYD || {};
+
+(function () {
+  const state = WYD.save.load();
+  const world = WYD.world.create();
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  canvas.width = WYD.data.map.width;
+  canvas.height = WYD.data.map.height;
+
+  WYD.ui.init(state, world);
+  WYD.ui.log("ようこそ。戦いは自動で進みます。装備とスキルを選んで強くなろう。", "#ffd447");
+
+  let last = performance.now();
+  function loop(now) {
+    // タブを切り替えたあと等に一気に進みすぎないよう、1回の経過時間に上限をつける
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    const steps = state.settings.speed;
+    for (let i = 0; i < steps; i++) WYD.world.update(world, state, dt);
+    WYD.render.draw(ctx, world, state);
+    WYD.ui.frame();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // 5秒ごと＆ページを閉じるときにセーブ
+  setInterval(() => {
+    if (!WYD.resetting) WYD.save.write(state);
+  }, 5000);
+  window.addEventListener("beforeunload", () => {
+    if (!WYD.resetting) WYD.save.write(state);
+  });
+
+  WYD.state = state;
+  WYD.currentWorld = world;
+})();

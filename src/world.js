@@ -1,0 +1,321 @@
+// ゲームの中身：オート戦闘・敵の出現・ドロップ・レベルアップ。
+window.WYD = window.WYD || {};
+
+WYD.world = {
+  create() {
+    const map = WYD.data.map;
+    return {
+      player: {
+        x: map.width / 2, y: map.height / 2,
+        hp: null, dead: false, respawnTimer: 0,
+        attackTimer: 0, skillCooldowns: {}, buff: null, swing: 0,
+      },
+      enemies: [],
+      drops: [],
+      effects: [],
+      texts: [],
+      spawnTimer: 0,
+      nextId: 1,
+    };
+  },
+
+  // 1コマ分すすめる（dt = 経過秒数）
+  update(w, state, dt) {
+    const stats = WYD.stats.compute(state);
+    const p = w.player;
+    if (p.hp === null) p.hp = stats.maxHp;
+    p.hp = Math.min(p.hp, stats.maxHp);
+
+    this.updateEffects(w, dt);
+
+    if (p.dead) {
+      p.respawnTimer -= dt;
+      if (p.respawnTimer <= 0) this.respawn(w, stats);
+      return;
+    }
+
+    p.hp = Math.min(stats.maxHp, p.hp + stats.hpRegen * dt);
+    if (p.buff) {
+      p.buff.timeLeft -= dt;
+      if (p.buff.timeLeft <= 0) p.buff = null;
+    }
+    for (const id in p.skillCooldowns) p.skillCooldowns[id] = Math.max(0, p.skillCooldowns[id] - dt);
+
+    this.updateSpawns(w, state, dt);
+    this.updatePlayer(w, state, stats, dt);
+    this.updateEnemies(w, state, stats, dt);
+    this.updateDrops(w, state, dt);
+  },
+
+  // ---------- 敵の出現 ----------
+  updateSpawns(w, state, dt) {
+    const map = WYD.data.map;
+    w.spawnTimer -= dt;
+    if (w.spawnTimer > 0 || w.enemies.length >= map.maxEnemies) return;
+    w.spawnTimer = map.spawnInterval;
+
+    const kinds = Object.keys(WYD.data.enemies);
+    const kind = WYD.util.pickWeighted(kinds, (k) => WYD.data.enemies[k].spawnWeight);
+    const def = WYD.data.enemies[kind];
+    const diff = WYD.data.difficulty;
+    const d = state.difficulty - 1;
+
+    // プレイヤーから離れた場所を探す
+    let pos;
+    for (let i = 0; i < 20; i++) {
+      pos = { x: WYD.util.rand(30, map.width - 30), y: WYD.util.rand(30, map.height - 30) };
+      if (WYD.util.dist(pos, w.player) >= map.spawnMinDistance) break;
+    }
+
+    const maxHp = Math.round(def.hp * (1 + diff.hpGrowth * d));
+    w.enemies.push({
+      id: w.nextId++, kind, x: pos.x, y: pos.y,
+      hp: maxHp, maxHp,
+      attack: def.attack * (1 + diff.attackGrowth * d),
+      defense: def.defense * (1 + diff.defenseGrowth * d),
+      attackTimer: 1,
+      hitFlash: 0,
+    });
+  },
+
+  // ---------- プレイヤーの自動行動 ----------
+  updatePlayer(w, state, stats, dt) {
+    const p = w.player;
+    const map = WYD.data.map;
+    p.swing = Math.max(0, p.swing - dt);
+
+    this.tryUseSkills(w, state, stats);
+
+    const target = this.nearestEnemy(w, p);
+    if (!target) {
+      // 敵がいないときは真ん中へ戻る
+      this.moveToward(p, { x: map.width / 2, y: map.height / 2 }, stats.moveSpeed * 0.5 * dt, 4);
+      return;
+    }
+
+    const reach = WYD.data.player.attackRange + WYD.data.enemies[target.kind].radius;
+    const d = WYD.util.dist(p, target);
+    if (d > reach) {
+      this.moveToward(p, target, stats.moveSpeed * dt, reach * 0.8);
+    }
+
+    p.attackTimer -= dt;
+    if (d <= reach && p.attackTimer <= 0) {
+      p.attackTimer = 1 / stats.attackSpeed;
+      p.swing = 0.15;
+      p.swingTarget = { x: target.x, y: target.y };
+      const hit = this.calcDamage(stats.attack, target.defense, stats.critChance);
+      this.damageEnemy(w, state, target, hit.damage, hit.crit);
+    }
+  },
+
+  tryUseSkills(w, state, stats) {
+    const p = w.player;
+    for (const id of WYD.data.skillOrder) {
+      const lv = state.player.skills[id] || 0;
+      if (lv <= 0 || !state.player.skillEnabled[id]) continue;
+      if ((p.skillCooldowns[id] || 0) > 0) continue;
+      const used = this.skillHandlers[id].call(this, w, state, stats, WYD.data.skills[id], lv);
+      if (used) p.skillCooldowns[id] = WYD.data.skills[id].cooldown;
+    }
+  },
+
+  // スキルごとの処理。使ったら true を返す
+  skillHandlers: {
+    whirl(w, state, stats, s, lv) {
+      const p = w.player;
+      const targets = w.enemies.filter((e) => WYD.util.dist(p, e) <= s.radius + WYD.data.enemies[e.kind].radius);
+      if (targets.length < s.minTargets) return false;
+      const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
+      for (const e of targets) {
+        const hit = this.calcDamage(stats.attack * mult, e.defense, stats.critChance);
+        this.damageEnemy(w, state, e, hit.damage, hit.crit);
+      }
+      w.effects.push({ type: "ring", x: p.x, y: p.y, radius: s.radius, color: s.color, time: 0, duration: 0.35 });
+      return true;
+    },
+    vajra(w, state, stats, s, lv) {
+      const p = w.player;
+      if (p.hp / stats.maxHp * 100 > s.triggerHpPercent) return false;
+      const healPct = (s.healPercentBase + s.healPercentPerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
+      const heal = Math.round(stats.maxHp * healPct / 100);
+      p.hp = Math.min(stats.maxHp, p.hp + heal);
+      p.buff = { defense: s.defenseBase + s.defensePerLevel * (lv - 1), timeLeft: s.duration, color: s.color };
+      this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
+      return true;
+    },
+  },
+
+  // ---------- 敵の行動 ----------
+  updateEnemies(w, state, stats, dt) {
+    const p = w.player;
+    for (const e of w.enemies) {
+      const def = WYD.data.enemies[e.kind];
+      e.hitFlash = Math.max(0, e.hitFlash - dt);
+      const reach = def.range + WYD.data.player.radius;
+      const d = WYD.util.dist(e, p);
+      if (d > reach) this.moveToward(e, p, def.moveSpeed * dt, reach * 0.8);
+
+      e.attackTimer -= dt;
+      if (d <= reach && e.attackTimer <= 0) {
+        e.attackTimer = 1 / def.attackSpeed;
+        const defense = stats.defense + (p.buff ? p.buff.defense : 0);
+        const hit = this.calcDamage(e.attack, defense, 0);
+        p.hp -= hit.damage;
+        this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
+        if (p.hp <= 0) {
+          this.playerDied(w);
+          return;
+        }
+      }
+    }
+    // 敵同士が重なりすぎないように少し押し合う
+    for (let i = 0; i < w.enemies.length; i++) {
+      for (let j = i + 1; j < w.enemies.length; j++) {
+        const a = w.enemies[i], b = w.enemies[j];
+        const min = WYD.data.enemies[a.kind].radius + WYD.data.enemies[b.kind].radius;
+        const d = WYD.util.dist(a, b);
+        if (d > 0 && d < min) {
+          const push = (min - d) / 2;
+          const nx = (a.x - b.x) / d, ny = (a.y - b.y) / d;
+          a.x += nx * push; a.y += ny * push;
+          b.x -= nx * push; b.y -= ny * push;
+        }
+      }
+    }
+  },
+
+  // ---------- 落ちている装備 ----------
+  updateDrops(w, state, dt) {
+    const D = WYD.data.items;
+    for (const drop of w.drops) {
+      drop.age += dt;
+      if (drop.age < D.pickupDelay || drop.picked) continue;
+      if (WYD.inventory.add(state, drop.item)) {
+        drop.picked = true;
+        const r = WYD.loot.rarityInfo(drop.item.rarity);
+        WYD.ui.log(`${drop.item.name}（${r.name}）を拾った`, r.color);
+        WYD.ui.markDirty();
+      } else if (!drop.warned) {
+        drop.warned = true;
+        WYD.ui.log("持ち物がいっぱいで拾えない！", "#ff6b6b");
+      }
+    }
+    w.drops = w.drops.filter((d) => !d.picked && d.age < D.groundLifetime);
+  },
+
+  updateEffects(w, dt) {
+    for (const ef of w.effects) ef.time += dt;
+    w.effects = w.effects.filter((ef) => ef.time < ef.duration);
+    for (const t of w.texts) { t.time += dt; t.y -= 30 * dt; }
+    w.texts = w.texts.filter((t) => t.time < 0.8);
+  },
+
+  // ---------- 共通の処理 ----------
+  calcDamage(attack, defense, critChance) {
+    const C = WYD.data.combat;
+    let dmg = attack - defense * C.defenseFactor;
+    dmg *= 1 + WYD.util.rand(-C.damageVariance, C.damageVariance);
+    const crit = Math.random() * 100 < critChance;
+    if (crit) dmg *= WYD.data.player.critMultiplier;
+    return { damage: Math.max(C.minDamage, Math.round(dmg)), crit };
+  },
+
+  damageEnemy(w, state, e, damage, crit) {
+    if (e.hp <= 0) return;
+    e.hp -= damage;
+    e.hitFlash = 0.1;
+    this.addText(w, e.x, e.y - 16, crit ? `${damage}!` : `${damage}`, crit ? "#ffd447" : "#ffffff");
+    if (e.hp <= 0) this.enemyDied(w, state, e);
+  },
+
+  enemyDied(w, state, e) {
+    const def = WYD.data.enemies[e.kind];
+    const diff = WYD.data.difficulty;
+    const d = state.difficulty - 1;
+    w.enemies = w.enemies.filter((x) => x !== e);
+
+    this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d)));
+
+    // 最高危険度で倒すと、次の危険度に近づく
+    if (state.difficulty === state.maxDifficulty && state.maxDifficulty < diff.max) {
+      state.killsAtMax++;
+      if (state.killsAtMax >= diff.killsToUnlockNext) {
+        state.maxDifficulty++;
+        state.killsAtMax = 0;
+        WYD.ui.log(`危険度 ${state.maxDifficulty} が解放された！`, "#ff8a2a");
+      }
+      WYD.ui.markDirty();
+    }
+
+    if (Math.random() < def.dropChance) {
+      const bonus = def.rarityBonus * (1 + diff.rarityGrowth * d);
+      const item = WYD.loot.create(state, state.difficulty, bonus);
+      if (item.rarity === "normal" && state.settings.skipNormal) return;
+      w.drops.push({ x: e.x, y: e.y, item, age: 0 });
+    }
+  },
+
+  gainExp(state, amount) {
+    const pl = state.player;
+    const P = WYD.data.player;
+    if (pl.level >= P.maxLevel) return;
+    pl.exp += amount;
+    while (pl.level < P.maxLevel && pl.exp >= WYD.stats.expToNext(pl.level)) {
+      pl.exp -= WYD.stats.expToNext(pl.level);
+      pl.level++;
+      pl.skillPoints += P.skillPointsPerLevel;
+      WYD.ui.log(`レベルアップ！ Lv${pl.level}（スキルポイント+${P.skillPointsPerLevel}）`, "#7dff8a");
+      WYD.ui.onLevelUp();
+    }
+    if (pl.level >= P.maxLevel) pl.exp = 0;
+    WYD.ui.markDirty();
+  },
+
+  playerDied(w) {
+    const p = w.player;
+    p.dead = true;
+    p.hp = 0;
+    p.respawnTimer = WYD.data.player.respawnSeconds;
+    WYD.ui.log("倒れてしまった…", "#ff6b6b");
+  },
+
+  respawn(w, stats) {
+    const map = WYD.data.map;
+    const p = w.player;
+    p.dead = false;
+    p.hp = stats.maxHp;
+    p.x = map.width / 2;
+    p.y = map.height / 2;
+    p.buff = null;
+    w.enemies = [];
+    w.spawnTimer = 1;
+  },
+
+  // 危険度を変えたら敵を入れ替える
+  resetEnemies(w) {
+    w.enemies = [];
+    w.spawnTimer = 0.5;
+  },
+
+  nearestEnemy(w, from) {
+    let best = null, bestD = Infinity;
+    for (const e of w.enemies) {
+      const d = WYD.util.dist(from, e);
+      if (d < bestD) { bestD = d; best = e; }
+    }
+    return best;
+  },
+
+  moveToward(obj, target, step, stopAt) {
+    const d = WYD.util.dist(obj, target);
+    if (d <= stopAt) return;
+    const s = Math.min(step, d - stopAt);
+    obj.x += (target.x - obj.x) / d * s;
+    obj.y += (target.y - obj.y) / d * s;
+  },
+
+  addText(w, x, y, text, color) {
+    w.texts.push({ x: x + WYD.util.rand(-6, 6), y, text, color, time: 0 });
+  },
+};

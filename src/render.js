@@ -1,0 +1,166 @@
+// マップの描画。絵（image）が用意されていればそれを、なければ丸や四角を描く。
+window.WYD = window.WYD || {};
+
+WYD.render = {
+  images: {},
+  decorations: null,
+
+  getImage(src) {
+    if (!src) return null;
+    if (!this.images[src]) {
+      const img = new Image();
+      img.src = src;
+      this.images[src] = img;
+    }
+    const img = this.images[src];
+    return img.complete && img.naturalWidth > 0 ? img : null;
+  },
+
+  makeDecorations() {
+    const map = WYD.data.map;
+    const rnd = WYD.util.seededRandom(map.decorationSeed);
+    const list = [];
+    for (let i = 0; i < map.decorationCount; i++) {
+      list.push({
+        x: rnd() * map.width, y: rnd() * map.height,
+        r: 3 + rnd() * 9, kind: rnd() < 0.7 ? "grass" : "stone",
+      });
+    }
+    return list;
+  },
+
+  draw(ctx, w, state) {
+    const map = WYD.data.map;
+    if (!this.decorations) this.decorations = this.makeDecorations();
+
+    ctx.fillStyle = map.bgColor;
+    ctx.fillRect(0, 0, map.width, map.height);
+    for (const d of this.decorations) {
+      ctx.fillStyle = d.kind === "grass" ? "#34482f" : "#4a4f47";
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (const drop of w.drops) this.drawDrop(ctx, drop);
+    for (const e of w.enemies) this.drawEnemy(ctx, e);
+    this.drawPlayer(ctx, w.player);
+    for (const ef of w.effects) this.drawEffect(ctx, ef);
+
+    ctx.textAlign = "center";
+    ctx.font = "bold 14px sans-serif";
+    for (const t of w.texts) {
+      ctx.globalAlpha = 1 - t.time / 0.8;
+      ctx.fillStyle = t.color;
+      ctx.fillText(t.text, t.x, t.y);
+    }
+    ctx.globalAlpha = 1;
+
+    // 左上：マップ名と危険度
+    ctx.textAlign = "left";
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.fillText(`${map.name}　危険度 ${state.difficulty}`, 12, 24);
+
+    if (w.player.dead) {
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.fillRect(0, 0, map.width, map.height);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ff8080";
+      ctx.font = "bold 32px sans-serif";
+      ctx.fillText("倒れてしまった…", map.width / 2, map.height / 2 - 10);
+      ctx.font = "18px sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(`${Math.ceil(w.player.respawnTimer)} 秒後に復活`, map.width / 2, map.height / 2 + 24);
+    }
+  },
+
+  drawCircleOrImage(ctx, x, y, r, color, imageSrc) {
+    const img = this.getImage(imageSrc);
+    if (img) {
+      ctx.drawImage(img, x - r * 1.5, y - r * 1.5, r * 3, r * 3);
+      return;
+    }
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  },
+
+  drawPlayer(ctx, p) {
+    const P = WYD.data.player;
+    if (p.buff) {
+      ctx.strokeStyle = p.buff.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, P.radius + 6, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    this.drawCircleOrImage(ctx, p.x, p.y, P.radius, p.dead ? "#555" : P.color, P.image);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, P.radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 攻撃の線
+    if (p.swing > 0 && p.swingTarget) {
+      ctx.strokeStyle = `rgba(255,255,255,${p.swing / 0.15})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.swingTarget.x, p.swingTarget.y);
+      ctx.stroke();
+    }
+  },
+
+  drawEnemy(ctx, e) {
+    const def = WYD.data.enemies[e.kind];
+    this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, def.image);
+
+    const bw = def.radius * 2.2, bh = 4;
+    const bx = e.x - bw / 2, by = e.y - def.radius - 9;
+    ctx.fillStyle = "#300";
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = "#e33";
+    ctx.fillRect(bx, by, bw * Math.max(0, e.hp / e.maxHp), bh);
+
+    if (def.showName) {
+      ctx.textAlign = "center";
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#e6c7ff";
+      ctx.fillText(def.name, e.x, by - 4);
+    }
+  },
+
+  drawDrop(ctx, drop) {
+    const r = WYD.loot.rarityInfo(drop.item.rarity);
+    const bounce = Math.max(0, 1 - drop.age * 3) * 10;
+    ctx.save();
+    ctx.translate(drop.x, drop.y - bounce);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = r.color;
+    ctx.fillRect(-6, -6, 12, 12);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-6, -6, 12, 12);
+    ctx.restore();
+    ctx.textAlign = "center";
+    ctx.font = "12px sans-serif";
+    ctx.fillStyle = r.color;
+    ctx.fillText(drop.item.name, drop.x, drop.y - 14 - bounce);
+  },
+
+  drawEffect(ctx, ef) {
+    if (ef.type === "ring") {
+      const t = ef.time / ef.duration;
+      ctx.strokeStyle = ef.color;
+      ctx.globalAlpha = 1 - t;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(ef.x, ef.y, ef.radius * (0.4 + 0.6 * t), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  },
+};
