@@ -13,7 +13,8 @@ WYD.save = {
     }
     return {
       version: 1,
-      player: { level: 1, exp: 0, skillPoints: 0, skills, skillEnabled: enabled },
+      player: { level: 1, exp: 0, skillPoints: 0, skills, skillEnabled: enabled,
+        paragon: { level: 0, exp: 0, points: 0, alloc: {} } },   // 修練（レベル上限のあと）
       equipment: {},   // slot -> item
       inventory: [],   // item の配列
       stash: [],       // 倉庫（item の配列）
@@ -42,6 +43,7 @@ WYD.save = {
       const state = Object.assign(base, saved);
       state.player = Object.assign(base.player, saved.player);
       state.player.skills = Object.assign(this.newState().player.skills, saved.player && saved.player.skills);
+      state.player.paragon = Object.assign(this.newState().player.paragon, saved.player && saved.player.paragon);
       state.player.skillEnabled = Object.assign(this.newState().player.skillEnabled, saved.player && saved.player.skillEnabled);
       state.settings = Object.assign(this.newState().settings, saved.settings);
       // エリアがなかった頃のセーブや、消えたエリアにいた場合は最初のエリアにする

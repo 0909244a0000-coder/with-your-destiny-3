@@ -770,8 +770,8 @@ WYD.world = {
   gainExp(state, amount) {
     const pl = state.player;
     const P = WYD.data.player;
-    if (pl.level >= P.maxLevel) return;
     WYD.offline.record("exp", amount);
+    if (pl.level >= P.maxLevel) return this.gainParagon(state, amount);
     pl.exp += amount;
     while (pl.level < P.maxLevel && pl.exp >= WYD.stats.expToNext(pl.level)) {
       pl.exp -= WYD.stats.expToNext(pl.level);
@@ -780,7 +780,26 @@ WYD.world = {
       WYD.ui.log(`レベルアップ！ Lv${pl.level}（スキルポイント+${P.skillPointsPerLevel}）`, "#7dff8a");
       WYD.ui.onLevelUp();
     }
-    if (pl.level >= P.maxLevel) pl.exp = 0;
+    if (pl.level >= P.maxLevel) {
+      const extra = pl.exp;
+      pl.exp = 0;
+      if (extra > 0) this.gainParagon(state, extra);
+    }
+    WYD.ui.markDirty();
+  },
+
+  // レベル上限のあとの経験値：修練レベルを上げ、修練ポイントをもらう
+  gainParagon(state, amount) {
+    const pg = state.player.paragon;
+    const G = WYD.data.player.paragon;
+    pg.exp += amount;
+    while (pg.exp >= WYD.stats.paragonToNext(pg.level)) {
+      pg.exp -= WYD.stats.paragonToNext(pg.level);
+      pg.level++;
+      pg.points += G.pointsPerLevel;
+      WYD.ui.log(`修練レベル ${pg.level}！（修練ポイント+${G.pointsPerLevel}）`, "#e0c070");
+      WYD.ui.onLevelUp();
+    }
     WYD.ui.markDirty();
   },
 

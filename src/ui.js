@@ -18,6 +18,16 @@ WYD.ui = {
     const s = state;
 
     this.$("help").onclick = () => this.showStory("help");
+    // 修練ポイントを振る
+    this.$("paragon").onclick = (e) => {
+      const btn = e.target.closest("button[data-paragon]");
+      if (!btn) return;
+      const pg = s.player.paragon;
+      if (pg.points <= 0) return;
+      pg.points--;
+      pg.alloc[btn.dataset.paragon] = (pg.alloc[btn.dataset.paragon] || 0) + 1;
+      this.changed();
+    };
     this.$("sound-toggle").onclick = () => {
       s.settings.sound = !s.settings.sound;
       this.changed();
@@ -276,8 +286,16 @@ WYD.ui = {
     this.$("hp-text").textContent = `HP ${hp} / ${stats.maxHp}`;
     const need = WYD.stats.expToNext(s.player.level);
     const maxed = s.player.level >= WYD.data.player.maxLevel;
-    this.$("exp-bar").style.width = maxed ? "100%" : `${(s.player.exp / need) * 100}%`;
-    this.$("exp-text").textContent = maxed ? "EXP MAX" : `EXP ${s.player.exp} / ${need}`;
+    if (maxed) {
+      // レベル上限のあとは、修練の経験値を出す
+      const pg = s.player.paragon;
+      const pneed = WYD.stats.paragonToNext(pg.level);
+      this.$("exp-bar").style.width = `${(pg.exp / pneed) * 100}%`;
+      this.$("exp-text").textContent = `修練 ${Math.floor(pg.exp)} / ${pneed}`;
+    } else {
+      this.$("exp-bar").style.width = `${(s.player.exp / need) * 100}%`;
+      this.$("exp-text").textContent = `EXP ${s.player.exp} / ${need}`;
+    }
   },
 
   renderPanels() {
@@ -309,7 +327,10 @@ WYD.ui = {
     this.$("auto-diff").checked = s.settings.autoDifficulty;
 
     // キャラ
-    this.$("char-name").textContent = `${P.className}　Lv ${s.player.level}`;
+    const pg = s.player.paragon;
+    this.$("char-name").textContent = `${P.className}　Lv ${s.player.level}${pg.level > 0 ? `　修練 ${pg.level}` : ""}`;
+    this.$("paragon").hidden = !(s.player.level >= P.maxLevel || pg.level > 0);
+    if (!this.$("paragon").hidden) this.$("paragon").innerHTML = this.paragonHtml();
     const rows = [
       ["攻撃力", Math.round(stats.attack)],
       ["防御力", Math.round(stats.defense)],
@@ -387,6 +408,20 @@ WYD.ui = {
         : `<div class="cell blank"></div>`;
     }
     return html;
+  },
+
+  // 修練ポイントの振り分け
+  paragonHtml() {
+    const G = WYD.data.player.paragon;
+    const pg = this.state.player.paragon;
+    const rows = Object.keys(G.stats).map((k) => {
+      const st = G.stats[k];
+      const n = pg.alloc[k] || 0;
+      const v = n * st.per;
+      return `<div class="paragon-row"><span>${st.name} +${Number.isInteger(v) ? v : v.toFixed(2)}${st.percent ? "%" : ""}</span>
+        <button data-paragon="${k}" ${pg.points > 0 ? "" : "disabled"}>＋</button></div>`;
+    }).join("");
+    return `<div class="build-title">修練ポイント：<b style="color:var(--accent)">${pg.points}</b>（レベル上限のあとの経験値でたまる）</div>${rows}`;
   },
 
   // 装備から今効いている特殊効果（合計）と固有能力のまとめ
