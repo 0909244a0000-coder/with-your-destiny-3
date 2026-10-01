@@ -16,7 +16,7 @@ WYD.trial = {
     const T = WYD.data.trial;
     const n = state.trialRun.level;
     return {
-      id: "trial", name: "終わりのない試練",
+      id: "trial", name: state.trialRun.daily ? "日替わりの試練" : "終わりのない試練",
       bgColor: T.bgColor, grassColor: T.grassColor, stoneColor: T.stoneColor, groundImage: T.groundImage,
       powerMult: T.powerBase * Math.pow(T.powerGrowth, n - 1),
       itemLevelBonus: 0, enemies: T.enemies, floors: 1, killsPerFloor: T.kills, boss: state.trialRun.guardian,
@@ -28,14 +28,19 @@ WYD.trial = {
     return T.itemLevelBase + T.itemLevelPerStage * (state.trialRun.level - 1);
   },
 
-  start(w, state, level) {
+  // daily = 日替わりの試練のとき { date, modIds, guardian }（src/daily.js）
+  start(w, state, level, daily) {
     const T = WYD.data.trial;
-    state.trialRun = { level, guardian: WYD.util.pick(T.guardians) };
-    w.trial = { timeLeft: T.timeLimit, kills: 0, guardianOut: false, done: false };
+    state.trialRun = { level, guardian: daily ? daily.guardian : WYD.util.pick(T.guardians), daily: daily || null };
+    const timeLimit = Math.round(T.timeLimit * WYD.daily.mult(state, "timeMult"));
+    const killTarget = Math.round(T.kills * WYD.daily.mult(state, "killsMult"));
+    w.trial = { timeLeft: timeLimit, timeLimit, killTarget, kills: 0, guardianOut: false, done: false };
     WYD.world.resetEnemies(w, state, false);
     w.drops = [];
-    w.banner = { text: `終わりのない試練　段階 ${level}`, time: 0 };
-    WYD.ui.log(`試練 段階${level} に挑む（${T.timeLimit}秒で${T.kills}体倒し、守護者を討て）`, T.color);
+    const name = daily ? "日替わりの試練" : "終わりのない試練";
+    w.banner = { text: `${name}　段階 ${level}`, time: 0 };
+    WYD.ui.log(`${name} 段階${level} に挑む（${timeLimit}秒で${killTarget}体倒し、守護者を討て）`, daily ? WYD.data.daily.color : T.color);
+    if (daily) WYD.ui.log(`今日の条件：${WYD.daily.describe(daily.date)}`, WYD.data.daily.color);
     WYD.ui.changed();
   },
 
@@ -52,7 +57,7 @@ WYD.trial = {
     const T = WYD.data.trial;
     const t = w.trial;
     if (!t || t.done) return;
-    if (t.kills >= T.kills && !t.guardianOut) {
+    if (t.kills >= t.killTarget && !t.guardianOut) {
       t.guardianOut = true;
       const kind = state.trialRun.guardian;
       const g = WYD.world.spawnEnemy(w, state, kind, WYD.world.farPosition(w));
@@ -66,7 +71,7 @@ WYD.trial = {
     w.spawnTimer = T.spawnInterval;
     const pick = WYD.util.pickWeighted(T.enemies, (x) => x.weight);
     const e = WYD.world.spawnEnemy(w, state, pick.kind, WYD.world.farPosition(w));
-    if (Math.random() < WYD.data.elites.chance) WYD.world.makeElite(e);
+    if (Math.random() < WYD.data.elites.chance * WYD.daily.mult(state, "eliteMult")) WYD.world.makeElite(e);
   },
 
   tick(w, state, dt) {
@@ -75,7 +80,7 @@ WYD.trial = {
     if (t.done) {
       t.nextIn -= dt;
       if (t.nextIn > 0) return;
-      if (state.trial.autoNext) this.start(w, state, state.trial.level);
+      if (state.trial.autoNext && !state.trialRun.daily) this.start(w, state, state.trial.level);
       else this.stop(w, state);
       return;
     }
@@ -87,7 +92,7 @@ WYD.trial = {
     const t = w.trial;
     if (!t || t.done) return;
     if (e.boss) this.finish(w, state, true, e);
-    else t.kills = Math.min(WYD.data.trial.kills, t.kills + 1);
+    else t.kills = Math.min(t.killTarget, t.kills + 1);
   },
 
   onDeath(w, state) {
@@ -98,11 +103,17 @@ WYD.trial = {
     const T = WYD.data.trial;
     const t = w.trial;
     t.done = true;
+    t.nextIn = T.nextDelay;
+    if (state.trialRun.daily) {
+      WYD.daily.finish(w, state, success, guardian);
+      WYD.ui.changed();
+      return;
+    }
     const n = state.trialRun.level;
     const rec = state.trial;
     rec.runs++;
     if (success) {
-      const used = T.timeLimit - t.timeLeft;
+      const used = t.timeLimit - t.timeLeft;
       const first = n > rec.best;
       rec.best = Math.max(rec.best, n);
       // ごほうび：装備と素材
@@ -121,8 +132,7 @@ WYD.trial = {
       WYD.ui.log(`試練 段階${n} 失敗…（時間切れ）`, "#ff6b6b");
       if (rec.autoNext && n > 1) rec.level = n - 1;
     }
-    // すこし待ってから、次の段階へ（自動）か、ふつうの冒険へもどる（tick で数える）
-    t.nextIn = T.nextDelay;
+    // すこし待ってから、次の段階へ（自動）か、ふつうの冒険へもどる（tick で数える。nextIn は上で設定）
     WYD.ui.changed();
   },
 
@@ -135,13 +145,14 @@ WYD.trial = {
     const bw = map.width * 0.4, x = (map.width - bw) / 2, y = map.height - 34;
     ctx.fillStyle = "rgba(0,0,0,0.6)";
     ctx.fillRect(x - 2, y - 2, bw + 4, 14);
-    ctx.fillStyle = T.color;
-    ctx.fillRect(x, y, bw * Math.max(0, t.timeLeft / T.timeLimit), 10);
+    const daily = state.trialRun.daily;
+    ctx.fillStyle = daily ? WYD.data.daily.color : T.color;
+    ctx.fillRect(x, y, bw * Math.max(0, t.timeLeft / t.timeLimit), 10);
     ctx.textAlign = "center";
     ctx.font = "bold 13px sans-serif";
     ctx.fillStyle = "#fff";
     const m = Math.max(0, Math.ceil(t.timeLeft));
-    const goal = t.guardianOut ? "守護者を倒せ！" : `守護者まで ${t.kills}/${T.kills}体`;
-    ctx.fillText(`試練 段階${state.trialRun.level}　残り ${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}　${goal}`, map.width / 2, y - 6);
+    const goal = t.guardianOut ? "守護者を倒せ！" : `守護者まで ${t.kills}/${t.killTarget}体`;
+    ctx.fillText(`${daily ? "日替わり" : "試練"} 段階${state.trialRun.level}　残り ${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}　${goal}`, map.width / 2, y - 6);
   },
 };

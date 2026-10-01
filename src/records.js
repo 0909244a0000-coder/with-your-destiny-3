@@ -42,6 +42,8 @@ WYD.records = {
       case "setPieces": return Object.keys(c.setPieces).length;
       case "setComplete": return WYD.data.sets.list.filter((s) => s.pieces.every((p) => c.setPieces[p.id])).length;
       case "cleared": return state.cleared ? 1 : 0;
+      case "dailyStreak": return state.daily.bestStreak;
+      case "dailyTotal": return state.daily.total;
     }
     return 0;
   },

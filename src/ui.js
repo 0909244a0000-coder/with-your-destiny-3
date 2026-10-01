@@ -85,6 +85,7 @@ WYD.ui = {
       if (WYD.trial.active(s)) WYD.trial.stop(this.world, s);
       else WYD.trial.start(this.world, s, s.trial.level);
     };
+    this.$("daily-start").onclick = () => WYD.daily.start(this.world, s);
     this.$("trial-auto").onchange = (e) => {
       s.trial.autoNext = e.target.checked;
       this.changed();
@@ -454,6 +455,10 @@ WYD.ui = {
     this.$("trial-start").textContent = inTrial ? "やめる" : "挑む";
     this.$("trial-auto").checked = s.trial.autoNext;
     this.$("trial-best").textContent = `（最高 段階${s.trial.best}）`;
+    const dailyDone = WYD.daily.doneToday(s);
+    this.$("daily-start").disabled = inTrial || dailyDone;
+    this.$("daily-start").textContent = dailyDone ? `日替わり：済（連続${s.daily.streak}日）` : `日替わり（段階${WYD.daily.stage(s)}）`;
+    this.$("daily-start").title = `1日1回、決まった条件で挑む。成功で素材・ユニーク装備・宝石。連続で成功すると素材が増える\n今日の条件：${WYD.daily.describe()}`;
     // 試練の最中はエリアと危険度は変えられない
     this.$("diff-down").disabled = this.$("diff-up").disabled = inTrial;
     if (inTrial) this.$("area-down").disabled = this.$("area-up").disabled = true;
@@ -610,7 +615,8 @@ WYD.ui = {
       return `<div class="codex-row"><span>${c.name}</span><b>${c.time ? rec.timeText(v) : Math.floor(v).toLocaleString()}</b></div>`;
     }).join("") +
       `<div class="codex-row"><span>最高危険度</span><b>${s.maxDifficulty}</b></div>` +
-      `<div class="codex-row"><span>試練の最高段階</span><b>${s.trial.best}</b></div>`;
+      `<div class="codex-row"><span>試練の最高段階</span><b>${s.trial.best}</b></div>` +
+      `<div class="codex-row"><span>日替わりの試練（成功・最高連続）</span><b>${s.daily.total}回・${s.daily.bestStreak}日</b></div>`;
     // 実績
     const done = R.achievements.filter((a) => s.achievements[a.id]).length;
     const achievements = R.achievements.map((a) => {

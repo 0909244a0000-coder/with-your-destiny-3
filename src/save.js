@@ -39,6 +39,7 @@ WYD.save = {
       codex: { uniques: {}, setPieces: {} },   // 図鑑（見つけたユニーク・セット装備の id）
       achievements: {},   // 達成した実績の id
       gems: {},        // 持っている宝石（"種類:段階" → 数）
+      daily: { lastDone: null, streak: 0, bestStreak: 0, total: 0 },   // 日替わりの試練の記録
     };
   },
 
@@ -84,6 +85,7 @@ WYD.save = {
       state.codex = Object.assign(this.newState().codex, saved.codex);
       state.achievements = Object.assign({}, saved.achievements);
       state.gems = Object.assign({}, saved.gems);
+      state.daily = Object.assign(this.newState().daily, saved.daily);
       // 「ノーマルを拾わない」だった頃のセーブは、「ノーマルを自動分解」にする
       if (saved.settings && saved.settings.skipNormal && !saved.settings.autoSalvage) state.settings.autoSalvage = "normal";
       delete state.settings.skipNormal;

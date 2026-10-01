@@ -204,6 +204,7 @@ WYD.world = {
       hitFlash: 0,
       stunTimer: 0,
     };
+    WYD.daily.modifyEnemy(state, e);   // 日替わりの試練の条件
     w.enemies.push(e);
     return e;
   },
