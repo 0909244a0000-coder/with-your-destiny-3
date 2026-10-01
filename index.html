@@ -10,6 +10,9 @@
   <header>
     <h1>With Your Destiny Ⅲ <small>最小版</small></h1>
     <div class="controls">
+      <span>キャラ</span>
+      <select id="class-select" title="職業を切り替える（キャラごとにセーブは別々）"></select>
+      <span class="sep"></span>
       <span>エリア</span>
       <button id="area-down" title="前のエリアへ">◀</button>
       <b id="area-name"></b>
@@ -113,9 +116,11 @@
   <script src="data/fx.js"></script>
   <script src="data/anim.js"></script>
   <script src="data/sound.js"></script>
+  <script src="data/classes.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>
+  <script src="src/classes.js"></script>
   <script src="src/stats.js"></script>
   <script src="src/loot.js"></script>
   <script src="src/inventory.js"></script>

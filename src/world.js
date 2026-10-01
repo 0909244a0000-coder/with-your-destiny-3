@@ -13,6 +13,7 @@ WYD.world = {
       fields: [],   // 地面に残る炎の陣など
       projectiles: [], // 敵が撃った弾
       particles: [],   // エフェクトの粒（src/fx.js）
+      bolts: [],       // 主人公が撃った火の玉（遠くから攻撃する職業）
       shake: null,     // 画面の揺れ
       enemies: [],
       drops: [],
@@ -56,6 +57,7 @@ WYD.world = {
     this.updateFloors(w, state, dt);
     this.updateSpawns(w, state, dt);
     this.updatePlayer(w, state, stats, dt);
+    this.updateBolts(w, state, stats, dt);
     this.updateEnemies(w, state, stats, dt);
     if (!p.dead) this.updateProjectiles(w, state, stats, dt);
     this.updateDrops(w, state, dt);
@@ -273,19 +275,29 @@ WYD.world = {
       return;
     }
 
-    const reach = WYD.data.player.attackRange + WYD.data.enemies[target.kind].radius;
+    const ranged = WYD.data.player.rangedAttack;
+    const reach = ranged ? ranged.range : WYD.data.player.attackRange + WYD.data.enemies[target.kind].radius;
     const d = WYD.util.dist(p, target);
-    if (d > reach) {
+    if (ranged) {
+      // 遠くから撃つ職業：近づきすぎたら下がり、遠すぎたら近づく
+      if (d > ranged.range * 0.9) this.moveToward(p, target, stats.moveSpeed * dt, ranged.range * 0.8);
+      else if (d < ranged.keepDistance) this.moveAway(p, target, stats.moveSpeed * 0.8 * dt);
+    } else if (d > reach) {
       this.moveToward(p, target, stats.moveSpeed * dt, reach * 0.8);
     }
 
     p.attackTimer -= dt;
     if (d <= reach && p.attackTimer <= 0) {
       p.attackTimer = 1 / (stats.attackSpeed * (1 + (p.haste ? p.haste.percent : 0) / 100));
-      p.swing = 0.15;
-      p.swingTarget = { x: target.x, y: target.y };
       p.atkAnim = WYD.data.anim.attack.time;
       p.face = target.x >= p.x ? 1 : -1;
+      p.swingTarget = { x: target.x, y: target.y };
+      if (ranged) {
+        // 火の玉を撃つ（当たったときに通常攻撃と同じ処理をする）
+        w.bolts.push({ x: p.x, y: p.y - 10, targetId: target.id, tx: target.x, ty: target.y });
+        return;
+      }
+      p.swing = 0.15;
       this.playerHit(w, state, stats, target, stats.attack);
       this.tryThunder(w, state, stats, target);
       // 固有能力：狂王の籠手（狂戦士の怒りの間、周りにも当たる）
@@ -298,13 +310,38 @@ WYD.world = {
     }
   },
 
+  // 主人公の火の玉を動かす。狙った敵を追いかけ、届いたら当たる
+  updateBolts(w, state, stats, dt) {
+    const R = WYD.data.player.rangedAttack;
+    if (!R) return;
+    for (const b of w.bolts) {
+      const e = w.enemies.find((x) => x.id === b.targetId);
+      if (e) { b.tx = e.x; b.ty = e.y; }
+      const d = Math.hypot(b.tx - b.x, b.ty - b.y);
+      const step = R.speed * dt;
+      if (d <= step + 4) {
+        b.done = true;
+        if (e && e.hp > 0) {
+          this.playerHit(w, state, stats, e, stats.attack);
+          this.tryThunder(w, state, stats, e);
+        }
+        WYD.fx.burst(w, b.tx, b.ty, { ...WYD.data.fx.hit, count: 8 }, R.color, { glow: true });
+        continue;
+      }
+      b.x += (b.tx - b.x) / d * step;
+      b.y += (b.ty - b.y) / d * step;
+      if (Math.random() < 0.6) WYD.fx.burst(w, b.x, b.y, { ...WYD.data.fx.ember, count: 1, life: 0.3 }, R.color, { glow: true });
+    }
+    w.bolts = w.bolts.filter((b) => !b.done);
+  },
+
   tryUseSkills(w, state, stats) {
     const p = w.player;
     for (const id of WYD.data.skillOrder) {
       const lv = state.player.skills[id] || 0;
       if (lv <= 0 || !state.player.skillEnabled[id]) continue;
       if ((p.skillCooldowns[id] || 0) > 0) continue;
-      const used = this.skillHandlers[id].call(this, w, state, stats, WYD.data.skills[id], lv);
+      const used = this.skillHandlers[WYD.classes.kindOf(id)].call(this, w, state, stats, WYD.data.skills[id], lv);
       if (used) p.skillCooldowns[id] = WYD.data.skills[id].cooldown * (1 - stats.effects.cooldown / 100);
     }
   },
@@ -839,6 +876,7 @@ WYD.world = {
     p.haste = null;
     w.fields = [];
     w.projectiles = [];
+    w.bolts = [];
     w.enemies = [];
     w.spawnTimer = 1;
   },
@@ -862,6 +900,14 @@ WYD.world = {
       if (d < bestD) { bestD = d; best = e; }
     }
     return best;
+  },
+
+  // target から遠ざかる（マップの外には出ない）
+  moveAway(obj, target, step) {
+    const map = WYD.data.map;
+    const d = WYD.util.dist(obj, target) || 1;
+    obj.x = WYD.util.clamp(obj.x + (obj.x - target.x) / d * step, 20, map.width - 20);
+    obj.y = WYD.util.clamp(obj.y + (obj.y - target.y) / d * step, 20, map.height - 20);
   },
 
   moveToward(obj, target, step, stopAt) {

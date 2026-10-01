@@ -46,6 +46,7 @@ WYD.data.items = {
     { slot: "weapon", id: "dual_blades", name: "双剣",       main: { attack: [5, 8] } },
     { slot: "weapon", id: "great_blade", name: "大剣",       main: { attack: [8, 12], attackSpeed: [-10, -10] } },
     { slot: "weapon", id: "chakram", name: "ダガー",     main: { attack: [4, 6], critChance: [3, 5] } },
+    { slot: "weapon", id: "staff", name: "杖",         main: { attack: [3, 5], skillDamage: [8, 14] } },
     { slot: "head",   id: "turban", name: "兜",         main: { defense: [2, 4] } },
     { slot: "head",   id: "crown", name: "サークレット", main: { defense: [1, 2], maxHp: [10, 20] } },
     { slot: "body",   id: "chainmail", name: "鎖帷子",     main: { defense: [4, 7] } },

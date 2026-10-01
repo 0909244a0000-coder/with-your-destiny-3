@@ -7,6 +7,7 @@ WYD.data.anim = {
   walk: { speed: 11, bob: 3.5, tilt: 0.07 },// 歩くときの上下のはずみ（px）と左右のかたむき
   attack: { time: 0.18, lunge: 10, tilt: 0.18 }, // 攻撃の踏み込み（秒・px・かたむき）
   hitKnock: 5,          // 攻撃を受けたときに後ろにずれる距離（px）
+  bindColor: "#5fd9a0", // 縛られている敵の輪の色
   faceTarget: true,     // 進む向き・相手の向きに合わせて絵を左右反転するか
   boss: {
     idleSway: 0.04,     // ボスの立っているときのゆれ（かたむき）

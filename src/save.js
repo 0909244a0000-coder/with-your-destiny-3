@@ -2,7 +2,8 @@
 window.WYD = window.WYD || {};
 
 WYD.save = {
-  KEY: "wyd3-save-v1",
+  BASE_KEY: "wyd3-save-v1",
+  KEY: "wyd3-save-v1",   // 職業ごとに変わる（src/classes.js）
 
   newState() {
     const skills = {};
@@ -13,6 +14,7 @@ WYD.save = {
     }
     return {
       version: 1,
+      classId: WYD.classes.id,   // 職業
       player: { level: 1, exp: 0, skillPoints: 0, skills, skillEnabled: enabled,
         paragon: { level: 0, exp: 0, points: 0, alloc: {} } },   // 修練（レベル上限のあと）
       equipment: {},   // slot -> item

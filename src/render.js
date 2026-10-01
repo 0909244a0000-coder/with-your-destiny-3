@@ -68,6 +68,8 @@ WYD.render = {
     for (const e of w.enemies.slice().sort((a, b) => a.y - b.y)) this.drawEnemy(ctx, e);
     this.drawPlayer(ctx, w.player);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
+    const R = WYD.data.player.rangedAttack;
+    if (R) for (const b of w.bolts) this.drawProjectile(ctx, { x: b.x, y: b.y, size: R.size, color: R.color });
     this.drawLight(ctx, w.player, state);
     // 光るものと落ちている装備は、明かりの暗さの上に描く（暗がりでも見えるように）
     for (const drop of w.drops) this.drawDrop(ctx, drop);
@@ -348,7 +350,7 @@ WYD.render = {
 
     if (e.stunTimer > 0) {
       // 縛られている敵：緑の縄
-      ctx.strokeStyle = WYD.data.skills.nagapasha.color;
+      ctx.strokeStyle = WYD.data.anim.bindColor;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(e.x, e.y, def.radius + 2, 0, Math.PI * 2);

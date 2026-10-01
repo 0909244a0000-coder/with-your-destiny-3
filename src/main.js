@@ -2,6 +2,7 @@
 window.WYD = window.WYD || {};
 
 (function () {
+  WYD.classes.apply();   // 今の職業の数値・スキル・セーブの場所を決める
   const state = WYD.save.load();
   const lastSeen = state.lastSeen;
   const world = WYD.world.create();

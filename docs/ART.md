@@ -33,7 +33,19 @@
 
 ## まだの絵（上から順に優先）
 
-この発注リストにある絵はすべて制作・登録済み。追加の発注はまだありません。
+### ソーサレス（2つ目の職業）のアイコン
+主人公の絵は、保管していた女性の術者の絵を使っています（`assets/player_sorceress.png`。持ち主の判断で、いったんこの絵）。
+
+**スキル（3列×2行）** → `--grid 3x2 --names sorc_nova,sorc_shield,sorc_chain,sorc_meteor,sorc_haste,sorc_freeze`、置いたら `data/classes.js` の `sorceress.skillIcons` に書く
+```
+A single sprite sheet image, 1536x1024, arranged as an exact 3 columns by 2 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Spell icons, left-to-right, top-to-bottom: 1 Frost Nova: a ring of ice shards bursting outward, 2 Mana Shield: a glowing blue magic barrier sphere, 3 Chain Lightning: a forked white-blue lightning bolt jumping between points, 4 Meteor: a flaming rock falling with a fire trail, 5 Arcane Surge: swirling violet magic energy around a hand, 6 Frozen Prison: a cage of ice crystals.
+```
+（共通の指定は上の「アイコンのシート」と同じ）
+
+**装備の「杖」（1個）** → `assets/items/staff.png`、置いたら `data/items.js` の `icons` に `staff` を足す
+```
+A single game item icon: a dark wooden mage staff topped with a glowing ember crystal.
+```
 
 ## 制作済みの仕様・再制作用プロンプト
 

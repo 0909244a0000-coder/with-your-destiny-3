@@ -18,6 +18,15 @@ WYD.ui = {
     const s = state;
 
     this.$("help").onclick = () => this.showStory("help");
+    // 職業の切り替え
+    this.$("class-select").innerHTML = Object.keys(WYD.data.classes)
+      .map((id) => `<option value="${id}">${WYD.data.classes[id].name}</option>`).join("");
+    this.$("class-select").value = WYD.classes.id;
+    this.$("class-select").onchange = (e) => {
+      const name = WYD.data.classes[e.target.value].name;
+      if (confirm(`「${name}」に切り替えますか？（今のキャラのセーブはそのまま残ります）`)) WYD.classes.switchTo(e.target.value, s);
+      else e.target.value = WYD.classes.id;
+    };
     // 修練ポイントを振る
     this.$("paragon").onclick = (e) => {
       const btn = e.target.closest("button[data-paragon]");
