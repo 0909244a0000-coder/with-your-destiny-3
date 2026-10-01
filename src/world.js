@@ -707,6 +707,12 @@ WYD.world = {
       if (b.life <= 0 || p.dead) continue;
       if (WYD.util.dist(b, p) > WYD.data.player.radius + b.size) continue;
       b.life = 0;
+      // 固有能力：流星避けの指輪（弾をはじく）
+      const ward = stats.powers.projectileWard;
+      if (ward && Math.random() * 100 < ward.chance) {
+        this.addText(w, p.x, p.y - 20, "はじいた", ward.color);
+        continue;
+      }
       const defense = stats.defense + (p.buff ? p.buff.defense : 0);
       const hit = this.calcDamage(b.attack, defense, 0);
       p.hp -= hit.damage;
@@ -819,6 +825,9 @@ WYD.world = {
     const fx = stats.effects;
     const wrath = WYD.loot.effectInfo("wrath");
     if (fx.wrath > 0 && wrath && p.hp / stats.maxHp * 100 <= wrath.hpPercent) attack *= 1 + fx.wrath / 100;
+    // 固有能力：狩人の籠手（精鋭とボスに強い）
+    const hunter = stats.powers.eliteHunter;
+    if (hunter && (e.elite || e.boss)) attack *= 1 + hunter.percent / 100;
     const hit = this.calcDamage(attack, e.defense, stats.critChance, stats.critMultiplier);
     this.damageEnemy(w, state, e, hit.damage, hit.crit);
     // スキルの型のおまけ：吸血・縛る（スキルを使っている最中だけ）

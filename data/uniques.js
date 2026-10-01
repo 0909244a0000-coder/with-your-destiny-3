@@ -64,5 +64,27 @@ WYD.data.uniques = {
       desc: "スキルの空き枠1つにつき、スキル威力 +{percentPerSlot}%（使うスキルをしぼるほど強い）",
       params: { percentPerSlot: 45 },
     },
+    {
+      id: "wardRing", name: "流星避けの指輪", base: "ring", weight: 8,
+      stats: { maxHp: [15, 30], defense: [2, 4] },
+      power: "projectileWard",
+      desc: "敵の弾を {chance}% の確率ではじく（弾幕を撃つボスに強い）",
+      params: { chance: 45, color: "#9fdcff" },
+    },
+    {
+      id: "hunterGauntlets", name: "狩人の籠手", base: "gauntlets", weight: 8,
+      stats: { attack: [3, 6], critChance: [2, 4] },
+      power: "eliteHunter",
+      desc: "精鋭とボスに与えるダメージ +{percent}%",
+      params: { percent: 35 },
+    },
+    {
+      // classOnly … この職業でだけ落ちる（ほかの職業ではスキルがないので）
+      id: "boneCrown", name: "骸の王冠", base: "crown", weight: 10, classOnly: "necromancer",
+      stats: { maxHp: [20, 35], skillDamage: [8, 15] },
+      power: "raiseBoost",
+      desc: "{skill:raise}で呼べる数 +{extraCount}、手下の攻撃力 +{attackPercent}%",
+      params: { extraCount: 2, attackPercent: 30 },
+    },
   ],
 };

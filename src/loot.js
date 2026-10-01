@@ -56,7 +56,7 @@ WYD.loot = {
   // ユニーク装備を作る（def を省くとランダムに選ぶ）
   createUnique(state, itemLevel, def) {
     const U = WYD.data.uniques;
-    def = def || WYD.util.pickWeighted(U.list, (x) => x.weight);
+    def = def || WYD.util.pickWeighted(this.forClass(U.list), (x) => x.weight);
     const base = WYD.data.items.bases.find((b) => b.id === def.base);
     const stats = [];
     for (const stat in base.main) {
@@ -81,7 +81,7 @@ WYD.loot = {
   // セット装備を作る（setId・pieceId を省くとランダム）
   createSetPiece(state, itemLevel, setId, pieceId) {
     const S = WYD.data.sets;
-    const set = setId ? S.list.find((x) => x.id === setId) : WYD.util.pick(S.list);
+    const set = setId ? S.list.find((x) => x.id === setId) : WYD.util.pick(this.forClass(S.list));
     const piece = pieceId ? set.pieces.find((x) => x.id === pieceId) : WYD.util.pick(set.pieces);
     const base = WYD.data.items.bases.find((b) => b.id === piece.base);
     const stats = [];
@@ -92,6 +92,11 @@ WYD.loot = {
       rarity: "set", set: set.id, piece: piece.id, level: itemLevel, stats,
       effects: this.rollEffects("set"),
     });
+  },
+
+  // 今の職業で出るものだけ（classOnly がほかの職業のものを除く）
+  forClass(list) {
+    return list.filter((x) => !x.classOnly || x.classOnly === WYD.classes.id);
   },
 
   // 装備の表示名（強化していれば「+3 名前」）

@@ -38,9 +38,9 @@ WYD.records = {
       case "paragon": return state.player.paragon.level;
       case "maxDifficulty": return state.maxDifficulty;
       case "trialBest": return state.trial.best;
-      case "uniques": return WYD.data.uniques.list.filter((u) => c.uniques[u.id]).length;
+      case "uniques": return WYD.loot.forClass(WYD.data.uniques.list).filter((u) => c.uniques[u.id]).length;
       case "setPieces": return Object.keys(c.setPieces).length;
-      case "setComplete": return WYD.data.sets.list.filter((s) => s.pieces.every((p) => c.setPieces[p.id])).length;
+      case "setComplete": return WYD.loot.forClass(WYD.data.sets.list).filter((s) => s.pieces.every((p) => c.setPieces[p.id])).length;
       case "cleared": return state.cleared ? 1 : 0;
       case "dailyStreak": return state.daily.bestStreak;
       case "dailyTotal": return state.daily.total;
@@ -51,7 +51,7 @@ WYD.records = {
   // 実績の目標の値（"all" は全種類）
   target(a) {
     if (a.value !== "all") return a.value;
-    if (a.check === "uniques") return WYD.data.uniques.list.length;
+    if (a.check === "uniques") return WYD.loot.forClass(WYD.data.uniques.list).length;
     return 1;
   },
 

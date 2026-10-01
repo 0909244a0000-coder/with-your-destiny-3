@@ -4,15 +4,18 @@ window.WYD = window.WYD || {};
 
 WYD.allies = {
   // 呼べる数
-  maxCount(s, lv) {
-    return Math.max(1, Math.floor(s.countBase + s.countPerLevel * (lv - 1)));
+  // 呼べる数（骸の王冠などの固有能力で増える）
+  maxCount(s, lv, stats) {
+    const boost = stats && stats.powers.raiseBoost;
+    return Math.max(1, Math.floor(s.countBase + s.countPerLevel * (lv - 1))) + (boost ? boost.extraCount : 0);
   },
 
   // スキル「骸骨召喚」：足りないぶんを呼ぶ。呼んだら true
   summon(w, state, stats, s, lv) {
     const p = w.player;
     const alive = w.allies.length;
-    const max = this.maxCount(s, lv);
+    const max = this.maxCount(s, lv, stats);
+    const boost = stats.powers.raiseBoost;
     if (alive >= max) return false;
     const map = WYD.data.map;
     for (let i = alive; i < max; i++) {
@@ -22,7 +25,8 @@ WYD.allies = {
         x: WYD.util.clamp(p.x + Math.cos(ang) * s.spawnSpread, 20, map.width - 20),
         y: WYD.util.clamp(p.y + Math.sin(ang) * s.spawnSpread, 20, map.height - 20),
         hp, maxHp: hp,
-        attack: stats.attack * (s.attackBase + s.attackPerLevel * (lv - 1)) * (1 + stats.skillDamage / 100),
+        attack: stats.attack * (s.attackBase + s.attackPerLevel * (lv - 1)) * (1 + stats.skillDamage / 100) *
+          (1 + (boost ? boost.attackPercent : 0) / 100),
         defense: stats.defense * s.defenseRatio,
         timeLeft: s.duration, duration: s.duration,
         moveSpeed: s.moveSpeed, attackSpeed: s.attackSpeed, range: s.range, radius: s.radius,

@@ -682,13 +682,14 @@ WYD.ui = {
     }).join("");
     // ユニーク図鑑
     const U = WYD.data.uniques;
-    const uFound = U.list.filter((u) => s.codex.uniques[u.id]).length;
-    const uniques = U.list.map((u) => s.codex.uniques[u.id]
+    const uList = WYD.loot.forClass(U.list);
+    const uFound = uList.filter((u) => s.codex.uniques[u.id]).length;
+    const uniques = uList.map((u) => s.codex.uniques[u.id]
       ? `<div class="codex-item"><b style="color:${rarity("unique").color}">${u.name}</b> <small class="muted">${baseName(u.base)}</small><br><small>${WYD.loot.uniqueDesc(u)}</small></div>`
       : `<div class="codex-item unknown"><b>？？？</b> <small class="muted">${baseName(u.base)}</small></div>`).join("");
     // セット図鑑
     const SE = WYD.data.sets;
-    const sets = SE.list.map((set) => {
+    const sets = WYD.loot.forClass(SE.list).map((set) => {
       const have = set.pieces.filter((p) => s.codex.setPieces[p.id]).length;
       const pieces = set.pieces.map((p) => s.codex.setPieces[p.id]
         ? `<span style="color:${SE.color}">${p.name}</span>` : `<span class="muted">？？？（${baseName(p.base)}）</span>`).join("、");
@@ -697,7 +698,7 @@ WYD.ui = {
     }).join("");
     return `<div class="codex-cols">
       <div><h3>記録</h3>${counters}<h3>実績 <small>${done}/${R.achievements.length}</small></h3>${achievements}</div>
-      <div><h3>ユニーク図鑑 <small>${uFound}/${U.list.length}</small></h3>${uniques}<h3>セット図鑑</h3>${sets}</div>
+      <div><h3>ユニーク図鑑 <small>${uFound}/${uList.length}</small></h3>${uniques}<h3>セット図鑑</h3>${sets}</div>
     </div>`;
   },
 

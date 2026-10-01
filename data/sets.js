@@ -55,5 +55,20 @@ WYD.data.sets = {
              desc: "{skill:whirl}を使うと足元の地面が燃え、{duration}秒間 {tick}秒ごとに攻撃力×{mult}倍で焼く" },
       },
     },
+    {
+      // ネクロマンサーでだけ落ちる（classOnly）
+      id: "boneLord", name: "骸の王の装い", classOnly: "necromancer",
+      pieces: [
+        { id: "bonelord_staff", name: "骸の王の杖", base: "staff", stats: { skillDamage: [10, 18] } },
+        { id: "bonelord_robe", name: "骸の王の法衣", base: "robe", stats: { maxHp: [20, 40] } },
+        { id: "bonelord_boots", name: "骸の王の脚甲", base: "leggings", stats: { defense: [3, 6] } },
+        { id: "bonelord_ring", name: "骸の王の指輪", base: "ring", stats: { attack: [3, 6] } },
+      ],
+      bonuses: {
+        2: { stats: { skillDamage: 20, maxHp: 40 } },
+        4: { power: "raiseBoost", params: { extraCount: 1, attackPercent: 60 },
+             desc: "{skill:raise}で呼べる数 +{extraCount}、手下の攻撃力 +{attackPercent}%" },
+      },
+    },
   ],
 };
