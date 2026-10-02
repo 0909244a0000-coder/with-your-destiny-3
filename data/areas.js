@@ -81,14 +81,13 @@ WYD.data.areas = [
     killsPerFloor: 60,
   },
   {
-    // 5つ目：氷の深淵。地面の絵はまだないので、地底界の絵に青白い色をかぶせて仮に使う
+    // 5つ目：氷の深淵。地面は assets/areas/frost.png
     id: "frost",
     name: "凍てつく深淵",
     bgColor: "#1a2430",
     grassColor: "#2a3a4a",
     stoneColor: "#5a6a7a",
-    groundImage: "assets/areas/patala.png",
-    groundTint: "rgba(150,200,255,0.35)",
+    groundImage: "assets/areas/frost.png",
     powerMult: 6.6,
     itemLevelBonus: 15,
     enemies: [
@@ -102,7 +101,7 @@ WYD.data.areas = [
     killsPerFloor: 66,
   },
   {
-    // 6つ目：炎の地獄。地面の絵はまだないので、火葬場の絵に赤い色をかぶせて仮に使う
+    // 6つ目：炎の地獄。地面は assets/areas/inferno.png
     id: "inferno",
     name: "業火の玉座",
     bgColor: "#2a1210",

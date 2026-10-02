@@ -298,8 +298,7 @@ WYD.data.enemies = {
   goblin: {
     name: "宝物ゴブリン",
     color: "#ffd447",
-    image: "assets/enemies/yaksha.png",
-    imageFilter: "sepia(1) saturate(3) brightness(1.15)",   // 仮の絵（金色にした夜叉）
+    image: "assets/enemies/goblin.png",
     radius: 12,
     hp: 200,
     attack: 0,

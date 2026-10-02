@@ -442,8 +442,8 @@ WYD.data.classes = {
         duration: 22, moveSpeed: 150, attackSpeed: 1.3, range: 24, radius: 11,
         spawnSpread: 30, followDistance: 45, firstAttackDelay: 0.3,
         color: "#a8a8b8",
-        image: "assets/enemies/daitya.png",   // 仮の絵
-        imageFilter: "grayscale(0.8) brightness(1.4)",
+        image: "assets/ally_wolf.png",
+        imageFilter: null,
       },
       dru_tornado: {
         kind: "whirl", name: "竜巻",
