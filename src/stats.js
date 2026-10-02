@@ -45,6 +45,9 @@ WYD.stats = {
     for (const a of this.activeSetBonuses(state)) {
       for (const id in a.bonus.effects || {}) if (id in totals) totals[id] += a.bonus.effects[id];
     }
+    for (const c of WYD.devotion.owned(state)) {
+      for (const id in c.bonus.effects || {}) if (id in totals) totals[id] += c.bonus.effects[id];
+    }
     for (const slot in state.equipment) {
       // ルーンワードの特殊効果
       const rw = WYD.gems.runeword(state.equipment[slot]);
@@ -76,6 +79,8 @@ WYD.stats = {
       const rw = WYD.gems.runeword(state.equipment[slot]);
       if (rw && rw.bonus.power && !out[rw.bonus.power]) out[rw.bonus.power] = rw.bonus.params;
     }
+    // 星座の固有能力
+    for (const c of WYD.devotion.owned(state)) if (c.bonus.power && !out[c.bonus.power]) out[c.bonus.power] = c.bonus.params;
     // カナイの箱に入れた能力（装備と同じ能力なら装備のほうが効く）
     for (const def of WYD.cube.active(state)) if (!out[def.power]) out[def.power] = def.params;
     return out;
@@ -85,9 +90,12 @@ WYD.stats = {
     const P = WYD.data.player;
     const lv = state.player.level - 1;
     const b = this.equipmentBonus(state);
-    // セットのボーナスの能力を足す
+    // セットのボーナスと星座の能力を足す
     for (const sb of this.activeSetBonuses(state)) {
       for (const k in sb.bonus.stats || {}) b[k] = (b[k] || 0) + sb.bonus.stats[k];
+    }
+    for (const c of WYD.devotion.owned(state)) {
+      for (const k in c.bonus.stats || {}) b[k] = (b[k] || 0) + c.bonus.stats[k];
     }
     const fx = this.effectTotals(state);
     const pb = this.paragonBonus(state);

@@ -49,6 +49,7 @@
       <span class="sep"></span>
       <button id="sound-toggle" title="効果音（最初に画面をクリックすると鳴りはじめる）">音：ON</button>
       <button id="help">遊び方</button>
+      <button id="devotion-open" title="信仰ポイントで星座を埋めて強くなる（Grim Dawn の星座）">星座</button>
       <button id="codex-open" title="図鑑（集めたユニーク・セット装備）、記録、実績">図鑑と記録</button>
       <button id="backup-export" title="全部のキャラのセーブを1つのファイルに保存する">セーブを書き出す</button>
       <button id="backup-import" title="書き出したファイルからセーブを戻す">読み込む</button>
@@ -127,6 +128,14 @@
 
   <div id="tooltip"></div>
 
+  <div id="devotion" class="modal" hidden>
+    <div class="modal-box devotion-box">
+      <h2>星座</h2>
+      <div id="devotion-body"></div>
+      <button id="devotion-close">閉じる</button>
+    </div>
+  </div>
+
   <div id="filter" class="modal" hidden>
     <div class="modal-box filter-box">
       <h2>戦利品フィルター</h2>
@@ -186,6 +195,7 @@
   <script src="data/daily.js"></script>
   <script src="data/cube.js"></script>
   <script src="data/maps.js"></script>
+  <script src="data/devotion.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>
@@ -204,6 +214,7 @@
   <script src="src/allies.js"></script>
   <script src="src/cube.js"></script>
   <script src="src/maps.js"></script>
+  <script src="src/devotion.js"></script>
   <script src="src/sound.js"></script>
   <script src="src/offline.js"></script>
   <script src="src/render.js"></script>

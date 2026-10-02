@@ -41,6 +41,7 @@ WYD.save = {
       achievements: {},   // 達成した実績の id
       gems: {},        // 持っている宝石（"種類:段階" → 数）
       maps: [],        // 持っている地図（src/maps.js）
+      devotion: {},    // 埋めた星座（星座の id → true）
       bossDeaths: {},  // ボスに倒された回数（エリアの id → 回数。倒すと消える）
       mapBest: 0,      // 成功した地図の最高段階
       cube: { learned: {}, slots: { weapon: null, armor: null, jewelry: null } },   // カナイの箱
@@ -98,6 +99,7 @@ WYD.save = {
       state.daily = Object.assign(this.newState().daily, saved.daily);
       if (!Array.isArray(state.maps)) state.maps = [];
       state.bossDeaths = Object.assign({}, saved.bossDeaths);
+      state.devotion = Object.assign({}, saved.devotion);
       state.cube = { learned: Object.assign({}, saved.cube && saved.cube.learned),
         slots: Object.assign(this.newState().cube.slots, saved.cube && saved.cube.slots) };
       // 「ノーマルを拾わない」だった頃のセーブは、「ノーマルを自動分解」にする

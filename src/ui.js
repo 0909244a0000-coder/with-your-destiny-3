@@ -153,6 +153,19 @@ WYD.ui = {
       if (this.craftMode) this.enhanceMode = this.cubeMode = this.forgeMode = false;
       this.markDirty();
     };
+    this.$("devotion-open").onclick = () => {
+      this.$("devotion-body").innerHTML = this.devotionHtml();
+      this.$("devotion").hidden = false;
+    };
+    this.$("devotion-close").onclick = () => { this.$("devotion").hidden = true; };
+    this.$("devotion-body").onclick = (e) => {
+      const btn = e.target.closest("[data-dev]");
+      if (!btn) return;
+      const ok = btn.dataset.act === "take" ? WYD.devotion.take(s, btn.dataset.dev) : WYD.devotion.remove(s, btn.dataset.dev);
+      if (!ok) this.log(btn.dataset.act === "take" ? "ポイントか縁が足りない" : "ほかの星座が必要としているので外せない", "#ff6b6b");
+      this.$("devotion-body").innerHTML = this.devotionHtml();
+      this.changed();
+    };
     this.$("filter-open").onclick = () => {
       this.$("filter-body").innerHTML = this.filterHtml();
       this.$("filter").hidden = false;
@@ -426,6 +439,25 @@ WYD.ui = {
     WYD.world.resetEnemies(this.world, s, true);
     this.log(`危険度を ${next} にした`);
     this.changed();
+  },
+
+  // 星座の画面
+  devotionHtml() {
+    const s = this.state;
+    const D = WYD.data.devotion;
+    const af = WYD.devotion.affinity(s);
+    const afText = (o) => Object.keys(o).map((k) => `<span style="color:${D.affinities[k].color}">${D.affinities[k].name}${o[k]}</span>`).join(" ") || "なし";
+    const P = D.points;
+    const rows = D.list.map((c) => {
+      const own = !!s.devotion[c.id];
+      const btn = own
+        ? `<button data-dev="${c.id}" data-act="remove" ${WYD.devotion.canRemove(s, c) ? "" : "disabled"}>外す</button>`
+        : `<button data-dev="${c.id}" data-act="take" ${WYD.devotion.canTake(s, c) ? "" : "disabled"}>埋める（${c.cost}）</button>`;
+      return `<div class="dev-row${own ? " own" : ""}"><div><b>${own ? "★" : "☆"} ${c.name}</b> <small class="muted">必要な縁：${afText(c.requires)}／もらえる縁：${afText(c.grants)}</small><br>
+        <small>${this.bonusText(c.bonus)}</small></div>${btn}</div>`;
+    }).join("");
+    return `<div class="dev-head">信仰ポイント：<b>${WYD.devotion.free(s)}</b> / ${WYD.devotion.totalPoints(s)}　今の縁：${afText(af)}</div>
+      <p class="muted">ポイントは レベル${P.perLevels}ごとに1、はじめて倒したボス1体ごとに${P.perBoss}、試練の最高段階${P.perTrialStages}ごとに1、地図の最高段階1ごとに${P.perMapTier}。外すとポイントはもどる。</p>${rows}`;
   },
 
   // 戦利品フィルターの画面
@@ -961,6 +993,9 @@ WYD.ui = {
     for (const slot in this.state.equipment) {
       const u = WYD.loot.uniqueInfo(this.state.equipment[slot]);
       if (u) lines.push(`<div style="color:${WYD.data.uniques.color}">◆ ${u.name}：<small>${WYD.loot.uniqueDesc(u)}</small></div>`);
+    }
+    for (const c of WYD.devotion.owned(this.state)) {
+      if (c.bonus.power) lines.push(`<div style="color:#fff0a0">✧ 星座：${c.name}：<small>${WYD.loot.uniqueDesc(c.bonus)}</small></div>`);
     }
     for (const u of WYD.cube.active(this.state)) {
       lines.push(`<div style="color:${WYD.data.cube.color}">▣ 箱：${u.name}：<small>${WYD.loot.uniqueDesc(u)}</small></div>`);
