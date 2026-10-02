@@ -8,6 +8,7 @@ WYD.ui = {
   craftMode: false,   // つけ直しモード（クリックで特殊効果をつけ直す）
   paused: false,      // 一時停止中か（セーブしない）
   enhanceMode: false, // 強化モード（クリックで +1 する）
+  discardMode: false, // 捨てるモード（クリックで捨てる。右クリックが使えない環境でも捨てられるように）
   forgeMode: false,   // 鍛造モード（クリックで鍛造の画面をひらく）
   forgeItem: null,    // 鍛造の画面で鍛えている装備
   cubeMode: false,    // カナイの箱に入れるモード（クリックでユニークを分解して覚える）
@@ -178,9 +179,18 @@ WYD.ui = {
       this.log(`マジック以下の装備を${r.count}個捨てた（${C.materialName} +${r.gained}）`);
       this.changed();
     };
+    this.$("sort-inv").onclick = () => {
+      WYD.inventory.sort(s.inventory);
+      this.changed();
+    };
+    this.$("discard-mode").onclick = () => {
+      this.discardMode = !this.discardMode;
+      if (this.discardMode) this.craftMode = this.enhanceMode = this.cubeMode = this.forgeMode = false;
+      this.markDirty();
+    };
     this.$("craft-mode").onclick = () => {
       this.craftMode = !this.craftMode;
-      if (this.craftMode) this.enhanceMode = this.cubeMode = this.forgeMode = false;
+      if (this.craftMode) this.enhanceMode = this.cubeMode = this.forgeMode = this.discardMode = false;
       this.markDirty();
     };
     this.$("devotion-open").onclick = () => {
@@ -296,7 +306,7 @@ WYD.ui = {
     };
     this.$("forge-mode").onclick = () => {
       this.forgeMode = !this.forgeMode;
-      if (this.forgeMode) this.craftMode = this.enhanceMode = this.cubeMode = false;
+      if (this.forgeMode) this.craftMode = this.enhanceMode = this.cubeMode = this.discardMode = false;
       this.markDirty();
     };
     this.$("forge-close").onclick = () => { this.$("forge").hidden = true; this.forgeItem = null; };
@@ -314,7 +324,7 @@ WYD.ui = {
     };
     this.$("cube-mode").onclick = () => {
       this.cubeMode = !this.cubeMode;
-      if (this.cubeMode) this.craftMode = this.enhanceMode = this.forgeMode = false;
+      if (this.cubeMode) this.craftMode = this.enhanceMode = this.forgeMode = this.discardMode = false;
       this.markDirty();
     };
     this.$("maps").onclick = (e) => {
@@ -341,7 +351,7 @@ WYD.ui = {
     };
     this.$("enhance-mode").onclick = () => {
       this.enhanceMode = !this.enhanceMode;
-      if (this.enhanceMode) this.craftMode = this.cubeMode = this.forgeMode = false;
+      if (this.enhanceMode) this.craftMode = this.cubeMode = this.forgeMode = this.discardMode = false;
       this.markDirty();
     };
 
@@ -381,6 +391,10 @@ WYD.ui = {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
       const index = Number(cell.dataset.index);
+      if (this.discardMode) {
+        this.discardAt("inv", index);
+        return;
+      }
       if (this.touchSheet("inv", index)) return;   // スマホ：触ると「どうするか」の窓
       if (e.ctrlKey || e.metaKey) this.toggleLock(s.inventory[index]);
       else if (this.forgeMode) this.openForge(s.inventory[index]);
@@ -418,6 +432,10 @@ WYD.ui = {
       if (this.eatClick()) return;
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
+      if (this.discardMode) {
+        this.discardAt("stash", Number(cell.dataset.index));
+        return;
+      }
       if (this.touchSheet("stash", Number(cell.dataset.index))) return;
       if (e.ctrlKey || e.metaKey) this.toggleLock(s.stash[Number(cell.dataset.index)]);
       else if (this.forgeMode) this.openForge(s.stash[Number(cell.dataset.index)]);
@@ -1050,11 +1068,18 @@ WYD.ui = {
     this.$("craft-mode").classList.toggle("active", this.craftMode);
     this.$("enhance-mode").textContent = `強化モード：${this.enhanceMode ? "ON" : "OFF"}`;
     this.$("enhance-mode").classList.toggle("active", this.enhanceMode);
-    this.$("inv-help").textContent = this.enhanceMode
+    this.$("discard-mode").textContent = `捨てるモード：${this.discardMode ? "ON" : "OFF"}`;
+    this.$("discard-mode").classList.toggle("active", this.discardMode);
+    this.$("inventory").classList.toggle("discarding", this.discardMode);
+    this.$("stash").classList.toggle("discarding", this.discardMode);
+    this.$("inv-help").textContent = this.discardMode
+      ? "捨てるモード：持ち物・倉庫の装備をクリック（スマホは触る）と捨てて素材にする。ロックした装備は捨てない。終わったらもう一度ボタンでOFF"
+      : this.enhanceMode
       ? "強化モード：持ち物や装備をクリックすると、素材を使って +1 強化する（捨てると使った素材の半分がもどる）"
       : this.craftMode
       ? "つけ直しモード：持ち物や装備をクリックすると、素材を使って特殊効果をつけ直す"
-      : "左クリック：装備する／右クリック（または長押し）：捨てる（捨てると素材になる）／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック";
+      : this.isTouch() ? "装備を触ると：説明・今の装備との比べ・装備する／倉庫へ／ロック／捨てる。まとめて捨てるときは「捨てるモード」"
+      : "左クリック：装備する／捨てる：「捨てるモード」をONにしてクリック（右クリック・Delete キーでも）／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック";
     this.$("inventory").innerHTML = this.cellsHtml(s.inventory, size);
     this.$("gems").innerHTML = this.gemsHtml();
     this.$("builds").innerHTML = this.buildsHtml();
@@ -1498,11 +1523,16 @@ WYD.ui = {
 
   // マウスを乗せている装備を捨てる（Delete キー。右クリックが効かない環境でも捨てられるように）
   discardHovered() {
-    const h = this.hovered, s = this.state;
-    const list = h.where === "inv" ? s.inventory : s.stash;
-    const item = list[h.index];
+    this.discardAt(this.hovered.where, this.hovered.index);
+  },
+
+  // 持ち物（"inv"）か倉庫（"stash"）の index 番目を捨てる
+  discardAt(where, index) {
+    const s = this.state;
+    const list = where === "inv" ? s.inventory : s.stash;
+    const item = list[index];
     if (!item) return;
-    const gained = h.where === "inv" ? WYD.inventory.discard(s, h.index) : WYD.inventory.discardFromStash(s, h.index);
+    const gained = where === "inv" ? WYD.inventory.discard(s, index) : WYD.inventory.discardFromStash(s, index);
     if (gained < 0) this.log(`${WYD.loot.label(item)}はロックしているので捨てられない（Ctrl＋クリックで外す）`, "#ff6b6b");
     else this.log(`${WYD.loot.label(item)}を捨てた（${WYD.data.crafting.materialName} +${gained}）`);
     this.hovered = null;
@@ -1511,7 +1541,7 @@ WYD.ui = {
   },
 
   touchSheet(where, key, force) {
-    if ((!this.isTouch() && !force) || this.forgeMode || this.cubeMode || this.gemSelected || this.enhanceMode || this.craftMode) return false;
+    if ((!this.isTouch() && !force) || this.forgeMode || this.cubeMode || this.gemSelected || this.enhanceMode || this.craftMode || this.discardMode) return false;
     const s = this.state;
     const item = where === "inv" ? s.inventory[key] : where === "stash" ? s.stash[key] : s.equipment[key];
     if (!item) return false;

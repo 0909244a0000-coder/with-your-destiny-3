@@ -108,6 +108,15 @@ WYD.inventory = {
 
   // 捨てる（分解して素材をもらう）。もらった素材の数を返す
   // ロックした装備は捨てられない（捨てたら素材の数、捨てなかったら -1）
+  // 並べ替え：ロックしたもの → レア度の高い順 → 部位の順 → 強い順
+  sort(list) {
+    const D = WYD.data.items;
+    const rank = (it) => D.rarities.findIndex((r) => r.id === it.rarity);
+    const slots = Object.keys(D.slots);
+    list.sort((a, b) => (b.locked ? 1 : 0) - (a.locked ? 1 : 0) || rank(b) - rank(a)
+      || slots.indexOf(a.slot) - slots.indexOf(b.slot) || this.itemScore(b) - this.itemScore(a));
+  },
+
   discard(state, index) {
     if (state.inventory[index] && state.inventory[index].locked) return -1;
     const item = state.inventory.splice(index, 1)[0];

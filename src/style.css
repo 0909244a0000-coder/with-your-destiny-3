@@ -92,7 +92,9 @@ aside { width: 400px; display: flex; flex-direction: column; gap: 12px; }
 .cell.blank { cursor: default; opacity: 0.5; }
 .cell:hover:not(.blank) { background: #2b251c; }
 #equipment.grid { grid-template-columns: repeat(3, 1fr); }
-.inv-buttons { display: flex; gap: 6px; margin-top: 8px; }
+.inv-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#discard-mode.active { background: linear-gradient(#7a2a1e, #4a1810); color: #ffd0c0; border-color: #ff6b4a; }
+.grid.discarding .cell { cursor: crosshair; box-shadow: inset 0 0 0 1px rgba(255, 90, 60, 0.6); }
 .inv-buttons button { font-size: 12px; }
 
 #tooltip {
