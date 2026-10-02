@@ -28,6 +28,7 @@
 - 伝説の宝石：`src/legendaryGems.js`（`WYD.lgems`）・`data/legendaryGems.js`。セーブは `state.lgems = { owned: { id: ランク }, equipped: [...] }`。手に入る・ランク上げは `src/trial.js` の finish（成功時）から。効果は `playerHit`（ダメージ倍率・迅速の重なり）、通常攻撃の間隔、`enemyDied`（強者の災い）、`src/stats.js`（命＝最大HP、血＝吸血）。自動プレイで試練20分後にランク8〜13、試練の最高段階は入れる前とほぼ同じ（10〜14）。パラディンは試練が少し苦手（段階10くらい）
 - 6つ目のエリア「業火の玉座」（`inferno`、powerMult 8.0）とボス「業火の魔王」（`hellLord`：分身・炎の沼・炎の弾。大技 slam はなし。slam のないボスにも対応した）。自動プレイ40分：6体目は23〜30分で倒せる（5体目の5〜9分後）。倒れる回数は40分で5〜12回とばらつく（装備の運しだい）。いちばんの原因は精鋭の溶岩の巨人だったので、攻撃力と速さを下げた。`tools/balance-sim.js` の結果に `deathCauses`（どこで・何の近くで倒れたか）を出すようにした
 - 祠：`src/shrines.js`・`data/shrines.js`。地面の祠は `w.shrine`、効いている効果は `w.player.shrine`。能力への効果は `WYD.stats.compute` の最後に `WYD.shrines.apply` でかける（`WYD.currentWorld` を見る）。経験値は `enemyDied`、主人公の動きは `updatePlayer`（いちばん近い敵より `detour` 以内なら先に祠へ）。記録 `shrinesUsed` と実績2つ
+- キャダラの賭け：`src/gamble.js`・`data/gamble.js`。`WYD.loot.create` に4つ目の引数 `opts`（`slot`・`rarity`）を足した（ほかの呼び出しは今までどおり）。記録 `gambles`
 - エフェクト（`src/fx.js`）、絵の動き（`src/render.js` の `pose`）、ディアブロ風パネル（`src/style.css` の後半）、効果音（`src/sound.js`）
 - 絵：主人公、地面3枚、装備13個・スキル6個のアイコン、全13種類の敵・ボス（`docs/ART.md` の「受け取り済み」）。アイコンの切り出し用シートも `assets/sheets/` に保存
 

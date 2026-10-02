@@ -18,11 +18,12 @@ WYD.loot = {
     );
   },
 
-  create(state, itemLevel, rarityBonus) {
+  // opts … { slot: 部位だけから選ぶ, rarity: レア度を決める }（キャダラの賭けで使う）
+  create(state, itemLevel, rarityBonus, opts) {
     const D = WYD.data.items;
     const u = WYD.util;
-    const base = u.pick(D.bases);
-    const rarity = this.rollRarity(rarityBonus);
+    const base = u.pick(opts && opts.slot ? D.bases.filter((b) => b.slot === opts.slot) : D.bases);
+    const rarity = opts && opts.rarity ? D.rarities.find((r) => r.id === opts.rarity) : this.rollRarity(rarityBonus);
 
     const stats = [];
     for (const stat in base.main) {

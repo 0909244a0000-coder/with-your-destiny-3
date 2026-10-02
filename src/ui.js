@@ -175,6 +175,27 @@ WYD.ui = {
       this.$("merc-body").innerHTML = this.mercHtml();
       this.$("merc").hidden = false;
     };
+    this.$("gamble-open").onclick = () => {
+      this.gambleLast = null;
+      this.$("gamble-body").innerHTML = this.gambleHtml();
+      this.$("gamble").hidden = false;
+    };
+    this.$("gamble-close").onclick = () => { this.$("gamble").hidden = true; };
+    this.$("gamble-body").onclick = (e) => {
+      const btn = e.target.closest("[data-gamble]");
+      if (!btn) return;
+      const item = WYD.gamble.roll(s, btn.dataset.gamble);
+      if (item) {
+        this.gambleLast = item;
+        const r = WYD.loot.rarityInfo(item.rarity);
+        this.log(`キャダラの賭け：${WYD.loot.label(item)}（${r.name}）`, r.color);
+        if (["legend", "unique", "set"].includes(item.rarity)) WYD.sound.play("uniqueDrop");
+      } else {
+        this.log(WYD.inventory.isFull(s) ? "持ち物がいっぱい" : `${WYD.data.crafting.materialName}が足りない`, "#ff6b6b");
+      }
+      this.$("gamble-body").innerHTML = this.gambleHtml();
+      this.changed();
+    };
     this.$("lgem-open").onclick = () => {
       this.$("lgem-body").innerHTML = this.lgemHtml();
       this.$("lgem").hidden = false;
@@ -523,6 +544,28 @@ WYD.ui = {
     }).join("");
     return `<div class="dev-head">信仰ポイント：<b>${WYD.devotion.free(s)}</b> / ${WYD.devotion.totalPoints(s)}　今の縁：${afText(af)}</div>
       <p class="muted">ポイントは レベル${P.perLevels}ごとに1、はじめて倒したボス1体ごとに${P.perBoss}、試練の最高段階${P.perTrialStages}ごとに1、地図の最高段階1ごとに${P.perMapTier}。外すとポイントはもどる。</p>${rows}`;
+  },
+
+  // キャダラの賭けの画面
+  gambleHtml() {
+    const s = this.state;
+    const G = WYD.data.gamble;
+    const mat = WYD.data.crafting.materialName;
+    if (s.player.level < G.minLevel) return `<p class="muted">レベル${G.minLevel}になると使えます。</p>`;
+    const cost = WYD.gamble.cost(s);
+    const total = G.odds.reduce((a, o) => a + o.weight, 0);
+    const odds = G.odds.map((o) => {
+      const r = WYD.loot.rarityInfo(o.rarity);
+      return `<span style="color:${r.color}">${r.name} ${Math.round(o.weight / total * 100)}%</span>`;
+    }).join("　");
+    const slots = WYD.data.items.slots;
+    const btns = Object.keys(slots).map((k) =>
+      `<button data-gamble="${k}" ${s.materials >= cost && !WYD.inventory.isFull(s) ? "" : "disabled"}>${slots[k]}</button>`).join(" ");
+    const last = this.gambleLast;
+    const lastHtml = last ? `<div class="dev-row own"><div>もらった装備：<b style="color:${WYD.loot.rarityInfo(last.rarity).color}">${WYD.loot.label(last)}</b>（持ち物に入りました）</div></div>` : "";
+    return `<div class="dev-head">1回 ${mat} <b>${cost}</b>（持っている ${mat}：${s.materials}）　アイテムレベル ${WYD.gamble.itemLevel(s)}</div>
+      <p class="muted">部位を選ぶと、その部位の装備がランダムで1つもらえます。出やすさ：${odds}（ユニーク・セットがその部位にないときはレジェンド）。アイテムレベルは、行ったことのある一番奥のエリアと最高危険度で決まります。</p>
+      <div class="gamble-btns">${btns}</div>${lastHtml}`;
   },
 
   // 伝説の宝石の画面

@@ -324,3 +324,5 @@ details.menu .menu-body button, details.menu .menu-body label { text-align: left
 .builds { margin-top: 6px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
 .build-slot { display: inline-flex; gap: 2px; }
 .build-slot button { font-size: 11px; padding: 0 6px; }
+.gamble-btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.gamble-btns button { min-width: 64px; }

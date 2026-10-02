@@ -24,6 +24,7 @@ WYD.data.records = {
     { id: "uniquesFound", name: "拾ったユニーク" },
     { id: "goblinKills", name: "倒した宝物ゴブリン" },
     { id: "shrinesUsed", name: "触れた祠" },
+    { id: "gambles", name: "キャダラの賭け" },
     { id: "ancientsFound", name: "拾った太古の装備" },
     { id: "primalsFound", name: "拾った始原の装備" },
     { id: "setsFound", name: "拾ったセット装備" },
