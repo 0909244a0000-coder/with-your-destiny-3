@@ -317,7 +317,7 @@ WYD.world = {
     if (this.hasAffix(e, "burning") && !p.dead && WYD.util.dist(e, p) <= burning.auraRadius) {
       p.hp -= e.attack * burning.auraDamage * dt;
       if (p.hp <= 0) {
-        this.playerDied(w);
+        this.playerDied(w, { by: this.enemyName(e), how: "burn" });
         return;
       }
     }
@@ -353,7 +353,7 @@ WYD.world = {
         const hit = this.calcDamage(h.damage, defense, 0);
         p.hp -= hit.damage;
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
-        if (p.hp <= 0) this.playerDied(w);
+        if (p.hp <= 0) this.playerDied(w, { by: h.by, how: "explode" });
       }
     }
     w.hazards = w.hazards.filter((h) => h.timer > 0);
@@ -760,7 +760,7 @@ WYD.world = {
         if (this.hasAffix(e, "frozen")) p.chill = this.eliteAffix("frozen").chillSeconds;
         this.reflect(w, state, stats, e, hit.damage);
         if (p.hp <= 0) {
-          this.playerDied(w);
+          this.playerDied(w, { by: this.enemyName(e), how: "hit" });
           return;
         }
       }
@@ -812,7 +812,7 @@ WYD.world = {
       w.projectiles.push({
         x: e.x, y: e.y,
         vx: (p.x - e.x) / d * r.speed, vy: (p.y - e.y) / d * r.speed,
-        size: r.size, color: r.color, attack: e.attack, ownerId: e.id,
+        size: r.size, color: r.color, attack: e.attack, ownerId: e.id, ownerName: this.enemyName(e),
         life: WYD.data.map.projectileLifetime,
       });
     }
@@ -843,7 +843,7 @@ WYD.world = {
       // 特殊効果：茨の鎧（撃った敵が生きていれば返す）
       const owner = w.enemies.find((e) => e.id === b.ownerId);
       if (owner) this.reflect(w, state, stats, owner, hit.damage);
-      if (p.hp <= 0) this.playerDied(w);
+      if (p.hp <= 0) this.playerDied(w, { by: b.ownerName, how: "shot" });
     }
     w.projectiles = w.projectiles.filter((b) => b.life > 0);
   },
@@ -876,7 +876,7 @@ WYD.world = {
     if (P && !p.dead && ready("pools", P)) {
       for (let i = 0; i < P.count; i++) {
         w.pools.push({ x: p.x + WYD.util.rand(-P.spread, P.spread), y: p.y + WYD.util.rand(-P.spread, P.spread),
-          radius: P.radius, timeLeft: P.duration, duration: P.duration, dps: e.attack * P.dpsMult, color: P.color });
+          radius: P.radius, timeLeft: P.duration, duration: P.duration, dps: e.attack * P.dpsMult, color: P.color, by: this.enemyName(e) });
       }
     }
     // 突進
@@ -900,7 +900,7 @@ WYD.world = {
         p.hp -= hit.damage;
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
         WYD.fx.shake(w, WYD.data.fx.shakeSlam);
-        if (p.hp <= 0) this.playerDied(w);
+        if (p.hp <= 0) this.playerDied(w, { by: this.enemyName(e), how: "charge" });
       }
       if (left <= step) e.charging = null;
       return true;
@@ -925,7 +925,7 @@ WYD.world = {
       pool.timeLeft -= dt;
       if (!p.dead && WYD.util.dist(pool, p) < pool.radius) {
         p.hp -= pool.dps * dt;
-        if (p.hp <= 0) this.playerDied(w);
+        if (p.hp <= 0) this.playerDied(w, { by: pool.by, how: "pool" });
       }
     }
     w.pools = w.pools.filter((x) => x.timeLeft > 0);
@@ -941,7 +941,7 @@ WYD.world = {
       const ang = offset + (i / b.count) * Math.PI * 2;
       w.projectiles.push({
         x: e.x, y: e.y, vx: Math.cos(ang) * b.speed, vy: Math.sin(ang) * b.speed,
-        size: b.size, color: b.color, attack: e.attack * b.damageMult, ownerId: e.id,
+        size: b.size, color: b.color, attack: e.attack * b.damageMult, ownerId: e.id, ownerName: this.enemyName(e),
         life: WYD.data.map.projectileLifetime,
       });
     }
@@ -967,7 +967,7 @@ WYD.world = {
         const hit = this.calcDamage(e.attack * slam.damageMult, defense, 0);
         p.hp -= hit.damage;
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
-        if (p.hp <= 0) this.playerDied(w);
+        if (p.hp <= 0) this.playerDied(w, { by: this.enemyName(e), how: "slam" });
       }
       return true;
     }
@@ -1160,7 +1160,7 @@ WYD.world = {
     WYD.records.add(state, "kills");
     if (this.hasAffix(e, "explosive")) {
       const A = this.eliteAffix("explosive");
-      w.hazards.push({ x: e.x, y: e.y, radius: A.radius, timer: A.delay, delay: A.delay, damage: e.attack * A.damageMult, color: A.color });
+      w.hazards.push({ x: e.x, y: e.y, radius: A.radius, timer: A.delay, delay: A.delay, damage: e.attack * A.damageMult, color: A.color, by: this.enemyName(e) });
     }
     if (e.elite) WYD.records.add(state, "eliteKills");
     if (e.boss) WYD.records.add(state, "bossKills");
@@ -1344,12 +1344,27 @@ WYD.world = {
     WYD.ui.markDirty();
   },
 
-  playerDied(w) {
+  enemyName(e) {
+    return e.name || WYD.data.enemies[e.kind].name;
+  },
+
+  // 倒れたとき：何に・どうやられたかと、次にためすことを知らせる
+  playerDied(w, cause) {
     const p = w.player;
+    if (p.dead) return;
     p.dead = true;
     p.hp = 0;
     p.respawnTimer = WYD.data.player.respawnSeconds;
-    WYD.ui.log("倒れてしまった…", "#ff6b6b");
+    const D = WYD.data.story.death;
+    const how = cause && D.how[cause.how];
+    WYD.ui.log(how && cause.by ? `${cause.by}${how}で倒れてしまった…` : "倒れてしまった…", "#ff6b6b");
+    // 同じヒントは遊んでいる間に1回だけ
+    const key = how && D.hints[cause.how] ? cause.how : "default";
+    w.hintsShown = w.hintsShown || {};
+    if (!w.hintsShown[key]) {
+      w.hintsShown[key] = true;
+      WYD.ui.log(`ヒント：${D.hints[key]}`, D.hintColor);
+    }
   },
 
   respawn(w, state, stats) {
