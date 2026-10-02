@@ -103,6 +103,17 @@ WYD.data.items = {
     "アグニの": "焔王の", "ヴァーユの": "嵐の",
   },
 
+  // 太古・始原（Diablo 3 のしくみ）：レジェンド・ユニーク・セットが、まれに能力の高い版で落ちる
+  ancient: {
+    rarities: ["legend", "unique", "set"],
+    ancientChance: 0.1,      // 太古になる確率
+    primalChance: 0.01,      // 始原になる確率
+    ancientMult: 1.3,        // 能力の倍率
+    primalMult: 1.6,
+    names: { 1: "太古の", 2: "始原の" },
+    colors: { 1: "#ff9a3c", 2: "#ff3c3c" },
+  },
+
   // 自動で装備：拾った装備の点数が、今その部位につけている装備より高ければ着替える（上のバーの「自動装備」）
   //   ユニーク・セット・強化した装備・宝石をはめた装備を着ているときは、その部位は着替えない
   //   点数 = 能力ごとの weights × 数値 の合計 + perEffect × 特殊効果の数（tools/balance-sim.js と同じ考え方）

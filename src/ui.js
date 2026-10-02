@@ -1034,7 +1034,7 @@ WYD.ui = {
   fxMark(item) {
     const n = this.itemEffects(item).length;
     const so = item.sockets || [];
-    return (item.locked ? ` <b class="fx-mark lock-mark" title="ロック中（Ctrl＋クリックで外す）">🔒</b>` : "") + (n ? ` <b class="fx-mark" style="color:${WYD.data.effects.color}">✦${n}</b>` : "") +
+    return (item.ancient ? ` <b class="fx-mark" style="color:${WYD.data.items.ancient.colors[item.ancient]}" title="${WYD.data.items.ancient.names[item.ancient]}装備">${item.ancient === 2 ? "◈" : "◆"}</b>` : "") + (item.locked ? ` <b class="fx-mark lock-mark" title="ロック中（Ctrl＋クリックで外す）">🔒</b>` : "") + (n ? ` <b class="fx-mark" style="color:${WYD.data.effects.color}">✦${n}</b>` : "") +
       (so.length ? ` <b class="fx-mark" title="ソケット（はめた数／穴の数）">◆${so.filter((x) => x).length}/${so.length}</b>` : "");
   },
 
@@ -1063,7 +1063,7 @@ WYD.ui = {
     return `<div class="tip-item">
       ${title ? `<div class="tip-title">${title}</div>` : ""}
       <div style="color:${WYD.gems.runeword(item) ? WYD.data.gems.runewordColor : r.color};font-weight:bold">${item.plus > 0 ? `<span style="color:${WYD.data.crafting.enhance.color}">+${item.plus}</span> ` : ""}${WYD.gems.runeword(item) ? `「${WYD.gems.runeword(item).name}」` : ""}${item.name}</div>
-      <div class="tip-sub">${r.name}・${WYD.data.items.slots[item.slot]}・アイテムLv ${item.level}</div>
+      <div class="tip-sub">${item.ancient ? `<b style="color:${WYD.data.items.ancient.colors[item.ancient]}">${WYD.data.items.ancient.names[item.ancient].replace("の", "")}</b>・` : ""}${r.name}・${WYD.data.items.slots[item.slot]}・アイテムLv ${item.level}</div>
       ${lines}
       ${uniqueLine}
       ${fxLines}

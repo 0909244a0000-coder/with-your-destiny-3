@@ -41,7 +41,7 @@ WYD.loot = {
     if (rarity.id === "rare") name = u.pick(D.rarePrefixes) + base.name;
     if (rarity.id === "legend") name = u.pick(D.legendPrefixes) + base.name;
 
-    return WYD.gems.rollSockets({
+    return this.finish({
       id: state.nextItemId++,
       name,
       slot: base.slot,
@@ -65,7 +65,7 @@ WYD.loot = {
     for (const stat in def.stats) {
       stats.push({ stat, value: this.rollValue(stat, def.stats[stat], itemLevel), main: false });
     }
-    return WYD.gems.rollSockets({
+    return this.finish({
       id: state.nextItemId++,
       name: def.name,
       slot: base.slot,
@@ -87,11 +87,29 @@ WYD.loot = {
     const stats = [];
     for (const stat in base.main) stats.push({ stat, value: this.rollValue(stat, base.main[stat], itemLevel), main: true });
     for (const stat in piece.stats) stats.push({ stat, value: this.rollValue(stat, piece.stats[stat], itemLevel), main: false });
-    return WYD.gems.rollSockets({
+    return this.finish({
       id: state.nextItemId++, name: piece.name, slot: base.slot, base: base.id,
       rarity: "set", set: set.id, piece: piece.id, level: itemLevel, stats,
       effects: this.rollEffects("set"),
     });
+  },
+
+  // 作った装備の仕上げ：太古・始原になるかを決め、ソケットをつける
+  finish(item) {
+    const A = WYD.data.items.ancient;
+    if (A.rarities.includes(item.rarity)) {
+      const r = Math.random();
+      const grade = r < A.primalChance ? 2 : r < A.primalChance + A.ancientChance ? 1 : 0;
+      if (grade) {
+        item.ancient = grade;
+        const mult = grade === 2 ? A.primalMult : A.ancientMult;
+        for (const line of item.stats) {
+          const p = Math.pow(10, WYD.data.items.stats[line.stat].decimals);
+          line.value = Math.round(line.value * mult * p) / p;
+        }
+      }
+    }
+    return WYD.gems.rollSockets(item);
   },
 
   // 今の職業で出るものだけ（classOnly がほかの職業のものを除く）
@@ -102,7 +120,7 @@ WYD.loot = {
   // 装備の表示名（強化していれば「+3 名前」）
   label(item) {
     const rw = WYD.gems.runeword(item);
-    const name = rw ? `「${rw.name}」${item.name}` : item.name;
+    const name = (item.ancient ? WYD.data.items.ancient.names[item.ancient] : "") + (rw ? `「${rw.name}」${item.name}` : item.name);
     return item.plus > 0 ? `+${item.plus} ${name}` : name;
   },
 

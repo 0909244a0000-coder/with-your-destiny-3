@@ -10,6 +10,7 @@ WYD.records = {
   // 拾った装備を図鑑に載せ、拾った数を数える
   found(state, item) {
     if (item.rarity === "legend") this.add(state, "legendsFound");
+    if (item.ancient) this.add(state, item.ancient === 2 ? "primalsFound" : "ancientsFound");
     if (item.unique) {
       this.add(state, "uniquesFound");
       state.codex.uniques[item.unique] = true;
