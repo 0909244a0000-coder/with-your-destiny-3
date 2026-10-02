@@ -58,7 +58,7 @@ WYD.data.enemies = {
   yakshaArcher: {
     name: "夜叉の弓兵",
     color: "#d89a5a",
-    image: null,
+    image: "assets/enemies/yakshaArcher.png",
     radius: 12,
     hp: 40,
     attack: 7,
@@ -76,7 +76,7 @@ WYD.data.enemies = {
   vetala: {
     name: "ヴェーターラ",
     color: "#c9c9a8",
-    image: null,
+    image: "assets/enemies/vetala.png",
     radius: 11,
     hp: 40,
     attack: 6,
@@ -91,7 +91,7 @@ WYD.data.enemies = {
   pishacha: {
     name: "ピシャーチャ",
     color: "#5f8f6a",
-    image: null,
+    image: "assets/enemies/pishacha.png",
     radius: 15,
     hp: 95,
     attack: 9,
@@ -107,7 +107,7 @@ WYD.data.enemies = {
   bhuta: {
     name: "鬼火のブータ",
     color: "#7fb0c9",
-    image: null,
+    image: "assets/enemies/bhuta.png",
     radius: 12,
     hp: 50,
     attack: 9,
@@ -140,7 +140,7 @@ WYD.data.enemies = {
   daitya: {
     name: "ダイティヤ",
     color: "#b04a6a",
-    image: null,
+    image: "assets/enemies/daitya.png",
     radius: 15,
     hp: 100,
     attack: 13,
@@ -156,7 +156,7 @@ WYD.data.enemies = {
   nagaCaster: {
     name: "ナーガの呪術師",
     color: "#7ad16a",
-    image: null,
+    image: "assets/enemies/nagaCaster.png",
     radius: 14,
     hp: 80,
     attack: 12,
@@ -170,12 +170,156 @@ WYD.data.enemies = {
     ranged: { keepDistance: 200, range: 300, speed: 220, size: 6, color: "#b6ff6a" },
   },
 
+  // ---- 奈落の大聖堂（4つ目のエリア）----
+  // 絵はまだないので、今ある絵の色を変えて仮に使う（imageFilter。本番の絵が来たら消す）
+  fallenKnight: {
+    name: "堕ちた聖騎士",
+    color: "#8a90a8",
+    image: "assets/enemies/rakshasa.png",
+    imageFilter: "grayscale(0.85) brightness(1.15)",
+    radius: 17,
+    hp: 140,
+    attack: 14,
+    defense: 5,
+    attackSpeed: 0.8,
+    moveSpeed: 70,
+    range: 30,
+    exp: 22,
+    dropChance: 0.32,
+    rarityBonus: 1.6,
+  },
+  shadowBeast: {
+    name: "影の獣",
+    color: "#2a2230",
+    image: "assets/enemies/daitya.png",
+    imageFilter: "brightness(0.45) saturate(0.3)",
+    radius: 14,
+    hp: 85,
+    attack: 12,
+    defense: 2,
+    attackSpeed: 1.2,
+    moveSpeed: 125,
+    range: 24,
+    exp: 17,
+    dropChance: 0.28,
+    rarityBonus: 1.5,
+  },
+  wailingSpirit: {
+    name: "嘆きの霊",
+    color: "#9fc8ff",
+    image: "assets/enemies/preta.png",
+    imageFilter: "hue-rotate(180deg) brightness(1.3) opacity(0.75)",
+    radius: 12,
+    hp: 60,
+    attack: 10,
+    defense: 1,
+    attackSpeed: 1.0,
+    moveSpeed: 105,
+    range: 22,
+    exp: 13,
+    dropChance: 0.25,
+    rarityBonus: 1.4,
+  },
+  boneCleric: {
+    name: "骸の司祭",
+    color: "#d8d0ff",
+    image: "assets/enemies/nagaCaster.png",
+    imageFilter: "grayscale(1) brightness(1.3)",
+    radius: 14,
+    hp: 90,
+    attack: 13,
+    defense: 3,
+    attackSpeed: 0.55,
+    moveSpeed: 60,
+    range: 22,
+    exp: 18,
+    dropChance: 0.32,
+    rarityBonus: 1.6,
+    ranged: { keepDistance: 210, range: 310, speed: 230, size: 6, color: "#c08aff" },
+  },
+
+  // ---- 凍てつく深淵（5つ目のエリア。絵は仮：今ある絵の色を変えたもの）----
+  frostWraith: {
+    name: "霜の亡者", color: "#bfe4ff",
+    image: "assets/enemies/preta.png", imageFilter: "hue-rotate(170deg) saturate(0.6) brightness(1.4)",
+    radius: 12, hp: 70, attack: 11, defense: 2, attackSpeed: 1.0, moveSpeed: 95, range: 22,
+    exp: 15, dropChance: 0.26, rarityBonus: 1.5,
+  },
+  iceGiant: {
+    name: "氷の巨人", color: "#8ab8e0",
+    image: "assets/enemies/rakshasa.png", imageFilter: "hue-rotate(180deg) saturate(0.5) brightness(1.2)",
+    radius: 20, hp: 220, attack: 17, defense: 7, attackSpeed: 0.6, moveSpeed: 55, range: 32,
+    exp: 30, dropChance: 0.38, rarityBonus: 1.8,
+  },
+  blizzardArcher: {
+    name: "吹雪の射手", color: "#d0f0ff",
+    image: "assets/enemies/yakshaArcher.png", imageFilter: "hue-rotate(170deg) brightness(1.3)",
+    radius: 12, hp: 65, attack: 12, defense: 2, attackSpeed: 0.65, moveSpeed: 70, range: 22,
+    exp: 16, dropChance: 0.28, rarityBonus: 1.5,
+    ranged: { keepDistance: 190, range: 290, speed: 260, size: 5, color: "#d0f0ff" },
+  },
+  frostWitch: {
+    name: "氷結の魔女", color: "#e0f4ff",
+    image: "assets/enemies/nagaCaster.png", imageFilter: "hue-rotate(160deg) saturate(0.4) brightness(1.5)",
+    radius: 14, hp: 95, attack: 14, defense: 3, attackSpeed: 0.5, moveSpeed: 60, range: 22,
+    exp: 20, dropChance: 0.32, rarityBonus: 1.6,
+    ranged: { keepDistance: 210, range: 310, speed: 200, size: 7, color: "#9fdcff" },
+  },
+
+  // ---- 業火の玉座（6つ目のエリア。絵は仮：今ある絵の色を変えたもの）----
+  fireImp: {
+    name: "業火の小鬼", color: "#ff7a3a",
+    image: "assets/enemies/fireImp.png",
+    radius: 11, hp: 65, attack: 11, defense: 2, attackSpeed: 1.0, moveSpeed: 105, range: 20,
+    exp: 16, dropChance: 0.26, rarityBonus: 1.6,
+  },
+  lavaGolem: {
+    name: "溶岩の巨人", color: "#d0502a",
+    image: "assets/enemies/lavaGolem.png",
+    radius: 21, hp: 240, attack: 14, defense: 8, attackSpeed: 0.5, moveSpeed: 50, range: 32,
+    exp: 32, dropChance: 0.38, rarityBonus: 1.9,
+  },
+  hellArcher: {
+    name: "地獄の射手", color: "#ff9a5a",
+    image: "assets/enemies/hellArcher.png",
+    radius: 12, hp: 70, attack: 13, defense: 2, attackSpeed: 0.65, moveSpeed: 70, range: 22,
+    exp: 17, dropChance: 0.28, rarityBonus: 1.6,
+    ranged: { keepDistance: 190, range: 290, speed: 260, size: 5, color: "#ffb04a" },
+  },
+  pyromancer: {
+    name: "業火の術師", color: "#ffc04a",
+    image: "assets/enemies/nagaCaster.png", imageFilter: "hue-rotate(-60deg) saturate(1.5) brightness(1.2)",
+    radius: 14, hp: 100, attack: 14, defense: 3, attackSpeed: 0.5, moveSpeed: 60, range: 22,
+    exp: 21, dropChance: 0.32, rarityBonus: 1.7,
+    ranged: { keepDistance: 210, range: 310, speed: 200, size: 8, color: "#ff6a2a" },
+  },
+
+  // ---- 宝物ゴブリン（まれに出て逃げ回る。data/elites.js の goblin も見る）----
+  goblin: {
+    name: "宝物ゴブリン",
+    color: "#ffd447",
+    image: "assets/enemies/yaksha.png",
+    imageFilter: "sepia(1) saturate(3) brightness(1.15)",   // 仮の絵（金色にした夜叉）
+    radius: 12,
+    hp: 200,
+    attack: 0,
+    defense: 3,
+    attackSpeed: 0,
+    moveSpeed: 95,      // 主人公（120）より少し遅い。追いかければ追いつける
+    range: 0,
+    exp: 60,
+    dropChance: 1.0,
+    rarityBonus: 5,
+    treasure: true,     // 逃げ回り、倒すと宝をたくさん落とす
+  },
+
   // ---- ボス ----
   //   slam… 大技：予告のあと、周りにまとめてダメージ
   ravana: {
     name: "羅刹王ラーヴァナ",
     color: "#7a1fb0",
     image: "assets/enemies/ravana.png",
+    poses: { attack: "assets/enemies/ravana_attack.png", windup: "assets/enemies/ravana_windup.png" },   // ポーズ違いの絵（攻撃・大技の溜め）
     radius: 30,
     hp: 900,
     attack: 14,
@@ -188,11 +332,14 @@ WYD.data.enemies = {
     rarityBonus: 6,
     boss: true,
     slam: { interval: 6, windup: 1.0, radius: 110, damageMult: 2.2 },
+    // 分身：本体と同じ姿の分身を呼ぶ（HPは本体の hpRatio 倍。分身は大技を使わず、倒しても何も落とさない）
+    clone: { interval: 12, firstDelay: 5, count: 2, hpRatio: 0.15, attackMult: 0.5, max: 4 },
   },
   asuraKing: {
     name: "阿修羅王",
     color: "#3f5fd0",
     image: "assets/enemies/asuraKing.png",
+    poses: { attack: "assets/enemies/asuraKing_attack.png", windup: "assets/enemies/asuraKing_windup.png" },   // ポーズ違いの絵（攻撃・大技の溜め）
     radius: 30,
     hp: 1100,
     attack: 15,
@@ -205,13 +352,16 @@ WYD.data.enemies = {
     rarityBonus: 7,
     boss: true,
     slam: { interval: 5, windup: 0.9, radius: 120, damageMult: 2.2 },
+    // 突進：予告の線が出たあと、その方向へ一気に走り抜ける。線の上にいると大ダメージ
+    charge: { interval: 7, firstDelay: 4, windup: 0.9, speed: 650, length: 360, width: 34, damageMult: 2.0, color: "#6aa0ff" },
   },
   mahisha: {
     name: "水牛魔マヒシャ",
     color: "#4a3a2a",
-    image: null,
+    image: "assets/enemies/mahisha.png",
+    poses: { attack: "assets/enemies/mahisha_attack.png", windup: "assets/enemies/mahisha_windup.png" },   // ポーズ違いの絵（攻撃・大技の溜め）
     radius: 34,
-    hp: 1300,
+    hp: 1150,   // 怒り（HP半分で強くなる）があるので、少し低め
     attack: 18,
     defense: 9,
     attackSpeed: 0.6,
@@ -222,6 +372,73 @@ WYD.data.enemies = {
     rarityBonus: 8,
     boss: true,
     slam: { interval: 5, windup: 0.8, radius: 130, damageMult: 2.5 },
+    // 毒の沼：主人公の足元に毒の沼をまく。沼の中にいると、少しずつ削られる
+    pools: { interval: 8, firstDelay: 3, count: 2, radius: 60, duration: 6, dpsMult: 0.35, spread: 60, color: "#7dbf3a" },
+  },
+  iceDragon: {
+    name: "氷獄の竜王",
+    color: "#7ab0e8",
+    image: "assets/enemies/mahisha.png",
+    imageFilter: "hue-rotate(180deg) saturate(0.6) brightness(1.3)",   // 仮の絵
+    poses: { attack: null, windup: null },
+    radius: 36,
+    hp: 1150,
+    attack: 16,
+    defense: 10,
+    attackSpeed: 0.6,
+    moveSpeed: 70,
+    range: 46,
+    exp: 750,
+    dropChance: 1.0,
+    rarityBonus: 10,
+    boss: true,
+    slam: { interval: 6, windup: 1.0, radius: 130, damageMult: 2.0 },
+    // 氷の吐息：予告の線のあと突進（阿修羅王と同じしくみ）と、まわりへの氷のつぶて
+    charge: { interval: 9, firstDelay: 5, windup: 1.1, speed: 520, length: 380, width: 40, damageMult: 1.8, color: "#bfe4ff" },
+    barrage: { interval: 6, count: 10, speed: 170, size: 6, color: "#d0f0ff", damageMult: 0.45 },
+  },
+  hellLord: {
+    name: "業火の魔王",
+    color: "#e0402a",
+    image: "assets/enemies/asuraKing.png",
+    imageFilter: "sepia(1) saturate(4) hue-rotate(-25deg) brightness(0.85)",   // 仮の絵
+    poses: { attack: null, windup: null },
+    radius: 38,
+    hp: 1250,
+    attack: 17,
+    defense: 11,
+    attackSpeed: 0.65,
+    moveSpeed: 72,
+    range: 48,
+    exp: 900,
+    dropChance: 1.0,
+    rarityBonus: 11,
+    boss: true,
+    // 分身（羅刹王と同じ）・炎の沼（水牛魔と同じ）・炎の弾（大司教と同じ）を使う。大技（slam）はなし（近接の職業がきつすぎたので）
+    clone: { interval: 14, firstDelay: 6, count: 2, hpRatio: 0.12, attackMult: 0.35, max: 4 },
+    pools: { interval: 9, firstDelay: 4, count: 2, radius: 60, duration: 6, dpsMult: 0.3, spread: 60, color: "#ff5a1a" },
+    barrage: { interval: 7, count: 10, speed: 170, size: 7, color: "#ff8a3a", damageMult: 0.3 },
+  },
+  archbishop: {
+    name: "堕天の大司教",
+    color: "#6a5a9a",
+    image: "assets/enemies/ravana.png",
+    imageFilter: "grayscale(0.6) hue-rotate(200deg) brightness(0.9)",   // 仮の絵
+    poses: { attack: null, windup: null },
+    radius: 32,
+    hp: 1000,
+    attack: 15,
+    defense: 9,
+    attackSpeed: 0.7,
+    moveSpeed: 70,
+    range: 42,
+    exp: 600,
+    dropChance: 1.0,
+    rarityBonus: 9,
+    boss: true,
+    slam: { interval: 6, windup: 1.0, radius: 120, damageMult: 2.0 },
+    // 弾幕：まわりへ一度にたくさんの弾を撃つ（ボス用）
+    barrage: { interval: 5, count: 8, speed: 180, size: 7, color: "#c08aff", damageMult: 0.5 },
   },
 };
 
