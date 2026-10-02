@@ -21,15 +21,26 @@ WYD.runes = {
     return (state.player.skills[skillId] || 0) >= this.unlockLevel(i) ? list[i] : null;
   },
 
-  // 型を反映したスキルの数値
+  // 型と、固有能力「skillBoost」（装備などでスキルを強くする）を反映したスキルの数値
   effectiveDef(state, skillId) {
     const def = WYD.data.skills[skillId];
     const rune = this.selected(state, skillId);
-    if (!rune || !rune.mods) return def;
+    const kind = WYD.classes.kindOf(skillId);
+    const boosts = [];
+    const powers = WYD.stats.powers(state);
+    for (const name in powers) if (name.startsWith("skillBoost") && powers[name].kind === kind) boosts.push(powers[name].mods);
+    if ((!rune || !rune.mods) && !boosts.length) return def;
     const out = Object.assign({}, def);
+    if (rune && rune.mods) this.applyMods(out, rune.mods);
+    for (const m of boosts) this.applyMods(out, m);
+    return out;
+  },
+
+  // 数値の変え方（["mul", 倍率] / ["add", 足す数] / ["set", 値]）をスキルの数値にあてる
+  applyMods(out, mods) {
     const groups = WYD.data.runes.groups;
-    for (const key in rune.mods) {
-      const [op, v] = rune.mods[key];
+    for (const key in mods) {
+      const [op, v] = mods[key];
       for (const f of groups[key] || [key]) {
         if (out[f] == null && op !== "set") continue;
         if (op === "mul") out[f] = out[f] * v;
@@ -37,7 +48,6 @@ WYD.runes = {
         else out[f] = v;
       }
     }
-    return out;
   },
 
   // 型のおまけの効果（なければ null）

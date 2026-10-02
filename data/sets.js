@@ -56,6 +56,36 @@ WYD.data.sets = {
       },
     },
     {
+      // バーバリアンでだけ落ちる
+      id: "immortalKing", name: "不滅の王の遺産", classOnly: "barbarian",
+      pieces: [
+        { id: "ik_blade", name: "不滅の王の剣", base: "dual_blades", stats: { attack: [5, 9] } },
+        { id: "ik_mail", name: "不滅の王の鎧", base: "chainmail", stats: { defense: [5, 9] } },
+        { id: "ik_gauntlets", name: "不滅の王の籠手", base: "gauntlets", stats: { attackSpeed: [4, 8] } },
+        { id: "ik_boots", name: "不滅の王の脚甲", base: "leggings", stats: { maxHp: [20, 40] } },
+      ],
+      bonuses: {
+        2: { stats: { attack: 15, maxHp: 60 } },
+        4: { effects: { lifesteal: 3 }, power: "skillBoostIK", params: { kind: "whirl", mods: { damage: ["mul", 2], cooldown: ["mul", 0.6] } },
+             desc: "{skill:whirl}の威力が2倍、使える間隔が0.6倍になる" },
+      },
+    },
+    {
+      // ソーサレスでだけ落ちる
+      id: "talRasha", name: "大魔術師の装い", classOnly: "sorceress",
+      pieces: [
+        { id: "tr_orb", name: "大魔術師の杖", base: "staff", stats: { skillDamage: [12, 20] } },
+        { id: "tr_robe", name: "大魔術師の法衣", base: "robe", stats: { maxHp: [20, 40] } },
+        { id: "tr_belt", name: "大魔術師の腕輪", base: "bracelet", stats: { attackSpeed: [4, 8] } },
+        { id: "tr_ring", name: "大魔術師の指輪", base: "ring", stats: { critChance: [2, 5] } },
+      ],
+      bonuses: {
+        2: { stats: { skillDamage: 25 } },
+        4: { effects: { cooldown: 10 }, power: "skillBoostTR", params: { kind: "sudarshana", mods: { targets: ["add", 4], damage: ["mul", 1.8] } },
+             desc: "{skill:sudarshana}の当たる数 +4、威力が1.8倍になる" },
+      },
+    },
+    {
       // ネクロマンサーでだけ落ちる（classOnly）
       id: "boneLord", name: "骸の王の装い", classOnly: "necromancer",
       pieces: [

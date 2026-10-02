@@ -97,6 +97,35 @@ WYD.data.uniques = {
         moveSpeed: 140, attackSpeed: 1.3, range: 24, radius: 11, spawnSpread: 25, followDistance: 40, firstAttackDelay: 0.2,
         color: "#9fdcff", image: "assets/enemies/preta.png", imageFilter: "hue-rotate(170deg) brightness(1.6) opacity(0.8)" },
     },
+    // ---- 職業専用：スキルを強くする（power は "skillBoost〜"。params.kind のスキルの数値を mods で変える。書き方は data/runes.js と同じ）----
+    {
+      id: "giantBlade", name: "巨人の大剣", base: "great_blade", weight: 10, classOnly: "barbarian",
+      stats: { attack: [6, 10], attackSpeed: [-5, 0] },
+      power: "skillBoostWhirl",
+      desc: "{skill:whirl}の範囲が1.4倍、威力が1.5倍になる",
+      params: { kind: "whirl", mods: { radius: ["mul", 1.4], damage: ["mul", 1.5] } },
+    },
+    {
+      id: "berserkerHelm", name: "狂戦士の兜", base: "turban", weight: 10, classOnly: "barbarian",
+      stats: { defense: [3, 6], attackSpeed: [4, 8] },
+      power: "skillBoostHaste",
+      desc: "{skill:hanuman}の時間が2倍、上がる攻撃速度が1.3倍、使える間隔が0.7倍になる",
+      params: { kind: "hanuman", mods: { duration: ["mul", 2], haste: ["mul", 1.3], cooldown: ["mul", 0.7] } },
+    },
+    {
+      id: "archmageStaff", name: "大魔導の杖", base: "staff", weight: 10, classOnly: "sorceress",
+      stats: { skillDamage: [15, 25] },
+      power: "skillBoostAgni",
+      desc: "{skill:agni}の範囲が1.3倍、威力が1.6倍、燃える時間が1.5倍になる",
+      params: { kind: "agni", mods: { radius: ["mul", 1.3], damage: ["mul", 1.6], duration: ["mul", 1.5] } },
+    },
+    {
+      id: "frostCrown", name: "氷結の冠", base: "crown", weight: 10, classOnly: "sorceress",
+      stats: { maxHp: [15, 30], skillDamage: [8, 14] },
+      power: "skillBoostFreeze",
+      desc: "{skill:nagapasha}で凍らせる時間が1.6倍、範囲が1.3倍、敵が1体でも使う",
+      params: { kind: "nagapasha", mods: { bind: ["mul", 1.6], radius: ["mul", 1.3], minTargets: ["set", 1] } },
+    },
     {
       // classOnly … この職業でだけ落ちる（ほかの職業ではスキルがないので）
       id: "boneCrown", name: "骸の王冠", base: "crown", weight: 10, classOnly: "necromancer",
