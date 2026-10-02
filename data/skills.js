@@ -93,7 +93,14 @@ WYD.data.skills = {
 };
 
 // スキルのアイコンの絵（スキル名 → ファイル）。例: whirl: "assets/skills/whirl.png"
-WYD.data.skillIcons = {};
+WYD.data.skillIcons = {
+  whirl: "assets/skills/whirl.png",
+  vajra: "assets/skills/vajra.png",
+  sudarshana: "assets/skills/sudarshana.png",
+  agni: "assets/skills/agni.png",
+  hanuman: "assets/skills/hanuman.png",
+  nagapasha: "assets/skills/nagapasha.png",
+};
 
 // 同時にONにできるスキルの数（ここでビルドを選ぶ）
 WYD.data.skillSlots = 3;
