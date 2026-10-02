@@ -84,7 +84,10 @@
 
   <main>
     <div class="left">
-      <canvas id="game" width="960" height="600"></canvas>
+      <div class="stage">
+        <canvas id="game" width="960" height="600"></canvas>
+        <button id="bag-open" class="bag-btn" title="装備・持ち物を開く（I キー）">🎒 装備・持ち物 <span id="bag-badge"></span></button>
+      </div>
       <section class="panel">
         <h2>ログ</h2>
         <div id="log"></div>
@@ -108,47 +111,6 @@
         <div id="skills"></div>
       </section>
 
-      <section class="panel">
-        <h2>装備 <small>クリックで外す</small></h2>
-        <div id="equipment" class="grid"></div>
-        <div id="builds" class="builds"></div>
-      </section>
-
-      <section class="panel">
-        <h2>持ち物 <small id="inv-count"></small> <small id="materials"></small></h2>
-        <div id="inventory" class="grid"></div>
-        <div class="inv-buttons">
-          <button id="discard-normal">ノーマルを全部捨てる</button>
-          <button id="discard-magic">マジック以下を全部捨てる</button>
-          <button id="craft-mode">つけ直しモード：OFF</button>
-          <button id="enhance-mode">強化モード：OFF</button>
-          <button id="forge-mode" title="装備をクリックすると、能力を1つずつ狙って鍛えられる（Last Epoch の鍛造）">鍛造</button>
-        </div>
-        <p class="muted" id="inv-help">左クリック：装備する／右クリックか長押し：捨てる（捨てると素材になる）</p>
-      </section>
-
-      <section class="panel" id="maps-panel" hidden>
-        <h2>地図 <small id="maps-count"></small> <small class="muted">クリア後に落ちる。使うと条件つきの試練に挑む（右クリックで捨てる）</small></h2>
-        <div id="maps"></div>
-      </section>
-
-      <section class="panel" id="cube-panel" hidden>
-        <h2>カナイの箱 <small class="muted">ユニークの力を覚えて、装備とは別に3つまで使える</small> <button id="cube-mode">入れるモード：OFF</button></h2>
-        <div id="cube"></div>
-      </section>
-
-      <section class="panel" id="gems-panel" hidden>
-        <h2>宝石 <small class="muted">選んでから装備をクリックすると、空いたソケットにはめる</small></h2>
-        <div id="gems"></div>
-      </section>
-
-      <section class="panel">
-        <h2>倉庫 <small id="stash-count"></small> <button id="stash-toggle">開く</button></h2>
-        <div id="stash-body" hidden>
-          <div id="stash" class="grid"></div>
-          <p class="muted">クリック：持ち物へ戻す／右クリック：捨てる。持ち物を倉庫に入れるときは Shift＋クリック</p>
-        </div>
-      </section>
     </aside>
   </main>
 
@@ -167,6 +129,58 @@
       <h2>傭兵</h2>
       <div id="merc-body"></div>
       <button id="merc-close">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 装備・持ち物の画面（戦いの画面の上の「装備・持ち物」ボタンか I キーで開く） -->
+  <div id="bag" class="modal bag" hidden>
+    <div class="modal-box bag-box">
+      <div class="bag-head">
+        <h2>装備・持ち物</h2>
+        <button id="bag-close" title="閉じる（I か Esc キー）">閉じる ✕</button>
+      </div>
+      <div class="bag-cols">
+        <div class="bag-col">
+          <section class="panel">
+            <h2>装備 <small>クリックで外す／長押しでほかの操作</small></h2>
+            <div id="equipment" class="grid"></div>
+            <div id="builds" class="builds"></div>
+          </section>
+          <section class="panel" id="gems-panel" hidden>
+            <h2>宝石 <small class="muted">選んでから装備をクリックすると、空いたソケットにはめる</small></h2>
+            <div id="gems"></div>
+          </section>
+          <section class="panel" id="cube-panel" hidden>
+            <h2>カナイの箱 <small class="muted">ユニークの力を覚えて、装備とは別に3つまで使える</small> <button id="cube-mode">入れるモード：OFF</button></h2>
+            <div id="cube"></div>
+          </section>
+        </div>
+        <div class="bag-col">
+          <section class="panel">
+            <h2>持ち物 <small id="inv-count"></small> <small id="materials"></small></h2>
+            <div id="inventory" class="grid"></div>
+            <div class="inv-buttons">
+              <button id="discard-normal">ノーマルを全部捨てる</button>
+              <button id="discard-magic">マジック以下を全部捨てる</button>
+              <button id="craft-mode">つけ直しモード：OFF</button>
+              <button id="enhance-mode">強化モード：OFF</button>
+              <button id="forge-mode" title="装備をクリックすると、能力を1つずつ狙って鍛えられる（Last Epoch の鍛造）">鍛造</button>
+            </div>
+            <p class="muted" id="inv-help">左クリック：装備する／右クリック・長押し・Delete キー：捨てる（捨てると素材になる）</p>
+          </section>
+          <section class="panel">
+            <h2>倉庫 <small id="stash-count"></small> <button id="stash-toggle">開く</button></h2>
+            <div id="stash-body" hidden>
+              <div id="stash" class="grid"></div>
+              <p class="muted">クリック：持ち物へ戻す／右クリック：捨てる。持ち物を倉庫に入れるときは Shift＋クリック</p>
+            </div>
+          </section>
+          <section class="panel" id="maps-panel" hidden>
+            <h2>地図 <small id="maps-count"></small> <small class="muted">クリア後に落ちる。使うと条件つきの試練に挑む（右クリックで捨てる）</small></h2>
+            <div id="maps"></div>
+          </section>
+        </div>
+      </div>
     </div>
   </div>
 

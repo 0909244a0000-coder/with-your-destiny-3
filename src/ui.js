@@ -125,11 +125,22 @@ WYD.ui = {
       if (e.code === "Space") {
         e.preventDefault();
         this.togglePause();
+      } else if (e.key === "i" || e.key === "I") {
+        this.toggleBag();
+      } else if (e.key === "Escape" && !this.$("bag").hidden) {
+        this.toggleBag(false);
+      } else if ((e.key === "Delete" || e.key === "Backspace") && this.hovered && !this.$("bag").hidden) {
+        e.preventDefault();
+        this.discardHovered();
       } else if (["1", "2", "4"].includes(e.key)) {
         s.settings.speed = Number(e.key);
         this.changed();
       }
     });
+    // 装備・持ち物の画面：戦いの画面の上のボタンで開く。外側（暗いところ）を押しても閉じる
+    this.$("bag-open").onclick = () => this.toggleBag(true);
+    this.$("bag-close").onclick = () => this.toggleBag(false);
+    this.$("bag").onclick = (e) => { if (e.target.id === "bag") this.toggleBag(false); };
     this.$("auto-diff").onchange = (e) => {
       s.settings.autoDifficulty = e.target.checked;
       this.changed();
@@ -394,7 +405,7 @@ WYD.ui = {
       this.changed();
     };
     inv.onmouseover = (e) => this.showTooltipFor(e, "inv");
-    inv.onmouseleave = () => this.hideTooltip();
+    inv.onmouseleave = () => { this.hideTooltip(); this.hovered = null; };
 
     // 倉庫：クリックで持ち物へ、右クリックで捨てる
     this.$("stash-toggle").onclick = () => {
@@ -429,7 +440,7 @@ WYD.ui = {
       this.changed();
     };
     stash.onmouseover = (e) => this.showTooltipFor(e, "stash");
-    stash.onmouseleave = () => this.hideTooltip();
+    stash.onmouseleave = () => { this.hideTooltip(); this.hovered = null; };
 
     // 装備欄：クリックで外す
     const eq = this.$("equipment");
@@ -1031,6 +1042,8 @@ WYD.ui = {
     // 持ち物
     const size = WYD.data.items.inventorySize;
     this.$("inv-count").textContent = `${s.inventory.length} / ${size}`;
+    this.$("bag-badge").textContent = `${s.inventory.length}/${size}`;
+    this.$("bag-open").classList.toggle("full", s.inventory.length >= size);
     const C = WYD.data.crafting;
     this.$("materials").innerHTML = `<span style="color:${C.materialColor}">${C.materialName} ${s.materials}</span>`;
     this.$("craft-mode").textContent = `つけ直しモード：${this.craftMode ? "ON" : "OFF"}`;
@@ -1475,6 +1488,28 @@ WYD.ui = {
   },
 
   // スマホ：装備を触ったら、説明と「どうするか」のボタンを窓で出す（ふつうのモードのときだけ）。出したら true
+  // 装備・持ち物の画面を開く・閉じる（show を省くと切り替え）
+  toggleBag(show) {
+    const bag = this.$("bag");
+    bag.hidden = show === undefined ? !bag.hidden : !show;
+    if (bag.hidden) { this.hideTooltip(); this.hovered = null; }
+    this.markDirty();
+  },
+
+  // マウスを乗せている装備を捨てる（Delete キー。右クリックが効かない環境でも捨てられるように）
+  discardHovered() {
+    const h = this.hovered, s = this.state;
+    const list = h.where === "inv" ? s.inventory : s.stash;
+    const item = list[h.index];
+    if (!item) return;
+    const gained = h.where === "inv" ? WYD.inventory.discard(s, h.index) : WYD.inventory.discardFromStash(s, h.index);
+    if (gained < 0) this.log(`${WYD.loot.label(item)}はロックしているので捨てられない（Ctrl＋クリックで外す）`, "#ff6b6b");
+    else this.log(`${WYD.loot.label(item)}を捨てた（${WYD.data.crafting.materialName} +${gained}）`);
+    this.hovered = null;
+    this.hideTooltip();
+    this.changed();
+  },
+
   touchSheet(where, key, force) {
     if ((!this.isTouch() && !force) || this.forgeMode || this.cubeMode || this.gemSelected || this.enhanceMode || this.craftMode) return false;
     const s = this.state;
@@ -1529,6 +1564,7 @@ WYD.ui = {
     if (where === "inv" || where === "stash") {
       const cell = e.target.closest("[data-index]");
       item = cell && (where === "inv" ? s.inventory : s.stash)[Number(cell.dataset.index)];
+      this.hovered = item ? { where, index: Number(cell.dataset.index) } : null;
       if (item) {
         html = this.itemHtml(item);
         const cur = s.equipment[item.slot];

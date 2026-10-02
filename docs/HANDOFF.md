@@ -47,6 +47,7 @@
 - ボスを倒したとき：1秒だけ動きを1/4にゆっくりにし、白く光って「討伐」と名前を出す（`w.bossDefeat`、`WYD.world.timeScale` を `src/main.js` のループで使う。`world.update` を直接呼ぶ道具には効かない。数値は `data/areas.js` の `boss.defeat`）
 - 落ちている装備の名前は重なったら上にずらし、うすい黒の板の上に書く（`src/render.js` の `drawDropLabels`、`data/map.js` の `dropLabel`）
 - 持ち物・倉庫・装備欄は、長押し（指でもマウスでも、`data/items.js` の `longPressMs`）で「どうするか」の窓（捨てる・倉庫へ など）が出る（`WYD.ui.bindLongPress`）。iPad にキーボードやマウスをつけると PC 扱いになり、指では右クリックできなかったため。指の長押しで出る右クリックではいきなり捨てない（`fingerUsed`）。スマホ扱いは `hover: none` か `pointer: coarse`
+- 装備・持ち物の画面：装備・宝石・カナイの箱・持ち物・倉庫・地図のパネルは、右の列ではなく `#bag`（戦いの画面に重ねて開く窓）の中にある。戦いの画面の右上の「🎒 装備・持ち物」ボタンか I キーで開く、Esc・外側で閉じる（`WYD.ui.toggleBag`）。戦いの画面は `.stage` で包み、大きさのCSSは `.stage` にかける。持ち物・倉庫はマウスを乗せて Delete キーでも捨てられる（`discardHovered`）
 - 戦いの画面の左下に、使っているスキルを並べる（`src/render.js` の `drawSkillBar`、大きさや色は `data/map.js` の `skillBar`）。暗い影が次に使えるまでの時間、光る枠が今使ったしるし。絵がないスキルは頭の1文字。スマホで画面が縮んでも `minShownPx` より小さく見えないよう、大きく描く
 - 傭兵：`src/mercenary.js`・`data/mercenary.js`。戦い方は手下と同じ `src/allies.js`（source が "merc"、時間で崩れない）。いなければ `WYD.mercenary.update` が出す（倒れたら `reviveTime` 秒後）。加護は `src/stats.js` で星座と同じように足す。セーブは `state.mercenary = { type, rank }`。絵は仮（敵の絵の色替え）。`tools/balance-sim.js` の6つ目の引数で傭兵を雇わせられる（4職で最後のボスは18〜19分、雇わないと17〜21分）
 - 伝説の宝石：`src/legendaryGems.js`（`WYD.lgems`）・`data/legendaryGems.js`。セーブは `state.lgems = { owned: { id: ランク }, equipped: [...] }`。手に入る・ランク上げは `src/trial.js` の finish（成功時）から。効果は `playerHit`（ダメージ倍率・迅速の重なり）、通常攻撃の間隔、`enemyDied`（強者の災い）、`src/stats.js`（命＝最大HP、血＝吸血）。自動プレイで試練20分後にランク8〜13、試練の最高段階は入れる前とほぼ同じ（10〜14）。パラディンは試練が少し苦手（段階10くらい）
