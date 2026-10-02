@@ -175,8 +175,8 @@ WYD.data.enemies = {
   fallenKnight: {
     name: "堕ちた聖騎士",
     color: "#8a90a8",
-    image: "assets/enemies/rakshasa.png",
-    imageFilter: "grayscale(0.85) brightness(1.15)",
+    image: "assets/enemies/fallenKnight.png",
+    imageFilter: null,
     radius: 17,
     hp: 140,
     attack: 14,
@@ -191,8 +191,8 @@ WYD.data.enemies = {
   shadowBeast: {
     name: "影の獣",
     color: "#2a2230",
-    image: "assets/enemies/daitya.png",
-    imageFilter: "brightness(0.45) saturate(0.3)",
+    image: "assets/enemies/shadowBeast.png",
+    imageFilter: null,
     radius: 14,
     hp: 85,
     attack: 12,
@@ -253,14 +253,14 @@ WYD.data.enemies = {
   },
   blizzardArcher: {
     name: "吹雪の射手", color: "#d0f0ff",
-    image: "assets/enemies/yakshaArcher.png", imageFilter: "hue-rotate(170deg) brightness(1.3)",
+    image: "assets/enemies/blizzardArcher.png",
     radius: 12, hp: 65, attack: 12, defense: 2, attackSpeed: 0.65, moveSpeed: 70, range: 22,
     exp: 16, dropChance: 0.28, rarityBonus: 1.5,
     ranged: { keepDistance: 190, range: 290, speed: 260, size: 5, color: "#d0f0ff" },
   },
   frostWitch: {
     name: "氷結の魔女", color: "#e0f4ff",
-    image: "assets/enemies/nagaCaster.png", imageFilter: "hue-rotate(160deg) saturate(0.4) brightness(1.5)",
+    image: "assets/enemies/frostWitch.png",
     radius: 14, hp: 95, attack: 14, defense: 3, attackSpeed: 0.5, moveSpeed: 60, range: 22,
     exp: 20, dropChance: 0.32, rarityBonus: 1.6,
     ranged: { keepDistance: 210, range: 310, speed: 200, size: 7, color: "#9fdcff" },
@@ -378,8 +378,8 @@ WYD.data.enemies = {
   iceDragon: {
     name: "氷獄の竜王",
     color: "#7ab0e8",
-    image: "assets/enemies/mahisha.png",
-    imageFilter: "hue-rotate(180deg) saturate(0.6) brightness(1.3)",   // 仮の絵
+    image: "assets/enemies/iceDragon.png",
+    imageFilter: null,
     poses: { attack: null, windup: null },
     radius: 36,
     hp: 1150,
