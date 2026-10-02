@@ -7,6 +7,7 @@ WYD.data.items = {
   stashSize: 30,        // 倉庫に入る数
   fullSalvage: ["normal", "magic"],   // 持ち物がいっぱいのとき、拾ったその場で素材にするレア度
   fullWarnInterval: 30,  // 「持ち物がいっぱい」の知らせを出す間隔（秒）
+  longPressMs: 450,     // 装備の欄を長押し（ミリ秒）すると「どうするか」の窓（捨てる・倉庫へ など）が出る
   pickupDelay: 0.8,     // 落ちてから拾うまでの秒数
   groundLifetime: 30,   // 拾えなかった装備が消えるまでの秒数
   levelScaling: 0.12,   // アイテムレベル+1ごとに数値が何割増えるか

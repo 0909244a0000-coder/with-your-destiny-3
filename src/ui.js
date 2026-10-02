@@ -364,7 +364,9 @@ WYD.ui = {
 
     // 持ち物：左クリックで装備、右クリックで捨てる
     const inv = this.$("inventory");
+    this.bindLongPress(inv, "[data-index]", "inv", (c) => Number(c.dataset.index));
     inv.onclick = (e) => {
+      if (this.eatClick()) return;
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
       const index = Number(cell.dataset.index);
@@ -384,6 +386,7 @@ WYD.ui = {
       e.preventDefault();
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
+      if (this.fingerUsed()) return;   // 指の長押しは窓で（いきなり捨てない）
       const item = s.inventory[Number(cell.dataset.index)];
       const gained = WYD.inventory.discard(s, Number(cell.dataset.index));
       if (gained < 0) this.log(`${WYD.loot.label(item)}はロックしているので捨てられない（Ctrl＋クリックで外す）`, "#ff6b6b");
@@ -399,7 +402,9 @@ WYD.ui = {
       this.markDirty();
     };
     const stash = this.$("stash");
+    this.bindLongPress(stash, "[data-index]", "stash", (c) => Number(c.dataset.index));
     stash.onclick = (e) => {
+      if (this.eatClick()) return;
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
       if (this.touchSheet("stash", Number(cell.dataset.index))) return;
@@ -416,6 +421,7 @@ WYD.ui = {
       e.preventDefault();
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
+      if (this.fingerUsed()) return;   // 指の長押しは窓で（いきなり捨てない）
       const item = s.stash[Number(cell.dataset.index)];
       const gained = WYD.inventory.discardFromStash(s, Number(cell.dataset.index));
       if (gained < 0) this.log(`${WYD.loot.label(item)}はロックしているので捨てられない（Ctrl＋クリックで外す）`, "#ff6b6b");
@@ -427,7 +433,9 @@ WYD.ui = {
 
     // 装備欄：クリックで外す
     const eq = this.$("equipment");
+    this.bindLongPress(eq, "[data-slot]", "eq", (c) => c.dataset.slot);
     eq.onclick = (e) => {
+      if (this.eatClick()) return;
       const cell = e.target.closest("[data-slot]");
       if (!cell || !s.equipment[cell.dataset.slot]) return;
       if (this.touchSheet("eq", cell.dataset.slot)) return;
@@ -1033,7 +1041,7 @@ WYD.ui = {
       ? "強化モード：持ち物や装備をクリックすると、素材を使って +1 強化する（捨てると使った素材の半分がもどる）"
       : this.craftMode
       ? "つけ直しモード：持ち物や装備をクリックすると、素材を使って特殊効果をつけ直す"
-      : "左クリック：装備する／右クリック：捨てる（捨てると素材になる）／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック";
+      : "左クリック：装備する／右クリック（または長押し）：捨てる（捨てると素材になる）／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック";
     this.$("inventory").innerHTML = this.cellsHtml(s.inventory, size);
     this.$("gems").innerHTML = this.gemsHtml();
     this.$("builds").innerHTML = this.buildsHtml();
@@ -1431,12 +1439,44 @@ WYD.ui = {
 
   // スマホ（マウスがない画面）か
   isTouch() {
-    return window.matchMedia && window.matchMedia("(hover: none)").matches;
+    return !!window.matchMedia && (window.matchMedia("(hover: none)").matches || window.matchMedia("(pointer: coarse)").matches);
+  },
+  // 指で触ったか（マウスでないか）。iPad にキーボードやマウスをつけていても、指で触ったときは指として扱う
+  fingerUsed() {
+    return this.isTouch() || (this.lastPointer && this.lastPointer !== "mouse");
+  },
+  // 長押し（指でもマウスでも）で「どうするか」の窓を出す。右クリックができない環境でも捨てたりできるように
+  bindLongPress(el, selector, where, keyOf) {
+    let timer = null, start = null;
+    const clear = () => { clearTimeout(timer); timer = null; };
+    el.addEventListener("pointerdown", (e) => {
+      this.lastPointer = e.pointerType;
+      if (e.button !== 0) return;
+      const cell = e.target.closest(selector);
+      if (!cell) return;
+      start = { x: e.clientX, y: e.clientY };
+      clear();
+      timer = setTimeout(() => {
+        timer = null;
+        if (this.touchSheet(where, keyOf(cell), true)) this.suppressClick = true;
+      }, WYD.data.items.longPressMs);
+    });
+    el.addEventListener("pointermove", (e) => {
+      if (timer && start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) clear();
+    });
+    el.addEventListener("pointerup", clear);
+    el.addEventListener("pointercancel", clear);
+  },
+  // 長押しで窓を出した直後のクリックは、装備などをしない
+  eatClick() {
+    if (!this.suppressClick) return false;
+    this.suppressClick = false;
+    return true;
   },
 
   // スマホ：装備を触ったら、説明と「どうするか」のボタンを窓で出す（ふつうのモードのときだけ）。出したら true
-  touchSheet(where, key) {
-    if (!this.isTouch() || this.forgeMode || this.cubeMode || this.gemSelected || this.enhanceMode || this.craftMode) return false;
+  touchSheet(where, key, force) {
+    if ((!this.isTouch() && !force) || this.forgeMode || this.cubeMode || this.gemSelected || this.enhanceMode || this.craftMode) return false;
     const s = this.state;
     const item = where === "inv" ? s.inventory[key] : where === "stash" ? s.stash[key] : s.equipment[key];
     if (!item) return false;
