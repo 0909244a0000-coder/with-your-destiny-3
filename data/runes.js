@@ -319,3 +319,12 @@ Object.assign(WYD.data.runes.skills, {
     { id: "wide", name: "炉の輪", desc: "手下に届く範囲2倍", mods: { radius: ["mul", 2] } },
   ],
 });
+
+// ネクロマンサーに足したスキルの型
+Object.assign(WYD.data.runes.skills, {
+  nec_decay: [
+    { id: "wide", name: "死の霧", desc: "範囲1.4倍。威力は少し下がる", mods: { radius: ["mul", 1.4], damage: ["mul", 0.8] } },
+    { id: "hot", name: "急速な腐敗", desc: "威力1.5倍。範囲は少し狭い", mods: { damage: ["mul", 1.5], radius: ["mul", 0.8] } },
+    { id: "leech", name: "命の簒奪", desc: "与えたダメージの4%を回復", extra: { lifesteal: 4 } },
+  ],
+});

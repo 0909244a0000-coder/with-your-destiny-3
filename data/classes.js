@@ -195,8 +195,14 @@ WYD.data.classes = {
         radius: 125, minTargets: 2, bindBase: 1.7, bindPerLevel: 0.2, bossBindMult: 0.3,
         damageBase: 0.6, damagePerLevel: 0.14, color: "#9a8aff",
       },
+      nec_decay: {
+        kind: "aura", auraType: "damage", name: "腐敗の気",
+        desc: "オーラ：まわりに死の気配をまとい、近くの敵を腐らせ続ける。攻撃力×倍率のダメージ。",
+        startLevel: 0, maxLevel: 10, cooldown: 1,
+        radius: 130, damageBase: 0.3, damagePerLevel: 0.06, color: "#9adf7a",
+      },
     },
-    skillOrder: ["nec_armor", "nec_raise", "nec_mage", "nec_pact", "nec_grasp", "nec_nova", "nec_spear", "nec_plague"],
+    skillOrder: ["nec_armor", "nec_decay", "nec_raise", "nec_mage", "nec_pact", "nec_grasp", "nec_nova", "nec_spear", "nec_plague"],
     skillIcons: {},
   },
 
