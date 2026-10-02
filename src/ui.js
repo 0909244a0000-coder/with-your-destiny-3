@@ -353,6 +353,8 @@ WYD.ui = {
       this.markDirty();
     };
 
+    // スマホでは、持ち物の説明を「触る」操作に合わせる
+    if (this.isTouch()) this.$("inv-help").textContent = "装備を触ると：説明・今の装備との比べ・装備する／倉庫へ／ロック／捨てる";
     // スマホの「どうするか」の窓
     this.$("sheet-body").onclick = (e) => {
       const b = e.target.closest("[data-sheet]");
@@ -1003,6 +1005,13 @@ WYD.ui = {
     this.$("gems").innerHTML = this.gemsHtml();
     this.$("builds").innerHTML = this.buildsHtml();
     this.$("maps-panel").hidden = !s.cleared && !s.maps.length;
+    // 序盤は使えないものを出さない（使えるようになったら出る）
+    const all = s.inventory.concat(s.stash, Object.values(s.equipment)).filter(Boolean);
+    this.$("cube-panel").hidden = !(s.records.uniquesFound > 0 || Object.keys(s.cube.learned).length);
+    this.$("gems-panel").hidden = !(Object.keys(s.gems).length || all.some((it) => (it.sockets || []).length));
+    this.$("merc-open").hidden = s.player.level < WYD.data.mercenary.minLevel && !s.mercenary.type;
+    this.$("gamble-open").hidden = s.player.level < WYD.data.gamble.minLevel;
+    this.$("lgem-open").hidden = !Object.keys(s.lgems.owned).length;
     this.$("maps-count").textContent = `${s.maps.length} / ${WYD.data.maps.maxHeld}　最高 段階${s.mapBest || 0}`;
     this.$("maps").innerHTML = this.mapsHtml();
     const cubeHtml = this.cubeHtml();
