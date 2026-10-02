@@ -47,11 +47,12 @@ button.on { background: #2f5e35; }
 button.off { background: #5e2f2f; }
 
 main { display: flex; gap: 12px; padding: 12px; align-items: flex-start; }
-.left { display: flex; flex-direction: column; gap: 12px; }
+.left { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; align-items: flex-start; }
 canvas { display: block; border: 1px solid var(--line); border-radius: 4px; }
 aside { width: 400px; display: flex; flex-direction: column; gap: 12px; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
 
+.left > .panel { align-self: stretch; }
 #log { height: 120px; overflow-y: auto; font-size: 13px; line-height: 1.5; }
 
 .bar { position: relative; height: 18px; background: #111; border-radius: 3px; margin-bottom: 6px; overflow: hidden; }
@@ -185,6 +186,10 @@ h2 {
 .panel::before { top: 3px; left: 3px; border-right: none; border-bottom: none; }
 .panel::after { bottom: 3px; right: 3px; border-left: none; border-top: none; }
 canvas {
+  /* 画面の大きさに合わせて、形（16:10）を保ったまま広げたり縮めたりする（高さは画面に収まるように） */
+  aspect-ratio: 960 / 600;
+  width: max(576px, min(100%, calc((100vh - 160px) * 1.6)));
+  height: auto;
   border: 2px solid #000;
   border-radius: 2px;
   box-shadow: 0 0 0 1px #4a3d2a, 0 6px 18px rgba(0, 0, 0, 0.8);

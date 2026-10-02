@@ -32,6 +32,7 @@
 - キャダラの賭け：`src/gamble.js`・`data/gamble.js`。`WYD.loot.create` に4つ目の引数 `opts`（`slot`・`rarity`）を足した（ほかの呼び出しは今までどおり）。記録 `gambles`
 - 裂け目：`src/breach.js`・`data/breach.js`。今の裂け目は `w.breach`、異界の敵は `e.breach`（色は `e.imageFilter`。`src/render.js` は `e.imageFilter` を先に見る）。開いている間は `updateFloors` の降りる処理を待たせる（そうしないと倒した数ですぐ次の階に行き、裂け目が消えていた）。自動プレイ40分で6体目は20〜25分（入れる前21〜27分）。記録 `breaches` と実績2つ
 - 賞金首の依頼：`src/bounties.js`・`data/bounties.js`。`WYD.records.add` が呼ばれるたびに `WYD.bounties.onRecord` で進む（記録の名前でつなぐので、新しい種類は data に足すだけ）。セーブは `state.bounties`。ご褒美の装備は自動分解せず持ち物へ（いっぱいなら素材）
+- 手直し（クオリティアップ）：スキルの説明に今と次のレベルの数値（`src/skillinfo.js`、しくみ kind ごとに出す数値を決める）。持ち物がいっぱいのときはノーマル・マジックを拾ったその場で素材に（`data/items.js` の `fullSalvage`、知らせは `fullWarnInterval` 秒に1回）。新しいセーブは自動装備ON。戦いの画面は画面の大きさに合わせて広がる・縮む（`src/style.css` の canvas。マウスで画面を触る処理はないので、大きさを変えても大丈夫）
 - エフェクト（`src/fx.js`）、絵の動き（`src/render.js` の `pose`）、ディアブロ風パネル（`src/style.css` の後半）、効果音（`src/sound.js`）
 - 絵：主人公、地面3枚、装備13個・スキル6個のアイコン、全13種類の敵・ボス（`docs/ART.md` の「受け取り済み」）。アイコンの切り出し用シートも `assets/sheets/` に保存
 
