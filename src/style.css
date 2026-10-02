@@ -368,4 +368,12 @@ details.menu .menu-body button, details.menu .menu-body label { text-align: left
   .left { width: 55%; flex: 0 0 55%; align-self: flex-start; }
   canvas { width: 100%; }
   aside { width: auto; flex: 1; min-width: 0; }
+  /* 上のバーを薄くして、はじめから戦いの画面が下まで見えるようにする（題名・補足の文は隠す、間をつめる） */
+  header { padding: 4px 8px; }
+  header h1 { display: none; }
+  header .controls { gap: 4px 6px; font-size: 12px; }
+  header .controls button, header .controls select { padding: 2px 6px; font-size: 12px; }
+  #boss-progress, #diff-progress, #trial-best { display: none; }
+  /* 戦いの画面とログが、画面の高さに収まる大きさまで */
+  canvas { width: min(100%, calc((100vh - 70px) * 1.6)); }
 }
