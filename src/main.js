@@ -14,6 +14,8 @@ window.WYD = window.WYD || {};
   WYD.ui.init(state, world);
   WYD.sound.init();
   WYD.ui.log("ようこそ。戦いは自動で進みます。装備とスキルを選んで強くなろう。", "#ffd447");
+  const cls = WYD.data.classes[WYD.classes.id];
+  if (cls.desc) WYD.ui.log(`${cls.name}：${cls.desc}`, WYD.data.player.color);
   if (WYD.save.restoredFromBackup) WYD.ui.log("セーブが壊れていたので、前回の控えから読み込みました", "#ff8a2a");
   WYD.offline.apply(state, world, lastSeen);
   // 初めて遊ぶとき（前に遊んだ記録がないとき）だけ、遊び方を出す

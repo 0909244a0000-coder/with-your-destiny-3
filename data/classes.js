@@ -9,6 +9,7 @@ WYD.data.classes = {
   // 最初の職業。今までのセーブはこの職業として読み込む
   barbarian: {
     name: "バーバリアン",
+    desc: "近くで戦う力自慢。旋風斬で周りをまとめて斬り、雄叫びや祖霊で押し切る。打たれ強く、はじめてでも扱いやすい",
     player: {},
     skills: null,
     skillOrder: null,
@@ -18,6 +19,7 @@ WYD.data.classes = {
   // 遠くから魔法で戦う職業
   sorceress: {
     name: "ソーサレス",
+    desc: "遠くから火の玉で戦う魔法使い。凍らせて足を止め、メテオやハイドラで焼き払う。打たれ弱いので距離が大事",
     player: {
       className: "ソーサレス",
       weaponName: "杖",
@@ -105,6 +107,7 @@ WYD.data.classes = {
   // 絵がまだないので、ソーサレスの絵の色を変えて仮に使う（imageFilter）。手下は亡者の絵を白くして使う
   necromancer: {
     name: "ネクロマンサー",
+    desc: "骸骨の戦士と魔術師を呼び出して、いっしょに戦う。手下が敵を引きつけるので、本人は後ろから骨の槍を撃つ",
     player: {
       className: "ネクロマンサー",
       weaponName: "杖",
@@ -210,6 +213,7 @@ WYD.data.classes = {
   // 絵がまだないので、バーバリアンの絵を金色にして仮に使う（imageFilter）
   paladin: {
     name: "パラディン",
+    desc: "聖なる騎士。オーラ（ONのあいだずっと効く）で、炎・回復・攻撃力アップを味方にまとい続ける。とても打たれ強い",
     player: {
       className: "パラディン",
       weaponName: "鎚",
@@ -290,6 +294,7 @@ WYD.data.classes = {
   // 絵がまだないので、バーバリアンの絵を暗い紫にして仮に使う（imageFilter）
   assassin: {
     name: "アサシン",
+    desc: "素早い近接と、地面に置く罠で戦う。罠は置いておくだけで敵を撃ち続け、影の戦士が身代わりになる",
     player: {
       className: "アサシン",
       weaponName: "鉤爪",
@@ -381,6 +386,7 @@ WYD.data.classes = {
   // 絵がまだないので、ネクロマンサーと同じくソーサレスの絵を緑がかった色にして仮に使う（imageFilter）
   druid: {
     name: "ドルイド",
+    desc: "熊や狼に変身して戦う、自然の力の職業。狼の群れや竜巻、地割れも使える。変身の時間をどう使うかがカギ",
     player: {
       className: "ドルイド",
       weaponName: "杖",

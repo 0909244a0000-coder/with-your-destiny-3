@@ -56,11 +56,12 @@ WYD.ui = {
     };
     // 職業の切り替え
     this.$("class-select").innerHTML = Object.keys(WYD.data.classes)
-      .map((id) => `<option value="${id}">${WYD.data.classes[id].name}</option>`).join("");
+      .map((id) => `<option value="${id}" title="${WYD.data.classes[id].desc || ""}">${WYD.data.classes[id].name}</option>`).join("");
     this.$("class-select").value = WYD.classes.id;
+    this.$("class-select").title = `${WYD.data.classes[WYD.classes.id].desc || ""}（職業を切り替える。キャラごとにセーブは別々）`;
     this.$("class-select").onchange = (e) => {
-      const name = WYD.data.classes[e.target.value].name;
-      if (confirm(`「${name}」に切り替えますか？（今のキャラのセーブはそのまま残ります）`)) WYD.classes.switchTo(e.target.value, s);
+      const c = WYD.data.classes[e.target.value];
+      if (confirm(`「${c.name}」に切り替えますか？\n${c.desc || ""}\n（今のキャラのセーブはそのまま残ります）`)) WYD.classes.switchTo(e.target.value, s);
       else e.target.value = WYD.classes.id;
     };
     // パラゴンボード
