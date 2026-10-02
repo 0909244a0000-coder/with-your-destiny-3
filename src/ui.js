@@ -474,6 +474,17 @@ WYD.ui = {
       if (btn.dataset.action === "toggle") this.toggleSkill(id);
       this.changed();
     };
+    // 余ったポイントの案内：今だけおまかせ／これからずっとおまかせ（設定の「スキルを自動で上げる」をON）
+    this.$("skill-hint").onclick = (e) => {
+      const btn = e.target.closest("button[data-skill-guide]");
+      if (!btn) return;
+      if (btn.dataset.skillGuide === "always") {
+        s.settings.autoSkill = true;
+        this.$("auto-skill").checked = true;
+      }
+      this.autoSkill();
+      this.changed();
+    };
   },
 
   // 特殊効果をつけ直す（素材が足りなければ教える）
@@ -816,6 +827,27 @@ WYD.ui = {
     }
   },
 
+  // スキルポイントが余っているとき：スキル欄の上に「＋で覚える／おまかせ」の案内を出す
+  renderSkillHint() {
+    const s = this.state, G = WYD.data.story.skillGuide;
+    const el = this.$("skill-hint");
+    const pts = s.player.skillPoints;
+    el.hidden = !(pts > 0 && !s.settings.autoSkill);
+    if (el.hidden) return;
+    el.innerHTML = `${G.panel.replace("{n}", pts)}<span class="skill-hint-btns"><button data-skill-guide="once">${G.onceButton}</button><button data-skill-guide="always">${G.alwaysButton}</button></span>`;
+  },
+
+  // ポイントがたまったら、画面の真ん中でも1回知らせる（遊んでいる間に段階ごとに1回）
+  checkSkillGuide() {
+    const s = this.state, G = WYD.data.story.skillGuide;
+    if (s.settings.autoSkill) return;
+    this.skillGuideShown = this.skillGuideShown || {};
+    const step = G.noticeAt.filter((n) => s.player.skillPoints >= n).pop();
+    if (step == null || this.skillGuideShown[step]) return;
+    this.skillGuideShown[step] = true;
+    this.notice(G.notice.replace("{n}", s.player.skillPoints), G.color);
+  },
+
   levelUpSkill(id) {
     const pl = this.state.player;
     const def = WYD.data.skills[id];
@@ -952,6 +984,7 @@ WYD.ui = {
 
     // スキル
     this.$("skill-points").textContent = s.player.skillPoints;
+    this.renderSkillHint();
     this.$("skill-slots").textContent = `${this.activeSkillCount()} / ${WYD.data.skillSlots}`;
     const skillsHtml = Object.keys(WYD.data.skills).map((id) => {
       const def = WYD.data.skills[id];

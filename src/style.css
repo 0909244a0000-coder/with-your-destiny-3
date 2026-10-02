@@ -70,6 +70,8 @@ aside { width: 400px; display: flex; flex-direction: column; gap: 12px; }
 .skill-head { display: flex; align-items: center; gap: 8px; }
 .skill-head span { margin-left: auto; color: var(--muted); }
 .skill-desc { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.skill-hint { margin: 0 0 8px; padding: 6px 8px; border: 1px solid #7dff8a; border-radius: 4px; background: rgba(60,120,60,0.18); color: #c8ffd0; font-size: 13px; }
+.skill-hint-btns { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 
 .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
 .cell {

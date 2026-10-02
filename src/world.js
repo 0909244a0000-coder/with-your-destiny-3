@@ -1326,6 +1326,7 @@ WYD.world = {
       WYD.ui.onLevelUp();
     }
     if (state.settings.autoSkill && pl.skillPoints > 0) WYD.ui.autoSkill();   // 設定「スキルを自動で上げる」
+    else WYD.ui.checkSkillGuide();
     if (pl.level >= P.maxLevel) {
       const extra = pl.exp;
       pl.exp = 0;
