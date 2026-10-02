@@ -10,6 +10,7 @@ WYD.data.effects = {
     rare:   [2, 2],
     legend: [3, 3],
     unique: [1, 1],
+    set: [1, 1],
   },
 
   color: "#e58cff",  // 持ち物画面で特殊効果を表示する色
