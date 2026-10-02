@@ -806,13 +806,13 @@ WYD.ui = {
   },
 
   // スキルポイントを自動で振る（設定「スキルを自動で上げる」）
-  //   1. ONの枠が空いていて、まだ覚えていないスキルがあれば覚える（AIが試す順番の早いもの）
+  //   1. ONの枠が空いていて、まだ覚えていないスキルがあれば覚える（おすすめの autoBuild を先に、そのあとAIが試す順番）
   //   2. ONのスキルのうち、レベルの低いものから上げる
   //   3. ONのスキルが全部最大なら、覚えているほかのスキルを上げる
   autoSkill() {
     const pl = this.state.player;
     const S = WYD.data.skills;
-    const order = WYD.data.skillOrder.filter((id) => S[id]);
+    const order = [...new Set([...(WYD.data.autoBuild || []), ...WYD.data.skillOrder])].filter((id) => S[id]);
     let guard = 0;
     while (pl.skillPoints > 0 && guard++ < 200) {
       const lv = (id) => pl.skills[id] || 0;

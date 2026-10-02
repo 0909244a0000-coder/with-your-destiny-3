@@ -12,6 +12,7 @@ WYD.data.classes = {
     desc: "近くで戦う力自慢。旋風斬で周りをまとめて斬り、雄叫びや祖霊で押し切る。打たれ強く、はじめてでも扱いやすい",
     player: {},
     skills: null,
+    autoBuild: null,
     skillOrder: null,
     skillIcons: null,
   },
@@ -99,6 +100,7 @@ WYD.data.classes = {
         radius: 140, healPercentBase: 1.1, healPercentPerLevel: 0.22, color: "#ffc07a",
       },
     },
+    autoBuild: ["sorc_nova", "sorc_shield", "sorc_chain"],   // 「おまかせ」で先に覚えてONにするスキル
     skillOrder: ["sorc_shield", "sorc_warmth", "sorc_static", "sorc_haste", "sorc_hydra", "sorc_freeze", "sorc_nova", "sorc_chain", "sorc_meteor"],
     skillIcons: {
       sorc_nova: "assets/skills/sorc_nova.png", sorc_shield: "assets/skills/sorc_shield.png", sorc_chain: "assets/skills/sorc_chain.png",
@@ -208,6 +210,7 @@ WYD.data.classes = {
         radius: 130, damageBase: 0.3, damagePerLevel: 0.06, color: "#9adf7a",
       },
     },
+    autoBuild: ["nec_raise", "nec_mage", "nec_nova"],   // 「おまかせ」で先に覚えてONにするスキル
     skillOrder: ["nec_armor", "nec_decay", "nec_raise", "nec_mage", "nec_pact", "nec_grasp", "nec_nova", "nec_spear", "nec_plague"],
     skillIcons: {},
   },
@@ -289,6 +292,7 @@ WYD.data.classes = {
         radius: 120, mightBase: 15, mightPerLevel: 4, color: "#ff6a5a",
       },
     },
+    autoBuild: ["pal_zeal", "pal_shield", "pal_hammer"],   // 「おまかせ」で先に覚えてONにするスキル
     skillOrder: ["pal_shield", "pal_might", "pal_prayer", "pal_fire", "pal_vow", "pal_chain", "pal_zeal", "pal_hammer", "pal_judgment"],
     skillIcons: {},
   },
@@ -381,6 +385,7 @@ WYD.data.classes = {
         damageBase: 0.72, damagePerLevel: 0.1, color: "#ff5a8a",
       },
     },
+    autoBuild: ["asn_blade", "asn_cloak", "asn_shuriken"],   // 「おまかせ」で先に覚えてONにするスキル
     skillOrder: ["asn_cloak", "asn_burst", "asn_shadow", "asn_mind", "asn_sentry", "asn_death", "asn_blade", "asn_shuriken", "asn_fire"],
     skillIcons: {},
   },
@@ -470,6 +475,7 @@ WYD.data.classes = {
         damageBase: 0.6, damagePerLevel: 0.14, color: "#6adf6a",
       },
     },
+    autoBuild: ["dru_bear", "dru_wolf", "dru_wolves"],   // 「おまかせ」で先に覚えてONにするスキル
     skillOrder: ["dru_bark", "dru_bear", "dru_wolf", "dru_howl", "dru_wolves", "dru_vines", "dru_tornado", "dru_boulder", "dru_fissure"],
     skillIcons: {},
   },

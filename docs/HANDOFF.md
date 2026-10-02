@@ -35,6 +35,8 @@
 - 倒れたとき：何に・どうやられたかをログに出し、やられ方ごとのヒントを遊んでいる間に1回だけ出す。倒れている間の画面にも「原因」とヒントを出す（`w.deathBy`・`w.deathHint`。`WYD.world.playerDied(w, {by, how})`、文は `data/story.js` の `death`）
 - スキルポイントの案内：余っていて「スキルを自動で上げる」がOFFなら、スキル欄の上に「今だけおまかせ／これからずっとおまかせ」を出す（`WYD.ui.renderSkillHint`）。残りが `noticeAt` の数になったら画面の真ん中でも1回知らせる（`checkSkillGuide`）。文と数は `data/story.js` の `skillGuide`。GPTのレビュー（`docs/reviews/2026-10-02-gpt.md`）の提案2から
 - 自動装備が守っている装備（ロック・ユニーク・セット・強化・宝石つき）のために着替えなかったら、理由をログに出す（同じ装備は1回だけ。`WYD.inventory.keepReason`・`noteKept`、文は `data/story.js` の `keepNote`）。GPTのレビューの提案4から
+- おまかせ（スキルを自動で上げる）は、職業ごとのおすすめ `autoBuild`（`data/classes.js`、バーバリアンは `data/skills.js`）を先に覚えてONにする。前はAIの順番（守り・補助が先）で覚えていたため、ソーサレス・ドルイドが40分で6体目を倒せなかった
+- `tools/balance-sim.js` の育て方は `game`（ゲームのおまかせと自動装備）が標準。`deathCauses` はとどめを刺した攻撃（`w.deathBy`）。game での6体目：ネクロ18・ドルイド23・ソーサレス24・バーバリアン27・パラディン28・アサシン31分（各1回）。終盤の倒れる原因は地獄の射手・業火の術師の飛び道具が多い（パラディン・アサシンが特に）
 - 戦いの画面の左下に、使っているスキルを並べる（`src/render.js` の `drawSkillBar`、大きさや色は `data/map.js` の `skillBar`）。暗い影が次に使えるまでの時間、光る枠が今使ったしるし。絵がないスキルは頭の1文字。スマホで画面が縮んでも `minShownPx` より小さく見えないよう、大きく描く
 - 傭兵：`src/mercenary.js`・`data/mercenary.js`。戦い方は手下と同じ `src/allies.js`（source が "merc"、時間で崩れない）。いなければ `WYD.mercenary.update` が出す（倒れたら `reviveTime` 秒後）。加護は `src/stats.js` で星座と同じように足す。セーブは `state.mercenary = { type, rank }`。絵は仮（敵の絵の色替え）。`tools/balance-sim.js` の6つ目の引数で傭兵を雇わせられる（4職で最後のボスは18〜19分、雇わないと17〜21分）
 - 伝説の宝石：`src/legendaryGems.js`（`WYD.lgems`）・`data/legendaryGems.js`。セーブは `state.lgems = { owned: { id: ランク }, equipped: [...] }`。手に入る・ランク上げは `src/trial.js` の finish（成功時）から。効果は `playerHit`（ダメージ倍率・迅速の重なり）、通常攻撃の間隔、`enemyDied`（強者の災い）、`src/stats.js`（命＝最大HP、血＝吸血）。自動プレイで試練20分後にランク8〜13、試練の最高段階は入れる前とほぼ同じ（10〜14）。パラディンは試練が少し苦手（段階10くらい）

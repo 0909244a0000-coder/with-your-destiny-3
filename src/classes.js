@@ -27,6 +27,7 @@ WYD.classes = {
     }
     if (c.skills) WYD.data.skills = c.skills;
     if (c.skillOrder) WYD.data.skillOrder = c.skillOrder;
+    if (c.autoBuild) WYD.data.autoBuild = c.autoBuild;
     if (c.skillIcons) WYD.data.skillIcons = c.skillIcons;
     // 最初の職業は今までと同じセーブの場所、ほかの職業は別の場所
     const first = Object.keys(WYD.data.classes)[0];

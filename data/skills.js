@@ -132,5 +132,9 @@ WYD.data.skillIcons = {
 // 同時にONにできるスキルの数（ここでビルドを選ぶ）
 WYD.data.skillSlots = 3;
 
+// 「おまかせ」（スキルを自動で上げる）で先に覚えてONにするスキル（おすすめの組み合わせ）。
+// 残りのポイントは、ONのスキルのレベルの低いものから上げる
+WYD.data.autoBuild = ["whirl", "vajra", "sudarshana"];
+
 // AIがスキルを試す順番
 WYD.data.skillOrder = ["vajra", "bar_orders", "bar_cry", "hanuman", "bar_ancients", "nagapasha", "whirl", "sudarshana", "agni"];
