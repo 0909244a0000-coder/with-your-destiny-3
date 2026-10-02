@@ -110,7 +110,7 @@ WYD.data.classes = {
   },
 
   // 骸骨の手下を呼び出して、いっしょに戦う職業
-  // 主人公の絵は player_necromancer.png。手下は亡者の絵を白くして仮に使う（絵が来たら imageFilter を null に）
+  // 主人公の絵は player_necromancer.png。手下は ally_skeleton.png・ally_skeleton_mage.png
   necromancer: {
     name: "ネクロマンサー",
     desc: "骸骨の戦士と魔術師を呼び出して、いっしょに戦う。手下が敵を引きつけるので、本人は後ろから骨の槍を撃つ",
@@ -162,8 +162,8 @@ WYD.data.classes = {
         shotColor: "#b98aff",
         spawnSpread: 40, followDistance: 70, firstAttackDelay: 0.6,
         color: "#d8c8ff",
-        image: "assets/enemies/nagaCaster.png",   // 仮の絵
-        imageFilter: "grayscale(1) brightness(1.5) hue-rotate(240deg)",
+        image: "assets/ally_skeleton_mage.png",
+        imageFilter: null,
       },
       nec_nova: {
         kind: "whirl", name: "骨の嵐",
