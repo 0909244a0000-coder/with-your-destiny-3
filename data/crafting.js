@@ -21,6 +21,20 @@ WYD.data.crafting = {
 
   rerollCost: { normal: 0, magic: 10, rare: 25, legend: 60, unique: 40, set: 35 },
 
+  // 鍛造（Last Epoch のしくみ）：装備ごとに「鍛造の余地」があり、それを使って能力を1つずつ狙って強くする。
+  // 余地がなくなったら、もう鍛えられない。運がよいと余地を使わずに済む（会心の鍛造）
+  forge: {
+    potential: { normal: 8, magic: 14, rare: 18, legend: 22, unique: 6, set: 6 },   // はじめの余地（レア度ごと）
+    improvePercent: 8,          // 能力1つを、元の値（はじめて鍛えたときの値）の何％ぶん上げるか（何度でも同じ量）
+    improvePotential: [1, 4],   // 能力を上げるときに減る余地 [最小, 最大]
+    improveCost: 6,             // 素材（アイテムレベルの半分を足す）
+    addPotential: [3, 6],       // 新しい能力を足すときに減る余地
+    addCost: 15,                // 素材（アイテムレベルを足す）
+    maxAffixes: 6,              // 追加能力の最大の数
+    critChance: 0.12,           // 会心の鍛造（余地が減らない）の確率
+    color: "#ff9a5a",
+  },
+
   // スキルと修練の振り直し：使ったポイントを全部もどす。素材 = respecBase + respecPerLevel × レベル
   respecBase: 20,
   respecPerLevel: 2,

@@ -128,6 +128,53 @@ WYD.inventory = {
     return n;
   },
 
+  // ---- 鍛造 ----
+  forgePotential(item) {
+    if (item.forgePotential == null) item.forgePotential = WYD.data.crafting.forge.potential[item.rarity] || 0;
+    return item.forgePotential;
+  },
+
+  forgeCost(item, kind) {
+    const F = WYD.data.crafting.forge;
+    return kind === "add" ? F.addCost + item.level : F.improveCost + Math.floor(item.level / 2);
+  },
+
+  // 鍛造する。kind = "improve"（lineIndex の能力を上げる）か "add"（新しい能力を足す）
+  // 結果 { ok, why, crit, used }
+  forge(state, item, kind, lineIndex) {
+    const F = WYD.data.crafting.forge;
+    const D = WYD.data.items;
+    const pot = this.forgePotential(item);
+    const cost = this.forgeCost(item, kind);
+    if (pot <= 0) return { ok: false, why: "鍛造の余地がもうない" };
+    if (state.materials < cost) return { ok: false, why: `${WYD.data.crafting.materialName}が${cost}個いる` };
+    let line = null;
+    if (kind === "improve") {
+      line = item.stats[lineIndex];
+      if (!line) return { ok: false, why: "その能力はない" };
+    } else {
+      const have = item.stats.filter((l) => !l.main).length;
+      if (have >= F.maxAffixes) return { ok: false, why: "これ以上は能力を足せない" };
+      const pool = D.affixes.filter((a) => !item.stats.some((l) => l.stat === a.stat));
+      if (!pool.length) return { ok: false, why: "足せる能力がない" };
+      const a = WYD.util.pick(pool);
+      line = { stat: a.stat, value: WYD.loot.rollValue(a.stat, a.range, item.level), main: false };
+    }
+    state.materials -= cost;
+    if (kind === "improve") {
+      if (line.base == null) line.base = line.value;   // 元の値を覚えておく（上がる量が毎回同じになるように）
+      line.value = Math.round((line.value + Math.abs(line.base) * F.improvePercent / 100) * 100) / 100;
+    } else {
+      item.stats.push(line);
+    }
+    const crit = Math.random() < F.critChance;
+    const range = kind === "add" ? F.addPotential : F.improvePotential;
+    const used = crit ? 0 : Math.min(pot, WYD.util.randInt(range[0], range[1]));
+    item.forgePotential = pot - used;
+    item.forged = (item.forged || 0) + 1;
+    return { ok: true, crit, used, line };
+  },
+
   // 振り直しの素材
   respecCost(state) {
     const C = WYD.data.crafting;

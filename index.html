@@ -94,6 +94,7 @@
           <button id="discard-magic">マジック以下を全部捨てる</button>
           <button id="craft-mode">つけ直しモード：OFF</button>
           <button id="enhance-mode">強化モード：OFF</button>
+          <button id="forge-mode" title="装備をクリックすると、能力を1つずつ狙って鍛えられる（Last Epoch の鍛造）">鍛造</button>
         </div>
         <p class="muted" id="inv-help">左クリック：装備する／右クリック：捨てる（捨てると素材になる）</p>
       </section>
@@ -124,6 +125,14 @@
   </main>
 
   <div id="tooltip"></div>
+
+  <div id="forge" class="modal" hidden>
+    <div class="modal-box forge-box">
+      <h2>鍛造</h2>
+      <div id="forge-body"></div>
+      <button id="forge-close">閉じる</button>
+    </div>
+  </div>
 
   <div id="codex" class="modal" hidden>
     <div class="modal-box codex-box">

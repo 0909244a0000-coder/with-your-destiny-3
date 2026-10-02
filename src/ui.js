@@ -8,6 +8,8 @@ WYD.ui = {
   craftMode: false,   // つけ直しモード（クリックで特殊効果をつけ直す）
   paused: false,      // 一時停止中か（セーブしない）
   enhanceMode: false, // 強化モード（クリックで +1 する）
+  forgeMode: false,   // 鍛造モード（クリックで鍛造の画面をひらく）
+  forgeItem: null,    // 鍛造の画面で鍛えている装備
   cubeMode: false,    // カナイの箱に入れるモード（クリックでユニークを分解して覚える）
   gemSelected: null,  // はめるために選んだ宝石（"種類:段階"）
   stashOpen: false,   // 倉庫を開いているか
@@ -148,12 +150,30 @@ WYD.ui = {
     };
     this.$("craft-mode").onclick = () => {
       this.craftMode = !this.craftMode;
-      if (this.craftMode) this.enhanceMode = this.cubeMode = false;
+      if (this.craftMode) this.enhanceMode = this.cubeMode = this.forgeMode = false;
       this.markDirty();
+    };
+    this.$("forge-mode").onclick = () => {
+      this.forgeMode = !this.forgeMode;
+      if (this.forgeMode) this.craftMode = this.enhanceMode = this.cubeMode = false;
+      this.markDirty();
+    };
+    this.$("forge-close").onclick = () => { this.$("forge").hidden = true; this.forgeItem = null; };
+    this.$("forge-body").onclick = (e) => {
+      const btn = e.target.closest("[data-forge]");
+      if (!btn || !this.forgeItem) return;
+      const r = WYD.inventory.forge(s, this.forgeItem, btn.dataset.forge, Number(btn.dataset.line));
+      if (!r.ok) this.log(r.why, "#ff6b6b");
+      else {
+        this.log(`${WYD.loot.label(this.forgeItem)}を鍛えた：${WYD.util.formatStat(r.line.stat, WYD.loot.lineValue(this.forgeItem, r.line))}${r.crit ? "（会心の鍛造！余地は減らない）" : `（余地 -${r.used}）`}`, WYD.data.crafting.forge.color);
+        WYD.sound.play(r.crit ? "uniqueDrop" : "rareDrop");
+      }
+      this.$("forge-body").innerHTML = this.forgeHtml(this.forgeItem);
+      this.changed();
     };
     this.$("cube-mode").onclick = () => {
       this.cubeMode = !this.cubeMode;
-      if (this.cubeMode) this.craftMode = this.enhanceMode = false;
+      if (this.cubeMode) this.craftMode = this.enhanceMode = this.forgeMode = false;
       this.markDirty();
     };
     this.$("maps").onclick = (e) => {
@@ -180,7 +200,7 @@ WYD.ui = {
     };
     this.$("enhance-mode").onclick = () => {
       this.enhanceMode = !this.enhanceMode;
-      if (this.enhanceMode) this.craftMode = this.cubeMode = false;
+      if (this.enhanceMode) this.craftMode = this.cubeMode = this.forgeMode = false;
       this.markDirty();
     };
 
@@ -210,6 +230,7 @@ WYD.ui = {
       if (!cell) return;
       const index = Number(cell.dataset.index);
       if (e.ctrlKey || e.metaKey) this.toggleLock(s.inventory[index]);
+      else if (this.forgeMode) this.openForge(s.inventory[index]);
       else if (this.cubeMode) this.cubeItem(s.inventory[index]);
       else if (this.gemSelected) this.socketGem(s.inventory[index]);
       else if (this.enhanceMode) this.enhanceItem(s.inventory[index]);
@@ -242,6 +263,7 @@ WYD.ui = {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
       if (e.ctrlKey || e.metaKey) this.toggleLock(s.stash[Number(cell.dataset.index)]);
+      else if (this.forgeMode) this.openForge(s.stash[Number(cell.dataset.index)]);
       else if (this.cubeMode) this.cubeItem(s.stash[Number(cell.dataset.index)]);
       else if (this.gemSelected) this.socketGem(s.stash[Number(cell.dataset.index)]);
       else if (this.enhanceMode) this.enhanceItem(s.stash[Number(cell.dataset.index)]);
@@ -270,6 +292,10 @@ WYD.ui = {
       if (e.ctrlKey || e.metaKey) {
         this.toggleLock(s.equipment[cell.dataset.slot]);
         this.changed();
+        return;
+      }
+      if (this.forgeMode) {
+        this.openForge(s.equipment[cell.dataset.slot]);
         return;
       }
       if (this.gemSelected || this.enhanceMode) {
@@ -388,6 +414,29 @@ WYD.ui = {
     WYD.world.resetEnemies(this.world, s, true);
     this.log(`危険度を ${next} にした`);
     this.changed();
+  },
+
+  // 鍛造の画面
+  openForge(item) {
+    if (!item) return;
+    this.forgeItem = item;
+    this.$("forge-body").innerHTML = this.forgeHtml(item);
+    this.$("forge").hidden = false;
+  },
+
+  forgeHtml(item) {
+    const F = WYD.data.crafting.forge;
+    const C = WYD.data.crafting;
+    const pot = WYD.inventory.forgePotential(item);
+    const ci = WYD.inventory.forgeCost(item, "improve"), ca = WYD.inventory.forgeCost(item, "add");
+    const lines = item.stats.map((l, i) => `<div class="forge-row"><span>${WYD.util.formatStat(l.stat, WYD.loot.lineValue(item, l))}${l.main ? " <small class='muted'>（基本）</small>" : ""}</span>
+      <button data-forge="improve" data-line="${i}" ${pot > 0 ? "" : "disabled"}>+${F.improvePercent}%</button></div>`).join("");
+    const affixes = item.stats.filter((l) => !l.main).length;
+    return `<div class="tip-item" style="border:none">${this.itemHtml(item)}</div>
+      <div class="forge-pot">鍛造の余地：<b style="color:${F.color}">${pot}</b>　<small class="muted">（1回で ${F.improvePotential[0]}〜${F.improvePotential[1]} 減る。${Math.round(F.critChance * 100)}%で減らない）</small></div>
+      ${lines}
+      <div class="forge-row"><span>新しい能力を足す（${affixes}/${F.maxAffixes}）</span><button data-forge="add" ${pot > 0 && affixes < F.maxAffixes ? "" : "disabled"}>足す</button></div>
+      <p class="muted">素材：能力を上げる ${ci}個／足す ${ca}個（持っている数 ${this.state.materials}）</p>`;
   },
 
   // カナイの箱に入れる（ユニークを分解して力を覚える）
@@ -664,6 +713,9 @@ WYD.ui = {
       this.$("cube").innerHTML = cubeHtml;
     }
     this.$("cube-mode").textContent = `入れるモード：${this.cubeMode ? "ON" : "OFF"}`;
+    this.$("forge-mode").textContent = `鍛造モード：${this.forgeMode ? "ON" : "OFF"}`;
+    this.$("forge-mode").classList.toggle("active", this.forgeMode);
+    if (this.forgeMode) this.$("inv-help").textContent = "鍛造モード：持ち物・装備・倉庫の装備をクリックすると、鍛造の画面がひらく";
     this.$("cube-mode").classList.toggle("active", this.cubeMode);
     if (this.cubeMode) this.$("inv-help").textContent = "カナイの箱に入れるモード：ユニーク装備をクリックすると、分解してその力を覚える";
     if (this.gemSelected) this.$("inv-help").textContent = `${WYD.gems.name(this.gemSelected)}を選んでいる：持ち物・装備・倉庫の装備をクリックすると、空いたソケットにはめる（もう一度宝石をクリックでやめる）`;

@@ -276,3 +276,10 @@ button.danger { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px #
 .map-row { font-size: 12px; padding: 3px 0; border-bottom: 1px dotted #2f281e; }
 .map-row button { font-size: 11px; padding: 0 5px; margin-left: 4px; }
 .map-mods { color: #c9b48a; font-size: 11px; }
+
+/* 鍛造 */
+.forge-box { width: 460px; }
+.forge-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 3px 0; border-bottom: 1px dotted #2f281e; }
+.forge-row button { font-size: 12px; padding: 1px 8px; }
+.forge-pot { margin: 8px 0 4px; font-size: 13px; }
+#forge-close { display: block; margin: 10px auto 0; }
