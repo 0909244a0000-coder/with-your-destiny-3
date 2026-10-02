@@ -130,5 +130,20 @@ WYD.data.sets = {
              desc: "すべての罠で、撃つ間隔が0.7倍、置いていられる時間が1.5倍になる" },
       },
     },
+    {
+      // ドルイドでだけ落ちる
+      id: "wildheart", name: "野生の魂", classOnly: "druid",
+      pieces: [
+        { id: "wild_staff", name: "野生の杖", base: "staff", stats: { attack: [3, 6] } },
+        { id: "wild_pelt", name: "野生の毛皮", base: "robe", stats: { maxHp: [25, 45] } },
+        { id: "wild_claws", name: "野生の爪", base: "gauntlets", stats: { attackSpeed: [4, 8] } },
+        { id: "wild_totem", name: "野生の護符", base: "talisman", stats: { hpRegen: [1, 2] } },
+      ],
+      bonuses: {
+        2: { stats: { maxHp: 60, attackSpeed: 8 } },
+        4: { effects: { lifesteal: 3 }, power: "skillBoostWild", params: { kind: "raise", mods: { countBase: ["add", 1], attackBase: ["mul", 1.5] } },
+             desc: "{skill:raise}で呼べる数 +1、攻撃力が1.5倍になる" },
+      },
+    },
   ],
 };

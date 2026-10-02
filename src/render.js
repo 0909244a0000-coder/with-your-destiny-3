@@ -424,8 +424,27 @@ WYD.render = {
       ctx.globalAlpha = 1;
     }
     if (p.dead && img) ctx.globalAlpha = 0.4;
-    this.drawCircleOrImage(ctx, p.x, p.y, P.radius, p.dead ? "#555" : P.color, this.poseImage(p, P), false,
-      this.pose(p, p.swingTarget, this.clock), P.imageFilter);
+    // 変身中は、姿の大きさと色で描く（獣の絵が来るまでは、まわりの光と名前でわかるように）
+    const form = p.form;
+    if (form && !p.dead) {
+      const FR = WYD.data.fx.formGlow;
+      const r = P.radius * form.scale * FR.radiusMult;
+      ctx.save();
+      ctx.globalAlpha = FR.alpha + FR.pulseAlpha * Math.sin((this.clock || 0) * FR.pulseSpeed);
+      ctx.fillStyle = form.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = form.color;
+      ctx.font = "bold 11px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`${form.name} ${Math.ceil(form.timeLeft)}秒`, p.x, p.y - r - 4);
+      ctx.restore();
+    }
+    const filter = form && form.filter ? [P.imageFilter, form.filter].filter(Boolean).join(" ") : P.imageFilter;
+    this.drawCircleOrImage(ctx, p.x, p.y, P.radius * (form ? form.scale : 1), p.dead ? "#555" : form ? form.color : P.color,
+      this.poseImage(p, P), false, this.pose(p, p.swingTarget, this.clock), filter);
     // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
     if (p.buff && !p.dead) {
       const size = P.radius * WYD.data.map.spriteScale * 1.3;

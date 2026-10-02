@@ -33,6 +33,17 @@ WYD.skillInfo = {
         if (s.auraType === "damage") return [["1回の威力", x(mult)], ["範囲", () => Math.round(s.radius)]];
         if (s.auraType === "heal") return [["回復", (lv) => `最大HPの${this.r2(s.healPercentBase + s.healPercentPerLevel * (lv - 1))}%`]];
         return [["攻撃力", (lv) => `+${this.r1(s.mightBase + s.mightPerLevel * (lv - 1))}%`]];
+      case "shift": {
+        const out = [];
+        const pct = (b, pl) => (lv) => `+${Math.round((s[b] || 0) + (s[pl] || 0) * (lv - 1))}%`;
+        if (s.attackPctBase) out.push(["攻撃力", pct("attackPctBase", "attackPctPerLevel")]);
+        if (s.attackSpeedPctBase) out.push(["攻撃速度", pct("attackSpeedPctBase", "attackSpeedPctPerLevel")]);
+        if (s.maxHpPct) out.push(["最大HP", () => `+${s.maxHpPct}%`]);
+        if (s.defensePct) out.push(["防御", () => `+${s.defensePct}%`]);
+        if (s.moveSpeedPct) out.push(["移動速度", () => `+${s.moveSpeedPct}%`]);
+        out.push(["時間", () => `${this.r1(s.duration)}秒`]);
+        return out;
+      }
       case "trap": return [
         ["1回の威力", x(mult)], ["撃つ数", () => Math.max(1, Math.floor(s.targetsBase || 1))],
         ["置ける数", (lv) => WYD.traps.maxCount(s, lv)], ["置いていられる", () => `${this.r1(s.duration)}秒（${this.r2(s.fireInterval)}秒ごと）`]];

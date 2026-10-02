@@ -6,7 +6,7 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
   const pg = await b.newPage();
   const errs = new Map(); pg.on('pageerror', e => { const k = e.message + ' @ ' + (e.stack || '').split('\n')[1]; errs.set(k, (errs.get(k) || 0) + 1); });
   await pg.goto('file://' + require('path').resolve(__dirname, '../index.html'));
-  for (const cls of ['barbarian', 'sorceress', 'necromancer', 'paladin', 'assassin']) {
+  for (const cls of ['barbarian', 'sorceress', 'necromancer', 'paladin', 'assassin', 'druid']) {
     await pg.evaluate((c) => { localStorage.clear(); localStorage.setItem('wyd3-active-class', c); WYD.resetting = true; }, cls);
     await pg.reload(); await pg.click('#modal-ok');
     const r = await pg.evaluate(() => {

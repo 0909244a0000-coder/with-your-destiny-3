@@ -60,6 +60,7 @@ WYD.world = {
       if (p.haste.timeLeft <= 0) p.haste = null;
     }
     WYD.lgems.update(w, dt);
+    WYD.forms.update(w, dt);
     WYD.shrines.update(w, state, stats, dt);
     WYD.breach.update(w, state, stats, dt);
     // オーラの輪（ONのオーラだけ残る）
@@ -525,6 +526,10 @@ WYD.world = {
     // 罠（アサシン。src/traps.js）
     trap(w, state, stats, s, lv) {
       return WYD.traps.place(w, state, stats, s, lv);
+    },
+    // 変身（ドルイド。src/forms.js）
+    shift(w, state, stats, s, lv) {
+      return WYD.forms.shift(w, state, stats, s, lv);
     },
     // オーラ（パラディン）：ONのあいだ、cooldown 秒ごとに効く。might は src/stats.js で攻撃力に足す
     aura(w, state, stats, s, lv) {

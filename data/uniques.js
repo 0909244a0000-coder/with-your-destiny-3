@@ -165,5 +165,12 @@ WYD.data.uniques = {
       desc: "すべての罠で、置ける数 +2、威力が1.3倍になる",
       params: { kind: "trap", mods: { maxTrapsBase: ["add", 2], damage: ["mul", 1.3] } },
     },
+    {
+      id: "beastHeart", name: "獣王の心臓", base: "amulet", weight: 10, classOnly: "druid",
+      stats: { maxHp: [20, 40], attack: [3, 6] },
+      power: "skillBoostShift",
+      desc: "すべての変身で、時間が1.5倍、攻撃力の上がり方が1.3倍になる",
+      params: { kind: "shift", mods: { duration: ["mul", 1.5], attackPctBase: ["mul", 1.3], attackPctPerLevel: ["mul", 1.3] } },
+    },
   ],
 };

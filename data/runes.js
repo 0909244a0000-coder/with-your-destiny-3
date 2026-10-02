@@ -235,3 +235,53 @@ Object.assign(WYD.data.runes.skills, {
     { id: "stun", name: "金縛り", desc: "当てた敵を0.5秒縛る", extra: { bind: 0.5 } },
   ],
 });
+
+// ドルイドのスキルの型
+Object.assign(WYD.data.runes.skills, {
+  dru_bear: [
+    { id: "long", name: "眠らぬ熊", desc: "変身の時間1.6倍", mods: { duration: ["mul", 1.6] } },
+    { id: "fury", name: "怒れる熊", desc: "攻撃力の上がり方1.4倍。防御の上がり方は小さい", mods: { attackPctBase: ["mul", 1.4], attackPctPerLevel: ["mul", 1.4], defensePct: ["mul", 0.5] } },
+    { id: "hide", name: "厚い毛皮", desc: "最大HPと防御の上がり方2倍。攻撃力の上がり方は小さい", mods: { maxHpPct: ["mul", 2], defensePct: ["mul", 2], attackPctBase: ["mul", 0.7], attackPctPerLevel: ["mul", 0.7] } },
+  ],
+  dru_wolf: [
+    { id: "long", name: "群れの長", desc: "変身の時間1.6倍", mods: { duration: ["mul", 1.6] } },
+    { id: "frenzy", name: "狂乱", desc: "攻撃速度の上がり方1.4倍", mods: { attackSpeedPctBase: ["mul", 1.4], attackSpeedPctPerLevel: ["mul", 1.4] } },
+    { id: "hunt", name: "狩りの牙", desc: "攻撃力の上がり方3倍。攻撃速度の上がり方は小さい", mods: { attackPctBase: ["mul", 3], attackPctPerLevel: ["mul", 3], attackSpeedPctBase: ["mul", 0.6], attackSpeedPctPerLevel: ["mul", 0.6] } },
+  ],
+  dru_wolves: [
+    { id: "pack", name: "大きな群れ", desc: "呼べる数 +2。1体ずつは弱くなる", mods: { countBase: ["add", 2], attackBase: ["mul", 0.7], hpRatio: ["mul", 0.8] } },
+    { id: "dire", name: "大狼", desc: "1体だけ、とても強い大狼を呼ぶ", mods: { countBase: ["set", 1], countPerLevel: ["set", 0], hpRatio: ["mul", 3.5], attackBase: ["mul", 2.6], radius: ["mul", 1.5] } },
+    { id: "lasting", name: "忠実な狼", desc: "いられる時間2倍", mods: { duration: ["mul", 2] } },
+  ],
+  dru_tornado: [
+    { id: "wide", name: "大竜巻", desc: "範囲1.4倍。威力は少し下がる", mods: { radius: ["mul", 1.4], damage: ["mul", 0.85] } },
+    { id: "leech", name: "命の風", desc: "与えたダメージの5%を回復", extra: { lifesteal: 5 } },
+    { id: "storm", name: "嵐のあと", desc: "使ったあと、足元に風の渦が残って敵を削る",
+      extra: { leaveField: { radius: 90, duration: 3, tick: 0.5, mult: 0.3, color: "#cfeedd" } } },
+  ],
+  dru_bark: [
+    { id: "steel", name: "鉄の樹皮", desc: "防御1.6倍。回復は減る", mods: { defense: ["mul", 1.6], heal: ["mul", 0.6] } },
+    { id: "regen", name: "森の癒し", desc: "回復1.6倍。防御は下がる", mods: { heal: ["mul", 1.6], defense: ["mul", 0.6] } },
+    { id: "early", name: "芽吹き", desc: "HP80%で早めに発動。使える間隔は少し長い", mods: { triggerHpPercent: ["set", 80], cooldown: ["mul", 1.2] } },
+  ],
+  dru_boulder: [
+    { id: "multi", name: "落石", desc: "当たる数 +2。威力は少し下がる", mods: { targets: ["add", 2], damage: ["mul", 0.8] } },
+    { id: "heavy", name: "大岩", desc: "当たる数 -1。威力1.6倍", mods: { targets: ["add", -1], damage: ["mul", 1.6] } },
+    { id: "stun", name: "地響き", desc: "当てた敵を0.6秒動けなくする", extra: { bind: 0.6 } },
+  ],
+  dru_fissure: [
+    { id: "big", name: "大地割れ", desc: "範囲1.35倍", mods: { radius: ["mul", 1.35] } },
+    { id: "long", name: "火山", desc: "燃える時間1.8倍。1回の威力は少し下がる", mods: { duration: ["mul", 1.8], damage: ["mul", 0.8] } },
+    { id: "rapid", name: "連続噴火", desc: "使える間隔0.6倍。威力は下がる", mods: { cooldown: ["mul", 0.6], damage: ["mul", 0.75] } },
+  ],
+  dru_howl: [
+    { id: "frenzy", name: "血の咆哮", desc: "攻撃速度がもっと上がる（1.4倍）。時間は短い", mods: { haste: ["mul", 1.4], duration: ["mul", 0.7] } },
+    { id: "endure", name: "長い咆哮", desc: "時間1.8倍。上がり方は少し小さい", mods: { duration: ["mul", 1.8], haste: ["mul", 0.8] } },
+    { id: "quick", name: "即応", desc: "使える間隔0.65倍", mods: { cooldown: ["mul", 0.65] } },
+  ],
+  dru_vines: [
+    { id: "long", name: "離さぬ蔓", desc: "縛る時間1.6倍", mods: { bind: ["mul", 1.6] } },
+    { id: "net", name: "茨の網", desc: "範囲1.4倍。敵が1体でも使う", mods: { radius: ["mul", 1.4], minTargets: ["set", 1] } },
+    { id: "crush", name: "締めつけ", desc: "威力2倍。縛る時間は短い", mods: { damage: ["mul", 2], bind: ["mul", 0.6] } },
+  ],
+});

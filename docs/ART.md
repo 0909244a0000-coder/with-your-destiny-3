@@ -148,6 +148,25 @@ A single small sprite, top-down view, transparent background: a compact mechanic
 A single sprite sheet image, 1536x1536, arranged as an exact 3 columns by 3 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Assassin skill icons, left-to-right, top-to-bottom: 1 Blade Fury: spinning violet blades, 2 Cloak of Shadows: a dark hooded cloak dissolving into shadow, 3 Chain Shuriken: a silver shuriken with motion trails, 4 Fire Trap: a trap bursting into flames, 5 Burst of Speed: a running silhouette with green speed lines, 6 Mind Blast: a glowing violet brain wave, 7 Shadow Warrior: a dark shadow copy of a warrior, 8 Lightning Sentry: a trap shooting blue lightning, 9 Death Sentry: a trap with a red skull light.
 ```
 
+### ドルイド（6つ目の職業）の絵
+今はソーサレスの絵を緑がかった色にして仮に使っています（`data/classes.js` の `druid.player.imageFilter`）。変身は同じ絵を大きくして色を変えたもの。狼は敵の絵の色替え。
+
+**主人公（1枚）** → `assets/player_druid.png`（512px以上・透明背景・`prepare_sprite.py` で256pxに）。置いたら `druid.player.image` をこの名前にし、`imageFilter` を `null` にする
+```
+A single full-body character sprite for a dark fantasy action RPG, 3/4 top-down view, facing right, transparent background: a rugged male druid in fur and leather with antler ornaments, a wooden staff wrapped in vines, a wolf pelt cloak. Western dark fantasy (Diablo-like), painterly, high contrast, accent color green #9adf6a. No text, no frame.
+```
+
+**変身の姿（2枚）** → `assets/druid_bear.png`・`assets/druid_wolf.png`（今は主人公の絵を大きく・色替えして代用。届いたら `src/render.js` の変身の描き方で絵を差し替える）
+```
+1 A werebear: a huge hulking bear standing on hind legs with druidic tattoos glowing green. 2 A werewolf: a lean grey wolf-man with glowing eyes, mid-leap.
+3/4 top-down view, facing right, transparent background, Western dark fantasy (Diablo-like), painterly. No text, no frame.
+```
+
+**スキル（3列×3行）** → `--grid 3x3 --names dru_bear,dru_wolf,dru_wolves,dru_tornado,dru_bark,dru_boulder,dru_fissure,dru_howl,dru_vines`、置いたら `druid.skillIcons` に書く
+```
+A single sprite sheet image, 1536x1536, arranged as an exact 3 columns by 3 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Druid skill icons, left-to-right, top-to-bottom: 1 Werebear: a roaring bear head, 2 Werewolf: a howling wolf head, 3 Summon Wolves: three wolf silhouettes, 4 Tornado: a swirling green tornado, 5 Oak Bark: a shield of tree bark, 6 Rolling Boulder: a large boulder with motion lines, 7 Fissure: a ground crack spewing lava, 8 Feral Howl: a golden sound wave from a wolf, 9 Grasping Vines: thorny vines coiling upward.
+```
+
 ### 傭兵の絵（3枚）
 今は敵の絵の色を変えて仮に使っています（`data/mercenary.js` の `image`・`imageFilter`）。置いたら `image` をこの名前にし、`imageFilter` を `null` にする（512px以上・透明背景・`prepare_sprite.py` で256pxに）。
 - `assets/merc_spear.png`

@@ -133,6 +133,7 @@ WYD.stats = {
       critMultiplier: P.critMultiplier + fx.critDamage / 100,
       effects: fx,
     };
+    WYD.forms.apply(out);   // 変身（src/forms.js）
     return WYD.shrines.apply(out);   // 祠の効果（src/shrines.js）
   },
 

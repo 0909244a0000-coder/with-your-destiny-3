@@ -349,4 +349,92 @@ WYD.data.classes = {
     skillOrder: ["asn_cloak", "asn_burst", "asn_shadow", "asn_mind", "asn_sentry", "asn_death", "asn_blade", "asn_shuriken", "asn_fire"],
     skillIcons: {},
   },
+
+  // 獣に変身して戦う、自然の力の職業（kind: "shift"。src/forms.js）
+  // 絵がまだないので、ネクロマンサーと同じくソーサレスの絵を緑がかった色にして仮に使う（imageFilter）
+  druid: {
+    name: "ドルイド",
+    player: {
+      className: "ドルイド",
+      weaponName: "杖",
+      color: "#9adf6a",
+      image: "assets/player_sorceress.png",
+      imageFilter: "hue-rotate(60deg) saturate(0.7) brightness(0.85)",   // 本番の絵が来たら null にする
+      poses: { attack: null },
+      base: { maxHp: 120, attack: 9, defense: 2, attackSpeed: 0.95, critChance: 5, hpRegen: 1.2, moveSpeed: 120 },
+      perLevel: { maxHp: 15, attack: 1.9, defense: 1 },
+    },
+    skills: {
+      // ---- 変身（kind: "shift"）。近くに敵がいると duration 秒のあいだ獣の姿になる。一度に1つの姿だけ ----
+      dru_bear: {
+        kind: "shift", name: "熊変化", formName: "熊",
+        desc: "変身：近くに敵がいると熊に変身。攻撃力・最大HP・防御が大きく上がる。",
+        startLevel: 1, maxLevel: 10, cooldown: 16,
+        triggerRange: 160, duration: 15,
+        attackPctBase: 30, attackPctPerLevel: 5, maxHpPct: 30, defensePct: 40,
+        scale: 1.3, formFilter: "sepia(0.8) saturate(1.4) hue-rotate(-20deg) brightness(0.8)", color: "#c08a4a",
+      },
+      dru_wolf: {
+        kind: "shift", name: "狼変化", formName: "狼",
+        desc: "変身：近くに敵がいると狼に変身。攻撃速度と移動速度が大きく上がる。",
+        startLevel: 0, maxLevel: 10, cooldown: 16,
+        triggerRange: 200, duration: 15,
+        attackPctBase: 10, attackPctPerLevel: 2, attackSpeedPctBase: 35, attackSpeedPctPerLevel: 5, moveSpeedPct: 25,
+        scale: 1.1, formFilter: "grayscale(0.6) brightness(1.1) hue-rotate(180deg)", color: "#b8c8d8",
+      },
+      dru_wolves: {
+        kind: "raise", name: "狼の群れ",
+        desc: "狼を呼び出す。狼は素早く敵にかみつき、敵の攻撃も引きつける。",
+        startLevel: 0, maxLevel: 10, cooldown: 3,
+        countBase: 2, countPerLevel: 0.3,
+        hpRatio: 0.4, attackBase: 0.4, attackPerLevel: 0.06, defenseRatio: 0.6,
+        duration: 22, moveSpeed: 150, attackSpeed: 1.3, range: 24, radius: 11,
+        spawnSpread: 30, followDistance: 45, firstAttackDelay: 0.3,
+        color: "#a8a8b8",
+        image: "assets/enemies/daitya.png",   // 仮の絵
+        imageFilter: "grayscale(0.8) brightness(1.4)",
+      },
+      dru_tornado: {
+        kind: "whirl", name: "竜巻",
+        desc: "まわりに竜巻を起こし、周りの敵すべてにダメージ。",
+        startLevel: 0, maxLevel: 10, cooldown: 4.5,
+        radius: 100, damageBase: 1.3, damagePerLevel: 0.26, minTargets: 1, color: "#cfeedd",
+      },
+      dru_bark: {
+        kind: "vajra", name: "樹皮の守り",
+        desc: "HPが減ると発動。木の皮で体を包んで防御力アップし、HPを回復。",
+        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 5,
+        defenseBase: 7, defensePerLevel: 3, healPercentBase: 12, healPercentPerLevel: 2,
+        triggerHpPercent: 60, color: "#8a6a3a",
+      },
+      dru_boulder: {
+        kind: "sudarshana", name: "転がる岩",
+        desc: "大きな岩が敵から敵へ転がり、何体もまとめて押しつぶす。",
+        startLevel: 0, maxLevel: 10, cooldown: 5,
+        range: 240, jumpRange: 150, targetsBase: 3, targetsPerLevel: 0.5,
+        damageBase: 1.6, damagePerLevel: 0.25, color: "#b8a07a",
+      },
+      dru_fissure: {
+        kind: "agni", name: "地割れ",
+        desc: "敵の多い場所の地面を割り、吹き出す溶岩で焼き続ける。",
+        startLevel: 0, maxLevel: 10, cooldown: 7.5,
+        range: 240, radius: 90, duration: 4, tick: 0.5, damageBase: 0.55, damagePerLevel: 0.11, color: "#ff8a3a",
+      },
+      dru_howl: {
+        kind: "hanuman", name: "野生の咆哮",
+        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
+        startLevel: 0, maxLevel: 10, cooldown: 14, duration: 6,
+        hasteBase: 40, hastePerLevel: 6, triggerRange: 140, color: "#e0c070",
+      },
+      dru_vines: {
+        kind: "nagapasha", name: "絡みつく蔓",
+        desc: "地面から蔓が伸びて周りの敵に絡みつき、動けなくしてダメージ。ボスには効きにくい。",
+        startLevel: 0, maxLevel: 10, cooldown: 10,
+        radius: 125, minTargets: 2, bindBase: 1.8, bindPerLevel: 0.2, bossBindMult: 0.3,
+        damageBase: 0.6, damagePerLevel: 0.14, color: "#6adf6a",
+      },
+    },
+    skillOrder: ["dru_bark", "dru_bear", "dru_wolf", "dru_howl", "dru_wolves", "dru_vines", "dru_tornado", "dru_boulder", "dru_fissure"],
+    skillIcons: {},
+  },
 };

@@ -15,6 +15,7 @@ WYD.data.fx = {
   whirl:    { count: 28, speed: 60,  life: 0.45, size: 2.4, color: "#bfefff" },  // 旋風斬の風
   ember:    { perSecond: 30, speed: 40, life: 0.8, size: 2.2, color: "#ffb04a" },// 燃える地面の火の粉
   aura:     { count: 6,  speed: 150, life: 0.5,  size: 2.2 },                    // オーラ「聖なる炎」の火の粉（オーラの色）
+  formGlow: { radiusMult: 1.6, alpha: 0.18, pulseAlpha: 0.08, pulseSpeed: 4 },   // 変身中の体のまわりの光（ドルイド）
   auraRing: { linger: 0.3, alpha: 0.25, pulseAlpha: 0.2, pulseSpeed: 3, flatten: 0.4 },  // オーラの足元の輪
   levelUp:  { count: 60, speed: 80,  life: 1.4,  size: 3.0, color: "#ffe680" },  // レベルアップの光
   slamDust: { count: 50, speed: 260, life: 0.6,  size: 3.4, color: "#c9a27a" },  // ボスの大技の土煙
