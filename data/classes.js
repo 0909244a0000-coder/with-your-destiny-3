@@ -294,7 +294,17 @@ WYD.data.classes = {
     },
     autoBuild: ["pal_zeal", "pal_shield", "pal_hammer"],   // 「おまかせ」で先に覚えてONにするスキル
     skillOrder: ["pal_shield", "pal_might", "pal_prayer", "pal_fire", "pal_vow", "pal_chain", "pal_zeal", "pal_hammer", "pal_judgment"],
-    skillIcons: {},
+    skillIcons: {
+      pal_zeal: "assets/skills/pal_zeal.png",
+      pal_shield: "assets/skills/pal_shield.png",
+      pal_hammer: "assets/skills/pal_hammer.png",
+      pal_judgment: "assets/skills/pal_judgment.png",
+      pal_vow: "assets/skills/pal_vow.png",
+      pal_chain: "assets/skills/pal_chain.png",
+      pal_fire: "assets/skills/pal_fire.png",
+      pal_prayer: "assets/skills/pal_prayer.png",
+      pal_might: "assets/skills/pal_might.png",
+    },
   },
 
   // 素早い近接と、地面に置く「罠」で戦う職業（kind: "trap"。src/traps.js）

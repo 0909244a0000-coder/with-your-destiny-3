@@ -1,7 +1,7 @@
 // 傭兵（Diablo 2）。どの職業でも1人雇える、ずっといっしょに戦う仲間。
 // 倒れても少したつと戻ってくる。強さは主人公の能力×割合なので、主人公が強くなると傭兵も強くなる。
 // 雇っているあいだ、主人公に「加護」（bonus：stats は能力、effects は特殊効果）がつく。
-// 絵がまだないので、敵の絵の色を変えて仮に使う（imageFilter）。
+// 絵は assets/merc_<種類>.png（ChatGPT に発注したもの）。
 window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
@@ -20,7 +20,7 @@ WYD.data.mercenary = {
       id: "spear", name: "槍兵", desc: "近くで戦う、打たれ強い傭兵。敵の攻撃を引きつける。",
       hpRatio: 1.0, attackRatio: 0.45, defenseRatio: 1.0,
       moveSpeed: 115, attackSpeed: 1.0, range: 34, radius: 14, followDistance: 45,
-      color: "#c9d6e8", image: "assets/enemies/rakshasa.png", imageFilter: "grayscale(0.7) brightness(1.3) hue-rotate(180deg)",
+      color: "#c9d6e8", image: "assets/merc_spear.png", imageFilter: null,
       bonusName: "不屈の加護", bonus: { effects: { lifesteal: 2 }, stats: { defense: 6 } },
     },
     {
@@ -28,7 +28,7 @@ WYD.data.mercenary = {
       hpRatio: 0.55, attackRatio: 0.55, defenseRatio: 0.5,
       moveSpeed: 115, attackSpeed: 1.1, range: 26, radius: 12, followDistance: 70,
       rangedRange: 240, keepDistance: 140, shotColor: "#e8e2a0",
-      color: "#b8e89a", image: "assets/enemies/yakshaArcher.png", imageFilter: "grayscale(0.6) brightness(1.3) hue-rotate(60deg)",
+      color: "#b8e89a", image: "assets/merc_archer.png", imageFilter: null,
       bonusName: "鷹の目の加護", bonus: { stats: { critChance: 6 } },
     },
     {

@@ -223,8 +223,8 @@ WYD.data.enemies = {
   boneCleric: {
     name: "骸の司祭",
     color: "#d8d0ff",
-    image: "assets/enemies/nagaCaster.png",
-    imageFilter: "grayscale(1) brightness(1.3)",
+    image: "assets/enemies/boneCleric.png",
+    imageFilter: null,
     radius: 14,
     hp: 90,
     attack: 13,
@@ -422,8 +422,8 @@ WYD.data.enemies = {
   archbishop: {
     name: "堕天の大司教",
     color: "#6a5a9a",
-    image: "assets/enemies/ravana.png",
-    imageFilter: "grayscale(0.6) hue-rotate(200deg) brightness(0.9)",   // 仮の絵
+    image: "assets/enemies/archbishop.png",
+    imageFilter: null,
     poses: { attack: null, windup: null },
     radius: 32,
     hp: 1000,
