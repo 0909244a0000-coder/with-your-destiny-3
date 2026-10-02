@@ -510,9 +510,11 @@ WYD.render = {
       ctx.fillText(`${form.name} ${Math.ceil(form.timeLeft)}秒`, p.x, p.y - r - 4);
       ctx.restore();
     }
-    const filter = form && form.filter ? [P.imageFilter, form.filter].filter(Boolean).join(" ") : P.imageFilter;
+    // 変身の絵（formImage）があればその絵を、なければ主人公の絵に色をかぶせる
+    const formImg = form && !p.dead && form.image;
+    const filter = formImg ? form.filter : form && form.filter ? [P.imageFilter, form.filter].filter(Boolean).join(" ") : P.imageFilter;
     this.drawCircleOrImage(ctx, p.x, p.y, P.radius * (form ? form.scale : 1), p.dead ? "#555" : form ? form.color : P.color,
-      this.poseImage(p, P), false, this.pose(p, p.swingTarget, this.clock), filter);
+      formImg || this.poseImage(p, P), false, this.pose(p, p.swingTarget, this.clock), filter);
     // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
     if (p.buff && !p.dead) {
       const size = P.radius * WYD.data.map.spriteScale * 1.3;

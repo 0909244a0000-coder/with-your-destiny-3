@@ -109,7 +109,7 @@ WYD.data.classes = {
   },
 
   // 骸骨の手下を呼び出して、いっしょに戦う職業
-  // 絵がまだないので、ソーサレスの絵の色を変えて仮に使う（imageFilter）。手下は亡者の絵を白くして使う
+  // 主人公の絵は player_necromancer.png。手下は亡者の絵を白くして仮に使う（絵が来たら imageFilter を null に）
   necromancer: {
     name: "ネクロマンサー",
     desc: "骸骨の戦士と魔術師を呼び出して、いっしょに戦う。手下が敵を引きつけるので、本人は後ろから骨の槍を撃つ",
@@ -117,8 +117,8 @@ WYD.data.classes = {
       className: "ネクロマンサー",
       weaponName: "杖",
       color: "#7dff9a",
-      image: "assets/player_sorceress.png",
-      imageFilter: "hue-rotate(95deg) saturate(0.55) brightness(0.8)",   // 本番の絵が来たら null にする
+      image: "assets/player_necromancer.png",
+      imageFilter: null,
       poses: { attack: null },
       base: { maxHp: 100, attack: 9, defense: 1, attackSpeed: 0.9, critChance: 5, hpRegen: 1, moveSpeed: 115 },
       perLevel: { maxHp: 12, attack: 2.0, defense: 0.7 },
@@ -216,7 +216,7 @@ WYD.data.classes = {
   },
 
   // 聖なる力で戦う騎士。「オーラ」（ONにしているあいだずっと効くスキル）を持つ
-  // 絵がまだないので、バーバリアンの絵を金色にして仮に使う（imageFilter）
+  // 主人公の絵は player_paladin.png
   paladin: {
     name: "パラディン",
     desc: "聖なる騎士。オーラ（ONのあいだずっと効く）で、炎・回復・攻撃力アップを味方にまとい続ける。とても打たれ強い",
@@ -224,8 +224,8 @@ WYD.data.classes = {
       className: "パラディン",
       weaponName: "鎚",
       color: "#ffd75e",
-      image: "assets/player.png",
-      imageFilter: "sepia(0.9) saturate(1.6) hue-rotate(5deg) brightness(1.1)",   // 本番の絵が来たら null にする
+      image: "assets/player_paladin.png",
+      imageFilter: null,
       poses: { attack: null },
       base: { maxHp: 130, attack: 9, defense: 3, attackSpeed: 1.0, critChance: 5, hpRegen: 1.5, moveSpeed: 115 },
       perLevel: { maxHp: 16, attack: 1.9, defense: 1.2 },
@@ -298,7 +298,7 @@ WYD.data.classes = {
   },
 
   // 素早い近接と、地面に置く「罠」で戦う職業（kind: "trap"。src/traps.js）
-  // 絵がまだないので、バーバリアンの絵を暗い紫にして仮に使う（imageFilter）
+  // 主人公の絵は player_assassin.png。影の戦士は同じ絵を暗くして使う
   assassin: {
     name: "アサシン",
     desc: "素早い近接と、地面に置く罠で戦う。罠は置いておくだけで敵を撃ち続け、影の戦士が身代わりになる",
@@ -306,8 +306,8 @@ WYD.data.classes = {
       className: "アサシン",
       weaponName: "鉤爪",
       color: "#c08aff",
-      image: "assets/player.png",
-      imageFilter: "hue-rotate(250deg) saturate(0.7) brightness(0.75)",   // 本番の絵が来たら null にする
+      image: "assets/player_assassin.png",
+      imageFilter: null,
       poses: { attack: null },
       base: { maxHp: 110, attack: 9, defense: 2, attackSpeed: 1.1, critChance: 7, hpRegen: 1, moveSpeed: 130 },
       perLevel: { maxHp: 13, attack: 1.85, defense: 0.85 },
@@ -361,8 +361,8 @@ WYD.data.classes = {
         duration: 25, moveSpeed: 130, attackSpeed: 1.2, range: 28, radius: 13,
         spawnSpread: 30, followDistance: 50, firstAttackDelay: 0.4,
         color: "#5a3a7a",
-        image: "assets/player.png",
-        imageFilter: "brightness(0.45) saturate(0.4) hue-rotate(250deg) opacity(0.85)",
+        image: "assets/player_assassin.png",
+        imageFilter: "brightness(0.35) saturate(0.5) opacity(0.85)",   // 影なので主人公の絵を暗く
       },
       // ---- 罠（kind: "trap"）。置くと duration 秒、fireInterval 秒ごとに range の中の敵（targetsBase 体）を撃つ ----
       asn_sentry: {
@@ -391,7 +391,7 @@ WYD.data.classes = {
   },
 
   // 獣に変身して戦う、自然の力の職業（kind: "shift"。src/forms.js）
-  // 絵がまだないので、ネクロマンサーと同じくソーサレスの絵を緑がかった色にして仮に使う（imageFilter）
+  // 主人公の絵は player_druid.png。熊変化は druid_bear.png（formImage）、狼変化はまだ主人公の絵の色替え
   druid: {
     name: "ドルイド",
     desc: "熊や狼に変身して戦う、自然の力の職業。狼の群れや竜巻、地割れも使える。変身の時間をどう使うかがカギ",
@@ -399,8 +399,8 @@ WYD.data.classes = {
       className: "ドルイド",
       weaponName: "杖",
       color: "#9adf6a",
-      image: "assets/player_sorceress.png",
-      imageFilter: "hue-rotate(60deg) saturate(0.7) brightness(0.85)",   // 本番の絵が来たら null にする
+      image: "assets/player_druid.png",
+      imageFilter: null,
       poses: { attack: null },
       base: { maxHp: 120, attack: 9, defense: 2, attackSpeed: 0.95, critChance: 5, hpRegen: 1.2, moveSpeed: 120 },
       perLevel: { maxHp: 15, attack: 1.9, defense: 1 },
@@ -413,7 +413,7 @@ WYD.data.classes = {
         startLevel: 1, maxLevel: 10, cooldown: 16,
         triggerRange: 160, duration: 15,
         attackPctBase: 30, attackPctPerLevel: 5, maxHpPct: 30, defensePct: 40,
-        scale: 1.3, formFilter: "sepia(0.8) saturate(1.4) hue-rotate(-20deg) brightness(0.8)", color: "#c08a4a",
+        scale: 1.3, formImage: "assets/druid_bear.png", formFilter: null, color: "#c08a4a",
       },
       dru_wolf: {
         kind: "shift", name: "狼変化", formName: "狼",

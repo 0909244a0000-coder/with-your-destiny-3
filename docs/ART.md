@@ -32,6 +32,8 @@
 - 敵・ボス：`mahisha`、`vetala`、`pishacha`、`daitya`、`yakshaArcher`、`bhuta`、`nagaCaster`
 - 切り出し用の透過シート：`assets/sheets/equipment.png`（2048×2048、4×4）、`assets/sheets/skills.png`（1536×1024、3×2）
 
+追加済み（第4回、`docs/ART-QUEUE.md` のブロック1）：主人公 `player_necromancer`・`player_paladin`・`player_assassin`・`player_druid`、熊変化 `druid_bear`（`dru_bear.formImage`）。アサシンの影の戦士も主人公の絵を暗くして使う。下の「ネクロマンサー〜ドルイドの主人公」の発注は済み（狼変化はまだ）
+
 保管中：杖を持った女性の術者（将来の職業の候補。ダークエルフ・アークメイジなど）
 
 ## まだの絵（上から順に優先）
