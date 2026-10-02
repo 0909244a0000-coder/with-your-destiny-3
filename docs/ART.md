@@ -141,6 +141,24 @@ Western dark fantasy (Diablo-like), painterly, high contrast. No text, no frame.
 A single sprite sheet image, 1536x1024, exact 3 columns by 2 rows grid of equal square cells (512x512 each) with clear empty gutters. Dark fantasy (Diablo-like) item icons, left-to-right, top-to-bottom: 1 a battered iron kite shield, 2 an old leather-bound spell tome with a glowing rune, 3 a gold amulet with a red gem, 4 a bone talisman on a cord, 5 a thick leather belt with an iron buckle, 6 a dark silk sash with tassels.
 ```
 
+### 5つ目のエリア「凍てつく深淵」の絵
+今は地面＝地底界の絵に青白い色をかぶせたもの、敵とボス＝今ある絵の色を変えたもの。届いたら `image` を差し替え、`groundTint`・`imageFilter` を消す。
+
+**地面（1枚）** → `assets/areas/frost.png`
+```
+A seamless tileable top-down floor texture for a dark fantasy game: cracked blue-white ice over dark stone, frost patterns, frozen bones, faint cold glow. Painterly, low contrast so characters stand out. No text.
+```
+
+**敵とボス（5枚。512px以上・透明背景・3/4見下ろし・右向き）** → `assets/enemies/<名前>.png`
+```
+1 frostWraith: a gaunt frozen ghoul covered in frost and icicles.
+2 iceGiant: a hulking giant of blue ice and frozen armor with a club of ice.
+3 blizzardArcher: a pale hooded archer in white furs with a bow of ice.
+4 frostWitch: an ice witch in tattered white robes holding a crystal staff.
+5 iceDragon (BOSS, larger): a dragon king of ice and frost, horned, with frozen scales and cold blue breath.
+Western dark fantasy (Diablo-like), painterly, high contrast. No text, no frame.
+```
+
 ## 制作済みの仕様・再制作用プロンプト
 
 以下は今回制作した絵の仕様です。再制作のために元のプロンプトとIDを残しています。

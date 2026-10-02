@@ -81,6 +81,27 @@ WYD.data.areas = [
     floors: 3,
     killsPerFloor: 60,
   },
+  {
+    // 5つ目：氷の深淵。地面の絵はまだないので、地底界の絵に青白い色をかぶせて仮に使う
+    id: "frost",
+    name: "凍てつく深淵",
+    bgColor: "#1a2430",
+    grassColor: "#2a3a4a",
+    stoneColor: "#5a6a7a",
+    groundImage: "assets/areas/patala.png",
+    groundTint: "rgba(150,200,255,0.35)",
+    powerMult: 6.6,
+    itemLevelBonus: 15,
+    enemies: [
+      { kind: "frostWraith", weight: 35 },
+      { kind: "iceGiant", weight: 25 },
+      { kind: "blizzardArcher", weight: 22 },
+      { kind: "frostWitch", weight: 18 },
+    ],
+    boss: "iceDragon",
+    floors: 3,
+    killsPerFloor: 66,
+  },
 ];
 
 // ボス戦の共通設定

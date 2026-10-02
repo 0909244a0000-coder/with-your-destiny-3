@@ -14,6 +14,7 @@ WYD.data.music = {
     smashana:  { root: 98,   scale: [0, 1, 3, 5, 7, 8, 10], tempo: 58, drone: 8, melody: 0.35, octave: 2, wave: "sine" },
     patala:    { root: 87.3, scale: [0, 2, 3, 5, 7, 8, 11], tempo: 72, drone: 8, melody: 0.4, octave: 2, wave: "triangle" },
     cathedral: { root: 73.4, scale: [0, 1, 3, 5, 6, 8, 10], tempo: 54, drone: 4, melody: 0.35, octave: 2, wave: "square" },
+    frost:     { root: 92.5, scale: [0, 2, 3, 7, 8], tempo: 50, drone: 8, melody: 0.3, octave: 3, wave: "sine" },
     boss:      { root: 65.4, scale: [0, 1, 3, 5, 7, 8, 10], tempo: 112, drone: 4, melody: 0.5, octave: 2, wave: "sawtooth", pulse: true },
     trial:     { root: 82.4, scale: [0, 2, 3, 5, 7, 9, 10], tempo: 96, drone: 4, melody: 0.5, octave: 2, wave: "triangle", pulse: true },
   },

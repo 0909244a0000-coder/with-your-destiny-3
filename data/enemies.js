@@ -238,6 +238,34 @@ WYD.data.enemies = {
     ranged: { keepDistance: 210, range: 310, speed: 230, size: 6, color: "#c08aff" },
   },
 
+  // ---- 凍てつく深淵（5つ目のエリア。絵は仮：今ある絵の色を変えたもの）----
+  frostWraith: {
+    name: "霜の亡者", color: "#bfe4ff",
+    image: "assets/enemies/preta.png", imageFilter: "hue-rotate(170deg) saturate(0.6) brightness(1.4)",
+    radius: 12, hp: 70, attack: 11, defense: 2, attackSpeed: 1.0, moveSpeed: 95, range: 22,
+    exp: 15, dropChance: 0.26, rarityBonus: 1.5,
+  },
+  iceGiant: {
+    name: "氷の巨人", color: "#8ab8e0",
+    image: "assets/enemies/rakshasa.png", imageFilter: "hue-rotate(180deg) saturate(0.5) brightness(1.2)",
+    radius: 20, hp: 220, attack: 17, defense: 7, attackSpeed: 0.6, moveSpeed: 55, range: 32,
+    exp: 30, dropChance: 0.38, rarityBonus: 1.8,
+  },
+  blizzardArcher: {
+    name: "吹雪の射手", color: "#d0f0ff",
+    image: "assets/enemies/yakshaArcher.png", imageFilter: "hue-rotate(170deg) brightness(1.3)",
+    radius: 12, hp: 65, attack: 12, defense: 2, attackSpeed: 0.65, moveSpeed: 70, range: 22,
+    exp: 16, dropChance: 0.28, rarityBonus: 1.5,
+    ranged: { keepDistance: 190, range: 290, speed: 260, size: 5, color: "#d0f0ff" },
+  },
+  frostWitch: {
+    name: "氷結の魔女", color: "#e0f4ff",
+    image: "assets/enemies/nagaCaster.png", imageFilter: "hue-rotate(160deg) saturate(0.4) brightness(1.5)",
+    radius: 14, hp: 95, attack: 14, defense: 3, attackSpeed: 0.5, moveSpeed: 60, range: 22,
+    exp: 20, dropChance: 0.32, rarityBonus: 1.6,
+    ranged: { keepDistance: 210, range: 310, speed: 200, size: 7, color: "#9fdcff" },
+  },
+
   // ---- 宝物ゴブリン（まれに出て逃げ回る。data/elites.js の goblin も見る）----
   goblin: {
     name: "宝物ゴブリン",
@@ -318,6 +346,28 @@ WYD.data.enemies = {
     slam: { interval: 5, windup: 0.8, radius: 130, damageMult: 2.5 },
     // 毒の沼：主人公の足元に毒の沼をまく。沼の中にいると、少しずつ削られる
     pools: { interval: 8, firstDelay: 3, count: 2, radius: 60, duration: 6, dpsMult: 0.35, spread: 60, color: "#7dbf3a" },
+  },
+  iceDragon: {
+    name: "氷獄の竜王",
+    color: "#7ab0e8",
+    image: "assets/enemies/mahisha.png",
+    imageFilter: "hue-rotate(180deg) saturate(0.6) brightness(1.3)",   // 仮の絵
+    poses: { attack: null, windup: null },
+    radius: 36,
+    hp: 1150,
+    attack: 16,
+    defense: 10,
+    attackSpeed: 0.6,
+    moveSpeed: 70,
+    range: 46,
+    exp: 750,
+    dropChance: 1.0,
+    rarityBonus: 10,
+    boss: true,
+    slam: { interval: 6, windup: 1.0, radius: 130, damageMult: 2.0 },
+    // 氷の吐息：予告の線のあと突進（阿修羅王と同じしくみ）と、まわりへの氷のつぶて
+    charge: { interval: 9, firstDelay: 5, windup: 1.1, speed: 520, length: 380, width: 40, damageMult: 1.8, color: "#bfe4ff" },
+    barrage: { interval: 6, count: 10, speed: 170, size: 6, color: "#d0f0ff", damageMult: 0.45 },
   },
   archbishop: {
     name: "堕天の大司教",
