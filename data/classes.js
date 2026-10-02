@@ -105,6 +105,7 @@ WYD.data.classes = {
     skillIcons: {
       sorc_nova: "assets/skills/sorc_nova.png", sorc_shield: "assets/skills/sorc_shield.png", sorc_chain: "assets/skills/sorc_chain.png",
       sorc_meteor: "assets/skills/sorc_meteor.png", sorc_haste: "assets/skills/sorc_haste.png", sorc_freeze: "assets/skills/sorc_freeze.png",
+      sorc_hydra: "assets/skills/sorc_hydra.png", sorc_static: "assets/skills/sorc_static.png", sorc_warmth: "assets/skills/sorc_warmth.png",
     },
   },
 
@@ -212,7 +213,17 @@ WYD.data.classes = {
     },
     autoBuild: ["nec_raise", "nec_mage", "nec_nova"],   // 「おまかせ」で先に覚えてONにするスキル
     skillOrder: ["nec_armor", "nec_decay", "nec_raise", "nec_mage", "nec_pact", "nec_grasp", "nec_nova", "nec_spear", "nec_plague"],
-    skillIcons: {},
+    skillIcons: {
+      nec_raise: "assets/skills/nec_raise.png",
+      nec_nova: "assets/skills/nec_nova.png",
+      nec_armor: "assets/skills/nec_armor.png",
+      nec_spear: "assets/skills/nec_spear.png",
+      nec_plague: "assets/skills/nec_plague.png",
+      nec_pact: "assets/skills/nec_pact.png",
+      nec_grasp: "assets/skills/nec_grasp.png",
+      nec_mage: "assets/skills/nec_mage.png",
+      nec_decay: "assets/skills/nec_decay.png",
+    },
   },
 
   // 聖なる力で戦う騎士。「オーラ」（ONにしているあいだずっと効くスキル）を持つ
@@ -397,7 +408,17 @@ WYD.data.classes = {
     },
     autoBuild: ["asn_blade", "asn_cloak", "asn_shuriken"],   // 「おまかせ」で先に覚えてONにするスキル
     skillOrder: ["asn_cloak", "asn_burst", "asn_shadow", "asn_mind", "asn_sentry", "asn_death", "asn_blade", "asn_shuriken", "asn_fire"],
-    skillIcons: {},
+    skillIcons: {
+      asn_blade: "assets/skills/asn_blade.png",
+      asn_cloak: "assets/skills/asn_cloak.png",
+      asn_shuriken: "assets/skills/asn_shuriken.png",
+      asn_fire: "assets/skills/asn_fire.png",
+      asn_burst: "assets/skills/asn_burst.png",
+      asn_mind: "assets/skills/asn_mind.png",
+      asn_shadow: "assets/skills/asn_shadow.png",
+      asn_sentry: "assets/skills/asn_sentry.png",
+      asn_death: "assets/skills/asn_death.png",
+    },
   },
 
   // 獣に変身して戦う、自然の力の職業（kind: "shift"。src/forms.js）
@@ -487,6 +508,16 @@ WYD.data.classes = {
     },
     autoBuild: ["dru_bear", "dru_wolf", "dru_wolves"],   // 「おまかせ」で先に覚えてONにするスキル
     skillOrder: ["dru_bark", "dru_bear", "dru_wolf", "dru_howl", "dru_wolves", "dru_vines", "dru_tornado", "dru_boulder", "dru_fissure"],
-    skillIcons: {},
+    skillIcons: {
+      dru_bear: "assets/skills/dru_bear.png",
+      dru_wolf: "assets/skills/dru_wolf.png",
+      dru_wolves: "assets/skills/dru_wolves.png",
+      dru_tornado: "assets/skills/dru_tornado.png",
+      dru_bark: "assets/skills/dru_bark.png",
+      dru_boulder: "assets/skills/dru_boulder.png",
+      dru_fissure: "assets/skills/dru_fissure.png",
+      dru_howl: "assets/skills/dru_howl.png",
+      dru_vines: "assets/skills/dru_vines.png",
+    },
   },
 };

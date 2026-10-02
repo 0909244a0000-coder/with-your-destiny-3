@@ -19,7 +19,8 @@ WYD.data.vfx = {
     chains: "assets/vfx/chains.png",       // 縛る鎖・氷（鉄鎖の束縛・凍てつく檻の間）
     shockwave: "assets/vfx/shockwave.png",    // 衝撃波の輪（ボスの大技）
     fireball: "assets/vfx/fireball.png", // 火の玉（ソーサレスの通常攻撃）
-    plague: "assets/vfx/plague.png",   // 毒の霧の地面（疫病の霧・腐敗の地）
+    plague: "assets/vfx/plague.png",
+    trap: "assets/vfx/trap.png",       // アサシンの罠の装置（なければ三角の図形）   // 毒の霧の地面（疫病の霧・腐敗の地）
   },
 
   // 絵の動かし方（共通）
@@ -52,5 +53,6 @@ WYD.data.vfx = {
     sorc_nova: null, dru_tornado: null,          // 霜の地面・風の渦（炎の絵は合わないので色の円）
   },
   meteorFall: 0.45,     // メテオの隕石が落ちてくるまでの秒数
+  trapImageScale: 2.6,  // 罠の絵の大きさ（罠の半径の何倍の幅で描くか）
   groundPulse: 0.08,    // 燃える地面のゆらぎの大きさ
 };

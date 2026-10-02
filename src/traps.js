@@ -68,7 +68,17 @@ WYD.traps = {
       ctx.stroke();
       ctx.setLineDash([]);
       ctx.globalAlpha = 1;
-      // 三角の装置
+      // 装置：絵があれば絵（撃った瞬間は明るく重ねる）、なければ三角の図形
+      const img = WYD.vfx.img("trap");
+      if (img) {
+        const size = r * WYD.data.vfx.trapImageScale;
+        ctx.drawImage(img, t.x - size / 2, t.y - size / 2, size, size);
+        if (t.flash > 0) {
+          ctx.globalCompositeOperation = "lighter";
+          ctx.drawImage(img, t.x - size / 2, t.y - size / 2, size, size);
+          ctx.globalCompositeOperation = "source-over";
+        }
+      } else {
       ctx.fillStyle = t.flash > 0 ? "#ffffff" : "#2a2a34";
       ctx.strokeStyle = t.color;
       ctx.lineWidth = 2;
@@ -79,6 +89,7 @@ WYD.traps = {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
+      }
       // 残り時間
       ctx.fillStyle = t.color;
       ctx.fillRect(t.x - r, t.y + r, r * 2 * Math.max(0, t.timeLeft / t.duration), 2);

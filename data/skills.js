@@ -127,6 +127,9 @@ WYD.data.skillIcons = {
   agni: "assets/skills/agni.png",
   hanuman: "assets/skills/hanuman.png",
   nagapasha: "assets/skills/nagapasha.png",
+  bar_ancients: "assets/skills/bar_ancients.png",
+  bar_orders: "assets/skills/bar_orders.png",
+  bar_cry: "assets/skills/bar_cry.png",
 };
 
 // 同時にONにできるスキルの数（ここでビルドを選ぶ）
