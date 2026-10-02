@@ -107,9 +107,14 @@ A single full-body character sprite for a dark fantasy action RPG, 3/4 top-down 
 A single full-body sprite, 3/4 top-down view, facing right, transparent background: a skeleton warrior with a rusty sword and a broken round shield, faint green glow in the eye sockets. Western dark fantasy (Diablo-like), painterly. No text, no frame.
 ```
 
+**手下の骸骨の魔術師（1枚）** → `assets/ally_skeleton_mage.png`。置いたら `necromancer.skills.nec_mage.image` をこの名前にし、`imageFilter` を `null` にする
+```
+A single full-body sprite, 3/4 top-down view, facing right, transparent background: a skeletal mage in a tattered violet hood, holding a bone staff with a floating violet flame. Western dark fantasy (Diablo-like), painterly. No text, no frame.
+```
+
 **スキル（4列×2行。最後の1マスは空き）** → `--grid 4x2 --names nec_raise,nec_nova,nec_armor,nec_spear,nec_plague,nec_pact,nec_grasp`、置いたら `necromancer.skillIcons` に書く
 ```
-A single sprite sheet image, 2048x1024, arranged as an exact 4 columns by 2 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Necromancer spell icons, left-to-right, top-to-bottom: 1 Raise Skeleton: a skeletal hand rising from the ground with green light, 2 Bone Storm: bone shards bursting outward in a ring, 3 Bone Armor: a ribcage-shaped shield of bones, 4 Bone Spear: a long sharp bone spear flying, 5 Plague Fog: a sickly green poison cloud, 6 Blood Pact: a dripping red rune in a circle, 7 Grasping Dead: many undead hands reaching out of dark earth, 8 (leave this cell empty).
+A single sprite sheet image, 2048x1024, arranged as an exact 4 columns by 2 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Necromancer spell icons, left-to-right, top-to-bottom: (cell 8 = Skeletal Mage: a skull wreathed in violet flame) 1 Raise Skeleton: a skeletal hand rising from the ground with green light, 2 Bone Storm: bone shards bursting outward in a ring, 3 Bone Armor: a ribcage-shaped shield of bones, 4 Bone Spear: a long sharp bone spear flying, 5 Plague Fog: a sickly green poison cloud, 6 Blood Pact: a dripping red rune in a circle, 7 Grasping Dead: many undead hands reaching out of dark earth, 8 (leave this cell empty).
 ```
 
 ### 4つ目のエリア「奈落の大聖堂」の絵

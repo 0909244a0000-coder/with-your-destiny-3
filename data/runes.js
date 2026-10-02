@@ -98,6 +98,11 @@ Object.assign(WYD.data.runes.skills, {
     { id: "golem", name: "骨の巨人", desc: "1体だけ、とても強い巨人を呼ぶ", mods: { countBase: ["set", 1], countPerLevel: ["set", 0], hpRatio: ["mul", 4], attackBase: ["mul", 2.8], radius: ["mul", 1.6] } },
     { id: "undying", name: "不死の兵", desc: "手下がいられる時間2倍、HP1.3倍", mods: { duration: ["mul", 2], hpRatio: ["mul", 1.3] } },
   ],
+  nec_mage: [
+    { id: "coven", name: "魔術師の会", desc: "呼べる数 +1。1体ずつは少し弱い", mods: { countBase: ["add", 1], attackBase: ["mul", 0.8] } },
+    { id: "lich", name: "リッチ", desc: "1体だけ、とても強い魔術師を呼ぶ", mods: { countBase: ["set", 1], countPerLevel: ["set", 0], attackBase: ["mul", 2.5], hpRatio: ["mul", 3], radius: ["mul", 1.4] } },
+    { id: "far", name: "遠見の魔術師", desc: "射程が1.4倍になり、もっと離れたところから撃つ", mods: { rangedRange: ["mul", 1.4], keepDistance: ["mul", 1.3] } },
+  ],
   nec_nova: [
     { id: "wide", name: "広がる骨", desc: "範囲1.4倍。威力は少し下がる", mods: { radius: ["mul", 1.4], damage: ["mul", 0.85] } },
     { id: "leech", name: "生命吸収", desc: "与えたダメージの5%を回復", extra: { lifesteal: 5 } },

@@ -11,12 +11,13 @@ WYD.allies = {
 
   // スキル「骸骨召喚」：足りないぶんを呼ぶ。呼んだら true
   summon(w, state, stats, s, lv) {
-    const alive = w.allies.filter((a) => a.source === "raise").length;
+    const source = WYD.world.castingId;   // 呼んだスキルごとに数える（骸骨の戦士と魔術師は別々）
+    const alive = w.allies.filter((a) => a.source === source).length;
     const max = this.maxCount(s, lv, stats);
     const boost = stats.powers.raiseBoost;
     if (alive >= max) return false;
     const attackMult = (s.attackBase + s.attackPerLevel * (lv - 1)) * (1 + (boost ? boost.attackPercent : 0) / 100);
-    for (let i = alive; i < max; i++) this.spawn(w, stats, s, attackMult, "raise");
+    for (let i = alive; i < max; i++) this.spawn(w, stats, s, attackMult, source);
     return true;
   },
 
@@ -37,6 +38,7 @@ WYD.allies = {
       moveSpeed: s.moveSpeed, attackSpeed: s.attackSpeed, range: s.range, radius: s.radius,
       attackTimer: s.firstAttackDelay, followDistance: s.followDistance, hitFlash: 0, atkAnim: 0, face: 1,
       color: s.color, image: s.image, imageFilter: s.imageFilter,
+      ranged: s.rangedRange || 0, keepDistance: s.keepDistance || 0, shotColor: s.shotColor,   // 遠くから撃つ手下
     };
     w.allies.push(a);
     w.effects.push({ type: "ring", x: a.x, y: a.y, radius: s.radius * 2, color: s.color, time: 0, duration: 0.35 });
@@ -66,14 +68,16 @@ WYD.allies = {
         WYD.world.moveToward(a, w.player, a.moveSpeed * dt, a.followDistance);
         continue;
       }
-      const reach = a.range + WYD.data.enemies[target.kind].radius;
+      const reach = a.ranged || a.range + WYD.data.enemies[target.kind].radius;
       const d = WYD.util.dist(a, target);
       if (d > reach) WYD.world.moveToward(a, target, a.moveSpeed * dt, reach * 0.8);
+      else if (a.ranged && d < a.keepDistance) WYD.world.moveAway(a, target, a.moveSpeed * dt);
       a.attackTimer -= dt;
       if (d <= reach && a.attackTimer <= 0) {
         a.attackTimer = 1 / a.attackSpeed;
         a.atkAnim = WYD.data.anim.attack.time;
         a.face = target.x >= a.x ? 1 : -1;
+        if (a.ranged) w.effects.push({ type: "chain", points: [{ x: a.x, y: a.y - 8 }, { x: target.x, y: target.y }], color: a.shotColor || a.color, time: 0, duration: 0.2 });
         const hit = WYD.world.calcDamage(a.attack, target.defense, stats.critChance, stats.critMultiplier);
         WYD.world.damageEnemy(w, state, target, hit.damage, hit.crit);
       }

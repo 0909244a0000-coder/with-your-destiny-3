@@ -120,6 +120,21 @@ WYD.data.classes = {
         image: "assets/enemies/preta.png",     // 手下の絵（本番の絵が来たら差し替え）
         imageFilter: "grayscale(1) brightness(1.6)",
       },
+      nec_mage: {
+        kind: "raise", name: "骸骨の魔術師",
+        desc: "遠くから魔法を撃つ骸骨を呼び出す。戦士より打たれ弱いが、離れたところから攻撃する。",
+        startLevel: 0, maxLevel: 10, cooldown: 4,
+        countBase: 1, countPerLevel: 0.25,
+        hpRatio: 0.25, attackBase: 0.55, attackPerLevel: 0.07, defenseRatio: 0.3,
+        duration: 18, moveSpeed: 100, attackSpeed: 0.8, range: 26, radius: 11,
+        rangedRange: 220,                      // この距離から撃つ
+        keepDistance: 120,                     // 敵とこの距離を保つ
+        shotColor: "#b98aff",
+        spawnSpread: 40, followDistance: 70, firstAttackDelay: 0.6,
+        color: "#d8c8ff",
+        image: "assets/enemies/nagaCaster.png",   // 仮の絵
+        imageFilter: "grayscale(1) brightness(1.5) hue-rotate(240deg)",
+      },
       nec_nova: {
         kind: "whirl", name: "骨の嵐",
         desc: "周りに骨の破片をまき散らし、敵すべてにダメージ。",
@@ -160,7 +175,7 @@ WYD.data.classes = {
         damageBase: 0.6, damagePerLevel: 0.14, color: "#9a8aff",
       },
     },
-    skillOrder: ["nec_armor", "nec_raise", "nec_pact", "nec_grasp", "nec_nova", "nec_spear", "nec_plague"],
+    skillOrder: ["nec_armor", "nec_raise", "nec_mage", "nec_pact", "nec_grasp", "nec_nova", "nec_spear", "nec_plague"],
     skillIcons: {},
   },
 };
