@@ -348,12 +348,20 @@ WYD.ui = {
       this.markDirty();
     };
 
+    // スマホの「どうするか」の窓
+    this.$("sheet-body").onclick = (e) => {
+      const b = e.target.closest("[data-sheet]");
+      if (b) this.sheetAction(b.dataset.sheet);
+    };
+    this.$("sheet").onclick = (e) => { if (e.target.id === "sheet") this.sheetAction("close"); };
+
     // 持ち物：左クリックで装備、右クリックで捨てる
     const inv = this.$("inventory");
     inv.onclick = (e) => {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
       const index = Number(cell.dataset.index);
+      if (this.touchSheet("inv", index)) return;   // スマホ：触ると「どうするか」の窓
       if (e.ctrlKey || e.metaKey) this.toggleLock(s.inventory[index]);
       else if (this.forgeMode) this.openForge(s.inventory[index]);
       else if (this.cubeMode) this.cubeItem(s.inventory[index]);
@@ -387,6 +395,7 @@ WYD.ui = {
     stash.onclick = (e) => {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
+      if (this.touchSheet("stash", Number(cell.dataset.index))) return;
       if (e.ctrlKey || e.metaKey) this.toggleLock(s.stash[Number(cell.dataset.index)]);
       else if (this.forgeMode) this.openForge(s.stash[Number(cell.dataset.index)]);
       else if (this.cubeMode) this.cubeItem(s.stash[Number(cell.dataset.index)]);
@@ -414,6 +423,7 @@ WYD.ui = {
     eq.onclick = (e) => {
       const cell = e.target.closest("[data-slot]");
       if (!cell || !s.equipment[cell.dataset.slot]) return;
+      if (this.touchSheet("eq", cell.dataset.slot)) return;
       if (e.ctrlKey || e.metaKey) {
         this.toggleLock(s.equipment[cell.dataset.slot]);
         this.changed();
@@ -1336,7 +1346,61 @@ WYD.ui = {
     </div>`;
   },
 
+  // スマホ（マウスがない画面）か
+  isTouch() {
+    return window.matchMedia && window.matchMedia("(hover: none)").matches;
+  },
+
+  // スマホ：装備を触ったら、説明と「どうするか」のボタンを窓で出す（ふつうのモードのときだけ）。出したら true
+  touchSheet(where, key) {
+    if (!this.isTouch() || this.forgeMode || this.cubeMode || this.gemSelected || this.enhanceMode || this.craftMode) return false;
+    const s = this.state;
+    const item = where === "inv" ? s.inventory[key] : where === "stash" ? s.stash[key] : s.equipment[key];
+    if (!item) return false;
+    this.sheet = { where, key };
+    const mat = WYD.data.crafting.materialName;
+    let html = this.itemHtml(item);
+    if (where !== "eq") {
+      const cur = s.equipment[item.slot];
+      html += cur ? this.itemHtml(cur, "いま装備中") : `<div class="tip-item tip-sub">この部位は何も装備していない</div>`;
+      html += this.compareHtml(item, cur);
+    }
+    const btn = (act, label, cls) => `<button data-sheet="${act}"${cls ? ` class="${cls}"` : ""}>${label}</button>`;
+    const acts = where === "inv" ? [btn("equip", "装備する"), btn("stash", "倉庫へ")]
+      : where === "stash" ? [btn("back", "持ち物へ戻す")] : [btn("unequip", "外す")];
+    acts.push(btn("lock", item.locked ? "ロックを外す" : "ロックする"));
+    if (where !== "eq") acts.push(btn("discard", `捨てる（${mat} +${WYD.inventory.salvageValue(s, item)}）`, "danger"));
+    acts.push(btn("close", "閉じる"));
+    this.$("sheet-body").innerHTML = `${html}<div class="sheet-btns">${acts.join("")}</div>`;
+    this.$("sheet").hidden = false;
+    return true;
+  },
+
+  // スマホの窓のボタン
+  sheetAction(act) {
+    const s = this.state;
+    const sh = this.sheet;
+    this.$("sheet").hidden = true;
+    if (!sh || act === "close") return;
+    const item = sh.where === "inv" ? s.inventory[sh.key] : sh.where === "stash" ? s.stash[sh.key] : s.equipment[sh.key];
+    if (!item) return;
+    const C = WYD.data.crafting;
+    if (act === "equip") WYD.inventory.equip(s, sh.key);
+    else if (act === "stash" && !WYD.inventory.toStash(s, sh.key)) this.log("倉庫がいっぱいで入れられない", "#ff6b6b");
+    else if (act === "back" && !WYD.inventory.fromStash(s, sh.key)) this.log("持ち物がいっぱいで戻せない", "#ff6b6b");
+    else if (act === "unequip" && !WYD.inventory.unequip(s, sh.key)) this.log("持ち物がいっぱいで外せない", "#ff6b6b");
+    else if (act === "lock") this.toggleLock(item);
+    else if (act === "discard") {
+      const gained = sh.where === "inv" ? WYD.inventory.discard(s, sh.key) : WYD.inventory.discardFromStash(s, sh.key);
+      if (gained < 0) this.log(`${WYD.loot.label(item)}はロックしているので捨てられない`, "#ff6b6b");
+      else this.log(`${WYD.loot.label(item)}を捨てた（${C.materialName} +${gained}）`);
+    }
+    this.sheet = null;
+    this.changed();
+  },
+
   showTooltipFor(e, where) {
+    if (this.isTouch()) return;   // スマホは触った窓で見る
     const s = this.state;
     let item = null, html = "";
     if (where === "inv" || where === "stash") {

@@ -336,3 +336,21 @@ details.menu .menu-body button, details.menu .menu-body label { text-align: left
 .skill-info { font-size: 11px; color: #b8ab90; margin-top: 2px; line-height: 1.5; }
 .skill-info b { color: #e8dcc0; font-weight: normal; }
 .skill-next { color: #7dff8a; }
+
+/* ---- スマホなど、幅のせまい画面 ---- */
+@media (max-width: 900px) {
+  /* 戦いの画面を上に、パネルをその下に縦に並べる */
+  main { flex-direction: column; padding: 8px; gap: 8px; }
+  .left { width: 100%; }
+  aside { width: 100%; }
+  canvas { width: 100%; max-height: none; }
+  /* 窓（遊び方・図鑑など）は画面からはみ出さないように */
+  .modal { align-items: flex-start; padding: 10px 0; overflow-y: auto; }
+  .modal-box { width: auto !important; min-width: 0; max-width: calc(100vw - 20px); max-height: calc(100vh - 20px); overflow-y: auto; padding: 14px 14px; box-sizing: border-box; }
+  .tip { max-width: calc(100vw - 20px); }
+}
+/* スマホ：装備を触ったときの窓 */
+.sheet-box { width: 360px; }
+.sheet-box .tip-item { margin-bottom: 8px; }
+.sheet-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.sheet-btns button { flex: 1 1 45%; padding: 10px 6px; font-size: 14px; }
