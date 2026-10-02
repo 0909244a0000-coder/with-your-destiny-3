@@ -326,3 +326,5 @@ details.menu .menu-body button, details.menu .menu-body label { text-align: left
 .build-slot button { font-size: 11px; padding: 0 6px; }
 .gamble-btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .gamble-btns button { min-width: 64px; }
+.bounty-bar { height: 5px; background: #2a2418; margin: 3px 0; border-radius: 2px; overflow: hidden; }
+.bounty-bar div { height: 100%; }

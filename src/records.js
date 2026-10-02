@@ -5,6 +5,7 @@ WYD.records = {
   // 記録を数える
   add(state, key, n) {
     state.records[key] = (state.records[key] || 0) + (n == null ? 1 : n);
+    WYD.bounties.onRecord(state, key, n == null ? 1 : n);   // 賞金首の依頼が進む
   },
 
   // 拾った装備を図鑑に載せ、拾った数を数える

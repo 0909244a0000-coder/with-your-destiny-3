@@ -47,7 +47,8 @@ WYD.save = {
       builds: [],      // 保存したビルド（src/builds.js）
       devotion: {},    // 埋めた星座（星座の id → true）
       mercenary: { type: null, rank: 1 },
-      lgems: { owned: {}, equipped: [] },   // 伝説の宝石（src/legendaryGems.js）   // 雇っている傭兵（src/mercenary.js）
+      lgems: { owned: {}, equipped: [] },
+      bounties: [],    // 賞金首の依頼（src/bounties.js）   // 伝説の宝石（src/legendaryGems.js）   // 雇っている傭兵（src/mercenary.js）
       bossDeaths: {},  // ボスに倒された回数（エリアの id → 回数。倒すと消える）
       mapBest: 0,      // 成功した地図の最高段階
       cube: { learned: {}, slots: { weapon: null, armor: null, jewelry: null } },   // カナイの箱

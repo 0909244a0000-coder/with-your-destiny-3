@@ -175,6 +175,19 @@ WYD.ui = {
       this.$("merc-body").innerHTML = this.mercHtml();
       this.$("merc").hidden = false;
     };
+    this.$("bounty-open").onclick = () => {
+      WYD.bounties.ensure(s);
+      this.$("bounty-body").innerHTML = this.bountyHtml();
+      this.$("bounty").hidden = false;
+    };
+    this.$("bounty-close").onclick = () => { this.$("bounty").hidden = true; };
+    this.$("bounty-body").onclick = (e) => {
+      const btn = e.target.closest("[data-bounty]");
+      if (!btn) return;
+      if (!WYD.bounties.reroll(s, Number(btn.dataset.bounty))) this.log(`${WYD.data.crafting.materialName}が足りない`, "#ff6b6b");
+      this.$("bounty-body").innerHTML = this.bountyHtml();
+      this.changed();
+    };
     this.$("gamble-open").onclick = () => {
       this.gambleLast = null;
       this.$("gamble-body").innerHTML = this.gambleHtml();
@@ -544,6 +557,23 @@ WYD.ui = {
     }).join("");
     return `<div class="dev-head">信仰ポイント：<b>${WYD.devotion.free(s)}</b> / ${WYD.devotion.totalPoints(s)}　今の縁：${afText(af)}</div>
       <p class="muted">ポイントは レベル${P.perLevels}ごとに1、はじめて倒したボス1体ごとに${P.perBoss}、試練の最高段階${P.perTrialStages}ごとに1、地図の最高段階1ごとに${P.perMapTier}。外すとポイントはもどる。</p>${rows}`;
+  },
+
+  // 賞金首の依頼の画面
+  bountyHtml() {
+    const s = this.state;
+    const D = WYD.data.bounties;
+    const R = D.reward;
+    const mat = WYD.data.crafting.materialName;
+    const rows = s.bounties.map((b, i) => {
+      const pct = Math.round(b.progress / b.target * 100);
+      const mats = R.materialsBase + R.materialsPerArea * WYD.bounties.areaIndex(s, b);
+      return `<div class="dev-row"><div style="flex:1"><b>${WYD.bounties.text(b)}</b>　${b.progress} / ${b.target}
+        <div class="bounty-bar"><div style="width:${pct}%;background:${D.color}"></div></div>
+        <small class="muted">ご褒美：${mat} ${mats}・装備${R.items}個（レア以上）</small></div>
+        <button data-bounty="${i}" ${s.materials >= D.rerollCost ? "" : "disabled"}>取り替える（${D.rerollCost}）</button></div>`;
+    }).join("");
+    return `<p class="muted">いつも${D.count}つの依頼があり、ふつうに遊んでいるだけで進みます。エリアの決まった依頼は、そのエリアにいるときだけ進みます（試練の中は進みません）。達成するとすぐ次の依頼が出ます。達成した数：${s.records.bounties || 0}</p>${rows}`;
   },
 
   // キャダラの賭けの画面
