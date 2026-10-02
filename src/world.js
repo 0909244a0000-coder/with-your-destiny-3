@@ -1357,10 +1357,12 @@ WYD.world = {
     p.respawnTimer = WYD.data.player.respawnSeconds;
     const D = WYD.data.story.death;
     const how = cause && D.how[cause.how];
-    WYD.ui.log(how && cause.by ? `${cause.by}${how}で倒れてしまった…` : "倒れてしまった…", "#ff6b6b");
+    w.deathBy = how && cause.by ? `${cause.by}${how}` : null;
+    WYD.ui.log(w.deathBy ? `${w.deathBy}で倒れてしまった…` : "倒れてしまった…", "#ff6b6b");
     // 同じヒントは遊んでいる間に1回だけ
     const key = how && D.hints[cause.how] ? cause.how : "default";
     w.hintsShown = w.hintsShown || {};
+    w.deathHint = D.hints[key];
     if (!w.hintsShown[key]) {
       w.hintsShown[key] = true;
       WYD.ui.log(`ヒント：${D.hints[key]}`, D.hintColor);

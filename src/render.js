@@ -171,6 +171,17 @@ WYD.render = {
       ctx.font = "18px sans-serif";
       ctx.fillStyle = "#ffffff";
       ctx.fillText(`${Math.ceil(w.player.respawnTimer)} 秒後に復活`, map.width / 2, map.height / 2 + 24);
+      // 何にやられたかと、次にためすこと
+      const D = WYD.data.story.death;
+      if (w.deathBy) {
+        ctx.fillStyle = "#ffb0b0";
+        ctx.fillText(`原因：${w.deathBy}`, map.width / 2, map.height / 2 + 56);
+      }
+      if (w.deathHint) {
+        ctx.font = "15px sans-serif";
+        ctx.fillStyle = D.hintColor;
+        ctx.fillText(w.deathHint, map.width / 2, map.height / 2 + 84);
+      }
     }
   },
 
