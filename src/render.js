@@ -390,33 +390,36 @@ WYD.render = {
     const B = WYD.data.map.skillBar;
     const p = w.player, pl = state.player;
     const ids = WYD.data.skillOrder.filter((id) => (pl.skills[id] || 0) > 0 && pl.skillEnabled[id]);
-    const y = WYD.data.map.height - B.bottom - B.size;
+    // スマホなどで画面が縮んで見えるときは、そのぶん大きく描く
+    const shown = ctx.canvas.clientWidth / WYD.data.map.width || 1;
+    const size = Math.max(B.size, Math.round(B.minShownPx / shown));
+    const y = WYD.data.map.height - B.bottom - size;
     ids.forEach((id, i) => {
-      const x = B.x + i * (B.size + B.gap);
+      const x = B.x + i * (size + B.gap);
       const def = WYD.data.skills[id];
       ctx.fillStyle = B.back;
-      ctx.fillRect(x, y, B.size, B.size);
+      ctx.fillRect(x, y, size, size);
       const img = this.getImage(WYD.data.skillIcons[id]);
-      if (img) ctx.drawImage(img, x, y, B.size, B.size);
+      if (img) ctx.drawImage(img, x, y, size, size);
       else {
         ctx.fillStyle = def.color || "#ccc";
-        ctx.font = `bold ${Math.round(B.size * 0.5)}px sans-serif`;
+        ctx.font = `bold ${Math.round(size * 0.5)}px sans-serif`;
         ctx.textAlign = "center";
-        ctx.fillText(def.name[0], x + B.size / 2, y + B.size * 0.68);
+        ctx.fillText(def.name[0], x + size / 2, y + size * 0.68);
       }
       // 残り時間：上から下へ減っていく影
       const max = (p.skillCooldownMax || {})[id] || 0;
       const left = p.skillCooldowns[id] || 0;
       if (max > 0 && left > 0) {
         ctx.fillStyle = B.shade;
-        const h = B.size * Math.min(1, left / max);
-        ctx.fillRect(x, y + B.size - h, B.size, h);
+        const h = size * Math.min(1, left / max);
+        ctx.fillRect(x, y + size - h, size, h);
       }
       const since = w.time - ((p.skillCastAt || {})[id] ?? -99);
       const k = Math.max(0, 1 - since / B.flash);
       ctx.lineWidth = 1 + k * 2;
       ctx.strokeStyle = k > 0 ? B.flashColor : B.border;
-      ctx.strokeRect(x + 0.5, y + 0.5, B.size - 1, B.size - 1);
+      ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
     });
     ctx.lineWidth = 1;
   },
