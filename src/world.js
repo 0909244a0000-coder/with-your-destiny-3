@@ -128,6 +128,7 @@ WYD.world = {
         const slam = WYD.data.enemies[area.boss].slam;   // 大技のないボスもいる
         if (slam) boss.slamTimer = slam.interval;
         WYD.ui.log(`ボス「${WYD.data.enemies[area.boss].name}」が現れた！`, WYD.data.boss.nameColor);
+        w.bossIntro = { name: WYD.data.enemies[area.boss].name, time: 0 };
         WYD.sound.play("bossAppear");
         WYD.ui.markDirty();
       }
@@ -185,6 +186,10 @@ WYD.world = {
     if (w.banner) {
       w.banner.time += dt;
       if (w.banner.time > 2.5) w.banner = null;
+    }
+    if (w.bossIntro) {
+      w.bossIntro.time += dt;
+      if (w.bossIntro.time > WYD.data.boss.intro.time) w.bossIntro = null;
     }
     if (w.descendNext && !w.breach) {   // 裂け目が開いている間は、閉じてから降りる
       w.descendNext = false;

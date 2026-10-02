@@ -152,6 +152,7 @@ WYD.render = {
     }
     ctx.globalAlpha = 1;
     ctx.restore();
+    this.drawBossIntro(ctx, w);   // 上の文字やボスの体力の棒より下に描く
 
     // 左上：マップ名と危険度
     ctx.textAlign = "left";
@@ -199,9 +200,46 @@ WYD.render = {
   },
 
   // 階を移ったとき：暗転から明るくなり、真ん中に階の名前を出す
+  // ボスが出たとき：上下の黒い帯がすべりこみ、名前を大きく出す
+  drawBossIntro(ctx, w) {
+    const b = w.bossIntro;
+    if (!b) return;
+    const I = WYD.data.boss.intro;
+    const map = WYD.data.map;
+    const fadeIn = Math.min(1, b.time / 0.35), fadeOut = Math.min(1, (I.time - b.time) / 0.5);
+    const k = Math.min(fadeIn, fadeOut);
+    const bar = map.height * I.bar * k;
+    ctx.fillStyle = "rgba(0,0,0,0.85)";
+    ctx.fillRect(0, 0, map.width, bar);
+    ctx.fillRect(0, map.height - bar, map.width, bar);
+    const serif = getComputedStyle(document.documentElement).getPropertyValue("--serif") || "serif";
+    const y = map.height * 0.42;
+    ctx.globalAlpha = k;
+    ctx.textAlign = "center";
+    ctx.font = `bold 16px ${serif}`;
+    ctx.fillStyle = I.labelColor;
+    ctx.fillText(I.label, map.width / 2, y - I.font * 0.9);
+    // 名前：少し大きく出てから元の大きさへ
+    const size = Math.round(I.font * (1 + 0.25 * Math.max(0, 1 - b.time / 0.35)));
+    ctx.font = `bold ${size}px ${serif}`;
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = "rgba(0,0,0,0.85)";
+    ctx.strokeText(b.name, map.width / 2, y);
+    ctx.shadowColor = WYD.data.boss.nameColor;
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = WYD.data.boss.nameColor;
+    ctx.fillText(b.name, map.width / 2, y);
+    ctx.shadowBlur = 0;
+    // 名前の下の線
+    const half = 160 * Math.min(1, b.time / 0.6);
+    ctx.fillStyle = I.labelColor;
+    ctx.fillRect(map.width / 2 - half, y + 14, half * 2, 2);
+    ctx.globalAlpha = 1;
+  },
+
   drawBanner(ctx, w) {
     const b = w.banner;
-    if (!b) return;
+    if (!b || w.bossIntro) return;   // ボスの演出と重ねない
     const map = WYD.data.map;
     if (b.time < 0.6) {
       ctx.fillStyle = `rgba(0,0,0,${1 - b.time / 0.6})`;

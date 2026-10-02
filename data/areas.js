@@ -132,7 +132,9 @@ WYD.data.boss = {
   retryProgressRatio: 0.5,
   floorPowerStep: 0.15,    // 1階深くなるごとに敵が何割強くなるか
   bossRoomMaxEnemies: 3,   // ボスの間に同時にいるふつうの敵の数
-  bossAppearDelay: 1.5,    // ボスの間に入ってからボスが出るまでの秒数
+  bossAppearDelay: 1.5,
+  // ボスが出たときの演出：上下に黒い帯が入り、名前を大きく出す（time 秒）
+  intro: { time: 2.6, bar: 0.12, label: "― ボス出現 ―", labelColor: "#e0c070", font: 44 },    // ボスの間に入ってからボスが出るまでの秒数
 
   // 何度もボスに倒されたら、そのボスが少しずつ弱くなる（倒すと元にもどる。試練・地図では弱くならない）
   easePerDeath: 0.05,      // 1回倒されるごとに、ボスのHPと攻撃力がこれだけ下がる
