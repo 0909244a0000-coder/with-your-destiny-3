@@ -2,7 +2,9 @@
 window.WYD = window.WYD || {};
 
 (function () {
+  WYD.classes.apply();   // 今の職業の数値・スキル・セーブの場所を決める
   const state = WYD.save.load();
+  const lastSeen = state.lastSeen;
   const world = WYD.world.create();
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
@@ -10,16 +12,42 @@ window.WYD = window.WYD || {};
   canvas.height = WYD.data.map.height;
 
   WYD.ui.init(state, world);
+  WYD.sound.init();
   WYD.ui.log("ようこそ。戦いは自動で進みます。装備とスキルを選んで強くなろう。", "#ffd447");
+  const cls = WYD.data.classes[WYD.classes.id];
+  if (cls.desc) WYD.ui.log(`${cls.name}：${cls.desc}`, WYD.data.player.color);
+  if (WYD.save.restoredFromBackup) WYD.ui.log("セーブが壊れていたので、前回の控えから読み込みました", "#ff8a2a");
+  WYD.offline.apply(state, world, lastSeen);
+  // 初めて遊ぶとき（前に遊んだ記録がないとき）だけ、遊び方を出す
+  if (!state.seenHelp) {
+    state.seenHelp = true;
+    if (!lastSeen) {
+      WYD.ui.showStory("intro");   // 短い説明（くわしくは「設定」→「遊び方」）
+      const intro = WYD.data.story.areaIntro[state.area];
+      if (intro) WYD.ui.log(intro, "#c9b48a");
+    }
+  }
+
+  // タブを裏にしている間は画面が止まるので、戻ってきたときに放置ぶんを渡す
+  let hiddenAt = null;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      hiddenAt = Date.now();
+    } else if (hiddenAt) {
+      WYD.offline.apply(state, world, hiddenAt);
+      hiddenAt = null;
+    }
+  });
 
   let last = performance.now();
   function loop(now) {
     // タブを切り替えたあと等に一気に進みすぎないよう、1回の経過時間に上限をつける
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    const steps = state.settings.speed;
+    const steps = WYD.ui.paused ? 0 : state.settings.speed;   // 一時停止中は進めない
     for (let i = 0; i < steps; i++) WYD.world.update(world, state, dt);
     WYD.render.draw(ctx, world, state);
+    WYD.music.update(state, world);
     WYD.ui.frame();
     requestAnimationFrame(loop);
   }
