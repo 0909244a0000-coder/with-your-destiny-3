@@ -118,12 +118,12 @@ WYD.stats = {
       maxHp: Math.round(P.base.maxHp + P.perLevel.maxHp * lv + b.maxHp + pb.maxHp),
       attack: P.base.attack + P.perLevel.attack * lv + b.attack + pb.attack,
       defense: P.base.defense + P.perLevel.defense * lv + b.defense + pb.defense,
-      attackSpeed: Math.max(P.minAttackSpeed, P.base.attackSpeed * (1 + (b.attackSpeed + pb.attackSpeed) / 100)),
+      attackSpeed: WYD.util.clamp(P.base.attackSpeed * (1 + (b.attackSpeed + pb.attackSpeed) / 100), P.minAttackSpeed, P.maxAttackSpeed),
       critChance: Math.min(P.critChanceCap, P.base.critChance + b.critChance + pb.critChance),
       hpRegen: (P.base.hpRegen + b.hpRegen + pb.hpRegen) * WYD.season.mult(state, "hpRegenMult"),
-      moveSpeed: P.base.moveSpeed * (1 + (b.moveSpeed + fx.moveSpeed) / 100),
+      moveSpeed: Math.min(P.base.moveSpeed * P.maxMoveSpeedMult, P.base.moveSpeed * (1 + (b.moveSpeed + fx.moveSpeed) / 100)),
       skillDamage: b.skillDamage + asceticBonus + pb.skillDamage,
-      magicFind: pb.magicFind,   // レア発見（%）
+      magicFind: Math.min(P.maxMagicFind, pb.magicFind),   // レア発見（%）
       powers,
       critMultiplier: P.critMultiplier + fx.critDamage / 100,
       effects: fx,
