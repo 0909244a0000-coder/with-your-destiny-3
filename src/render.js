@@ -387,6 +387,19 @@ WYD.render = {
       ctx.stroke();
       ctx.setLineDash([]);
     }
+    // オーラ：足元にゆっくり脈打つ輪
+    const AR = WYD.data.fx.auraRing;
+    for (const id in p.dead ? {} : p.auras || {}) {
+      const a = p.auras[id];
+      const pulse = 0.5 + 0.5 * Math.sin(this.clock * AR.pulseSpeed + a.radius);
+      ctx.strokeStyle = a.color;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = AR.alpha + AR.pulseAlpha * pulse;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + P.radius * 0.6, a.radius, a.radius * AR.flatten, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
     if (p.buff) {
       ctx.strokeStyle = p.buff.color;
       ctx.lineWidth = 3;

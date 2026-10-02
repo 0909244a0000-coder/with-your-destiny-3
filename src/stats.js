@@ -116,7 +116,7 @@ WYD.stats = {
     }
     return {
       maxHp: Math.round(P.base.maxHp + P.perLevel.maxHp * lv + b.maxHp + pb.maxHp),
-      attack: P.base.attack + P.perLevel.attack * lv + b.attack + pb.attack,
+      attack: (P.base.attack + P.perLevel.attack * lv + b.attack + pb.attack) * this.mightMult(state),
       defense: P.base.defense + P.perLevel.defense * lv + b.defense + pb.defense,
       attackSpeed: WYD.util.clamp(P.base.attackSpeed * (1 + (b.attackSpeed + pb.attackSpeed) / 100), P.minAttackSpeed, P.maxAttackSpeed),
       critChance: Math.min(P.critChanceCap, P.base.critChance + b.critChance + pb.critChance),
@@ -128,6 +128,20 @@ WYD.stats = {
       critMultiplier: P.critMultiplier + fx.critDamage / 100,
       effects: fx,
     };
+  },
+
+  // オーラ「力」（kind: "aura"・auraType: "might"）をONにしていれば、攻撃力の倍率
+  mightMult(state) {
+    const pl = state.player;
+    let pct = 0;
+    for (const id in WYD.data.skills) {
+      const def = WYD.data.skills[id];
+      const lv = pl.skills[id] || 0;
+      if (def.kind !== "aura" || def.auraType !== "might" || lv <= 0 || !pl.skillEnabled[id]) continue;
+      const s = WYD.runes.effectiveDef(state, id);
+      pct += s.mightBase + s.mightPerLevel * (lv - 1);
+    }
+    return 1 + pct / 100;
   },
 
   expToNext(level) {

@@ -151,5 +151,12 @@ WYD.data.uniques = {
       desc: "{skill:raise}で呼べる数 +{extraCount}、手下の攻撃力 +{attackPercent}%",
       params: { extraCount: 2, attackPercent: 30 },
     },
+    {
+      id: "crusaderCrown", name: "聖騎士の冠", base: "crown", weight: 10, classOnly: "paladin",
+      stats: { maxHp: [20, 35], defense: [2, 4] },
+      power: "skillBoostAura",
+      desc: "すべてのオーラの範囲が1.3倍、効き目が1.4倍になる",
+      params: { kind: "aura", mods: { radius: ["mul", 1.3], damage: ["mul", 1.4], heal: ["mul", 1.4], mightBase: ["mul", 1.4], mightPerLevel: ["mul", 1.4] } },
+    },
   ],
 };

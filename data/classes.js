@@ -178,4 +178,84 @@ WYD.data.classes = {
     skillOrder: ["nec_armor", "nec_raise", "nec_mage", "nec_pact", "nec_grasp", "nec_nova", "nec_spear", "nec_plague"],
     skillIcons: {},
   },
+
+  // 聖なる力で戦う騎士。「オーラ」（ONにしているあいだずっと効くスキル）を持つ
+  // 絵がまだないので、バーバリアンの絵を金色にして仮に使う（imageFilter）
+  paladin: {
+    name: "パラディン",
+    player: {
+      className: "パラディン",
+      weaponName: "鎚",
+      color: "#ffd75e",
+      image: "assets/player.png",
+      imageFilter: "sepia(0.9) saturate(1.6) hue-rotate(5deg) brightness(1.1)",   // 本番の絵が来たら null にする
+      poses: { attack: null },
+      base: { maxHp: 130, attack: 9, defense: 3, attackSpeed: 1.0, critChance: 5, hpRegen: 1.5, moveSpeed: 115 },
+      perLevel: { maxHp: 16, attack: 1.9, defense: 1.2 },
+    },
+    skills: {
+      pal_zeal: {
+        kind: "whirl", name: "熱狂の一撃",
+        desc: "すばやく何度も振り回し、周りの敵すべてにダメージ。",
+        startLevel: 1, maxLevel: 10, cooldown: 4,
+        radius: 85, damageBase: 1.4, damagePerLevel: 0.28, minTargets: 1, color: "#fff2a8",
+      },
+      pal_shield: {
+        kind: "vajra", name: "聖なる盾",
+        desc: "HPが減ると発動。光の盾で防御力アップし、HPを回復。",
+        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 5,
+        defenseBase: 7, defensePerLevel: 3.5, healPercentBase: 10, healPercentPerLevel: 2,
+        triggerHpPercent: 60, color: "#ffe68a",
+      },
+      pal_hammer: {
+        kind: "sudarshana", name: "祝福の鎚",
+        desc: "光の鎚が敵から敵へ飛び移り、何体もまとめて打つ。",
+        startLevel: 0, maxLevel: 10, cooldown: 5,
+        range: 240, jumpRange: 160, targetsBase: 3, targetsPerLevel: 0.5,
+        damageBase: 1.5, damagePerLevel: 0.25, color: "#cfe0ff",
+      },
+      pal_judgment: {
+        kind: "agni", name: "天の裁き",
+        desc: "敵の多い場所に光の柱を下ろし、中の敵を焼き続ける。",
+        startLevel: 0, maxLevel: 10, cooldown: 8,
+        range: 220, radius: 85, duration: 4, tick: 0.5, damageBase: 0.5, damagePerLevel: 0.1, color: "#fff6c8",
+      },
+      pal_vow: {
+        kind: "hanuman", name: "聖戦の誓い",
+        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
+        startLevel: 0, maxLevel: 10, cooldown: 14, duration: 6,
+        hasteBase: 40, hastePerLevel: 6, triggerRange: 120, color: "#ffb84a",
+      },
+      pal_chain: {
+        kind: "nagapasha", name: "審判の鎖",
+        desc: "光の鎖で周りの敵を縛り、しばらく動けなくしてダメージ。ボスには効きにくい。",
+        startLevel: 0, maxLevel: 10, cooldown: 10,
+        radius: 120, minTargets: 2, bindBase: 1.6, bindPerLevel: 0.2, bossBindMult: 0.3,
+        damageBase: 0.7, damagePerLevel: 0.15, color: "#fff2a8",
+      },
+      // ---- オーラ（kind: "aura"）。ONにしているあいだ、ずっと効き続ける ----
+      // auraType … "damage"（周りの敵を焼く）・"heal"（HPを回復）・"might"（攻撃力アップ）
+      // cooldown … 何秒ごとに効くか（might は常に効くので使わない）
+      pal_fire: {
+        kind: "aura", auraType: "damage", name: "聖なる炎",
+        desc: "オーラ：まわりの敵を聖なる炎で焼き続ける。攻撃力×倍率のダメージ。",
+        startLevel: 0, maxLevel: 10, cooldown: 1,
+        radius: 100, damageBase: 0.35, damagePerLevel: 0.07, color: "#ffb84a",
+      },
+      pal_prayer: {
+        kind: "aura", auraType: "heal", name: "祈り",
+        desc: "オーラ：HPがずっと回復する。手下にも効く。最大HPの何%か。",
+        startLevel: 0, maxLevel: 10, cooldown: 1,
+        radius: 140, healPercentBase: 1.2, healPercentPerLevel: 0.25, color: "#9fffb0",
+      },
+      pal_might: {
+        kind: "aura", auraType: "might", name: "力",
+        desc: "オーラ：攻撃力が上がり続ける。",
+        startLevel: 0, maxLevel: 10, cooldown: 1,
+        radius: 120, mightBase: 15, mightPerLevel: 4, color: "#ff6a5a",
+      },
+    },
+    skillOrder: ["pal_shield", "pal_might", "pal_prayer", "pal_fire", "pal_vow", "pal_chain", "pal_zeal", "pal_hammer", "pal_judgment"],
+    skillIcons: {},
+  },
 };

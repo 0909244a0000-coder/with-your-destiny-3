@@ -67,8 +67,9 @@ WYD.maps = {
   // 素材で「レア」にする（条件を3〜4つにつけ直す）
   upgrade(state, index) {
     const map = state.maps[index];
+    if (!map) return true;   // 押したときにはもうなかった（画面の更新が遅れた）：何もしない
     const cost = WYD.data.maps.upgradeCostPerTier * map.tier;
-    if (!map || state.materials < cost) return false;
+    if (state.materials < cost) return false;
     state.materials -= cost;
     state.maps[index] = this.create(map.tier, "rare");
     return true;

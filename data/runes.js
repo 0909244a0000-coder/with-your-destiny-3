@@ -135,3 +135,54 @@ Object.assign(WYD.data.runes.skills, {
     { id: "crush", name: "握りつぶし", desc: "威力2倍。縛る時間は短い", mods: { damage: ["mul", 2], bind: ["mul", 0.6] } },
   ],
 });
+
+// パラディンのスキルの型
+Object.assign(WYD.data.runes.skills, {
+  pal_zeal: [
+    { id: "wide", name: "聖なる旋回", desc: "範囲1.4倍。威力は少し下がる", mods: { radius: ["mul", 1.4], damage: ["mul", 0.85] } },
+    { id: "leech", name: "生命の誓い", desc: "与えたダメージの5%を回復", extra: { lifesteal: 5 } },
+    { id: "holy", name: "聖地", desc: "使ったあと、足元に聖なる炎の地面が残る",
+      extra: { leaveField: { radius: 85, duration: 3, tick: 0.5, mult: 0.3, color: "#ffb84a" } } },
+  ],
+  pal_shield: [
+    { id: "steel", name: "城壁", desc: "防御1.6倍。回復は減る", mods: { defense: ["mul", 1.6], heal: ["mul", 0.6] } },
+    { id: "regen", name: "癒しの光", desc: "回復1.6倍。防御は下がる", mods: { heal: ["mul", 1.6], defense: ["mul", 0.6] } },
+    { id: "early", name: "備え", desc: "HP80%で早めに発動。使える間隔は少し長い", mods: { triggerHpPercent: ["set", 80], cooldown: ["mul", 1.2] } },
+  ],
+  pal_hammer: [
+    { id: "multi", name: "鎚の嵐", desc: "当たる数 +2。威力は少し下がる", mods: { targets: ["add", 2], damage: ["mul", 0.8] } },
+    { id: "heavy", name: "大鎚", desc: "当たる数 -1。威力1.6倍", mods: { targets: ["add", -1], damage: ["mul", 1.6] } },
+    { id: "stun", name: "気絶", desc: "当てた敵を0.6秒気絶させる", extra: { bind: 0.6 } },
+  ],
+  pal_judgment: [
+    { id: "big", name: "大いなる裁き", desc: "範囲1.35倍", mods: { radius: ["mul", 1.35] } },
+    { id: "long", name: "続く裁き", desc: "時間1.8倍。1回の威力は少し下がる", mods: { duration: ["mul", 1.8], damage: ["mul", 0.8] } },
+    { id: "rapid", name: "連なる裁き", desc: "使える間隔0.6倍。威力は下がる", mods: { cooldown: ["mul", 0.6], damage: ["mul", 0.75] } },
+  ],
+  pal_vow: [
+    { id: "frenzy", name: "熱狂", desc: "攻撃速度がもっと上がる（1.4倍）。時間は短い", mods: { haste: ["mul", 1.4], duration: ["mul", 0.7] } },
+    { id: "endure", name: "長い誓い", desc: "時間1.8倍。上がり方は少し小さい", mods: { duration: ["mul", 1.8], haste: ["mul", 0.8] } },
+    { id: "quick", name: "即応", desc: "使える間隔0.65倍", mods: { cooldown: ["mul", 0.65] } },
+  ],
+  pal_chain: [
+    { id: "long", name: "離さぬ鎖", desc: "縛る時間1.6倍", mods: { bind: ["mul", 1.6] } },
+    { id: "net", name: "光の網", desc: "範囲1.4倍。敵が1体でも使う", mods: { radius: ["mul", 1.4], minTargets: ["set", 1] } },
+    { id: "crush", name: "断罪", desc: "威力2倍。縛る時間は短い", mods: { damage: ["mul", 2], bind: ["mul", 0.6] } },
+  ],
+  // オーラの型
+  pal_fire: [
+    { id: "wide", name: "燎原", desc: "範囲1.4倍。威力は少し下がる", mods: { radius: ["mul", 1.4], damage: ["mul", 0.8] } },
+    { id: "hot", name: "灼熱", desc: "威力1.5倍。範囲は少し狭い", mods: { damage: ["mul", 1.5], radius: ["mul", 0.8] } },
+    { id: "leech", name: "浄化の炎", desc: "与えたダメージの4%を回復", extra: { lifesteal: 4 } },
+  ],
+  pal_prayer: [
+    { id: "strong", name: "深い祈り", desc: "回復1.5倍", mods: { heal: ["mul", 1.5] } },
+    { id: "fast", name: "絶えぬ祈り", desc: "0.5秒ごとに回復（1回は少し少ない）", mods: { cooldown: ["set", 0.5], heal: ["mul", 0.6] } },
+    { id: "wide", name: "群れの祈り", desc: "手下に届く範囲2倍", mods: { radius: ["mul", 2] } },
+  ],
+  pal_might: [
+    { id: "strong", name: "剛力", desc: "攻撃力の上がり方1.4倍", mods: { mightBase: ["mul", 1.4], mightPerLevel: ["mul", 1.4] } },
+    { id: "early", name: "目覚め", desc: "最初から大きく上がる（Lvごとの伸びは小さい）", mods: { mightBase: ["mul", 1.7], mightPerLevel: ["mul", 0.5] } },
+    { id: "growth", name: "成長", desc: "Lvごとの伸びが大きい（最初は小さい）", mods: { mightBase: ["mul", 0.6], mightPerLevel: ["mul", 1.9] } },
+  ],
+});

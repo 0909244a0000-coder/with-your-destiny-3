@@ -1,11 +1,12 @@
 // バランス確認用：新しいセーブから自動で遊ばせて、ボスを倒した時間や倒れた回数を出す。
-// 使い方：  node tools/balance-sim.js [遊ばせる分数（省略すると15）] [職業（省略するとバーバリアン）]
+// 使い方：  node tools/balance-sim.js [遊ばせる分数（省略すると15）] [職業（省略するとバーバリアン）] [試練の分数] [覚えるスキル3つ（カンマ区切り）]
 // 必要なもの：Node.js と Playwright（npm i playwright）。ゲームの数値は変えない（ブラウザの中だけで動く）。
 const path = require('path');
 const { chromium } = require('playwright');
 const MINUTES = Number(process.argv[2]) || 15;
 const CLASS = process.argv[3] || 'barbarian';
 const TRIAL_MINUTES = Number(process.argv[4]) || 0; // クリア後、終わりのない試練を何分続けるか
+const SKILLS = process.argv[5] ? process.argv[5].split(',') : null; // 覚えるスキル3つ（省略すると最初の3つ）。例：pal_zeal,pal_might,pal_fire
 (async () => {
   const b = await chromium.launch();
   const pg = await b.newPage();
@@ -14,11 +15,11 @@ const TRIAL_MINUTES = Number(process.argv[4]) || 0; // クリア後、終わり�
   await pg.goto('file://' + path.resolve(__dirname, '..', 'index.html'));
   await pg.evaluate((c) => { localStorage.clear(); localStorage.setItem('wyd3-active-class', c); WYD.resetting = true; }, CLASS);
   await pg.reload();
-  const t0 = Date.now(); const res = await pg.evaluate(([MINUTES, TRIAL_MINUTES]) => {
+  const t0 = Date.now(); const res = await pg.evaluate(([MINUTES, TRIAL_MINUTES, SKILLS]) => {
     const s = WYD.state, w = WYD.currentWorld;
     s.settings.speed = 0; // stop the live loop from advancing
     const score = (it) => it ? it.stats.reduce((a, l) => a + l.value * ({ attack: 4, defense: 2.5, maxHp: 0.4, hpRegen: 4, attackSpeed: 1.5, critChance: 1.5, moveSpeed: 0.3, skillDamage: 0.8 }[l.stat] || 0), 0) + (it.effects || []).length * 6 + (it.unique ? 30 : 0) : 0;
-    const ids = Object.keys(WYD.data.skills); const order = [ids[0], ids[1], ids[2], ids[0], ids[1], ids[0], ids[2], ids[0]];
+    const ids = SKILLS || Object.keys(WYD.data.skills); const order = [ids[0], ids[1], ids[2], ids[0], ids[1], ids[0], ids[2], ids[0]];
     let deaths = 0, wasDead = false, t = 0;
     const events = [];
     const log = (m) => events.push(`${Math.round(t / 60)}分 Lv${s.player.level} ${m}`);
@@ -63,7 +64,7 @@ const TRIAL_MINUTES = Number(process.argv[4]) || 0; // クリア後、終わり�
     }
     return { events, trial, deaths, level: s.player.level, area: s.area, maxDiff: s.maxDifficulty, mats: s.materials,
       eq: Object.values(s.equipment).map(i => i.name + '(' + i.rarity + ')') };
-  }, [MINUTES, TRIAL_MINUTES]);
+  }, [MINUTES, TRIAL_MINUTES, SKILLS]);
   console.log(JSON.stringify(res, null, 1), 'secs', (Date.now()-t0)/1000);
   console.log('ERRORS', errs);
   await b.close();

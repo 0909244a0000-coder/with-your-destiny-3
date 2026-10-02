@@ -58,6 +58,11 @@ WYD.world = {
       p.haste.timeLeft -= dt;
       if (p.haste.timeLeft <= 0) p.haste = null;
     }
+    // オーラの輪（ONのオーラだけ残る）
+    for (const id in p.auras || {}) {
+      p.auras[id].timeLeft -= dt;
+      if (p.auras[id].timeLeft <= 0) delete p.auras[id];
+    }
     this.updateFields(w, state, stats, dt);
     this.updateHazards(w, stats, dt);
     this.updatePools(w, dt);
@@ -503,6 +508,29 @@ WYD.world = {
 
   // スキルごとの処理。使ったら true を返す
   skillHandlers: {
+    // オーラ（パラディン）：ONのあいだ、cooldown 秒ごとに効く。might は src/stats.js で攻撃力に足す
+    aura(w, state, stats, s, lv) {
+      const p = w.player;
+      p.auras = p.auras || {};
+      p.auras[this.castingId] = { radius: s.radius, color: s.color, timeLeft: s.cooldown + WYD.data.fx.auraRing.linger };
+      if (s.auraType === "damage") {
+        const targets = w.enemies.filter((e) => WYD.util.dist(p, e) <= s.radius + WYD.data.enemies[e.kind].radius);
+        if (!targets.length) return false;
+        const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
+        for (const e of targets) this.playerHit(w, state, stats, e, stats.attack * mult);
+        WYD.fx.burst(w, p.x, p.y, WYD.data.fx.aura, s.color, { glow: true });
+        return true;
+      }
+      if (s.auraType === "heal") {
+        const pct = (s.healPercentBase + s.healPercentPerLevel * (lv - 1)) * (1 + stats.skillDamage / 100) / 100;
+        const hurtAllies = w.allies.filter((a) => a.hp < a.maxHp && WYD.util.dist(p, a) <= s.radius);
+        if (p.hp >= stats.maxHp && !hurtAllies.length) return false;
+        p.hp = Math.min(stats.maxHp, p.hp + stats.maxHp * pct);
+        for (const a of hurtAllies) a.hp = Math.min(a.maxHp, a.hp + a.maxHp * pct);
+        return true;
+      }
+      return false;   // might：いつも効いている（輪を出すだけ）
+    },
     // 骸骨召喚（src/allies.js）
     raise(w, state, stats, s, lv) {
       return WYD.allies.summon(w, state, stats, s, lv);

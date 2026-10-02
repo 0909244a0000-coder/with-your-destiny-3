@@ -100,5 +100,20 @@ WYD.data.sets = {
              desc: "{skill:raise}で呼べる数 +{extraCount}、手下の攻撃力 +{attackPercent}%" },
       },
     },
+    {
+      // パラディンでだけ落ちる
+      id: "crusader", name: "聖戦士の誓い", classOnly: "paladin",
+      pieces: [
+        { id: "crusader_hammer", name: "聖戦士の鎚", base: "great_blade", stats: { attack: [5, 9] } },
+        { id: "crusader_shield", name: "聖戦士の盾", base: "shield", stats: { defense: [4, 7] } },
+        { id: "crusader_mail", name: "聖戦士の鎧", base: "chainmail", stats: { maxHp: [20, 40] } },
+        { id: "crusader_seal", name: "聖戦士の印章", base: "rosary", stats: { hpRegen: [1, 2] } },
+      ],
+      bonuses: {
+        2: { stats: { defense: 10, maxHp: 60 } },
+        4: { effects: { lifesteal: 2 }, power: "skillBoostCrusader", params: { kind: "whirl", mods: { damage: ["mul", 1.8], radius: ["mul", 1.25] } },
+             desc: "{skill:whirl}の威力が1.8倍、範囲が1.25倍になる" },
+      },
+    },
   ],
 };

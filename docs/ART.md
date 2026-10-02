@@ -117,6 +117,19 @@ A single full-body sprite, 3/4 top-down view, facing right, transparent backgrou
 A single sprite sheet image, 2048x1024, arranged as an exact 4 columns by 2 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Necromancer spell icons, left-to-right, top-to-bottom: (cell 8 = Skeletal Mage: a skull wreathed in violet flame) 1 Raise Skeleton: a skeletal hand rising from the ground with green light, 2 Bone Storm: bone shards bursting outward in a ring, 3 Bone Armor: a ribcage-shaped shield of bones, 4 Bone Spear: a long sharp bone spear flying, 5 Plague Fog: a sickly green poison cloud, 6 Blood Pact: a dripping red rune in a circle, 7 Grasping Dead: many undead hands reaching out of dark earth, 8 (leave this cell empty).
 ```
 
+### パラディン（4つ目の職業）の絵
+今はバーバリアンの絵を金色にして仮に使っています（`data/classes.js` の `paladin.player.imageFilter`）。
+
+**主人公（1枚）** → `assets/player_paladin.png`（512px以上・透明背景・`prepare_sprite.py` で256pxに）。置いたら `paladin.player.image` をこの名前にし、`imageFilter` を `null` にする
+```
+A single full-body character sprite for a dark fantasy action RPG, 3/4 top-down view, facing right, transparent background: a holy paladin in heavy silver plate armor with gold trim, a white tabard with a gold cross-like sun emblem, a war hammer in one hand and a kite shield in the other, a faint golden glow. Western dark fantasy (Diablo-like), painterly, high contrast, accent color gold #ffd75e. No text, no frame.
+```
+
+**スキル（3列×3行）** → `--grid 3x3 --names pal_zeal,pal_shield,pal_hammer,pal_judgment,pal_vow,pal_chain,pal_fire,pal_prayer,pal_might`、置いたら `paladin.skillIcons` に書く
+```
+A single sprite sheet image, 1536x1536, arranged as an exact 3 columns by 3 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Paladin skill icons, left-to-right, top-to-bottom: 1 Zeal: a hammer swung in a fast golden arc, 2 Holy Shield: a glowing kite shield, 3 Blessed Hammer: a spinning blue-white hammer of light, 4 Judgment: a pillar of holy light striking the ground, 5 Crusader Vow: a raised fist wreathed in orange flame, 6 Chains of Judgment: golden chains of light, 7 Holy Fire aura: a ring of holy fire on the ground, 8 Prayer aura: hands in prayer with green light, 9 Might aura: a red glowing rune of strength in a circle.
+```
+
 ### 4つ目のエリア「奈落の大聖堂」の絵
 今は地面＝火葬場の絵に紫をかぶせたもの、敵とボス＝今ある絵の色を変えたもの（`data/areas.js` の `groundTint`、`data/enemies.js` の `imageFilter`）。届いたら `image` を差し替え、`groundTint`・`imageFilter` を消す。世界観は西洋の闇（崩れた大聖堂、堕ちた聖職者、亡霊）。
 
