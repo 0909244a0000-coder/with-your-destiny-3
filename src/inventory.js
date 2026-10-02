@@ -35,14 +35,37 @@ WYD.inventory = {
 
   // 自動で着替えないほうがいい装備（自分で選んだはずのもの）
   keepEquipped(item) {
-    return !!item && (item.locked || item.rarity === "unique" || item.rarity === "set" || item.plus > 0 || (item.sockets || []).some((x) => x));
+    return !!this.keepReason(item);
+  },
+
+  // 自動で着替えない理由（data/story.js の keepNote.reasons の名前）。着替えてよければ null
+  keepReason(item) {
+    if (!item) return null;
+    if (item.locked) return "locked";
+    if (item.rarity === "unique") return "unique";
+    if (item.rarity === "set") return "set";
+    if (item.plus > 0) return "plus";
+    if ((item.sockets || []).some((x) => x)) return "gem";
+    return null;
+  },
+
+  // 数値では強い装備を拾ったのに、守っている装備があって着替えなかったことを知らせる（同じ装備については1回だけ）
+  noteKept(cur, item) {
+    const K = WYD.data.story.keepNote;
+    this.keptNoted = this.keptNoted || new WeakSet();
+    if (this.keptNoted.has(cur)) return;
+    this.keptNoted.add(cur);
+    WYD.ui.log(K.text.replace("{new}", WYD.loot.label(item)).replace("{cur}", WYD.loot.label(cur)).replace("{why}", K.reasons[this.keepReason(cur)]), K.color);
   },
 
   // 拾った装備が強ければ着替える。着替えたら true
   autoEquip(state, item) {
     const cur = state.equipment[item.slot];
-    if (this.keepEquipped(cur)) return false;
     const before = this.itemScore(cur);
+    if (this.keepEquipped(cur)) {
+      if (this.itemScore(item) > before * (1 + WYD.data.items.autoEquip.minGain)) this.noteKept(cur, item);
+      return false;
+    }
     if (cur && this.itemScore(item) <= before * (1 + WYD.data.items.autoEquip.minGain)) return false;
     const index = state.inventory.indexOf(item);
     if (index < 0) return false;
