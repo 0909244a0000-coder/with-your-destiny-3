@@ -36,6 +36,13 @@ WYD.render = {
   },
 
   draw(ctx, w, state) {
+    if (w.town) {
+      // 拠点（野営地）：敵のいない画面。知らせ・スキルの並びは出す
+      WYD.town.draw(ctx, w, state);
+      this.drawSkillBar(ctx, w, state);
+      this.drawNotices(ctx, w);
+      return;
+    }
     const map = WYD.data.map;
     const area = WYD.world.area(state);
     if (!this.decorations) this.decorations = this.makeDecorations();

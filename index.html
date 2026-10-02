@@ -86,7 +86,10 @@
     <div class="left">
       <div class="stage">
         <canvas id="game" width="960" height="600"></canvas>
-        <button id="bag-open" class="bag-btn" title="装備・持ち物を開く（I キー）">🎒 装備・持ち物 <span id="bag-badge"></span></button>
+        <div class="stage-btns">
+          <button id="town-btn" title="敵の出ない野営地と戦場を行き来する（H キー）">🏕 拠点へ</button>
+          <button id="bag-open" class="bag-btn" title="装備・持ち物を開く（I キー）">🎒 装備・持ち物 <span id="bag-badge"></span></button>
+        </div>
       </div>
       <section class="panel">
         <h2>ログ</h2>
@@ -293,6 +296,7 @@
   <script src="data/gamble.js"></script>
   <script src="data/breach.js"></script>
   <script src="data/bounties.js"></script>
+  <script src="data/town.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>
@@ -328,6 +332,7 @@
   <script src="src/bounties.js"></script>
   <script src="src/sound.js"></script>
   <script src="src/offline.js"></script>
+  <script src="src/town.js"></script>
   <script src="src/render.js"></script>
   <script src="src/ui.js"></script>
   <script src="src/main.js"></script>

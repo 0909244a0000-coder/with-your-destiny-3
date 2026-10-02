@@ -53,6 +53,8 @@ WYD.world = {
     WYD.offline.tick(state, dt);
     WYD.trial.tick(w, state, dt);
     WYD.records.add(state, "playSeconds", dt);
+    if (w.town && WYD.trial.active(state)) WYD.town.leave(w, state);   // 拠点から試練などを始めたら戦場へ
+    if (w.town) return WYD.town.update(w, state, stats);   // 拠点（野営地）にいる間は戦わない
 
     if (p.dead) {
       p.respawnTimer -= dt;

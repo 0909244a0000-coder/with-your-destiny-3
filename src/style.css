@@ -382,7 +382,9 @@ details.menu .menu-body button, details.menu .menu-body label { text-align: left
 }
 
 /* 装備・持ち物の画面（戦いの画面の上に重ねて開く） */
-.bag-btn { position: absolute; top: 8px; right: 8px; z-index: 3; font-size: 13px; padding: 6px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.7); }
+.stage-btns { position: absolute; top: 8px; right: 8px; z-index: 3; display: flex; gap: 6px; }
+.stage-btns button { font-size: 13px; padding: 6px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.7); }
+#town-btn.in-town { background: linear-gradient(#6a2a1e, #3a1610); border-color: #ff8a5a; }
 .bag-btn #bag-badge { color: var(--muted); font-size: 11px; }
 .bag-btn.full #bag-badge { color: #ff8a6a; }
 .modal.bag { z-index: 15; background: rgba(0, 0, 0, 0.45); align-items: flex-start; padding: 3vh 0; overflow-y: auto; }
@@ -393,5 +395,6 @@ details.menu .menu-body button, details.menu .menu-body label { text-align: left
 .bag-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 @media (max-width: 900px) {
   .bag-cols { grid-template-columns: 1fr; }
-  .bag-btn { top: 4px; right: 4px; font-size: 12px; padding: 4px 8px; }
+  .stage-btns { top: 4px; right: 4px; gap: 4px; }
+  .stage-btns button { font-size: 12px; padding: 4px 8px; }
 }

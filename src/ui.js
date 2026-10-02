@@ -128,6 +128,8 @@ WYD.ui = {
         this.togglePause();
       } else if (e.key === "i" || e.key === "I") {
         this.toggleBag();
+      } else if (e.key === "h" || e.key === "H") {
+        WYD.town.toggle(this.world, s);
       } else if (e.key === "Escape" && !this.$("bag").hidden) {
         this.toggleBag(false);
       } else if ((e.key === "Delete" || e.key === "Backspace") && this.hovered && !this.$("bag").hidden) {
@@ -140,6 +142,7 @@ WYD.ui = {
     });
     // 装備・持ち物の画面：戦いの画面の上のボタンで開く。外側（暗いところ）を押しても閉じる
     this.$("bag-open").onclick = () => this.toggleBag(true);
+    this.$("town-btn").onclick = () => WYD.town.toggle(this.world, s);
     this.$("bag-close").onclick = () => this.toggleBag(false);
     this.$("bag").onclick = (e) => { if (e.target.id === "bag") this.toggleBag(false); };
     this.$("auto-diff").onchange = (e) => {
@@ -1071,6 +1074,9 @@ WYD.ui = {
     const size = WYD.data.items.inventorySize;
     this.$("inv-count").textContent = `${s.inventory.length} / ${size}`;
     this.$("bag-badge").textContent = `${s.inventory.length}/${size}`;
+    const inTown = !!(this.world && this.world.town);
+    this.$("town-btn").textContent = inTown ? "⚔ 戦場へ" : "🏕 拠点へ";
+    this.$("town-btn").classList.toggle("in-town", inTown);
     this.$("bag-open").classList.toggle("full", s.inventory.length >= size);
     const C = WYD.data.crafting;
     this.putHtml("materials", `<span style="color:${C.materialColor}">${C.materialName} ${s.materials}</span>`);
