@@ -24,6 +24,10 @@ WYD.ui = {
     const s = state;
 
     this.$("help").onclick = () => this.showStory("help");
+    // まとめメニュー：1つ開いたらほかは閉じる。メニューの外をクリックしたら閉じる
+    const menus = [...document.querySelectorAll("details.menu")];
+    for (const m of menus) m.addEventListener("toggle", () => { if (m.open) for (const o of menus) if (o !== m) o.open = false; });
+    document.addEventListener("click", (e) => { if (!e.target.closest("details.menu")) for (const m of menus) m.open = false; });
     this.$("codex-open").onclick = () => {
       this.$("codex-body").innerHTML = this.codexHtml();
       this.$("codex").hidden = false;

@@ -43,19 +43,35 @@
       <button data-speed="4">×4</button>
       <button id="pause" title="一時停止（キーボードのスペースでも。1・2・4キーで速度）">停止</button>
       <span class="sep"></span>
-      <label title="拾った装備が今より強ければ自動で着替える（ユニーク・セット・強化や宝石つきの装備は外さない）"><input type="checkbox" id="auto-equip"> 自動装備</label>
       <label title="季節のルール：選ぶと遊び方が変わり、ごほうびが増える">季節 <select id="season"></select></label>
-      <button id="filter-open" title="部位ごとに、どのレア度から拾うかを決める（拾わないものは素材になる）">フィルター</button>
-      <label>自動分解 <select id="auto-salvage" title="選んだレア度以下の装備は、拾わずにその場で素材にする"></select></label>
       <span class="sep"></span>
-      <button id="sound-toggle" title="効果音（最初に画面をクリックすると鳴りはじめる）">音：ON</button>
-      <button id="help">遊び方</button>
-      <button id="devotion-open" title="信仰ポイントで星座を埋めて強くなる（Grim Dawn の星座）">星座</button>
-      <button id="codex-open" title="図鑑（集めたユニーク・セット装備）、記録、実績">図鑑と記録</button>
-      <button id="backup-export" title="全部のキャラのセーブを1つのファイルに保存する">セーブを書き出す</button>
-      <button id="backup-import" title="書き出したファイルからセーブを戻す">読み込む</button>
-      <input type="file" id="backup-file" accept=".json,application/json" hidden>
-      <button id="reset" class="danger">最初から</button>
+      <!-- まとめたメニュー（クリックで開く） -->
+      <details class="menu">
+        <summary>拾う・装備</summary>
+        <div class="menu-body">
+          <label title="拾った装備が今より強ければ自動で着替える（ユニーク・セット・強化や宝石つきの装備は外さない）"><input type="checkbox" id="auto-equip"> 自動装備</label>
+          <button id="filter-open" title="部位ごとに、どのレア度から拾うかを決める（拾わないものは素材になる）">戦利品フィルター</button>
+          <label>自動分解 <select id="auto-salvage" title="選んだレア度以下の装備は、拾わずにその場で素材にする"></select></label>
+        </div>
+      </details>
+      <details class="menu">
+        <summary>やり込み</summary>
+        <div class="menu-body">
+          <button id="devotion-open" title="信仰ポイントで星座を埋めて強くなる（Grim Dawn の星座）">星座</button>
+          <button id="codex-open" title="図鑑（集めたユニーク・セット装備）、記録、実績">図鑑と記録</button>
+        </div>
+      </details>
+      <details class="menu">
+        <summary>設定</summary>
+        <div class="menu-body">
+          <button id="sound-toggle" title="効果音（最初に画面をクリックすると鳴りはじめる）">音：ON</button>
+          <button id="help">遊び方</button>
+          <button id="backup-export" title="全部のキャラのセーブを1つのファイルに保存する">セーブを書き出す</button>
+          <button id="backup-import" title="書き出したファイルからセーブを戻す">読み込む</button>
+          <input type="file" id="backup-file" accept=".json,application/json" hidden>
+          <button id="reset" class="danger">最初から</button>
+        </div>
+      </details>
     </div>
   </header>
 
