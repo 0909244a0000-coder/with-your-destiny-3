@@ -328,3 +328,6 @@ details.menu .menu-body button, details.menu .menu-body label { text-align: left
 .gamble-btns button { min-width: 64px; }
 .bounty-bar { height: 5px; background: #2a2418; margin: 3px 0; border-radius: 2px; overflow: hidden; }
 .bounty-bar div { height: 100%; }
+.skill-info { font-size: 11px; color: #b8ab90; margin-top: 2px; line-height: 1.5; }
+.skill-info b { color: #e8dcc0; font-weight: normal; }
+.skill-next { color: #7dff8a; }

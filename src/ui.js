@@ -926,6 +926,7 @@ WYD.ui = {
           <button data-skill="${id}" data-action="toggle" class="${on && lv > 0 ? "on" : "off"}" ${lv > 0 ? "" : "disabled"}>${lv > 0 ? (on ? "ON" : "OFF") : "未習得"}</button>
         </div>
         <div class="skill-desc">${def.desc}（${Math.round(WYD.runes.effectiveDef(s, id).cooldown * 10) / 10}秒ごと）</div>
+        ${WYD.skillInfo.html(s, id, lv)}
         ${this.runeHtml(id, lv)}
       </div>`;
     }).join("");
