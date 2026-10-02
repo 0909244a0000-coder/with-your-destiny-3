@@ -12,6 +12,25 @@ WYD.inventory = {
     return true;
   },
 
+  // 持ち物がいっぱいのとき、拾う装備より弱い装備を1つ素材にして場所をあける。
+  // 守る装備（ロック・ユニーク・セット・強化・宝石つき）は選ばない。レア度が低いもの → 点数が低いものから選ぶ。
+  // 素材にしたら { item, gained } を返す。あけられなければ null
+  makeRoomFor(state, item) {
+    const order = WYD.data.items.rarities.map((r) => r.id);
+    const rank = (it) => order.indexOf(it.rarity);
+    const score = this.itemScore(item);
+    let worst = -1;
+    state.inventory.forEach((it, i) => {
+      if (this.keepReason(it)) return;
+      if (rank(it) > rank(item) || (rank(it) === rank(item) && this.itemScore(it) >= score)) return;
+      const w = state.inventory[worst];
+      if (worst < 0 || rank(it) < rank(w) || (rank(it) === rank(w) && this.itemScore(it) < this.itemScore(w))) worst = i;
+    });
+    if (worst < 0) return null;
+    const old = state.inventory.splice(worst, 1)[0];
+    return { item: old, gained: this.salvage(state, old) };
+  },
+
   // 持ち物の index 番目を装備する（前の装備は同じ場所に戻る）
   equip(state, index) {
     const item = state.inventory[index];

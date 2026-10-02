@@ -1010,6 +1010,8 @@ WYD.world = {
     for (const drop of w.drops) {
       drop.age += dt;
       if (drop.age < D.pickupDelay || drop.picked) continue;
+      const room = !WYD.inventory.isFull(state) || !state.settings.fullReplace ? null : WYD.inventory.makeRoomFor(state, drop.item);
+      if (room) WYD.ui.log(`持ち物がいっぱいなので、${WYD.loot.label(room.item)}を素材にして入れ替えた（${WYD.data.crafting.materialName} +${room.gained}）`, "#9aa0a6");
       if (WYD.inventory.add(state, drop.item)) {
         drop.picked = true;
         WYD.records.found(state, drop.item);

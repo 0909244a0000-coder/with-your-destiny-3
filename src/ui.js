@@ -163,6 +163,10 @@ WYD.ui = {
       s.settings.autoEquip = e.target.checked;
       this.changed();
     };
+    this.$("full-replace").onchange = (e) => {
+      s.settings.fullReplace = e.target.checked;
+      this.changed();
+    };
     this.$("auto-salvage").onchange = (e) => {
       s.settings.autoSalvage = e.target.value;
       this.changed();
@@ -968,6 +972,7 @@ WYD.ui = {
     }
     this.$("auto-salvage").value = s.settings.autoSalvage;
     this.$("auto-equip").checked = !!s.settings.autoEquip;
+    this.$("full-replace").checked = !!s.settings.fullReplace;
     this.$("auto-skill").checked = !!s.settings.autoSkill;
     this.$("season").value = WYD.season.current(s).id;
     this.$("season").title = `季節のルール：${WYD.season.current(s).desc}`;
