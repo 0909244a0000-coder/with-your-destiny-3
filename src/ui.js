@@ -99,6 +99,7 @@ WYD.ui = {
       else WYD.trial.start(this.world, s, s.trial.level);
     };
     this.$("daily-start").onclick = () => WYD.daily.start(this.world, s);
+    this.$("uber-start").onclick = () => WYD.uber.start(this.world, s);
     this.$("trial-auto").onchange = (e) => {
       s.trial.autoNext = e.target.checked;
       this.changed();
@@ -720,6 +721,9 @@ WYD.ui = {
     this.$("trial-start").textContent = inTrial ? "やめる" : "挑む";
     this.$("trial-auto").checked = s.trial.autoNext;
     this.$("trial-best").textContent = `（最高 段階${s.trial.best}）`;
+    const U = WYD.data.uber;
+    this.$("uber-start").disabled = !WYD.uber.canStart(s);
+    this.$("uber-start").textContent = `${U.name}（鍵 ${s.uber.keys}/${U.keysNeeded}）`;
     const dailyDone = WYD.daily.doneToday(s);
     this.$("daily-start").disabled = inTrial || dailyDone;
     this.$("daily-start").textContent = dailyDone ? `日替わり：済（連続${s.daily.streak}日）` : `日替わり（段階${WYD.daily.stage(s)}）`;

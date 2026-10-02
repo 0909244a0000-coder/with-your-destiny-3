@@ -16,7 +16,7 @@ WYD.trial = {
     const T = WYD.data.trial;
     const n = state.trialRun.level;
     return {
-      id: "trial", name: state.trialRun.map ? WYD.maps.name(state.trialRun.map) : state.trialRun.daily ? "日替わりの試練" : "終わりのない試練",
+      id: "trial", name: state.trialRun.uber ? WYD.data.uber.name : state.trialRun.map ? WYD.maps.name(state.trialRun.map) : state.trialRun.daily ? "日替わりの試練" : "終わりのない試練",
       bgColor: T.bgColor, grassColor: T.grassColor, stoneColor: T.stoneColor, groundImage: T.groundImage,
       powerMult: T.powerBase * Math.pow(T.powerGrowth, n - 1),
       itemLevelBonus: 0, enemies: T.enemies, floors: 1, killsPerFloor: T.kills, boss: state.trialRun.guardian,
@@ -30,15 +30,16 @@ WYD.trial = {
 
   // daily = 日替わりの試練のとき { date, modIds, guardian }（src/daily.js）
   // map = 地図で挑むとき（src/maps.js）
-  start(w, state, level, daily, map) {
+  // uber = 奈落の双王（src/uber.js）。はじめからボス2体
+  start(w, state, level, daily, map, uber) {
     const T = WYD.data.trial;
-    state.trialRun = { level, guardian: daily ? daily.guardian : WYD.util.pick(T.guardians), daily: daily || null, map: map || null };
-    const timeLimit = Math.round((map ? WYD.data.maps.timeLimit : T.timeLimit) * WYD.daily.mult(state, "timeMult"));
-    const killTarget = Math.round(T.kills * WYD.daily.mult(state, "killsMult"));
+    state.trialRun = { level, guardian: daily ? daily.guardian : WYD.util.pick(T.guardians), daily: daily || null, map: map || null, uber: !!uber };
+    const timeLimit = Math.round((uber ? WYD.data.uber.timeLimit : map ? WYD.data.maps.timeLimit : T.timeLimit) * WYD.daily.mult(state, "timeMult"));
+    const killTarget = uber ? 0 : Math.round(T.kills * WYD.daily.mult(state, "killsMult"));
     w.trial = { timeLeft: timeLimit, timeLimit, killTarget, kills: 0, guardianOut: false, done: false };
     WYD.world.resetEnemies(w, state, false);
     w.drops = [];
-    const name = map ? WYD.maps.name(map) : daily ? "日替わりの試練" : "終わりのない試練";
+    const name = uber ? WYD.data.uber.name : map ? WYD.maps.name(map) : daily ? "日替わりの試練" : "終わりのない試練";
     w.banner = { text: `${name}　段階 ${level}`, time: 0 };
     WYD.ui.log(`${name} 段階${level} に挑む（${timeLimit}秒で${killTarget}体倒し、守護者を討て）`, daily ? WYD.data.daily.color : T.color);
     if (daily) WYD.ui.log(`今日の条件：${WYD.daily.describe(daily.date)}`, WYD.data.daily.color);
@@ -61,11 +62,14 @@ WYD.trial = {
     if (!t || t.done) return;
     if (t.kills >= t.killTarget && !t.guardianOut) {
       t.guardianOut = true;
-      const kind = state.trialRun.guardian;
-      const g = WYD.world.spawnEnemy(w, state, kind, WYD.world.farPosition(w));
-      g.boss = true;
-      g.slamTimer = WYD.data.enemies[kind].slam.interval;
-      WYD.ui.log(`守護者「${WYD.data.enemies[kind].name}」が現れた！`, T.color);
+      const kinds = state.trialRun.uber ? WYD.data.uber.bosses : [state.trialRun.guardian];
+      t.bossesLeft = kinds.length;
+      for (const kind of kinds) {
+        const g = WYD.world.spawnEnemy(w, state, kind, WYD.world.farPosition(w));
+        g.boss = true;
+        g.slamTimer = WYD.data.enemies[kind].slam.interval;
+        WYD.ui.log(`${state.trialRun.uber ? "双王" : "守護者"}「${WYD.data.enemies[kind].name}」が現れた！`, T.color);
+      }
       WYD.sound.play("bossAppear");
     }
     w.spawnTimer -= dt;
@@ -82,7 +86,7 @@ WYD.trial = {
     if (t.done) {
       t.nextIn -= dt;
       if (t.nextIn > 0) return;
-      if (state.trial.autoNext && !state.trialRun.daily && !state.trialRun.map) this.start(w, state, state.trial.level);
+      if (state.trial.autoNext && !state.trialRun.daily && !state.trialRun.map && !state.trialRun.uber) this.start(w, state, state.trial.level);
       else this.stop(w, state);
       return;
     }
@@ -93,8 +97,11 @@ WYD.trial = {
   onKill(w, state, e) {
     const t = w.trial;
     if (!t || t.done) return;
-    if (e.boss) this.finish(w, state, true, e);
-    else t.kills = Math.min(t.killTarget, t.kills + 1);
+    if (e.boss && !e.clone) {
+      // ボスが全部たおれたら成功（奈落の双王は2体）
+      t.bossesLeft = (t.bossesLeft || 1) - 1;
+      if (t.bossesLeft <= 0) this.finish(w, state, true, e);
+    } else if (!e.boss) t.kills = Math.min(t.killTarget, t.kills + 1);
   },
 
   onDeath(w, state) {
@@ -106,6 +113,11 @@ WYD.trial = {
     const t = w.trial;
     t.done = true;
     t.nextIn = T.nextDelay;
+    if (state.trialRun.uber) {
+      WYD.uber.finish(w, state, success, guardian);
+      WYD.ui.changed();
+      return;
+    }
     if (state.trialRun.map) {
       WYD.maps.finish(w, state, success, guardian);
       WYD.ui.changed();

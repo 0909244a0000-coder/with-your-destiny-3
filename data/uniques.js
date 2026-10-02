@@ -97,6 +97,23 @@ WYD.data.uniques = {
         moveSpeed: 140, attackSpeed: 1.3, range: 24, radius: 11, spawnSpread: 25, followDistance: 40, firstAttackDelay: 0.2,
         color: "#9fdcff", image: "assets/enemies/preta.png", imageFilter: "hue-rotate(170deg) brightness(1.6) opacity(0.8)" },
     },
+    // ---- 奈落の双王でだけ出る（weight 0 なので、ふつうには落ちない。uberOnly）----
+    {
+      id: "abyssHeart", name: "奈落の心臓", base: "amulet", weight: 0, uberOnly: true,
+      stats: { attack: [8, 14], skillDamage: [20, 30], critChance: [3, 5] },
+      power: "eliteHunter",
+      desc: "精鋭とボスに与えるダメージ +{percent}%",
+      params: { percent: 50 },
+    },
+    {
+      id: "twinCrown", name: "双王の冠", base: "crown", weight: 0, uberOnly: true,
+      stats: { maxHp: [60, 90], defense: [8, 12] },
+      power: "periodicSummon",
+      desc: "{interval}秒ごとに双王の影を{count}体呼ぶ（{duration}秒いて、攻撃力×{attackMult}倍でなぐる）",
+      params: { interval: 10, firstDelay: 2, count: 2, duration: 9, attackMult: 1.1, hpRatio: 0.6, defenseRatio: 1,
+        moveSpeed: 130, attackSpeed: 1.2, range: 28, radius: 15, spawnSpread: 30, followDistance: 40, firstAttackDelay: 0.2,
+        color: "#ff5ad0", image: "assets/enemies/ravana.png", imageFilter: "grayscale(1) brightness(0.6) sepia(1) hue-rotate(270deg) opacity(0.7)" },
+    },
     // ---- 職業専用：スキルを強くする（power は "skillBoost〜"。params.kind のスキルの数値を mods で変える。書き方は data/runes.js と同じ）----
     {
       id: "giantBlade", name: "巨人の大剣", base: "great_blade", weight: 10, classOnly: "barbarian",

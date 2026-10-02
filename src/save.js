@@ -41,6 +41,7 @@ WYD.save = {
       achievements: {},   // 達成した実績の id
       gems: {},        // 持っている宝石（"種類:段階" → 数）
       maps: [],        // 持っている地図（src/maps.js）
+      uber: { keys: 0, kills: 0 },   // 奈落の鍵と、双王を倒した数
       builds: [],      // 保存したビルド（src/builds.js）
       devotion: {},    // 埋めた星座（星座の id → true）
       bossDeaths: {},  // ボスに倒された回数（エリアの id → 回数。倒すと消える）
@@ -109,6 +110,7 @@ WYD.save = {
       state.bossDeaths = Object.assign({}, saved.bossDeaths);
       state.devotion = Object.assign({}, saved.devotion);
       if (!Array.isArray(state.builds)) state.builds = [];
+      state.uber = Object.assign(this.newState().uber, saved.uber);
       state.cube = { learned: Object.assign({}, saved.cube && saved.cube.learned),
         slots: Object.assign(this.newState().cube.slots, saved.cube && saved.cube.slots) };
       // 「ノーマルを拾わない」だった頃のセーブは、「ノーマルを自動分解」にする
