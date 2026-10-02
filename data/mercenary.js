@@ -36,7 +36,7 @@ WYD.data.mercenary = {
       hpRatio: 0.5, attackRatio: 0.6, defenseRatio: 0.4,
       moveSpeed: 105, attackSpeed: 0.85, range: 26, radius: 12, followDistance: 70,
       rangedRange: 220, keepDistance: 130, shotColor: "#9ad0ff",
-      color: "#a8c8ff", image: "assets/enemies/nagaCaster.png", imageFilter: "grayscale(0.5) brightness(1.3) hue-rotate(200deg)",
+      color: "#a8c8ff", image: "assets/merc_mage.png", imageFilter: null,
       bonusName: "魔力の加護", bonus: { stats: { skillDamage: 15 } },
     },
   ],

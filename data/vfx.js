@@ -14,11 +14,11 @@ WYD.data.vfx = {
     lightning: "assets/vfx/lightning.png",    // 稲妻（チェインライトニング・雷鳴）
     axe: "assets/vfx/axe.png",          // 回る投げ斧（連鎖の投げ斧）
     meteor: "assets/vfx/meteor.png",       // 落ちてくる隕石（メテオ）
-    magicCircle: null,  // 足元の魔法陣（鉄の皮膚・マナシールド・狂戦士の怒り・魔力の奔流）
+    magicCircle: "assets/vfx/magicCircle.png",  // 足元の魔法陣（鉄の皮膚・マナシールド・狂戦士の怒り・魔力の奔流）
     shield: "assets/vfx/shield.png",       // 体を包む光の球（鉄の皮膚・マナシールドの間）
     chains: "assets/vfx/chains.png",       // 縛る鎖・氷（鉄鎖の束縛・凍てつく檻の間）
     shockwave: "assets/vfx/shockwave.png",    // 衝撃波の輪（ボスの大技）
-    fireball: null,     // 火の玉（ソーサレスの通常攻撃）
+    fireball: "assets/vfx/fireball.png", // 火の玉（ソーサレスの通常攻撃）
     plague: "assets/vfx/plague.png",   // 毒の霧の地面（疫病の霧・腐敗の地）
   },
 

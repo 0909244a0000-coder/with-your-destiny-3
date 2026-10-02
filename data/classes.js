@@ -146,8 +146,8 @@ WYD.data.classes = {
         followDistance: 40,                    // 敵がいないとき、主人公からこの距離までついてくる
         firstAttackDelay: 0.5,                 // 出てから最初に攻撃するまでの秒数
         color: "#e8e2c8",
-        image: "assets/enemies/preta.png",     // 手下の絵（本番の絵が来たら差し替え）
-        imageFilter: "grayscale(1) brightness(1.6)",
+        image: "assets/ally_skeleton.png",
+        imageFilter: null,
       },
       nec_mage: {
         kind: "raise", name: "骸骨の魔術師",
