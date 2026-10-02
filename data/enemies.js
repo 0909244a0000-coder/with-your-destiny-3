@@ -288,7 +288,7 @@ WYD.data.enemies = {
   },
   pyromancer: {
     name: "業火の術師", color: "#ffc04a",
-    image: "assets/enemies/nagaCaster.png", imageFilter: "hue-rotate(-60deg) saturate(1.5) brightness(1.2)",
+    image: "assets/enemies/pyromancer.png",
     radius: 14, hp: 100, attack: 14, defense: 3, attackSpeed: 0.5, moveSpeed: 60, range: 22,
     exp: 21, dropChance: 0.32, rarityBonus: 1.7,
     ranged: { keepDistance: 210, range: 310, speed: 200, size: 8, color: "#ff6a2a" },
@@ -400,8 +400,8 @@ WYD.data.enemies = {
   hellLord: {
     name: "業火の魔王",
     color: "#e0402a",
-    image: "assets/enemies/asuraKing.png",
-    imageFilter: "sepia(1) saturate(4) hue-rotate(-25deg) brightness(0.85)",   // 仮の絵
+    image: "assets/enemies/hellLord.png",
+    imageFilter: null,
     poses: { attack: null, windup: null },
     radius: 38,
     hp: 1250,
