@@ -98,7 +98,7 @@ WYD.maps = {
     const count = D.guardianDrops + (Math.random() < D.guardianExtraChance ? 1 : 0);
     for (let i = 0; i < count; i++) this.add(state, this.create(map.tier + (Math.random() < D.tierUpChance ? 1 : 0)));
     state.mapBest = Math.max(state.mapBest || 0, map.tier);
-    WYD.ui.log(`${this.name(map)} 成功！ 装備${items}個・${WYD.data.crafting.materialName} +${mats}（量 ×${q.toFixed(2)}）`, M.color);
+    WYD.ui.notice(`${this.name(map)} 成功！ 装備${items}個・${WYD.data.crafting.materialName} +${mats}（量 ×${q.toFixed(2)}）`, M.color);
     WYD.sound.play("uniqueDrop");
   },
 };

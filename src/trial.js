@@ -143,7 +143,7 @@ WYD.trial = {
       }
       const mats = T.rewardMaterials[0] + T.rewardMaterials[1] * n;
       state.materials += mats;
-      WYD.ui.log(`試練 段階${n} 成功！（${Math.round(used)}秒）${first ? "自己ベスト更新！" : ""} ${WYD.data.crafting.materialName} +${mats}`, T.color);
+      WYD.ui.notice(`試練 段階${n} 成功！（${Math.round(used)}秒）${first ? "自己ベスト更新！" : ""} ${WYD.data.crafting.materialName} +${mats}`, T.color);
       WYD.sound.play("uniqueDrop");
       if (rec.autoNext) rec.level = n + 1;
       else rec.level = Math.min(rec.best + 1, rec.level);

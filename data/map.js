@@ -3,6 +3,7 @@ window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
 WYD.data.map = {
+  notice: { duration: 3, fade: 0.6, max: 3, font: "bold 20px serif", lineHeight: 30, top: 110 },   // 画面の真ん中に出す大事な知らせ
   width: 960,
   height: 600,
   maxEnemies: 6,        // 同時に出る敵の最大数

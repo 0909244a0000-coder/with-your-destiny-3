@@ -37,6 +37,8 @@ WYD.world = {
     w.time = (w.time || 0) + dt;   // 絵の動きに使う時計
     this.trackMotion(w, dt);
     this.updateEffects(w, dt);
+    for (const n of w.notices || []) n.time += dt;
+    if (w.notices) w.notices = w.notices.filter((n) => n.time < WYD.data.map.notice.duration);
     WYD.offline.tick(state, dt);
     WYD.trial.tick(w, state, dt);
     WYD.records.add(state, "playSeconds", dt);
@@ -127,7 +129,7 @@ WYD.world = {
     if (!bossRoom && Math.random() < G.chance * WYD.season.mult(state, "goblinMult") && !w.enemies.some((x) => WYD.data.enemies[x.kind].treasure)) {
       const g = this.spawnEnemy(w, state, "goblin", this.farPosition(w));
       g.fleeTimer = G.fleeTime;
-      WYD.ui.log("宝物ゴブリンが現れた！ 逃げられる前に倒せ！", G.color);
+      WYD.ui.notice("宝物ゴブリンが現れた！ 逃げられる前に倒せ！", G.color);
       WYD.sound.play("rareDrop");
       return;
     }
@@ -936,7 +938,8 @@ WYD.world = {
         }
         WYD.records.check(state);
         const r = WYD.loot.rarityInfo(drop.item.rarity);
-        WYD.ui.log(`${drop.item.name}（${r.name}）を拾った`, r.color);
+        if (drop.item.ancient) WYD.ui.notice(`${WYD.loot.label(drop.item)}を拾った！`, WYD.data.items.ancient.colors[drop.item.ancient]);
+        else WYD.ui.log(`${WYD.loot.label(drop.item)}（${r.name}）を拾った`, r.color);
         WYD.ui.markDirty();
       } else if (!drop.warned) {
         drop.warned = true;
@@ -1059,7 +1062,7 @@ WYD.world = {
     w.effects.push({ type: "shock", x: e.x, y: e.y, radius: def.radius * 4, color: R.color, time: 0, duration: 0.6 });
     WYD.fx.shake(w, WYD.data.fx.shakeSlam);
     WYD.sound.play("bossAppear");
-    WYD.ui.log(`${def.name}が怒り狂った！（速く・強くなり、手下を呼んだ）`, R.color);
+    WYD.ui.notice(`${def.name}が怒り狂った！（速く・強くなり、手下を呼んだ）`, R.color);
   },
 
   enemyDied(w, state, e) {
@@ -1163,7 +1166,7 @@ WYD.world = {
     if (Math.random() < uniqueChance) {
       const item = WYD.loot.createUnique(state, this.itemLevel(state));
       w.drops.push({ x: e.x, y: e.y, item, age: 0 });
-      WYD.ui.log(`ユニーク装備「${item.name}」が落ちた！`, U.color);
+      WYD.ui.notice(`ユニーク装備「${item.name}」が落ちた！`, U.color);
       WYD.sound.play("uniqueDrop");
     }
     // ボスと精鋭は、まれにセット装備を落とす
@@ -1172,7 +1175,7 @@ WYD.world = {
     if (Math.random() < setChance) {
       const item = WYD.loot.createSetPiece(state, this.itemLevel(state));
       w.drops.push({ x: e.x + 12, y: e.y + 8, item, age: 0 });
-      WYD.ui.log(`セット装備「${item.name}」が落ちた！`, SE.color);
+      WYD.ui.notice(`セット装備「${item.name}」が落ちた！`, SE.color);
       WYD.sound.play("uniqueDrop");
     }
     for (let i = 0; i < count; i++) {

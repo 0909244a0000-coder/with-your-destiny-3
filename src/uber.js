@@ -27,7 +27,7 @@ WYD.uber = {
     if (Math.random() >= chance) return;
     state.uber.keys++;
     WYD.world.addText(w, e.x, e.y - 60, U.keyName, U.color);
-    WYD.ui.log(`${U.keyName}を手に入れた（${state.uber.keys}/${U.keysNeeded}）`, U.color);
+    WYD.ui.notice(`${U.keyName}を手に入れた（${state.uber.keys}/${U.keysNeeded}）`, U.color);
     WYD.sound.play("uniqueDrop");
     WYD.ui.markDirty();
   },
@@ -50,7 +50,7 @@ WYD.uber = {
     state.materials += U.rewardMaterials;
     for (let i = 0; i < U.rewardGems; i++) WYD.gems.add(state, WYD.gems.key(WYD.util.pick(WYD.data.gems.gems).id, Math.min(WYD.data.gems.tiers.length - 1, WYD.gems.dropTier(state) + 1)));
     state.uber.kills++;
-    WYD.ui.log(`${U.name}を討った！ ユニーク${U.rewardUniques}個・${WYD.data.crafting.materialName} +${U.rewardMaterials}・宝石${U.rewardGems}個`, U.color);
+    WYD.ui.notice(`${U.name}を討った！ ユニーク${U.rewardUniques}個・${WYD.data.crafting.materialName} +${U.rewardMaterials}・宝石${U.rewardGems}個`, U.color);
     WYD.sound.play("achievement");
   },
 };

@@ -143,6 +143,7 @@ WYD.render = {
     ctx.fillText(`${area.name}　${WYD.world.floorName(state)}${WYD.trial.active(state) ? "" : `　危険度 ${state.difficulty}`}`, 12, 24);
     this.drawBossBar(ctx, w);
     WYD.trial.draw(ctx, w, state);
+    this.drawNotices(ctx, w);
     if (WYD.ui.paused) {
       // 一時停止中の表示
       const map = WYD.data.map;
@@ -329,6 +330,25 @@ WYD.render = {
     ctx.beginPath();
     ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
     ctx.fill();
+  },
+
+  // 大事な知らせ（画面の真ん中・上寄り。だんだん消える）
+  drawNotices(ctx, w) {
+    const N = WYD.data.map.notice;
+    const map = WYD.data.map;
+    (w.notices || []).forEach((n, i) => {
+      const left = N.duration - n.time;
+      ctx.globalAlpha = Math.max(0, Math.min(1, left / N.fade, n.time / 0.15));
+      ctx.font = N.font;
+      ctx.textAlign = "center";
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(0,0,0,0.85)";
+      const y = N.top + i * N.lineHeight;
+      ctx.strokeText(n.text, map.width / 2, y);
+      ctx.fillStyle = n.color;
+      ctx.fillText(n.text, map.width / 2, y);
+    });
+    ctx.globalAlpha = 1;
   },
 
   // 爆発の予告：輪の中がだんだん埋まっていく

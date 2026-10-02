@@ -65,7 +65,7 @@ WYD.records = {
       if (this.progress(state, a) < this.target(a)) continue;
       state.achievements[a.id] = true;
       state.materials += a.reward;
-      WYD.ui.log(`実績「${a.name}」を達成！（${a.desc}）${WYD.data.crafting.materialName} +${a.reward}`, R.color);
+      WYD.ui.notice(`実績「${a.name}」を達成！（${a.desc}）${WYD.data.crafting.materialName} +${a.reward}`, R.color);
       WYD.sound.play("achievement");
       WYD.ui.markDirty();
     }

@@ -638,6 +638,15 @@ WYD.ui = {
     this.log(`${def.name}が Lv${pl.skills[id]} になった`, def.color);
   },
 
+  // 大事な知らせ：ログに書き、画面の真ん中にも大きく出す
+  notice(msg, color) {
+    this.log(msg, color);
+    const N = WYD.data.map.notice;
+    const w = this.world;
+    if (!w) return;
+    w.notices = (w.notices || []).concat([{ text: msg, color: color || "#ffffff", time: 0 }]).slice(-N.max);
+  },
+
   log(msg, color) {
     const box = this.$("log");
     if (!box) return;
