@@ -585,6 +585,16 @@ WYD.ui = {
     this.dirty = true;
   },
 
+  // 中身が前と同じなら書きかえない（毎回作り直すと、絵が点滅したり、マウスを乗せた説明がちらついたりする）
+  putHtml(id, html) {
+    const el = this.$(id);
+    if (el._html === html) return false;
+    el._html = html;
+    el.innerHTML = html;
+    if (id === "inventory" || id === "stash" || id === "equipment") this.cellsChanged = true;
+    return true;
+  },
+
   onLevelUp() {
     const stats = WYD.stats.compute(this.state);
     if (this.world && !this.world.player.dead) {
@@ -1005,7 +1015,7 @@ WYD.ui = {
     const pg = s.player.paragon;
     this.$("char-name").textContent = `${P.className}　Lv ${s.player.level}${pg.level > 0 ? `　修練 ${pg.level}` : ""}`;
     this.$("paragon").hidden = !(s.player.level >= P.maxLevel || pg.level > 0);
-    if (!this.$("paragon").hidden) this.$("paragon").innerHTML = this.paragonHtml();
+    if (!this.$("paragon").hidden) this.putHtml("paragon", this.paragonHtml());
     const rows = [
       ["攻撃力", Math.round(stats.attack)],
       ["防御力", Math.round(stats.defense)],
@@ -1016,8 +1026,8 @@ WYD.ui = {
       ["スキル威力", `+${Math.round(stats.skillDamage)}%`],
       ["会心ダメージ", `×${stats.critMultiplier.toFixed(2)}`],
     ];
-    this.$("stats").innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("");
-    this.$("build").innerHTML = this.buildHtml(stats);
+    this.putHtml("stats", rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join(""));
+    this.putHtml("build", this.buildHtml(stats));
 
     // スキル
     this.$("skill-points").textContent = s.player.skillPoints;
@@ -1043,19 +1053,19 @@ WYD.ui = {
     }).join("");
     // 中身が変わったときだけ作り直す（選択欄を開いている最中に閉じないように）
     if (skillsHtml !== this.lastSkillsHtml) {
-      this.$("skills").innerHTML = skillsHtml;
+      this.putHtml("skills", skillsHtml);
       this.lastSkillsHtml = skillsHtml;
     }
 
     // 装備
     const slots = WYD.data.items.slots;
-    this.$("equipment").innerHTML = Object.keys(slots).map((slot) => {
+    this.putHtml("equipment", Object.keys(slots).map((slot) => {
       const item = s.equipment[slot];
       return `<div class="cell slot" data-slot="${slot}" ${item ? `style="border-color:${this.color(item)};--r:${this.glow(item)}"` : ""}>
         <small>${slots[slot]}${item ? this.fxMark(item) : ""}</small>
         ${item ? `<span style="color:${this.color(item)}">${WYD.loot.label(item)}</span>${this.iconImg(item)}` : `<span class="empty">なし</span>`}
       </div>`;
-    }).join("");
+    }).join(""));
 
     // 持ち物
     const size = WYD.data.items.inventorySize;
@@ -1063,7 +1073,7 @@ WYD.ui = {
     this.$("bag-badge").textContent = `${s.inventory.length}/${size}`;
     this.$("bag-open").classList.toggle("full", s.inventory.length >= size);
     const C = WYD.data.crafting;
-    this.$("materials").innerHTML = `<span style="color:${C.materialColor}">${C.materialName} ${s.materials}</span>`;
+    this.putHtml("materials", `<span style="color:${C.materialColor}">${C.materialName} ${s.materials}</span>`);
     this.$("craft-mode").textContent = `つけ直しモード：${this.craftMode ? "ON" : "OFF"}`;
     this.$("craft-mode").classList.toggle("active", this.craftMode);
     this.$("enhance-mode").textContent = `強化モード：${this.enhanceMode ? "ON" : "OFF"}`;
@@ -1080,9 +1090,9 @@ WYD.ui = {
       ? "つけ直しモード：持ち物や装備をクリックすると、素材を使って特殊効果をつけ直す"
       : this.isTouch() ? "装備を触ると：説明・今の装備との比べ・装備する／倉庫へ／ロック／捨てる。まとめて捨てるときは「捨てるモード」"
       : "左クリック：装備する／捨てる：「捨てるモード」をONにしてクリック（右クリック・Delete キーでも）／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック";
-    this.$("inventory").innerHTML = this.cellsHtml(s.inventory, size);
-    this.$("gems").innerHTML = this.gemsHtml();
-    this.$("builds").innerHTML = this.buildsHtml();
+    this.putHtml("inventory", this.cellsHtml(s.inventory, size));
+    this.putHtml("gems", this.gemsHtml());
+    this.putHtml("builds", this.buildsHtml());
     this.$("maps-panel").hidden = !s.cleared && !s.maps.length;
     // 序盤は使えないものを出さない（使えるようになったら出る）
     const all = s.inventory.concat(s.stash, Object.values(s.equipment)).filter(Boolean);
@@ -1093,11 +1103,11 @@ WYD.ui = {
     this.unlock("lgem-open", Object.keys(s.lgems.owned).length > 0);
     this.unlocksReady = true;
     this.$("maps-count").textContent = `${s.maps.length} / ${WYD.data.maps.maxHeld}　最高 段階${s.mapBest || 0}`;
-    this.$("maps").innerHTML = this.mapsHtml();
+    this.putHtml("maps", this.mapsHtml());
     const cubeHtml = this.cubeHtml();
     if (cubeHtml !== this.lastCubeHtml) {   // 選んでいる最中にリストが閉じないよう、変わったときだけ描き直す
       this.lastCubeHtml = cubeHtml;
-      this.$("cube").innerHTML = cubeHtml;
+      this.putHtml("cube", cubeHtml);
     }
     this.$("cube-mode").textContent = `入れるモード：${this.cubeMode ? "ON" : "OFF"}`;
     this.$("forge-mode").textContent = `鍛造モード：${this.forgeMode ? "ON" : "OFF"}`;
@@ -1112,8 +1122,10 @@ WYD.ui = {
     this.$("stash-count").textContent = `${s.stash.length} / ${stashSize}`;
     this.$("stash-toggle").textContent = this.stashOpen ? "閉じる" : "開く";
     this.$("stash-body").hidden = !this.stashOpen;
-    if (this.stashOpen) this.$("stash").innerHTML = this.cellsHtml(s.stash, stashSize);
-    this.hideTooltip();
+    if (this.stashOpen) this.putHtml("stash", this.cellsHtml(s.stash, stashSize));
+    // 装備のマスが作り直されたときだけ説明を消す（同じなら出したまま。毎回消すと点滅する）
+    if (this.cellsChanged) this.hideTooltip();
+    this.cellsChanged = false;
   },
 
   // 持ち物・倉庫のマス目
