@@ -22,7 +22,7 @@ window.WYD = window.WYD || {};
   if (!state.seenHelp) {
     state.seenHelp = true;
     if (!lastSeen) {
-      WYD.ui.showStory("help");
+      WYD.ui.showStory("intro");   // 短い説明（くわしくは「設定」→「遊び方」）
       const intro = WYD.data.story.areaIntro[state.area];
       if (intro) WYD.ui.log(intro, "#c9b48a");
     }
