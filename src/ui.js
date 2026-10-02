@@ -78,6 +78,10 @@ WYD.ui = {
       this.$("board-body").innerHTML = this.boardHtml();
       this.changed();
     };
+    this.$("music-toggle").onclick = () => {
+      s.settings.music = !s.settings.music;
+      this.changed();
+    };
     this.$("sound-toggle").onclick = () => {
       s.settings.sound = !s.settings.sound;
       this.changed();
@@ -720,7 +724,8 @@ WYD.ui = {
     this.$("auto-salvage").disabled = !!s.settings.filter.on;
     this.$("pause").textContent = this.paused ? "再開" : "停止";
     this.$("pause").classList.toggle("active", this.paused);
-    this.$("sound-toggle").textContent = `音：${s.settings.sound ? "ON" : "OFF"}`;
+    this.$("sound-toggle").textContent = `効果音：${s.settings.sound ? "ON" : "OFF"}`;
+    this.$("music-toggle").textContent = `音楽：${s.settings.music !== false ? "ON" : "OFF"}`;
     this.$("auto-diff").checked = s.settings.autoDifficulty;
     const inTrial = WYD.trial.active(s);
     this.$("trial-group").hidden = !WYD.trial.unlocked(s);

@@ -45,6 +45,7 @@ window.WYD = window.WYD || {};
     const steps = WYD.ui.paused ? 0 : state.settings.speed;   // 一時停止中は進めない
     for (let i = 0; i < steps; i++) WYD.world.update(world, state, dt);
     WYD.render.draw(ctx, world, state);
+    WYD.music.update(state, world);
     WYD.ui.frame();
     requestAnimationFrame(loop);
   }
