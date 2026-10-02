@@ -1,0 +1,1 @@
+necromancer {"nanStats":[],"inv":29,"mats":94740,"trial":true} reload ok: 50 errors: 0
