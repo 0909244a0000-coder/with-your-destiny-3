@@ -28,6 +28,9 @@ WYD.data.items = {
     hands: "手",
     feet: "足",
     ring: "指輪",
+    offhand: "盾",
+    neck: "首飾り",
+    waist: "帯",
   },
 
   // 能力の名前と表示のしかた。scales=true はアイテムレベルで強くなる
@@ -59,6 +62,12 @@ WYD.data.items = {
     { slot: "feet",   id: "sandals", name: "ブーツ",     main: { moveSpeed: [5, 10] } },
     { slot: "ring",   id: "ring", name: "指輪",       main: { maxHp: [5, 10] } },
     { slot: "ring",   id: "rosary", name: "印章指輪",   main: { hpRegen: [0.5, 1] } },
+    { slot: "offhand", id: "shield", name: "盾",         main: { defense: [2, 4], maxHp: [5, 12] } },
+    { slot: "offhand", id: "tome", name: "魔導書",       main: { skillDamage: [5, 10] } },
+    { slot: "neck",   id: "amulet", name: "首飾り",     main: { critChance: [1, 3] } },
+    { slot: "neck",   id: "talisman", name: "護符",     main: { maxHp: [8, 15] } },
+    { slot: "waist",  id: "belt", name: "帯",           main: { maxHp: [8, 15] } },
+    { slot: "waist",  id: "sash", name: "飾り帯",       main: { hpRegen: [0.3, 0.8] } },
   ],
 
   // 装備のアイコンの絵（id → ファイル）。例: dual_blades: "assets/items/dual_blades.png"

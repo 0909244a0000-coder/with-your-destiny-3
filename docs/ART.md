@@ -135,6 +135,12 @@ A seamless tileable top-down floor texture for a dark fantasy game: cracked blac
 Western dark fantasy (Diablo-like), painterly, high contrast. No text, no frame.
 ```
 
+### 新しい装備のアイコン（6個）
+盾・首飾り・帯の部位が増えました。今はアイコンなし（文字だけ）。→ `--grid 3x2 --names shield,tome,amulet,talisman,belt,sash`、置いたら `data/items.js` の `icons` に足す
+```
+A single sprite sheet image, 1536x1024, exact 3 columns by 2 rows grid of equal square cells (512x512 each) with clear empty gutters. Dark fantasy (Diablo-like) item icons, left-to-right, top-to-bottom: 1 a battered iron kite shield, 2 an old leather-bound spell tome with a glowing rune, 3 a gold amulet with a red gem, 4 a bone talisman on a cord, 5 a thick leather belt with an iron buckle, 6 a dark silk sash with tassels.
+```
+
 ## 制作済みの仕様・再制作用プロンプト
 
 以下は今回制作した絵の仕様です。再制作のために元のプロンプトとIDを残しています。

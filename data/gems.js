@@ -1,5 +1,5 @@
 // ソケットと宝石。装備にソケット（穴）がつくことがあり、宝石をはめると能力が上がる。
-//   gems    … 宝石の種類。はめる場所（weapon = 武器、armor = 頭・胴・手・足、jewelry = 指輪）ごとに上がる能力
+//   gems    … 宝石の種類。はめる場所（weapon = 武器、armor = 頭・胴・手・足・盾・帯、jewelry = 指輪・首飾り）ごとに上がる能力
 //             数値は一番下の段階（欠けた）のもの。段階が上がると tiers の mult 倍
 //   tiers   … 宝石の段階。同じ宝石を combineCount 個と素材 cost で1つ上の段階にできる
 //   sockets … ソケットのつき方。chance = レア度ごとのつく確率、max = 部位ごとの最大数
@@ -31,7 +31,7 @@ WYD.data.gems = {
 
   sockets: {
     chance: { normal: 0.25, magic: 0.08, rare: 0.2, legend: 0.4, unique: 0.5, set: 0.35 },   // ノーマルはルーンワード用に多め
-    max: { weapon: 3, body: 3, head: 2, hands: 1, feet: 1, ring: 1 },
+    max: { weapon: 3, body: 3, head: 2, hands: 1, feet: 1, ring: 1, offhand: 2, neck: 1, waist: 1 },
     secondChance: 0.35,            // 最大2つの部位で、2つ目がつく確率
   },
   // ---- ルーン（Diablo 2 のしくみ）----
@@ -57,7 +57,7 @@ WYD.data.gems = {
   runeUpgradeCost: 10,          // 1つ上にするときの素材（ルーンの順番 × これ）
 
   // ルーンワード：ノーマル装備で、ソケットの数とルーンの順番がぴったり合うと発動
-  //   group … はめられる部位（weapon / armor / jewelry。armor は頭・胴・手・足）
+  //   group … はめられる部位（weapon / armor / jewelry。armor は頭・胴・手・足・盾・帯）
   //   bonus … stats（能力）・effects（特殊効果）・power と params と desc（固有能力。data/uniques.js と同じしくみ）
   runewords: [
     { id: "steel", name: "鋼", runes: ["tir", "el"], group: "weapon",
@@ -81,8 +81,9 @@ WYD.data.gems = {
   ],
   runewordColor: "#c7a96b",
 
-  slotGroup: { weapon: "weapon", head: "armor", body: "armor", hands: "armor", feet: "armor", ring: "jewelry" },
-  groupName: { weapon: "武器", armor: "防具", jewelry: "指輪" },
+  slotGroup: { weapon: "weapon", head: "armor", body: "armor", hands: "armor", feet: "armor", ring: "jewelry",
+    offhand: "armor", neck: "jewelry", waist: "armor" },
+  groupName: { weapon: "武器", armor: "防具", jewelry: "装飾品" },
 
   drop: {
     chanceNormal: 0.01,            // ふつうの敵が落とす確率
