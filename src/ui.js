@@ -1007,11 +1007,12 @@ WYD.ui = {
     this.$("maps-panel").hidden = !s.cleared && !s.maps.length;
     // 序盤は使えないものを出さない（使えるようになったら出る）
     const all = s.inventory.concat(s.stash, Object.values(s.equipment)).filter(Boolean);
-    this.$("cube-panel").hidden = !(s.records.uniquesFound > 0 || Object.keys(s.cube.learned).length);
-    this.$("gems-panel").hidden = !(Object.keys(s.gems).length || all.some((it) => (it.sockets || []).length));
-    this.$("merc-open").hidden = s.player.level < WYD.data.mercenary.minLevel && !s.mercenary.type;
-    this.$("gamble-open").hidden = s.player.level < WYD.data.gamble.minLevel;
-    this.$("lgem-open").hidden = !Object.keys(s.lgems.owned).length;
+    this.unlock("cube-panel", s.records.uniquesFound > 0 || Object.keys(s.cube.learned).length > 0);
+    this.unlock("gems-panel", Object.keys(s.gems).length > 0 || all.some((it) => (it.sockets || []).length));
+    this.unlock("merc-open", s.player.level >= WYD.data.mercenary.minLevel || !!s.mercenary.type);
+    this.unlock("gamble-open", s.player.level >= WYD.data.gamble.minLevel);
+    this.unlock("lgem-open", Object.keys(s.lgems.owned).length > 0);
+    this.unlocksReady = true;
     this.$("maps-count").textContent = `${s.maps.length} / ${WYD.data.maps.maxHeld}　最高 段階${s.mapBest || 0}`;
     this.$("maps").innerHTML = this.mapsHtml();
     const cubeHtml = this.cubeHtml();
@@ -1381,6 +1382,18 @@ WYD.ui = {
       ${this.scoreChangeText(item, cur)}
       ${rows.length ? rows.join("") : `<div class="tip-sub">変化なし</div>`}
     </div>`;
+  },
+
+  // 隠していたものを出す。はじめて出たときは「使えるようになった」と知らせる
+  // （ページを開いて最初の1回は知らせない＝前から使えていたものを知らせないように）
+  unlock(id, show) {
+    const s = this.state;
+    s.unlocks = s.unlocks || {};
+    this.$(id).hidden = !show;
+    if (!show || s.unlocks[id]) return;
+    s.unlocks[id] = true;
+    const text = WYD.data.story.unlocks[id];
+    if (this.unlocksReady && text) this.notice(`新しく使えるようになった：${text}`, WYD.data.story.unlockColor);
   },
 
   // スマホ（マウスがない画面）か
