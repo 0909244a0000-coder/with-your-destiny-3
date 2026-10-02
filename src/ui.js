@@ -174,6 +174,23 @@ WYD.ui = {
       this.$("devotion-body").innerHTML = this.devotionHtml();
       this.changed();
     };
+    this.$("builds").onclick = (e) => {
+      const btn = e.target.closest("[data-build]");
+      if (!btn) return;
+      const n = Number(btn.dataset.build);
+      if (btn.dataset.act === "save") {
+        const old = s.builds[n];
+        const name = prompt("ビルドの名前", old ? old.name : `ビルド${n + 1}`);
+        if (name == null) return;
+        WYD.builds.save(s, n, name);
+        this.log(`今の装備とスキルを「${name}」に保存した`, "#7dff8a");
+      } else {
+        const r = WYD.builds.load(s, n);
+        if (!r) return;
+        this.log(`「${s.builds[n].name}」に切り替えた${r.missing ? `（見つからない・持ち物がいっぱいで戻せない装備が${r.missing}個）` : ""}`, r.missing ? "#ffb05a" : "#7dff8a");
+      }
+      this.changed();
+    };
     this.$("season").innerHTML = WYD.data.seasons.list.map((x) => `<option value="${x.id}">${x.name}</option>`).join("");
     this.$("season").onchange = (e) => {
       s.settings.season = e.target.value;
@@ -781,6 +798,7 @@ WYD.ui = {
       : "左クリック：装備する／右クリック：捨てる（捨てると素材になる）／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック";
     this.$("inventory").innerHTML = this.cellsHtml(s.inventory, size);
     this.$("gems").innerHTML = this.gemsHtml();
+    this.$("builds").innerHTML = this.buildsHtml();
     this.$("maps-panel").hidden = !s.cleared && !s.maps.length;
     this.$("maps-count").textContent = `${s.maps.length} / ${WYD.data.maps.maxHeld}　最高 段階${s.mapBest || 0}`;
     this.$("maps").innerHTML = this.mapsHtml();
@@ -849,6 +867,18 @@ WYD.ui = {
     } else {
       this.log(`${item.name}には空いたソケットがない`, "#ff6b6b");
     }
+  },
+
+  // ビルドの欄（4つ）
+  buildsHtml() {
+    const s = this.state;
+    const slots = WYD.data.items.buildSlots;
+    let html = `<span class="muted">ビルド：</span>`;
+    for (let n = 0; n < slots; n++) {
+      const b = s.builds[n];
+      html += `<span class="build-slot">${b ? `<button data-build="${n}" data-act="load" title="この装備・スキル・型・箱の枠に切り替える">${b.name}</button>` : `<span class="muted">（空き）</span>`}<button data-build="${n}" data-act="save" title="今の装備・スキル・型・箱の枠をここに保存">保存</button></span>`;
+    }
+    return html;
   },
 
   // 宝石の欄

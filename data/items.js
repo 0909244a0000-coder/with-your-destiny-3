@@ -103,6 +103,8 @@ WYD.data.items = {
     "アグニの": "焔王の", "ヴァーユの": "嵐の",
   },
 
+  buildSlots: 4,            // ビルドを保存できる数
+
   // 太古・始原（Diablo 3 のしくみ）：レジェンド・ユニーク・セットが、まれに能力の高い版で落ちる
   ancient: {
     rarities: ["legend", "unique", "set"],

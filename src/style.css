@@ -319,3 +319,8 @@ details.menu > summary::after { content: " ▾"; color: var(--muted); }
 details.menu[open] > summary { background: #3a3020; }
 details.menu .menu-body { position: absolute; top: 100%; left: 0; z-index: 30; margin-top: 4px; min-width: 190px; display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #15120d; border: 1px solid #8a6d32; box-shadow: 0 6px 18px rgba(0,0,0,0.8); }
 details.menu .menu-body button, details.menu .menu-body label { text-align: left; white-space: nowrap; }
+
+/* ビルドの保存 */
+.builds { margin-top: 6px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.build-slot { display: inline-flex; gap: 2px; }
+.build-slot button { font-size: 11px; padding: 0 6px; }
