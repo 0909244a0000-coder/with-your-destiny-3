@@ -50,6 +50,7 @@
   - ブラウザで `index.html` を開いて、エラーが出ないこと
   - バランスを変えたら `node tools/balance-sim.js 15`（新しいセーブから15分ぶん自動で遊ばせて、ボスを倒した時間と倒れた回数を出す）
   - 古いセーブで壊れないこと（セーブは `localStorage` の `wyd3-save-v1`）
+  - 大きく変えたら `node tools/fuzz-test.js <職業> 2000`（でたらめ操作でエラーを探す）と `node tools/combo-test.js`（季節×遊び方の組み合わせ）
 
 ## 次にやること（候補、上から優先）
 1. **ソーサレス用のアイコン**（`docs/ART.md` の「まだの絵」）
