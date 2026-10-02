@@ -109,9 +109,8 @@ WYD.data.areas = [
     bgColor: "#2a1210",
     grassColor: "#4a1a10",
     stoneColor: "#6a3a2a",
-    groundImage: "assets/areas/smashana.png",
-    groundTint: "rgba(255,80,30,0.3)",
-    powerMult: 8.0,
+    groundImage: "assets/areas/inferno.png",
+        powerMult: 8.0,
     itemLevelBonus: 19,
     enemies: [
       { kind: "fireImp", weight: 35 },

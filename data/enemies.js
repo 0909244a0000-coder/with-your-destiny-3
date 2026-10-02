@@ -269,19 +269,19 @@ WYD.data.enemies = {
   // ---- 業火の玉座（6つ目のエリア。絵は仮：今ある絵の色を変えたもの）----
   fireImp: {
     name: "業火の小鬼", color: "#ff7a3a",
-    image: "assets/enemies/pishacha.png", imageFilter: "hue-rotate(-30deg) saturate(1.8) brightness(1.2)",
+    image: "assets/enemies/fireImp.png",
     radius: 11, hp: 65, attack: 11, defense: 2, attackSpeed: 1.0, moveSpeed: 105, range: 20,
     exp: 16, dropChance: 0.26, rarityBonus: 1.6,
   },
   lavaGolem: {
     name: "溶岩の巨人", color: "#d0502a",
-    image: "assets/enemies/daitya.png", imageFilter: "hue-rotate(-20deg) saturate(1.6) brightness(0.9)",
+    image: "assets/enemies/lavaGolem.png",
     radius: 21, hp: 240, attack: 14, defense: 8, attackSpeed: 0.5, moveSpeed: 50, range: 32,
     exp: 32, dropChance: 0.38, rarityBonus: 1.9,
   },
   hellArcher: {
     name: "地獄の射手", color: "#ff9a5a",
-    image: "assets/enemies/yakshaArcher.png", imageFilter: "hue-rotate(-30deg) saturate(1.6) brightness(1.1)",
+    image: "assets/enemies/hellArcher.png",
     radius: 12, hp: 70, attack: 13, defense: 2, attackSpeed: 0.65, moveSpeed: 70, range: 22,
     exp: 17, dropChance: 0.28, rarityBonus: 1.6,
     ranged: { keepDistance: 190, range: 290, speed: 260, size: 5, color: "#ffb04a" },

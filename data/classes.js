@@ -391,7 +391,7 @@ WYD.data.classes = {
   },
 
   // 獣に変身して戦う、自然の力の職業（kind: "shift"。src/forms.js）
-  // 主人公の絵は player_druid.png。熊変化は druid_bear.png（formImage）、狼変化はまだ主人公の絵の色替え
+  // 主人公の絵は player_druid.png。熊変化は druid_bear.png、狼変化は druid_wolf.png（formImage）
   druid: {
     name: "ドルイド",
     desc: "熊や狼に変身して戦う、自然の力の職業。狼の群れや竜巻、地割れも使える。変身の時間をどう使うかがカギ",
@@ -421,7 +421,7 @@ WYD.data.classes = {
         startLevel: 0, maxLevel: 10, cooldown: 16,
         triggerRange: 200, duration: 15,
         attackPctBase: 10, attackPctPerLevel: 2, attackSpeedPctBase: 35, attackSpeedPctPerLevel: 5, moveSpeedPct: 25,
-        scale: 1.1, formFilter: "grayscale(0.6) brightness(1.1) hue-rotate(180deg)", color: "#b8c8d8",
+        scale: 1.1, formImage: "assets/druid_wolf.png", formFilter: null, color: "#b8c8d8",
       },
       dru_wolves: {
         kind: "raise", name: "狼の群れ",
