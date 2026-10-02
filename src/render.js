@@ -65,6 +65,8 @@ WYD.render = {
       ctx.fill();
     }
 
+    // 明かり：地面はしっかり暗くし、キャラは下でうすく暗くする（遠くの敵も見分けられるように）
+    this.drawLight(ctx, w.player, state, "ground");
     for (const f of w.fields) this.drawField(ctx, f);
     for (const h of w.hazards || []) this.drawHazard(ctx, h);
     for (const pool of w.pools || []) {
@@ -118,7 +120,7 @@ WYD.render = {
         this.drawProjectile(ctx, { x: b.x, y: b.y, size: R.size, color: R.color });
       }
     }
-    this.drawLight(ctx, w.player, state);
+    this.drawLight(ctx, w.player, state, WYD.data.map.light.unitDarkness);
     // 光るものと落ちている装備は、明かりの暗さの上に描く（暗がりでも見えるように）
     for (const drop of w.drops) this.drawDrop(ctx, drop);
     for (const ef of w.effects) this.drawEffect(ctx, ef);
@@ -207,10 +209,14 @@ WYD.render = {
   },
 
   // 明かり：主人公から離れるほど暗くする
-  drawLight(ctx, p, state) {
+  // mult：暗さにかける割合（キャラの上は light.unitDarkness）。"ground" は地面用で、
+  // あとでキャラの上にかける暗さと重ねたときに、地面がもとの暗さになるようにする
+  drawLight(ctx, p, state, mult) {
     const map = WYD.data.map;
     const L = map.light;
-    const dark = Math.min(L.maxDarkness, L.darkness + L.darknessPerFloor * ((state.floor || 1) - 1));
+    const full = Math.min(L.maxDarkness, L.darkness + L.darknessPerFloor * ((state.floor || 1) - 1));
+    const unit = L.unitDarkness * full;
+    const dark = mult === "ground" ? 1 - (1 - full) / (1 - unit) : mult * full;
     const g = ctx.createRadialGradient(p.x, p.y, L.inner, p.x, p.y, L.outer);
     g.addColorStop(0, "rgba(0,0,0,0)");
     g.addColorStop(1, `rgba(0,0,0,${dark})`);

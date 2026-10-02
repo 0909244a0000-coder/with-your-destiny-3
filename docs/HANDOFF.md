@@ -40,6 +40,7 @@
 - 試したがやめたこと：地獄の射手の攻撃 13→11・業火の術師 14→12。パラディン・アサシン各2回で、6体目の時間は変えない場合 23・24／19・27分、変えた場合 24・24／31・22分で差が出なかった（運のぶれの方が大きい）。今の数値のまま
 - スマホ横向き：上のバーを薄く（題名と補足の文を隠す）し、戦いの画面を画面の高さに収める（`src/style.css` の横向きの所）
 - 主人公の絵：ネクロ・パラディン・アサシン・ドルイドに本番の絵（`assets/player_<職業>.png`）。変身は `formImage` に絵があればその絵を描く（熊・狼とも絵あり）。業火の玉座は地面・敵4種・ボスとも本番の絵。足元の魔法陣・火の玉・飾り帯・骸骨の手下・傭兵3人・全6エリアの地面・敵・ボス・全職業のスキルアイコン・アサシンの罠（`data/vfx.js` の `trap`、`src/traps.js` は絵がなければ三角）も本番の絵。ネクロの骸骨の魔術師も入れて、発注キュー（`docs/ART-QUEUE.md`）の絵はすべてそろった（残りの発注は `docs/ART-QUEUE.md`）
+- 明かり（`src/render.js` の `drawLight`）は2回に分けてかける：地面の直後に「地面用」、キャラの上に `data/map.js` の `light.unitDarkness` の割合だけ。重ねると地面は前と同じ暗さ、遠くの敵は前より明るく見える
 - 戦いの画面の左下に、使っているスキルを並べる（`src/render.js` の `drawSkillBar`、大きさや色は `data/map.js` の `skillBar`）。暗い影が次に使えるまでの時間、光る枠が今使ったしるし。絵がないスキルは頭の1文字。スマホで画面が縮んでも `minShownPx` より小さく見えないよう、大きく描く
 - 傭兵：`src/mercenary.js`・`data/mercenary.js`。戦い方は手下と同じ `src/allies.js`（source が "merc"、時間で崩れない）。いなければ `WYD.mercenary.update` が出す（倒れたら `reviveTime` 秒後）。加護は `src/stats.js` で星座と同じように足す。セーブは `state.mercenary = { type, rank }`。絵は仮（敵の絵の色替え）。`tools/balance-sim.js` の6つ目の引数で傭兵を雇わせられる（4職で最後のボスは18〜19分、雇わないと17〜21分）
 - 伝説の宝石：`src/legendaryGems.js`（`WYD.lgems`）・`data/legendaryGems.js`。セーブは `state.lgems = { owned: { id: ランク }, equipped: [...] }`。手に入る・ランク上げは `src/trial.js` の finish（成功時）から。効果は `playerHit`（ダメージ倍率・迅速の重なり）、通常攻撃の間隔、`enemyDied`（強者の災い）、`src/stats.js`（命＝最大HP、血＝吸血）。自動プレイで試練20分後にランク8〜13、試練の最高段階は入れる前とほぼ同じ（10〜14）。パラディンは試練が少し苦手（段階10くらい）
