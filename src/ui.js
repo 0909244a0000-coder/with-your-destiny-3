@@ -170,6 +170,13 @@ WYD.ui = {
       this.$("devotion-body").innerHTML = this.devotionHtml();
       this.changed();
     };
+    this.$("season").innerHTML = WYD.data.seasons.list.map((x) => `<option value="${x.id}">${x.name}</option>`).join("");
+    this.$("season").onchange = (e) => {
+      s.settings.season = e.target.value;
+      const cur = WYD.season.current(s);
+      this.log(`季節を「${cur.name}」にした：${cur.desc}（新しく出る敵から変わる）`, WYD.data.seasons.color);
+      this.changed();
+    };
     this.$("filter-open").onclick = () => {
       this.$("filter-body").innerHTML = this.filterHtml();
       this.$("filter").hidden = false;
@@ -676,6 +683,8 @@ WYD.ui = {
     }
     this.$("auto-salvage").value = s.settings.autoSalvage;
     this.$("auto-equip").checked = !!s.settings.autoEquip;
+    this.$("season").value = WYD.season.current(s).id;
+    this.$("season").title = `季節のルール：${WYD.season.current(s).desc}`;
     this.$("filter-open").classList.toggle("active", !!s.settings.filter.on);
     this.$("auto-salvage").disabled = !!s.settings.filter.on;
     this.$("pause").textContent = this.paused ? "再開" : "停止";
@@ -1128,7 +1137,7 @@ WYD.ui = {
         html += this.compareHtml(item, cur);
         html += this.enhanceMode ? this.enhanceHelp(item) : this.craftMode
           ? this.rerollHelp(item)
-          : `<div class="tip-help">${where === "inv" ? "左クリック：装備する／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック" : "クリック：持ち物へ戻す"}／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.inventory.salvageValue(item)}）</div>`;
+          : `<div class="tip-help">${where === "inv" ? "左クリック：装備する／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック" : "クリック：持ち物へ戻す"}／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.inventory.salvageValue(this.state, item)}）</div>`;
       }
     } else {
       const cell = e.target.closest("[data-slot]");

@@ -44,6 +44,7 @@
       <button id="pause" title="一時停止（キーボードのスペースでも。1・2・4キーで速度）">停止</button>
       <span class="sep"></span>
       <label title="拾った装備が今より強ければ自動で着替える（ユニーク・セット・強化や宝石つきの装備は外さない）"><input type="checkbox" id="auto-equip"> 自動装備</label>
+      <label title="季節のルール：選ぶと遊び方が変わり、ごほうびが増える">季節 <select id="season"></select></label>
       <button id="filter-open" title="部位ごとに、どのレア度から拾うかを決める（拾わないものは素材になる）">フィルター</button>
       <label>自動分解 <select id="auto-salvage" title="選んだレア度以下の装備は、拾わずにその場で素材にする"></select></label>
       <span class="sep"></span>
@@ -204,6 +205,7 @@
   <script src="data/cube.js"></script>
   <script src="data/maps.js"></script>
   <script src="data/devotion.js"></script>
+  <script src="data/seasons.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>
@@ -224,6 +226,7 @@
   <script src="src/maps.js"></script>
   <script src="src/devotion.js"></script>
   <script src="src/board.js"></script>
+  <script src="src/seasons.js"></script>
   <script src="src/sound.js"></script>
   <script src="src/offline.js"></script>
   <script src="src/render.js"></script>

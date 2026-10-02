@@ -122,7 +122,7 @@ WYD.world = {
 
     // まれに宝物ゴブリン（同時に1体まで、ボスの間には出ない）
     const G = WYD.data.goblin;
-    if (!bossRoom && Math.random() < G.chance && !w.enemies.some((x) => WYD.data.enemies[x.kind].treasure)) {
+    if (!bossRoom && Math.random() < G.chance * WYD.season.mult(state, "goblinMult") && !w.enemies.some((x) => WYD.data.enemies[x.kind].treasure)) {
       const g = this.spawnEnemy(w, state, "goblin", this.farPosition(w));
       g.fleeTimer = G.fleeTime;
       WYD.ui.log("宝物ゴブリンが現れた！ 逃げられる前に倒せ！", G.color);
@@ -131,7 +131,7 @@ WYD.world = {
     }
     const pick = WYD.util.pickWeighted(area.enemies, (x) => x.weight);
     const e = this.spawnEnemy(w, state, pick.kind, this.farPosition(w));
-    if (Math.random() < WYD.data.elites.chance) this.makeElite(e);
+    if (Math.random() < WYD.data.elites.chance * WYD.season.mult(state, "eliteMult")) this.makeElite(e);
   },
 
   // 今いるエリアの設定
@@ -229,6 +229,10 @@ WYD.world = {
       stunTimer: 0,
     };
     WYD.daily.modifyEnemy(state, e);   // 日替わりの試練の条件
+    // 季節のルール
+    e.maxHp = Math.round(e.maxHp * WYD.season.mult(state, "enemyHp"));
+    e.hp = e.maxHp;
+    e.attack *= WYD.season.mult(state, "enemyAttack");
     w.enemies.push(e);
     return e;
   },
@@ -955,7 +959,7 @@ WYD.world = {
 
     const area = this.area(state);
     const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult * this.floorPower(state);
-    this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult));
+    this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult * WYD.season.mult(state, "expMult")));
 
     WYD.records.add(state, "kills");
     if (this.hasAffix(e, "explosive")) {
@@ -1030,7 +1034,7 @@ WYD.world = {
     // 精鋭は必ず数個落とし、レアも出やすい
     const E = WYD.data.elites;
     const bonus = def.rarityBonus * (1 + diff.rarityGrowth * d) * (e.elite ? E.rarityBonusMult : 1) *
-      (inTrial ? WYD.data.trial.rarityBonus : 1) * (1 + stats.magicFind / 100);
+      (inTrial ? WYD.data.trial.rarityBonus : 1) * (1 + stats.magicFind / 100) * WYD.season.mult(state, "rarityMult");
     let count = e.elite ? E.dropCount : (Math.random() < def.dropChance ? 1 : 0);
     if (e.boss) count = WYD.data.boss.dropCount;
     if (e.elite) WYD.ui.log(`精鋭「${e.name}」を倒した！`, E.color);

@@ -51,7 +51,7 @@ WYD.gems = {
   // 敵を倒したとき、ルーンを落とすことがある
   dropRune(w, state, e) {
     const D = WYD.data.gems.runeDrop;
-    const chance = e.boss ? D.chanceBoss : e.elite ? D.chanceElite : D.chanceNormal;
+    const chance = (e.boss ? D.chanceBoss : e.elite ? D.chanceElite : D.chanceNormal) * WYD.season.mult(state, "gemMult");
     if (Math.random() >= chance) return;
     const r = WYD.util.pickWeighted(WYD.data.gems.runes, (x) => x.weight);
     const key = `rune:${r.id}`;
@@ -112,7 +112,7 @@ WYD.gems = {
   // 敵を倒したとき、宝石を落とすことがある（そのまま手に入る）
   onKill(w, state, e) {
     const D = WYD.data.gems.drop;
-    const count = e.boss ? D.bossCount : Math.random() < (e.elite ? D.chanceElite : D.chanceNormal) ? 1 : 0;
+    const count = e.boss ? D.bossCount : Math.random() < (e.elite ? D.chanceElite : D.chanceNormal) * WYD.season.mult(state, "gemMult") ? 1 : 0;
     for (let i = 0; i < count; i++) {
       const key = this.key(WYD.util.pick(WYD.data.gems.gems).id, this.dropTier(state));
       this.add(state, key);

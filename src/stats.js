@@ -51,6 +51,8 @@ WYD.stats = {
     for (const t of WYD.board.ownedTiles(state)) {
       for (const id in t.effects || {}) if (id in totals) totals[id] += t.effects[id];
     }
+    const se = WYD.season.effects(state);   // 季節のルール
+    for (const id in se) if (id in totals) totals[id] += se[id];
     for (const slot in state.equipment) {
       // ルーンワードの特殊効果
       const rw = WYD.gems.runeword(state.equipment[slot]);
@@ -118,7 +120,7 @@ WYD.stats = {
       defense: P.base.defense + P.perLevel.defense * lv + b.defense + pb.defense,
       attackSpeed: Math.max(P.minAttackSpeed, P.base.attackSpeed * (1 + (b.attackSpeed + pb.attackSpeed) / 100)),
       critChance: Math.min(P.critChanceCap, P.base.critChance + b.critChance + pb.critChance),
-      hpRegen: P.base.hpRegen + b.hpRegen + pb.hpRegen,
+      hpRegen: (P.base.hpRegen + b.hpRegen + pb.hpRegen) * WYD.season.mult(state, "hpRegenMult"),
       moveSpeed: P.base.moveSpeed * (1 + (b.moveSpeed + fx.moveSpeed) / 100),
       skillDamage: b.skillDamage + asceticBonus + pb.skillDamage,
       magicFind: pb.magicFind,   // レア発見（%）

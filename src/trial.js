@@ -73,7 +73,7 @@ WYD.trial = {
     w.spawnTimer = T.spawnInterval;
     const pick = WYD.util.pickWeighted(T.enemies, (x) => x.weight);
     const e = WYD.world.spawnEnemy(w, state, pick.kind, WYD.world.farPosition(w));
-    if (Math.random() < WYD.data.elites.chance * WYD.daily.mult(state, "eliteMult")) WYD.world.makeElite(e);
+    if (Math.random() < WYD.data.elites.chance * WYD.daily.mult(state, "eliteMult") * WYD.season.mult(state, "eliteMult")) WYD.world.makeElite(e);
   },
 
   tick(w, state, dt) {

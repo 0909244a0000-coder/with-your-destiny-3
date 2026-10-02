@@ -133,14 +133,15 @@ WYD.inventory = {
   },
 
   // 捨てたときにもらえる素材の数
-  salvageValue(item) {
+  salvageValue(state, item) {
     const C = WYD.data.crafting;
-    return (C.salvage[item.rarity] || 0) + Math.floor((item.enhanceSpent || 0) * C.enhance.refundOnSalvage);
+    const base = Math.round((C.salvage[item.rarity] || 0) * WYD.season.mult(state, "materialsMult"));
+    return base + Math.floor((item.enhanceSpent || 0) * C.enhance.refundOnSalvage);
   },
 
   salvage(state, item) {
     WYD.gems.returnGems(state, item);
-    const n = this.salvageValue(item);
+    const n = this.salvageValue(state, item);
     state.materials = (state.materials || 0) + n;
     return n;
   },
