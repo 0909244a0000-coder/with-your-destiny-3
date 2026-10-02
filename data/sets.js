@@ -115,5 +115,20 @@ WYD.data.sets = {
              desc: "{skill:whirl}の威力が1.8倍、範囲が1.25倍になる" },
       },
     },
+    {
+      // アサシンでだけ落ちる
+      id: "shadowGuild", name: "影の結社", classOnly: "assassin",
+      pieces: [
+        { id: "guild_claw", name: "結社の鉤爪", base: "chakram", stats: { attack: [4, 8] } },
+        { id: "guild_mask", name: "結社の仮面", base: "turban", stats: { critChance: [2, 5] } },
+        { id: "guild_boots", name: "結社の足袋", base: "sandals", stats: { moveSpeed: [5, 10] } },
+        { id: "guild_ring", name: "結社の指輪", base: "ring", stats: { skillDamage: [8, 14] } },
+      ],
+      bonuses: {
+        2: { stats: { critChance: 6, skillDamage: 15 } },
+        4: { effects: { critDamage: 40 }, power: "skillBoostGuild", params: { kind: "trap", mods: { fireInterval: ["mul", 0.7], duration: ["mul", 1.5] } },
+             desc: "すべての罠で、撃つ間隔が0.7倍、置いていられる時間が1.5倍になる" },
+      },
+    },
   ],
 };

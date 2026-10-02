@@ -258,4 +258,95 @@ WYD.data.classes = {
     skillOrder: ["pal_shield", "pal_might", "pal_prayer", "pal_fire", "pal_vow", "pal_chain", "pal_zeal", "pal_hammer", "pal_judgment"],
     skillIcons: {},
   },
+
+  // 素早い近接と、地面に置く「罠」で戦う職業（kind: "trap"。src/traps.js）
+  // 絵がまだないので、バーバリアンの絵を暗い紫にして仮に使う（imageFilter）
+  assassin: {
+    name: "アサシン",
+    player: {
+      className: "アサシン",
+      weaponName: "鉤爪",
+      color: "#c08aff",
+      image: "assets/player.png",
+      imageFilter: "hue-rotate(250deg) saturate(0.7) brightness(0.75)",   // 本番の絵が来たら null にする
+      poses: { attack: null },
+      base: { maxHp: 110, attack: 9, defense: 2, attackSpeed: 1.1, critChance: 7, hpRegen: 1, moveSpeed: 130 },
+      perLevel: { maxHp: 13, attack: 1.85, defense: 0.85 },
+    },
+    skills: {
+      asn_blade: {
+        kind: "whirl", name: "刃の舞",
+        desc: "回転しながら周りの敵すべてを切り裂く。",
+        startLevel: 1, maxLevel: 10, cooldown: 3.5,
+        radius: 85, damageBase: 1.3, damagePerLevel: 0.27, minTargets: 1, color: "#d8b0ff",
+      },
+      asn_cloak: {
+        kind: "vajra", name: "影の外套",
+        desc: "HPが減ると発動。影に身を包んで防御力アップし、HPを回復。",
+        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 5,
+        defenseBase: 6, defensePerLevel: 3, healPercentBase: 11, healPercentPerLevel: 2,
+        triggerHpPercent: 60, color: "#7a5aa8",
+      },
+      asn_shuriken: {
+        kind: "sudarshana", name: "連鎖の手裏剣",
+        desc: "手裏剣が敵から敵へ飛び移り、何体もまとめて切る。",
+        startLevel: 0, maxLevel: 10, cooldown: 4,
+        range: 260, jumpRange: 170, targetsBase: 4, targetsPerLevel: 0.5,
+        damageBase: 1.3, damagePerLevel: 0.23, color: "#e0e0f0",
+      },
+      asn_fire: {
+        kind: "agni", name: "爆炎の罠",
+        desc: "敵の多い場所に炎の罠をしかけ、燃える地面で焼き続ける。",
+        startLevel: 0, maxLevel: 10, cooldown: 7,
+        range: 240, radius: 85, duration: 4, tick: 0.5, damageBase: 0.55, damagePerLevel: 0.11, color: "#ff7a3a",
+      },
+      asn_burst: {
+        kind: "hanuman", name: "疾風の構え",
+        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
+        startLevel: 0, maxLevel: 10, cooldown: 13, duration: 6,
+        hasteBase: 45, hastePerLevel: 6, triggerRange: 140, color: "#9affd8",
+      },
+      asn_mind: {
+        kind: "nagapasha", name: "心縛り",
+        desc: "念の力で周りの敵の心を縛り、しばらく動けなくしてダメージ。ボスには効きにくい。",
+        startLevel: 0, maxLevel: 10, cooldown: 10,
+        radius: 125, minTargets: 2, bindBase: 1.7, bindPerLevel: 0.2, bossBindMult: 0.3,
+        damageBase: 0.65, damagePerLevel: 0.14, color: "#c08aff",
+      },
+      asn_shadow: {
+        kind: "raise", name: "影の戦士",
+        desc: "自分そっくりの影を1体呼び出す。影は敵を切り、敵の攻撃も引きつける。",
+        startLevel: 0, maxLevel: 10, cooldown: 4,
+        countBase: 1, countPerLevel: 0,
+        hpRatio: 0.6, attackBase: 0.6, attackPerLevel: 0.08, defenseRatio: 0.8,
+        duration: 25, moveSpeed: 130, attackSpeed: 1.2, range: 28, radius: 13,
+        spawnSpread: 30, followDistance: 50, firstAttackDelay: 0.4,
+        color: "#5a3a7a",
+        image: "assets/player.png",
+        imageFilter: "brightness(0.45) saturate(0.4) hue-rotate(250deg) opacity(0.85)",
+      },
+      // ---- 罠（kind: "trap"）。置くと duration 秒、fireInterval 秒ごとに range の中の敵（targetsBase 体）を撃つ ----
+      asn_sentry: {
+        kind: "trap", name: "稲妻の歩哨",
+        desc: "罠：近くの敵へ稲妻を撃ち続ける装置を置く。いくつも置ける。",
+        startLevel: 0, maxLevel: 10, cooldown: 2,
+        triggerRange: 260,      // この距離に敵がいたら置く
+        placeAt: 0.4,           // 主人公と敵のあいだのどこに置くか（0＝主人公、1＝敵）
+        maxTrapsBase: 2, maxTrapsPerLevel: 0.2,   // 同時に置ける数（小数は切り捨て）
+        duration: 10, fireInterval: 0.6, range: 230, targetsBase: 1, trapRadius: 9,
+        damageBase: 0.4, damagePerLevel: 0.065, color: "#9ad0ff",
+      },
+      asn_death: {
+        kind: "trap", name: "死の歩哨",
+        desc: "罠：ゆっくりだが、近くの敵3体へまとめて強い一撃を撃つ装置を置く。",
+        startLevel: 0, maxLevel: 10, cooldown: 3,
+        triggerRange: 240, placeAt: 0.4,
+        maxTrapsBase: 1, maxTrapsPerLevel: 0.15,
+        duration: 12, fireInterval: 1.5, range: 220, targetsBase: 3, trapRadius: 11,
+        damageBase: 0.72, damagePerLevel: 0.1, color: "#ff5a8a",
+      },
+    },
+    skillOrder: ["asn_cloak", "asn_burst", "asn_shadow", "asn_mind", "asn_sentry", "asn_death", "asn_blade", "asn_shuriken", "asn_fire"],
+    skillIcons: {},
+  },
 };

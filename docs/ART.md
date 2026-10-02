@@ -130,6 +130,24 @@ A single full-body character sprite for a dark fantasy action RPG, 3/4 top-down 
 A single sprite sheet image, 1536x1536, arranged as an exact 3 columns by 3 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Paladin skill icons, left-to-right, top-to-bottom: 1 Zeal: a hammer swung in a fast golden arc, 2 Holy Shield: a glowing kite shield, 3 Blessed Hammer: a spinning blue-white hammer of light, 4 Judgment: a pillar of holy light striking the ground, 5 Crusader Vow: a raised fist wreathed in orange flame, 6 Chains of Judgment: golden chains of light, 7 Holy Fire aura: a ring of holy fire on the ground, 8 Prayer aura: hands in prayer with green light, 9 Might aura: a red glowing rune of strength in a circle.
 ```
 
+### アサシン（5つ目の職業）の絵
+今はバーバリアンの絵を暗い紫にして仮に使っています（`data/classes.js` の `assassin.player.imageFilter`）。影の戦士も同じ絵を暗くしたもの。
+
+**主人公（1枚）** → `assets/player_assassin.png`（512px以上・透明背景・`prepare_sprite.py` で256pxに）。置いたら `assassin.player.image` をこの名前にし、`imageFilter` を `null` にする
+```
+A single full-body character sprite for a dark fantasy action RPG, 3/4 top-down view, facing right, transparent background: a lithe female assassin in dark violet leather armor and a hood, a half mask, twin katar claw blades, a crouched ready stance. Western dark fantasy (Diablo-like), painterly, high contrast, accent color violet #c08aff. No text, no frame.
+```
+
+**罠（1枚）** → `assets/vfx/trap.png`（今は三角形の図形で描いています）
+```
+A single small sprite, top-down view, transparent background: a compact mechanical trap device of dark iron with a glowing blue crystal on top, three short legs. Dark fantasy, painterly. No text, no frame.
+```
+
+**スキル（3列×3行）** → `--grid 3x3 --names asn_blade,asn_cloak,asn_shuriken,asn_fire,asn_burst,asn_mind,asn_shadow,asn_sentry,asn_death`、置いたら `assassin.skillIcons` に書く
+```
+A single sprite sheet image, 1536x1536, arranged as an exact 3 columns by 3 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Assassin skill icons, left-to-right, top-to-bottom: 1 Blade Fury: spinning violet blades, 2 Cloak of Shadows: a dark hooded cloak dissolving into shadow, 3 Chain Shuriken: a silver shuriken with motion trails, 4 Fire Trap: a trap bursting into flames, 5 Burst of Speed: a running silhouette with green speed lines, 6 Mind Blast: a glowing violet brain wave, 7 Shadow Warrior: a dark shadow copy of a warrior, 8 Lightning Sentry: a trap shooting blue lightning, 9 Death Sentry: a trap with a red skull light.
+```
+
 ### 傭兵の絵（3枚）
 今は敵の絵の色を変えて仮に使っています（`data/mercenary.js` の `image`・`imageFilter`）。置いたら `image` をこの名前にし、`imageFilter` を `null` にする（512px以上・透明背景・`prepare_sprite.py` で256pxに）。
 - `assets/merc_spear.png`

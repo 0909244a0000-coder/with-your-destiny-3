@@ -158,5 +158,12 @@ WYD.data.uniques = {
       desc: "すべてのオーラの範囲が1.3倍、効き目が1.4倍になる",
       params: { kind: "aura", mods: { radius: ["mul", 1.3], damage: ["mul", 1.4], heal: ["mul", 1.4], mightBase: ["mul", 1.4], mightPerLevel: ["mul", 1.4] } },
     },
+    {
+      id: "shadowClaw", name: "影の鉤爪", base: "chakram", weight: 10, classOnly: "assassin",
+      stats: { attack: [4, 8], critChance: [3, 6] },
+      power: "skillBoostTrap",
+      desc: "すべての罠で、置ける数 +2、威力が1.3倍になる",
+      params: { kind: "trap", mods: { maxTrapsBase: ["add", 2], damage: ["mul", 1.3] } },
+    },
   ],
 };

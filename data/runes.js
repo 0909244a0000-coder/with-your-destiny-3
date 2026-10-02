@@ -186,3 +186,52 @@ Object.assign(WYD.data.runes.skills, {
     { id: "growth", name: "成長", desc: "Lvごとの伸びが大きい（最初は小さい）", mods: { mightBase: ["mul", 0.6], mightPerLevel: ["mul", 1.9] } },
   ],
 });
+
+// アサシンのスキルの型
+Object.assign(WYD.data.runes.skills, {
+  asn_blade: [
+    { id: "wide", name: "大回転", desc: "範囲1.4倍。威力は少し下がる", mods: { radius: ["mul", 1.4], damage: ["mul", 0.85] } },
+    { id: "leech", name: "血の刃", desc: "与えたダメージの5%を回復", extra: { lifesteal: 5 } },
+    { id: "fast", name: "連舞", desc: "使える間隔0.65倍。威力は少し下がる", mods: { cooldown: ["mul", 0.65], damage: ["mul", 0.85] } },
+  ],
+  asn_cloak: [
+    { id: "steel", name: "濃い影", desc: "防御1.6倍。回復は減る", mods: { defense: ["mul", 1.6], heal: ["mul", 0.6] } },
+    { id: "regen", name: "影の癒し", desc: "回復1.6倍。防御は下がる", mods: { heal: ["mul", 1.6], defense: ["mul", 0.6] } },
+    { id: "early", name: "先読み", desc: "HP80%で早めに発動。使える間隔は少し長い", mods: { triggerHpPercent: ["set", 80], cooldown: ["mul", 1.2] } },
+  ],
+  asn_shuriken: [
+    { id: "multi", name: "乱れ投げ", desc: "当たる数 +2。威力は少し下がる", mods: { targets: ["add", 2], damage: ["mul", 0.8] } },
+    { id: "heavy", name: "大手裏剣", desc: "当たる数 -1。威力1.6倍", mods: { targets: ["add", -1], damage: ["mul", 1.6] } },
+    { id: "poison", name: "毒刃", desc: "当てた敵を0.6秒しびれさせる", extra: { bind: 0.6 } },
+  ],
+  asn_fire: [
+    { id: "big", name: "大爆炎", desc: "範囲1.35倍", mods: { radius: ["mul", 1.35] } },
+    { id: "long", name: "くすぶり", desc: "燃える時間1.8倍。1回の威力は少し下がる", mods: { duration: ["mul", 1.8], damage: ["mul", 0.8] } },
+    { id: "rapid", name: "連鎖爆破", desc: "使える間隔0.6倍。威力は下がる", mods: { cooldown: ["mul", 0.6], damage: ["mul", 0.75] } },
+  ],
+  asn_burst: [
+    { id: "frenzy", name: "神速", desc: "攻撃速度がもっと上がる（1.4倍）。時間は短い", mods: { haste: ["mul", 1.4], duration: ["mul", 0.7] } },
+    { id: "endure", name: "持続", desc: "時間1.8倍。上がり方は少し小さい", mods: { duration: ["mul", 1.8], haste: ["mul", 0.8] } },
+    { id: "quick", name: "即応", desc: "使える間隔0.65倍", mods: { cooldown: ["mul", 0.65] } },
+  ],
+  asn_mind: [
+    { id: "long", name: "深い暗示", desc: "縛る時間1.6倍", mods: { bind: ["mul", 1.6] } },
+    { id: "net", name: "念の波", desc: "範囲1.4倍。敵が1体でも使う", mods: { radius: ["mul", 1.4], minTargets: ["set", 1] } },
+    { id: "crush", name: "心砕き", desc: "威力2倍。縛る時間は短い", mods: { damage: ["mul", 2], bind: ["mul", 0.6] } },
+  ],
+  asn_shadow: [
+    { id: "twin", name: "双影", desc: "影を2体呼ぶ。1体ずつは少し弱い", mods: { countBase: ["set", 2], attackBase: ["mul", 0.75], hpRatio: ["mul", 0.8] } },
+    { id: "master", name: "影の達人", desc: "影がとても強くなるが、いられる時間が短い", mods: { attackBase: ["mul", 1.8], hpRatio: ["mul", 1.5], duration: ["mul", 0.6] } },
+    { id: "lasting", name: "消えぬ影", desc: "影がいられる時間2倍", mods: { duration: ["mul", 2] } },
+  ],
+  asn_sentry: [
+    { id: "many", name: "歩哨の列", desc: "置ける数 +2。1回の威力は少し下がる", mods: { maxTrapsBase: ["add", 2], damage: ["mul", 0.8] } },
+    { id: "long", name: "長持ち", desc: "置いていられる時間1.8倍", mods: { duration: ["mul", 1.8] } },
+    { id: "rapid", name: "速射", desc: "撃つ間隔0.65倍。1回の威力は少し下がる", mods: { fireInterval: ["mul", 0.65], damage: ["mul", 0.85] } },
+  ],
+  asn_death: [
+    { id: "wide", name: "死の網", desc: "撃つ数 +2、届く範囲1.2倍", mods: { targets: ["add", 2], range: ["mul", 1.2] } },
+    { id: "heavy", name: "処刑", desc: "威力1.7倍。撃つ数は1体", mods: { damage: ["mul", 1.7], targets: ["set", 1] } },
+    { id: "stun", name: "金縛り", desc: "当てた敵を0.5秒縛る", extra: { bind: 0.5 } },
+  ],
+});

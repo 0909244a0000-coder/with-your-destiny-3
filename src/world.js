@@ -14,6 +14,7 @@ WYD.world = {
       hazards: [],  // 少しして爆発する場所（精鋭の「爆砕」）
       pools: [],    // 毒の沼（ボスの技）
       allies: [],   // 味方の手下（ネクロマンサーの骸骨。src/allies.js）
+      traps: [],    // 置いた罠（アサシン。src/traps.js）
       projectiles: [], // 敵が撃った弾
       particles: [],   // エフェクトの粒（src/fx.js）
       bolts: [],       // 主人公が撃った火の玉（遠くから攻撃する職業）
@@ -78,6 +79,7 @@ WYD.world = {
     this.updateBolts(w, state, stats, dt);
     WYD.mercenary.update(w, state, stats, dt);
     WYD.allies.update(w, state, stats, dt);
+    WYD.traps.update(w, state, stats, dt);
     this.updateEnemies(w, state, stats, dt);
     if (!p.dead) this.updateProjectiles(w, state, stats, dt);
     this.updateDrops(w, state, dt);
@@ -202,6 +204,7 @@ WYD.world = {
     state.floor = WYD.util.clamp(state.floor + delta, 1, area.floors + 1);
     w.enemies = [];
     w.projectiles = [];
+    w.traps = [];
     w.fields = [];
     w.hazards = [];
     w.pools = [];
@@ -519,6 +522,10 @@ WYD.world = {
 
   // スキルごとの処理。使ったら true を返す
   skillHandlers: {
+    // 罠（アサシン。src/traps.js）
+    trap(w, state, stats, s, lv) {
+      return WYD.traps.place(w, state, stats, s, lv);
+    },
     // オーラ（パラディン）：ONのあいだ、cooldown 秒ごとに効く。might は src/stats.js で攻撃力に足す
     aura(w, state, stats, s, lv) {
       const p = w.player;
@@ -1350,6 +1357,7 @@ WYD.world = {
     p.haste = null;
     p.chill = 0;
     w.allies = [];
+    w.traps = [];
     w.mercTimer = null;   // 傭兵は少したってから戻る
     w.fields = [];
     w.hazards = [];
