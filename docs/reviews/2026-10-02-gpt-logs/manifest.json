@@ -1,0 +1,116 @@
+[
+  {
+    "name": "balance-barbarian-1",
+    "command": "node tools/balance-sim.js 40 barbarian 15",
+    "exit": 0,
+    "seconds": 3.03
+  },
+  {
+    "name": "balance-barbarian-2",
+    "command": "node tools/balance-sim.js 40 barbarian 15",
+    "exit": 0,
+    "seconds": 3.29
+  },
+  {
+    "name": "balance-sorceress-1",
+    "command": "node tools/balance-sim.js 40 sorceress 15",
+    "exit": 0,
+    "seconds": 3.42
+  },
+  {
+    "name": "balance-sorceress-2",
+    "command": "node tools/balance-sim.js 40 sorceress 15",
+    "exit": 0,
+    "seconds": 3.13
+  },
+  {
+    "name": "balance-necromancer-1",
+    "command": "node tools/balance-sim.js 40 necromancer 15",
+    "exit": 0,
+    "seconds": 3.65
+  },
+  {
+    "name": "balance-necromancer-2",
+    "command": "node tools/balance-sim.js 40 necromancer 15",
+    "exit": 0,
+    "seconds": 3.52
+  },
+  {
+    "name": "balance-paladin-1",
+    "command": "node tools/balance-sim.js 40 paladin 15",
+    "exit": 0,
+    "seconds": 2.67
+  },
+  {
+    "name": "balance-paladin-2",
+    "command": "node tools/balance-sim.js 40 paladin 15",
+    "exit": 0,
+    "seconds": 2.86
+  },
+  {
+    "name": "balance-assassin-1",
+    "command": "node tools/balance-sim.js 40 assassin 15",
+    "exit": 0,
+    "seconds": 2.77
+  },
+  {
+    "name": "balance-assassin-2",
+    "command": "node tools/balance-sim.js 40 assassin 15",
+    "exit": 0,
+    "seconds": 2.75
+  },
+  {
+    "name": "balance-druid-1",
+    "command": "node tools/balance-sim.js 40 druid 15",
+    "exit": 0,
+    "seconds": 3.09
+  },
+  {
+    "name": "balance-druid-2",
+    "command": "node tools/balance-sim.js 40 druid 15",
+    "exit": 0,
+    "seconds": 3.13
+  },
+  {
+    "name": "fuzz-barbarian",
+    "command": "node tools/fuzz-test.js barbarian 1500",
+    "exit": 0,
+    "seconds": 13.06
+  },
+  {
+    "name": "fuzz-sorceress",
+    "command": "node tools/fuzz-test.js sorceress 1500",
+    "exit": 0,
+    "seconds": 12.04
+  },
+  {
+    "name": "fuzz-necromancer",
+    "command": "node tools/fuzz-test.js necromancer 1500",
+    "exit": 0,
+    "seconds": 12.86
+  },
+  {
+    "name": "fuzz-paladin",
+    "command": "node tools/fuzz-test.js paladin 1500",
+    "exit": 0,
+    "seconds": 12.51
+  },
+  {
+    "name": "fuzz-assassin",
+    "command": "node tools/fuzz-test.js assassin 1500",
+    "exit": 0,
+    "seconds": 13.61
+  },
+  {
+    "name": "fuzz-druid",
+    "command": "node tools/fuzz-test.js druid 1500",
+    "exit": 0,
+    "seconds": 13.56
+  },
+  {
+    "name": "combo",
+    "command": "node tools/combo-test.js",
+    "exit": 0,
+    "seconds": 11.63
+  }
+]
