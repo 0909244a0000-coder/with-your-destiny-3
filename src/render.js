@@ -100,6 +100,7 @@ WYD.render = {
     WYD.shrines.draw(ctx, w);
     WYD.allies.draw(ctx, w);
     this.drawPlayer(ctx, w.player);
+    this.drawPlayerBar(ctx, w.player, state);
     WYD.shrines.drawActive(ctx, w);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
     const R = WYD.data.player.rangedAttack;
@@ -369,6 +370,22 @@ WYD.render = {
     ctx.arc(h.x, h.y, h.radius * k, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
+  },
+
+  // 主人公の頭の上のHPの棒（HPが減ると赤くなる）
+  drawPlayerBar(ctx, p, state) {
+    if (p.dead || p.hp == null) return;
+    const B = WYD.data.map.playerBar;
+    const P = WYD.data.player;
+    const maxHp = WYD.stats.compute(state).maxHp;
+    const ratio = Math.max(0, Math.min(1, p.hp / maxHp));
+    const scale = p.form ? p.form.scale : 1;
+    const x = p.x - B.width / 2;
+    const y = p.y - P.radius * WYD.data.map.spriteScale * 0.5 * scale - B.gap;
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(x - 1, y - 1, B.width + 2, B.height + 2);
+    ctx.fillStyle = ratio <= B.lowAt ? B.lowColor : B.color;
+    ctx.fillRect(x, y, B.width * ratio, B.height);
   },
 
   drawPlayer(ctx, p) {

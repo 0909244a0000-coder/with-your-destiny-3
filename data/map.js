@@ -21,6 +21,7 @@ WYD.data.map = {
     darknessPerFloor: 0.05, // 1階深くなるごとに足す暗さ（ボスの間がいちばん暗い）
     maxDarkness: 0.9,
   },
+  playerBar: { width: 48, height: 6, gap: 6, color: "#3fd06a", lowColor: "#ffb03a", lowAt: 0.3 },   // 主人公の頭の上のHPの棒（スマホでもHPが見えるように）
   playerRing: 0.8,      // 主人公の足元の輪の濃さ（0〜1）。主人公がどこにいるか分かるように
   decorationCount: 40,  // 飾り（草・石）の数
   decorationSeed: 7,
