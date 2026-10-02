@@ -410,17 +410,7 @@ WYD.ui = {
       } else WYD.inventory.equip(s, index);
       this.changed();
     };
-    inv.oncontextmenu = (e) => {
-      e.preventDefault();
-      const cell = e.target.closest("[data-index]");
-      if (!cell) return;
-      if (this.fingerUsed()) return;   // 指の長押しは窓で（いきなり捨てない）
-      const item = s.inventory[Number(cell.dataset.index)];
-      const gained = WYD.inventory.discard(s, Number(cell.dataset.index));
-      if (gained < 0) this.log(`${WYD.loot.label(item)}はロックしているので捨てられない（Ctrl＋クリックで外す）`, "#ff6b6b");
-      else if (item) this.log(`${WYD.loot.label(item)}を捨てた（${C.materialName} +${gained}）`);
-      this.changed();
-    };
+    this.bindRightDiscard(inv, "inv");
     inv.onmouseover = (e) => this.showTooltipFor(e, "inv");
     inv.onmouseleave = () => { this.hideTooltip(); this.hovered = null; };
 
@@ -449,17 +439,7 @@ WYD.ui = {
       else if (!WYD.inventory.fromStash(s, Number(cell.dataset.index))) this.log("持ち物がいっぱいで戻せない", "#ff6b6b");
       this.changed();
     };
-    stash.oncontextmenu = (e) => {
-      e.preventDefault();
-      const cell = e.target.closest("[data-index]");
-      if (!cell) return;
-      if (this.fingerUsed()) return;   // 指の長押しは窓で（いきなり捨てない）
-      const item = s.stash[Number(cell.dataset.index)];
-      const gained = WYD.inventory.discardFromStash(s, Number(cell.dataset.index));
-      if (gained < 0) this.log(`${WYD.loot.label(item)}はロックしているので捨てられない（Ctrl＋クリックで外す）`, "#ff6b6b");
-      else if (item) this.log(`${WYD.loot.label(item)}を捨てた（${C.materialName} +${gained}）`);
-      this.changed();
-    };
+    this.bindRightDiscard(stash, "stash");
     stash.onmouseover = (e) => this.showTooltipFor(e, "stash");
     stash.onmouseleave = () => { this.hideTooltip(); this.hovered = null; };
 
@@ -1497,10 +1477,6 @@ WYD.ui = {
   isTouch() {
     return !!window.matchMedia && (window.matchMedia("(hover: none)").matches || window.matchMedia("(pointer: coarse)").matches);
   },
-  // 指で触ったか（マウスでないか）。iPad にキーボードやマウスをつけていても、指で触ったときは指として扱う
-  fingerUsed() {
-    return this.isTouch() || (this.lastPointer && this.lastPointer !== "mouse");
-  },
   // 長押し（指でもマウスでも）で「どうするか」の窓を出す。右クリックができない環境でも捨てたりできるように
   bindLongPress(el, selector, where, keyOf) {
     let timer = null, start = null;
@@ -1522,6 +1498,26 @@ WYD.ui = {
     });
     el.addEventListener("pointerup", clear);
     el.addEventListener("pointercancel", clear);
+  },
+  // 右クリックで捨てる。contextmenu が届かない・遅れる環境でもいいように、マウスの右ボタンを押した時点で捨てる。
+  // 指の長押し（touch）で出る contextmenu では捨てない（窓のほうを出す）
+  bindRightDiscard(el, where) {
+    let done = false;
+    el.addEventListener("pointerdown", (e) => {
+      done = false;
+      if (e.button !== 2 || e.pointerType === "touch") return;
+      const cell = e.target.closest("[data-index]");
+      if (!cell) return;
+      done = true;
+      this.discardAt(where, Number(cell.dataset.index));
+    });
+    el.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      if (done) { done = false; return; }
+      if (this.lastPointer === "touch") return;
+      const cell = e.target.closest("[data-index]");
+      if (cell) this.discardAt(where, Number(cell.dataset.index));
+    });
   },
   // 長押しで窓を出した直後のクリックは、装備などをしない
   eatClick() {
