@@ -133,6 +133,7 @@ WYD.render = {
     this.drawLight(ctx, w.player, state, WYD.data.map.light.unitDarkness);
     // 光るものと落ちている装備は、明かりの暗さの上に描く（暗がりでも見えるように）
     for (const drop of w.drops) this.drawDrop(ctx, drop);
+    this.drawDropLabels(ctx, w.drops);
     for (const ef of w.effects) this.drawEffect(ctx, ef);
     WYD.fx.draw(ctx, w);
 
@@ -768,10 +769,31 @@ WYD.render = {
     ctx.lineWidth = 1;
     ctx.strokeRect(-6, -6, 12, 12);
     ctx.restore();
+  },
+
+  // 落ちている装備の名前：重なるものは上にずらし、うすい黒の板の上に書く（たくさん落ちても読める）
+  drawDropLabels(ctx, drops) {
+    const L = WYD.data.map.dropLabel;
+    ctx.font = `${L.font}px sans-serif`;
     ctx.textAlign = "center";
-    ctx.font = "12px sans-serif";
-    ctx.fillStyle = r.color;
-    ctx.fillText(drop.item.name, drop.x, drop.y - 14 - bounce);
+    const placed = [];
+    for (const drop of drops.slice().sort((a, b) => b.y - a.y)) {
+      const r = WYD.loot.rarityInfo(drop.item.rarity);
+      const bounce = Math.max(0, 1 - drop.age * 3) * 10;
+      const w = ctx.measureText(drop.item.name).width + L.pad * 2;
+      const h = L.font + L.pad;
+      let y = drop.y - 14 - bounce;
+      for (let tries = 0; tries < L.maxShift; tries++) {
+        const hit = placed.some((b) => Math.abs(b.x - drop.x) < (b.w + w) / 2 && Math.abs(b.y - y) < h);
+        if (!hit) break;
+        y -= h;
+      }
+      placed.push({ x: drop.x, y, w });
+      ctx.fillStyle = L.back;
+      ctx.fillRect(drop.x - w / 2, y - L.font, w, h);
+      ctx.fillStyle = r.color;
+      ctx.fillText(drop.item.name, drop.x, y - 1);
+    }
   },
 
   drawEffect(ctx, ef) {
