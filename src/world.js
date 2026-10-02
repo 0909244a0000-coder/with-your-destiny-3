@@ -514,11 +514,17 @@ WYD.world = {
         // 型のおまけ：足元に燃える地面などを残す
         const lf = extra && extra.leaveField;
         if (lf) {
-          w.fields.push({ x: p.x, y: p.y, radius: lf.radius, timeLeft: lf.duration, duration: lf.duration,
+          w.fields.push({ texture: this.groundTexture(id), x: p.x, y: p.y, radius: lf.radius, timeLeft: lf.duration, duration: lf.duration,
             tick: lf.tick, tickTimer: lf.tick, mult: lf.mult * (1 + stats.skillDamage / 100), color: lf.color });
         }
       }
     }
+  },
+
+  // 地面に残るものの絵の名前（data/vfx.js の groundStyle。ないスキルは undefined＝燃える地面の絵、null＝絵なし）
+  groundTexture(skillId) {
+    const G = WYD.data.vfx.groundStyle;
+    return skillId in G ? G[skillId] : undefined;
   },
 
   // スキルごとの処理。使ったら true を返す
@@ -638,7 +644,7 @@ WYD.world = {
       } else {
         WYD.vfx.spawn(w, "fireBurst", best.x, best.y, { size: s.radius * 2 });
       }
-      w.fields.push({ x: best.x, y: best.y, radius: s.radius, timeLeft: s.duration, duration: s.duration,
+      w.fields.push({ texture: this.groundTexture(this.castingId), x: best.x, y: best.y, radius: s.radius, timeLeft: s.duration, duration: s.duration,
         tick: s.tick, tickTimer: 0, mult, color: s.color });
       return true;
     },

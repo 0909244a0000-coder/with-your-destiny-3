@@ -19,6 +19,7 @@ WYD.data.vfx = {
     chains: "assets/vfx/chains.png",       // 縛る鎖・氷（鉄鎖の束縛・凍てつく檻の間）
     shockwave: "assets/vfx/shockwave.png",    // 衝撃波の輪（ボスの大技）
     fireball: null,     // 火の玉（ソーサレスの通常攻撃）
+    plague: "assets/vfx/plague.png",   // 毒の霧の地面（疫病の霧・腐敗の地）
   },
 
   // 絵の動かし方（共通）
@@ -45,6 +46,11 @@ WYD.data.vfx = {
   },
   // 敵から敵へ飛ぶスキルの見た目（"segment" = 稲妻のように線でつなぐ、"hit" = 当たった敵ごとに絵）
   chainStyle: { sudarshana: { mode: "hit", key: "axe" }, sorc_chain: { mode: "segment", key: "lightning" } },
+  // 地面に残るもの（燃える地面など）の絵。スキル名 → 絵の名前。ここにないスキルは fireGround。null なら絵を使わず色の円で描く
+  groundStyle: {
+    nec_plague: "plague", nec_nova: "plague",   // 毒の霧・腐敗の地
+    sorc_nova: null, dru_tornado: null,          // 霜の地面・風の渦（炎の絵は合わないので色の円）
+  },
   meteorFall: 0.45,     // メテオの隕石が落ちてくるまでの秒数
   groundPulse: 0.08,    // 燃える地面のゆらぎの大きさ
 };

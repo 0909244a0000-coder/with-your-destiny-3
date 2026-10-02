@@ -66,7 +66,8 @@ WYD.vfx = {
 
   // 地面に広がる絵（燃える地面）。ゆらぎながら、消える前に薄くなる
   drawGround(ctx, f, t) {
-    const img = this.img("fireGround");
+    if (f.texture === null) return false;   // 絵を使わない地面（霜・風など）
+    const img = this.img(f.texture || "fireGround");
     if (!img) return false;
     const pulse = 1 + Math.sin(t * 6 + f.x) * WYD.data.vfx.groundPulse;
     const s = f.radius * 2 * pulse;
