@@ -10,6 +10,9 @@
   <header>
     <h1>With Your Destiny Ⅲ <small>最小版</small></h1>
     <div class="controls">
+      <span>キャラ</span>
+      <select id="class-select" title="職業を切り替える（キャラごとにセーブは別々）"></select>
+      <span class="sep"></span>
       <span>エリア</span>
       <button id="area-down" title="前のエリアへ">◀</button>
       <b id="area-name"></b>
@@ -22,15 +25,59 @@
       <button id="diff-up" title="危険度を上げる">▶</button>
       <label title="新しい危険度が解放されたら自動で上げ、何度も倒れたら1つ下げる"><input type="checkbox" id="auto-diff"> 自動</label>
       <span id="diff-progress" class="muted"></span>
+      <span id="trial-group" hidden>
+        <span class="sep"></span>
+        <span>試練</span>
+        <button id="trial-down" title="段階を下げる">◀</button>
+        <b id="trial-level">1</b>
+        <button id="trial-up" title="段階を上げる（最高記録の次まで）">▶</button>
+        <button id="trial-start" title="制限時間内に決まった数を倒し、守護者を討つ">挑む</button>
+        <label title="成功したら次の段階、失敗したら1つ下の段階で自動で続ける"><input type="checkbox" id="trial-auto"> 連続</label>
+        <span id="trial-best" class="muted"></span>
+        <button id="daily-start">日替わり</button>
+        <button id="uber-start" title="奈落の鍵3つで、強くなったボス2体に同時に挑む">奈落</button>
+      </span>
       <span class="sep"></span>
       <span>速度</span>
       <button data-speed="1">×1</button>
       <button data-speed="2">×2</button>
       <button data-speed="4">×4</button>
+      <button id="pause" title="一時停止（キーボードのスペースでも。1・2・4キーで速度）">停止</button>
       <span class="sep"></span>
-      <label><input type="checkbox" id="skip-normal"> ノーマルを拾わない</label>
+      <label title="季節のルール：選ぶと遊び方が変わり、ごほうびが増える">季節 <select id="season"></select></label>
       <span class="sep"></span>
-      <button id="reset" class="danger">最初から</button>
+      <!-- まとめたメニュー（クリックで開く） -->
+      <details class="menu">
+        <summary>拾う・装備</summary>
+        <div class="menu-body">
+          <label title="拾った装備が今より強ければ自動で着替える（ユニーク・セット・強化や宝石つきの装備は外さない）"><input type="checkbox" id="auto-equip"> 自動装備</label>
+          <button id="gamble-open" title="素材を払って部位を選ぶと、その部位の装備がランダムでもらえる（Diablo 3 のキャダラ）">キャダラの賭け</button>
+          <button id="filter-open" title="部位ごとに、どのレア度から拾うかを決める（拾わないものは素材になる）">戦利品フィルター</button>
+          <label>自動分解 <select id="auto-salvage" title="選んだレア度以下の装備は、拾わずにその場で素材にする"></select></label>
+        </div>
+      </details>
+      <details class="menu">
+        <summary>やり込み</summary>
+        <div class="menu-body">
+          <button id="bounty-open" title="いつも3つの依頼。遊んでいるだけで進み、達成するとご褒美（Diablo 3 の賞金首）">賞金首の依頼</button>
+          <button id="merc-open" title="いっしょに戦う傭兵を雇う（Diablo 2 の傭兵）">傭兵</button>
+          <button id="lgem-open" title="試練で手に入る特別な宝石。成功するたびにランクが上がる（Diablo 3 の伝説の宝石）">伝説の宝石</button>
+          <button id="devotion-open" title="信仰ポイントで星座を埋めて強くなる（Grim Dawn の星座）">星座</button>
+          <button id="codex-open" title="図鑑（集めたユニーク・セット装備）、記録、実績">図鑑と記録</button>
+        </div>
+      </details>
+      <details class="menu">
+        <summary>設定</summary>
+        <div class="menu-body">
+          <button id="sound-toggle" title="効果音（最初に画面をクリックすると鳴りはじめる）">音：ON</button>
+          <button id="music-toggle" title="BGM（エリア・ボス・試練で曲が変わる）">音楽：ON</button>
+          <button id="help">遊び方</button>
+          <button id="backup-export" title="全部のキャラのセーブを1つのファイルに保存する">セーブを書き出す</button>
+          <button id="backup-import" title="書き出したファイルからセーブを戻す">読み込む</button>
+          <input type="file" id="backup-file" accept=".json,application/json" hidden>
+          <button id="reset" class="danger">最初から</button>
+        </div>
+      </details>
     </div>
   </header>
 
@@ -48,17 +95,21 @@
         <h2 id="char-name">Lv 1</h2>
         <div class="bar"><div id="hp-bar" class="fill hp"></div><span id="hp-text"></span></div>
         <div class="bar"><div id="exp-bar" class="fill exp"></div><span id="exp-text"></span></div>
+        <div id="dps" class="dps" title="直近10秒に敵へ与えたダメージの平均（手下や燃える地面もふくむ）。ビルドの強さの目安"></div>
         <div id="stats" class="stats"></div>
+        <div id="paragon" class="build" hidden></div>
+        <div id="build" class="build"></div>
       </section>
 
       <section class="panel">
-        <h2>スキル <small>残りポイント：<b id="skill-points">0</b>　使用中：<b id="skill-slots"></b></small></h2>
+        <h2>スキル <small>残りポイント：<b id="skill-points">0</b>　使用中：<b id="skill-slots"></b></small> <button id="respec" title="使ったスキルポイントと修練ポイントを全部もどす（素材を使う）">振り直し</button></h2>
         <div id="skills"></div>
       </section>
 
       <section class="panel">
         <h2>装備 <small>クリックで外す</small></h2>
         <div id="equipment" class="grid"></div>
+        <div id="builds" class="builds"></div>
       </section>
 
       <section class="panel">
@@ -68,13 +119,119 @@
           <button id="discard-normal">ノーマルを全部捨てる</button>
           <button id="discard-magic">マジック以下を全部捨てる</button>
           <button id="craft-mode">つけ直しモード：OFF</button>
+          <button id="enhance-mode">強化モード：OFF</button>
+          <button id="forge-mode" title="装備をクリックすると、能力を1つずつ狙って鍛えられる（Last Epoch の鍛造）">鍛造</button>
         </div>
         <p class="muted" id="inv-help">左クリック：装備する／右クリック：捨てる（捨てると素材になる）</p>
+      </section>
+
+      <section class="panel" id="maps-panel" hidden>
+        <h2>地図 <small id="maps-count"></small> <small class="muted">クリア後に落ちる。使うと条件つきの試練に挑む（右クリックで捨てる）</small></h2>
+        <div id="maps"></div>
+      </section>
+
+      <section class="panel">
+        <h2>カナイの箱 <small class="muted">ユニークの力を覚えて、装備とは別に3つまで使える</small> <button id="cube-mode">入れるモード：OFF</button></h2>
+        <div id="cube"></div>
+      </section>
+
+      <section class="panel">
+        <h2>宝石 <small class="muted">選んでから装備をクリックすると、空いたソケットにはめる</small></h2>
+        <div id="gems"></div>
+      </section>
+
+      <section class="panel">
+        <h2>倉庫 <small id="stash-count"></small> <button id="stash-toggle">開く</button></h2>
+        <div id="stash-body" hidden>
+          <div id="stash" class="grid"></div>
+          <p class="muted">クリック：持ち物へ戻す／右クリック：捨てる。持ち物を倉庫に入れるときは Shift＋クリック</p>
+        </div>
       </section>
     </aside>
   </main>
 
   <div id="tooltip"></div>
+
+  <div id="board" class="modal" hidden>
+    <div class="modal-box board-box">
+      <h2>パラゴンボード</h2>
+      <div id="board-body"></div>
+      <button id="board-close">閉じる</button>
+    </div>
+  </div>
+
+  <div id="merc" class="modal" hidden>
+    <div class="modal-box devotion-box">
+      <h2>傭兵</h2>
+      <div id="merc-body"></div>
+      <button id="merc-close">閉じる</button>
+    </div>
+  </div>
+
+  <div id="lgem" class="modal" hidden>
+    <div class="modal-box devotion-box">
+      <h2>伝説の宝石</h2>
+      <div id="lgem-body"></div>
+      <button id="lgem-close">閉じる</button>
+    </div>
+  </div>
+
+  <div id="gamble" class="modal" hidden>
+    <div class="modal-box devotion-box">
+      <h2>キャダラの賭け</h2>
+      <div id="gamble-body"></div>
+      <button id="gamble-close">閉じる</button>
+    </div>
+  </div>
+
+  <div id="bounty" class="modal" hidden>
+    <div class="modal-box devotion-box">
+      <h2>賞金首の依頼</h2>
+      <div id="bounty-body"></div>
+      <button id="bounty-close">閉じる</button>
+    </div>
+  </div>
+
+  <div id="devotion" class="modal" hidden>
+    <div class="modal-box devotion-box">
+      <h2>星座</h2>
+      <div id="devotion-body"></div>
+      <button id="devotion-close">閉じる</button>
+    </div>
+  </div>
+
+  <div id="filter" class="modal" hidden>
+    <div class="modal-box filter-box">
+      <h2>戦利品フィルター</h2>
+      <div id="filter-body"></div>
+      <button id="filter-close">閉じる</button>
+    </div>
+  </div>
+
+  <div id="forge" class="modal" hidden>
+    <div class="modal-box forge-box">
+      <h2>鍛造</h2>
+      <div id="forge-body"></div>
+      <button id="forge-close">閉じる</button>
+    </div>
+  </div>
+
+  <div id="codex" class="modal" hidden>
+    <div class="modal-box codex-box">
+      <h2>図鑑と記録</h2>
+      <div id="codex-body"></div>
+      <button id="codex-close">閉じる</button>
+    </div>
+  </div>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-box">
+      <h2 id="modal-title"></h2>
+      <p id="modal-text"></p>
+      <ul id="modal-list"></ul>
+      <button id="modal-ok">続ける</button>
+    </div>
+  </div>
 
   <!-- 数値（data/） -->
   <script src="data/player.js"></script>
@@ -87,13 +244,64 @@
   <script src="data/effects.js"></script>
   <script src="data/crafting.js"></script>
   <script src="data/uniques.js"></script>
+  <script src="data/offline.js"></script>
+  <script src="data/story.js"></script>
+  <script src="data/fx.js"></script>
+  <script src="data/anim.js"></script>
+  <script src="data/sound.js"></script>
+  <script src="data/classes.js"></script>
+  <script src="data/vfx.js"></script>
+  <script src="data/runes.js"></script>
+  <script src="data/sets.js"></script>
+  <script src="data/trial.js"></script>
+  <script src="data/records.js"></script>
+  <script src="data/gems.js"></script>
+  <script src="data/daily.js"></script>
+  <script src="data/cube.js"></script>
+  <script src="data/maps.js"></script>
+  <script src="data/devotion.js"></script>
+  <script src="data/seasons.js"></script>
+  <script src="data/uber.js"></script>
+  <script src="data/music.js"></script>
+  <script src="data/mercenary.js"></script>
+  <script src="data/legendaryGems.js"></script>
+  <script src="data/shrines.js"></script>
+  <script src="data/gamble.js"></script>
+  <script src="data/breach.js"></script>
+  <script src="data/bounties.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>
+  <script src="src/classes.js"></script>
   <script src="src/stats.js"></script>
   <script src="src/loot.js"></script>
   <script src="src/inventory.js"></script>
   <script src="src/world.js"></script>
+  <script src="src/fx.js"></script>
+  <script src="src/vfx.js"></script>
+  <script src="src/runes.js"></script>
+  <script src="src/trial.js"></script>
+  <script src="src/records.js"></script>
+  <script src="src/gems.js"></script>
+  <script src="src/daily.js"></script>
+  <script src="src/allies.js"></script>
+  <script src="src/traps.js"></script>
+  <script src="src/cube.js"></script>
+  <script src="src/maps.js"></script>
+  <script src="src/devotion.js"></script>
+  <script src="src/board.js"></script>
+  <script src="src/seasons.js"></script>
+  <script src="src/builds.js"></script>
+  <script src="src/uber.js"></script>
+  <script src="src/music.js"></script>
+  <script src="src/mercenary.js"></script>
+  <script src="src/legendaryGems.js"></script>
+  <script src="src/shrines.js"></script>
+  <script src="src/gamble.js"></script>
+  <script src="src/breach.js"></script>
+  <script src="src/bounties.js"></script>
+  <script src="src/sound.js"></script>
+  <script src="src/offline.js"></script>
   <script src="src/render.js"></script>
   <script src="src/ui.js"></script>
   <script src="src/main.js"></script>
