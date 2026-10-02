@@ -50,6 +50,7 @@ WYD.stats = {
     }
     const mb = WYD.mercenary.bonus(state);   // 傭兵の加護
     for (const id in mb.effects || {}) if (id in totals) totals[id] += mb.effects[id];
+    totals.lifesteal += WYD.lgems.value(state, "blood");   // 伝説の宝石：血の宝石
     for (const t of WYD.board.ownedTiles(state)) {
       for (const id in t.effects || {}) if (id in totals) totals[id] += t.effects[id];
     }
@@ -119,7 +120,7 @@ WYD.stats = {
       asceticBonus = Math.max(0, WYD.data.skillSlots - active) * powers.ascetic.percentPerSlot;
     }
     return {
-      maxHp: Math.round(P.base.maxHp + P.perLevel.maxHp * lv + b.maxHp + pb.maxHp),
+      maxHp: Math.round((P.base.maxHp + P.perLevel.maxHp * lv + b.maxHp + pb.maxHp) * (1 + WYD.lgems.value(state, "life") / 100)),
       attack: (P.base.attack + P.perLevel.attack * lv + b.attack + pb.attack) * this.mightMult(state),
       defense: P.base.defense + P.perLevel.defense * lv + b.defense + pb.defense,
       attackSpeed: WYD.util.clamp(P.base.attackSpeed * (1 + (b.attackSpeed + pb.attackSpeed) / 100), P.minAttackSpeed, P.maxAttackSpeed),

@@ -175,6 +175,18 @@ WYD.ui = {
       this.$("merc-body").innerHTML = this.mercHtml();
       this.$("merc").hidden = false;
     };
+    this.$("lgem-open").onclick = () => {
+      this.$("lgem-body").innerHTML = this.lgemHtml();
+      this.$("lgem").hidden = false;
+    };
+    this.$("lgem-close").onclick = () => { this.$("lgem").hidden = true; };
+    this.$("lgem-body").onclick = (e) => {
+      const btn = e.target.closest("[data-lgem]");
+      if (!btn) return;
+      if (!WYD.lgems.toggle(s, btn.dataset.lgem)) this.log(`伝説の宝石は${WYD.data.legendaryGems.slots}つまで`, "#ff6b6b");
+      this.$("lgem-body").innerHTML = this.lgemHtml();
+      this.changed();
+    };
     this.$("merc-close").onclick = () => { this.$("merc").hidden = true; };
     this.$("merc-body").onclick = (e) => {
       const btn = e.target.closest("[data-merc]");
@@ -511,6 +523,25 @@ WYD.ui = {
     }).join("");
     return `<div class="dev-head">信仰ポイント：<b>${WYD.devotion.free(s)}</b> / ${WYD.devotion.totalPoints(s)}　今の縁：${afText(af)}</div>
       <p class="muted">ポイントは レベル${P.perLevels}ごとに1、はじめて倒したボス1体ごとに${P.perBoss}、試練の最高段階${P.perTrialStages}ごとに1、地図の最高段階1ごとに${P.perMapTier}。外すとポイントはもどる。</p>${rows}`;
+  },
+
+  // 伝説の宝石の画面
+  lgemHtml() {
+    const s = this.state;
+    const D = WYD.data.legendaryGems;
+    const L = s.lgems;
+    const stage = s.trial.best + 1;
+    const rows = D.list.map((g) => {
+      const rank = L.owned[g.id];
+      const on = L.equipped.includes(g.id);
+      if (!rank) return `<div class="dev-row"><div><b class="muted">？ ${g.name}</b> <small class="muted">まだ持っていない</small><br><small class="muted">${WYD.lgems.descFor(g, 1)}</small></div></div>`;
+      const btn = `<button data-lgem="${g.id}" ${!on && L.equipped.length >= D.slots ? "disabled" : ""}>${on ? "外す" : "つける"}</button>`;
+      const chance = Math.round(WYD.lgems.upgradeChance(stage, rank) * 100);
+      return `<div class="dev-row${on ? " own" : ""}"><div><b style="color:${g.color}">◆ ${g.name}</b> ランク ${rank}${rank >= D.maxRank ? "（最大）" : ""}<br>
+        <small>${WYD.lgems.descFor(g, rank)}</small> <small class="muted">（試練 段階${stage}でのランク上げ成功率 ${chance}%）</small></div>${btn}</div>`;
+    }).join("");
+    return `<div class="dev-head">つけている数：<b>${L.equipped.length}</b> / ${D.slots}</div>
+      <p class="muted">試練（日替わり・地図・双王もふくむ）に成功すると、まだ持っていない宝石が手に入ることがあります（最初の1つは必ず）。成功するたびに、つけている宝石のランクを${D.upgradeTries}回まで自動で上げます（ランクの低いものから）。高い段階ほど上がりやすい。</p>${rows}`;
   },
 
   // 傭兵の画面

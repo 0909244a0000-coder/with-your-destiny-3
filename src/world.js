@@ -58,6 +58,7 @@ WYD.world = {
       p.haste.timeLeft -= dt;
       if (p.haste.timeLeft <= 0) p.haste = null;
     }
+    WYD.lgems.update(w, dt);
     // オーラの輪（ONのオーラだけ残る）
     for (const id in p.auras || {}) {
       p.auras[id].timeLeft -= dt;
@@ -433,7 +434,7 @@ WYD.world = {
 
     p.attackTimer -= dt;
     if (d <= reach && p.attackTimer <= 0) {
-      p.attackTimer = 1 / (stats.attackSpeed * (1 + (p.haste ? p.haste.percent : 0) / 100));
+      p.attackTimer = 1 / (stats.attackSpeed * (1 + (p.haste ? p.haste.percent : 0) / 100) * WYD.lgems.attackSpeedMult(w, state));
       p.atkAnim = WYD.data.anim.attack.time;
       p.face = target.x >= p.x ? 1 : -1;
       p.swingTarget = { x: target.x, y: target.y };
@@ -1007,6 +1008,8 @@ WYD.world = {
     // 固有能力：狩人の籠手（精鋭とボスに強い）
     const hunter = stats.powers.eliteHunter;
     if (hunter && (e.elite || e.boss)) attack *= 1 + hunter.percent / 100;
+    attack *= WYD.lgems.damageMult(w, state, e);   // 伝説の宝石
+    WYD.lgems.onHit(w, state);
     const hit = this.calcDamage(attack, e.defense, stats.critChance, stats.critMultiplier);
     this.damageEnemy(w, state, e, hit.damage, hit.crit);
     // スキルの型のおまけ：吸血・縛る（スキルを使っている最中だけ）
@@ -1102,6 +1105,7 @@ WYD.world = {
       w.effects.push({ type: "ring", x: e.x, y: e.y, radius: 30, color: def.color, time: 0, duration: 0.3 });
       return;
     }
+    WYD.lgems.onKill(w, state, e);
     WYD.fx.death(w, e);
     const diff = WYD.data.difficulty;
     const inTrial = WYD.trial.active(state);

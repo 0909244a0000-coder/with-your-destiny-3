@@ -114,6 +114,7 @@ WYD.trial = {
     t.done = true;
     t.nextIn = T.nextDelay;
     if (success) WYD.records.addRun(state, Math.round(t.timeLimit - t.timeLeft));
+    if (success) WYD.lgems.onTrialSuccess(state, state.trialRun.level);   // 伝説の宝石
     if (state.trialRun.uber) {
       WYD.uber.finish(w, state, success, guardian);
       WYD.ui.changed();

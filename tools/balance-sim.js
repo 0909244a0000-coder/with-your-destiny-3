@@ -65,7 +65,7 @@ const MERC = process.argv[6] || null; // 雇う傭兵（spear・archer・mage。
       }
       trial = s.trial;
     }
-    return { events, trial, deaths, level: s.player.level, area: s.area, maxDiff: s.maxDifficulty, mats: s.materials,
+    return { events, lgems: s.lgems, trial, deaths, level: s.player.level, area: s.area, maxDiff: s.maxDifficulty, mats: s.materials,
       eq: Object.values(s.equipment).map(i => i.name + '(' + i.rarity + ')') };
   }, [MINUTES, TRIAL_MINUTES, SKILLS, MERC]);
   console.log(JSON.stringify(res, null, 1), 'secs', (Date.now()-t0)/1000);

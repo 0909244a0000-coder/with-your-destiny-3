@@ -59,6 +59,7 @@
         <summary>やり込み</summary>
         <div class="menu-body">
           <button id="merc-open" title="いっしょに戦う傭兵を雇う（Diablo 2 の傭兵）">傭兵</button>
+          <button id="lgem-open" title="試練で手に入る特別な宝石。成功するたびにランクが上がる（Diablo 3 の伝説の宝石）">伝説の宝石</button>
           <button id="devotion-open" title="信仰ポイントで星座を埋めて強くなる（Grim Dawn の星座）">星座</button>
           <button id="codex-open" title="図鑑（集めたユニーク・セット装備）、記録、実績">図鑑と記録</button>
         </div>
@@ -165,6 +166,14 @@
     </div>
   </div>
 
+  <div id="lgem" class="modal" hidden>
+    <div class="modal-box devotion-box">
+      <h2>伝説の宝石</h2>
+      <div id="lgem-body"></div>
+      <button id="lgem-close">閉じる</button>
+    </div>
+  </div>
+
   <div id="devotion" class="modal" hidden>
     <div class="modal-box devotion-box">
       <h2>星座</h2>
@@ -237,6 +246,7 @@
   <script src="data/uber.js"></script>
   <script src="data/music.js"></script>
   <script src="data/mercenary.js"></script>
+  <script src="data/legendaryGems.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>
@@ -262,6 +272,7 @@
   <script src="src/uber.js"></script>
   <script src="src/music.js"></script>
   <script src="src/mercenary.js"></script>
+  <script src="src/legendaryGems.js"></script>
   <script src="src/sound.js"></script>
   <script src="src/offline.js"></script>
   <script src="src/render.js"></script>
