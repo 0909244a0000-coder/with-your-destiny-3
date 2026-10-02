@@ -3,7 +3,7 @@ window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
 WYD.data.items = {
-  inventorySize: 30,
+  inventorySize: 60,   // 持ち物に入る数（6列なので6の倍数に）
   stashSize: 30,        // 倉庫に入る数
   fullSalvage: ["normal", "magic"],   // 持ち物がいっぱいのとき、拾ったその場で素材にするレア度
   fullWarnInterval: 30,  // 「持ち物がいっぱい」の知らせを出す間隔（秒）
