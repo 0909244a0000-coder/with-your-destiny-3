@@ -73,6 +73,7 @@ WYD.world = {
     this.updateSpawns(w, state, dt);
     this.updatePlayer(w, state, stats, dt);
     this.updateBolts(w, state, stats, dt);
+    WYD.mercenary.update(w, state, stats, dt);
     WYD.allies.update(w, state, stats, dt);
     this.updateEnemies(w, state, stats, dt);
     if (!p.dead) this.updateProjectiles(w, state, stats, dt);
@@ -1335,6 +1336,7 @@ WYD.world = {
     p.haste = null;
     p.chill = 0;
     w.allies = [];
+    w.mercTimer = null;   // 傭兵は少したってから戻る
     w.fields = [];
     w.hazards = [];
     w.pools = [];

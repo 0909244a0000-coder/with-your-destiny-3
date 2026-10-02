@@ -130,6 +130,21 @@ A single full-body character sprite for a dark fantasy action RPG, 3/4 top-down 
 A single sprite sheet image, 1536x1536, arranged as an exact 3 columns by 3 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Paladin skill icons, left-to-right, top-to-bottom: 1 Zeal: a hammer swung in a fast golden arc, 2 Holy Shield: a glowing kite shield, 3 Blessed Hammer: a spinning blue-white hammer of light, 4 Judgment: a pillar of holy light striking the ground, 5 Crusader Vow: a raised fist wreathed in orange flame, 6 Chains of Judgment: golden chains of light, 7 Holy Fire aura: a ring of holy fire on the ground, 8 Prayer aura: hands in prayer with green light, 9 Might aura: a red glowing rune of strength in a circle.
 ```
 
+### 傭兵の絵（3枚）
+今は敵の絵の色を変えて仮に使っています（`data/mercenary.js` の `image`・`imageFilter`）。置いたら `image` をこの名前にし、`imageFilter` を `null` にする（512px以上・透明背景・`prepare_sprite.py` で256pxに）。
+- `assets/merc_spear.png`
+```
+A single full-body sprite, 3/4 top-down view, facing right, transparent background: a hired spearman mercenary in worn steel half-plate and a blue cloak, long spear, round shield. Western dark fantasy (Diablo-like), painterly. No text, no frame.
+```
+- `assets/merc_archer.png`
+```
+A single full-body sprite, 3/4 top-down view, facing right, transparent background: a hooded rogue archer mercenary in green leather armor, drawing a longbow. Western dark fantasy (Diablo-like), painterly. No text, no frame.
+```
+- `assets/merc_mage.png`
+```
+A single full-body sprite, 3/4 top-down view, facing right, transparent background: a desert mage mercenary in blue and sand-colored robes and a turban, holding a staff with a cold blue light. Western dark fantasy (Diablo-like), painterly. No text, no frame.
+```
+
 ### 4つ目のエリア「奈落の大聖堂」の絵
 今は地面＝火葬場の絵に紫をかぶせたもの、敵とボス＝今ある絵の色を変えたもの（`data/areas.js` の `groundTint`、`data/enemies.js` の `imageFilter`）。届いたら `image` を差し替え、`groundTint`・`imageFilter` を消す。世界観は西洋の闇（崩れた大聖堂、堕ちた聖職者、亡霊）。
 

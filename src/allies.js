@@ -128,6 +128,14 @@ WYD.allies = {
       ctx.fillRect(a.x - bw / 2, a.y - a.radius - 12, bw, 3);
       ctx.fillStyle = WYD.data.player.color;
       ctx.fillRect(a.x - bw / 2, a.y - a.radius - 12, bw * Math.max(0, a.hp / a.maxHp), 3);
+      if (a.merc) {
+        // 傭兵：時間で崩れないので、時間のかわりに名前
+        ctx.fillStyle = a.color;
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(a.name, a.x, a.y - a.radius - 15);
+        continue;
+      }
       ctx.fillStyle = "#888";
       ctx.fillRect(a.x - bw / 2, a.y - a.radius - 8, bw * Math.max(0, a.timeLeft / a.duration), 1);
     }

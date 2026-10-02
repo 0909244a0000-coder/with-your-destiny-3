@@ -171,6 +171,22 @@ WYD.ui = {
       this.$("devotion").hidden = false;
     };
     this.$("devotion-close").onclick = () => { this.$("devotion").hidden = true; };
+    this.$("merc-open").onclick = () => {
+      this.$("merc-body").innerHTML = this.mercHtml();
+      this.$("merc").hidden = false;
+    };
+    this.$("merc-close").onclick = () => { this.$("merc").hidden = true; };
+    this.$("merc-body").onclick = (e) => {
+      const btn = e.target.closest("[data-merc]");
+      if (!btn) return;
+      const act = btn.dataset.merc;
+      const ok = act === "rank" ? WYD.mercenary.rankUp(s)
+        : act === "dismiss" ? (WYD.mercenary.dismiss(s), true)
+        : WYD.mercenary.hire(s, act);
+      if (!ok) this.log(`${WYD.data.crafting.materialName}が足りない`, "#ff6b6b");
+      this.$("merc-body").innerHTML = this.mercHtml();
+      this.changed();
+    };
     this.$("devotion-body").onclick = (e) => {
       const btn = e.target.closest("[data-dev]");
       if (!btn) return;
@@ -495,6 +511,31 @@ WYD.ui = {
     }).join("");
     return `<div class="dev-head">信仰ポイント：<b>${WYD.devotion.free(s)}</b> / ${WYD.devotion.totalPoints(s)}　今の縁：${afText(af)}</div>
       <p class="muted">ポイントは レベル${P.perLevels}ごとに1、はじめて倒したボス1体ごとに${P.perBoss}、試練の最高段階${P.perTrialStages}ごとに1、地図の最高段階1ごとに${P.perMapTier}。外すとポイントはもどる。</p>${rows}`;
+  },
+
+  // 傭兵の画面
+  mercHtml() {
+    const s = this.state;
+    const M = WYD.data.mercenary;
+    const mat = WYD.data.crafting.materialName;
+    const cur = WYD.mercenary.type(s);
+    if (s.player.level < M.minLevel) return `<p class="muted">レベル${M.minLevel}になると雇えます。</p>`;
+    let head = `<div class="dev-head">今の傭兵：<b>なし</b></div>`;
+    if (cur) {
+      const cost = WYD.mercenary.rankCost(s);
+      const rankBtn = cost == null ? `<small class="muted">位は最大</small>`
+        : `<button data-merc="rank" ${s.materials >= cost ? "" : "disabled"}>位を上げる（${mat} ${cost}）</button>`;
+      head = `<div class="dev-row own"><div><b>${cur.name}</b>（位 ${s.mercenary.rank} / ${M.rankCosts.length + 1}、HPと攻撃力 +${Math.round(M.rankMult * (s.mercenary.rank - 1) * 100)}%）<br>
+        <small>${cur.bonusName}：${this.bonusText(cur.bonus)}</small></div><div>${rankBtn} <button data-merc="dismiss">解雇</button></div></div>`;
+    }
+    const rows = M.types.map((t) => {
+      const own = cur && cur.id === t.id;
+      const btn = own ? `<small class="muted">雇っている</small>`
+        : `<button data-merc="${t.id}" ${WYD.mercenary.canHire(s, t.id) ? "" : "disabled"}>${cur ? "替える" : "雇う"}（${mat} ${M.hireCost}）</button>`;
+      return `<div class="dev-row${own ? " own" : ""}"><div><b>${t.name}</b> <small class="muted">${t.desc}</small><br>
+        <small>${t.bonusName}：${this.bonusText(t.bonus)}</small></div>${btn}</div>`;
+    }).join("");
+    return `${head}<p class="muted">傭兵は主人公の強さに合わせて強くなります。倒れても${M.reviveTime}秒で戻ります。雇っているあいだ「加護」がつきます。替えると位は1にもどります。</p>${rows}`;
   },
 
   // 戦利品フィルターの画面

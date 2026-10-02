@@ -46,6 +46,7 @@ WYD.save = {
       uber: { keys: 0, kills: 0 },   // 奈落の鍵と、双王を倒した数
       builds: [],      // 保存したビルド（src/builds.js）
       devotion: {},    // 埋めた星座（星座の id → true）
+      mercenary: { type: null, rank: 1 },   // 雇っている傭兵（src/mercenary.js）
       bossDeaths: {},  // ボスに倒された回数（エリアの id → 回数。倒すと消える）
       mapBest: 0,      // 成功した地図の最高段階
       cube: { learned: {}, slots: { weapon: null, armor: null, jewelry: null } },   // カナイの箱

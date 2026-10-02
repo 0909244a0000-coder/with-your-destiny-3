@@ -20,7 +20,7 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
     await pg.evaluate(() => {
       const skip = new Set(['reset', 'backup-import', 'backup-export', 'class-select', 'backup-file']);
       for (let i = 0; i < 100; i++) {
-        const all = [...document.querySelectorAll('button, summary, [data-index], [data-slot], [data-gem], [data-cell], [data-dev], [data-map-use], [data-map-up], [data-build], select, input[type=checkbox]')]
+        const all = [...document.querySelectorAll('button, summary, [data-index], [data-slot], [data-gem], [data-cell], [data-dev], [data-merc], [data-map-use], [data-map-up], [data-build], select, input[type=checkbox]')]
           .filter((e) => e.offsetParent !== null && !skip.has(e.id) && !e.disabled);
         if (!all.length) continue;
         const el = all[Math.floor(Math.random() * all.length)];

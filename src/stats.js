@@ -48,6 +48,8 @@ WYD.stats = {
     for (const c of WYD.devotion.owned(state)) {
       for (const id in c.bonus.effects || {}) if (id in totals) totals[id] += c.bonus.effects[id];
     }
+    const mb = WYD.mercenary.bonus(state);   // 傭兵の加護
+    for (const id in mb.effects || {}) if (id in totals) totals[id] += mb.effects[id];
     for (const t of WYD.board.ownedTiles(state)) {
       for (const id in t.effects || {}) if (id in totals) totals[id] += t.effects[id];
     }
@@ -104,6 +106,8 @@ WYD.stats = {
     for (const c of WYD.devotion.owned(state)) {
       for (const k in c.bonus.stats || {}) b[k] = (b[k] || 0) + c.bonus.stats[k];
     }
+    const mb = WYD.mercenary.bonus(state);   // 傭兵の加護
+    for (const k in mb.stats || {}) b[k] = (b[k] || 0) + mb.stats[k];
     const fx = this.effectTotals(state);
     const pb = this.paragonBonus(state);
     const powers = this.powers(state);

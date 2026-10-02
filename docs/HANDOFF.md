@@ -24,6 +24,7 @@
 - 終わりのない試練（クリア後、上のバーの「試練」から。`data/trial.js`・`src/trial.js`）。試練の最中かどうかはセーブしない（読み直すとふつうの冒険にもどる）。`node tools/balance-sim.js 25 barbarian 20` でクリア後に20分試練を続けた結果も出る
 - 職業4つ：バーバリアン（近接）、ソーサレス（火の玉で遠くから）、ネクロマンサー（骨の槍で遠くから＋骸骨の手下。`data/classes.js`）、パラディン（近接＋オーラ）。手下のしくみは `src/allies.js`（新しいスキルのしくみ `raise`）。近くの敵は、主人公より近い手下をねらう。ネクロマンサーとパラディンの絵はまだ仮（`docs/ART.md`）。キャラごとにセーブは別（バーバリアンは `wyd3-save-v1`、ほかは `wyd3-save-v1-<職業>`）
 - オーラ（パラディン）：スキルのしくみ `aura`（`src/world.js`）。`auraType` が damage＝周りの敵を `cooldown` 秒ごとに焼く、heal＝主人公と近くの手下のHPを回復、might＝攻撃力アップ（`src/stats.js` の `mightMult`、ONでLv1以上なら常に効く）。足元に輪が出る（数値は `data/fx.js` の `auraRing`）。パラディン専用ユニーク「聖騎士の冠」（全オーラ強化）とセット「聖戦士の誓い」あり。`tools/balance-sim.js` の5つ目の引数で覚えるスキル3つを選べる
+- 傭兵：`src/mercenary.js`・`data/mercenary.js`。戦い方は手下と同じ `src/allies.js`（source が "merc"、時間で崩れない）。いなければ `WYD.mercenary.update` が出す（倒れたら `reviveTime` 秒後）。加護は `src/stats.js` で星座と同じように足す。セーブは `state.mercenary = { type, rank }`。絵は仮（敵の絵の色替え）。`tools/balance-sim.js` の6つ目の引数で傭兵を雇わせられる（4職で最後のボスは18〜19分、雇わないと17〜21分）
 - エフェクト（`src/fx.js`）、絵の動き（`src/render.js` の `pose`）、ディアブロ風パネル（`src/style.css` の後半）、効果音（`src/sound.js`）
 - 絵：主人公、地面3枚、装備13個・スキル6個のアイコン、全13種類の敵・ボス（`docs/ART.md` の「受け取り済み」）。アイコンの切り出し用シートも `assets/sheets/` に保存
 
