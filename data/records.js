@@ -12,6 +12,8 @@ WYD.data = WYD.data || {};
 
 WYD.data.records = {
   color: "#ffd36b",   // 実績の文字の色
+  historyMax: 30,     // 挑戦の記録を何件まで残すか
+  runNames: { trial: "試練", daily: "日替わり", map: "地図", uber: "奈落の双王" },
 
   counters: [
     { id: "kills", name: "倒した敵" },

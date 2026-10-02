@@ -941,6 +941,18 @@ WYD.ui = {
       : `<div class="socket empty">◇ 空いたソケット</div>`).join("");
   },
 
+  runHistoryHtml() {
+    const s = this.state;
+    const R = WYD.data.records;
+    const seasonName = (id) => (WYD.data.seasons.list.find((x) => x.id === id) || {}).name || "";
+    const fmt = (r) => `${R.runNames[r.kind]} ${r.kind === "map" ? "地図段階" : "段階"}${r.level}　${Math.floor(r.seconds / 60)}:${String(r.seconds % 60).padStart(2, "0")}`;
+    const best = Object.keys(R.runNames).filter((k) => s.runBest[k]).map((k) =>
+      `<div class="codex-row"><span>最高：${fmt(s.runBest[k])}</span><b class="muted">${s.runBest[k].date}</b></div>`).join("");
+    const list = s.runHistory.slice(0, 10).map((r) =>
+      `<div class="codex-row"><span>${fmt(r)}${r.season && r.season !== "none" ? `　<small class="muted">${seasonName(r.season)}</small>` : ""}</span><b class="muted">${r.date}</b></div>`).join("");
+    return best || list ? `${best}<div class="build-title" style="margin-top:4px">最近（新しい順）</div>${list}` : `<p class="muted">まだ記録がない（試練・日替わり・地図・奈落の双王に成功すると残る）</p>`;
+  },
+
   runewordListHtml() {
     const G = WYD.data.gems;
     return G.runewords.map((rw) => `<div class="codex-item"><b style="color:${G.runewordColor}">「${rw.name}」</b> <small class="muted">${G.groupName[rw.group]}・ソケット${rw.runes.length}つ</small><br>
@@ -988,7 +1000,8 @@ WYD.ui = {
     }).join("");
     return `<div class="codex-cols">
       <div><h3>記録</h3>${counters}<h3>実績 <small>${done}/${R.achievements.length}</small></h3>${achievements}</div>
-      <div><h3>ルーンワード <small>ノーマル装備のソケットを、この順番でうめる</small></h3>${this.runewordListHtml()}
+      <div><h3>挑戦の記録</h3>${this.runHistoryHtml()}
+      <h3>ルーンワード <small>ノーマル装備のソケットを、この順番でうめる</small></h3>${this.runewordListHtml()}
       <h3>ユニーク図鑑 <small>${uFound}/${uList.length}</small></h3>${uniques}<h3>セット図鑑</h3>${sets}</div>
     </div>`;
   },

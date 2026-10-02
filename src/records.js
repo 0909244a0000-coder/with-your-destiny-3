@@ -71,6 +71,22 @@ WYD.records = {
     }
   },
 
+  // 挑戦（試練・日替わり・地図・双王）に成功したら、記録に残す
+  addRun(state, seconds) {
+    const run = state.trialRun;
+    const kind = run.uber ? "uber" : run.map ? "map" : run.daily ? "daily" : "trial";
+    const d = new Date();
+    state.runHistory.unshift({
+      kind, level: run.map ? run.map.tier : run.level, seconds,
+      date: `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+      season: state.settings.season, playerLevel: state.player.level,
+    });
+    state.runHistory.length = Math.min(state.runHistory.length, WYD.data.records.historyMax);
+    // 種類ごとの、いちばん高い段階で、いちばん速い記録
+    const best = state.runBest[kind];
+    if (!best || run.level > best.level || (run.level === best.level && seconds < best.seconds)) state.runBest[kind] = state.runHistory[0];
+  },
+
   // 遊んだ時間を「1時間2分」のように
   timeText(sec) {
     const m = Math.floor(sec / 60), h = Math.floor(m / 60);

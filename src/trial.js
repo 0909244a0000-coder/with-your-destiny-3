@@ -113,6 +113,7 @@ WYD.trial = {
     const t = w.trial;
     t.done = true;
     t.nextIn = T.nextDelay;
+    if (success) WYD.records.addRun(state, Math.round(t.timeLimit - t.timeLeft));
     if (state.trialRun.uber) {
       WYD.uber.finish(w, state, success, guardian);
       WYD.ui.changed();
