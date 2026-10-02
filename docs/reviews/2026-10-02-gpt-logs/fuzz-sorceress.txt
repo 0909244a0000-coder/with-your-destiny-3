@@ -1,0 +1,1 @@
+sorceress {"nanStats":[],"inv":15,"mats":93988,"trial":true} reload ok: 50 errors: 0
