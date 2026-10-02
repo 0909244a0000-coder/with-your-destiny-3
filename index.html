@@ -44,6 +44,7 @@
       <button id="pause" title="一時停止（キーボードのスペースでも。1・2・4キーで速度）">停止</button>
       <span class="sep"></span>
       <label title="拾った装備が今より強ければ自動で着替える（ユニーク・セット・強化や宝石つきの装備は外さない）"><input type="checkbox" id="auto-equip"> 自動装備</label>
+      <button id="filter-open" title="部位ごとに、どのレア度から拾うかを決める（拾わないものは素材になる）">フィルター</button>
       <label>自動分解 <select id="auto-salvage" title="選んだレア度以下の装備は、拾わずにその場で素材にする"></select></label>
       <span class="sep"></span>
       <button id="sound-toggle" title="効果音（最初に画面をクリックすると鳴りはじめる）">音：ON</button>
@@ -125,6 +126,14 @@
   </main>
 
   <div id="tooltip"></div>
+
+  <div id="filter" class="modal" hidden>
+    <div class="modal-box filter-box">
+      <h2>戦利品フィルター</h2>
+      <div id="filter-body"></div>
+      <button id="filter-close">閉じる</button>
+    </div>
+  </div>
 
   <div id="forge" class="modal" hidden>
     <div class="modal-box forge-box">

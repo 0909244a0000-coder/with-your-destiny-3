@@ -153,6 +153,18 @@ WYD.ui = {
       if (this.craftMode) this.enhanceMode = this.cubeMode = this.forgeMode = false;
       this.markDirty();
     };
+    this.$("filter-open").onclick = () => {
+      this.$("filter-body").innerHTML = this.filterHtml();
+      this.$("filter").hidden = false;
+    };
+    this.$("filter-close").onclick = () => { this.$("filter").hidden = true; };
+    this.$("filter-body").onchange = (e) => {
+      const f = s.settings.filter;
+      const t = e.target;
+      if (t.dataset.filterSlot) f.slots[t.dataset.filterSlot] = t.value;
+      else if (t.dataset.filterFlag) f[t.dataset.filterFlag] = t.checked;
+      this.changed();
+    };
     this.$("forge-mode").onclick = () => {
       this.forgeMode = !this.forgeMode;
       if (this.forgeMode) this.craftMode = this.enhanceMode = this.cubeMode = false;
@@ -416,6 +428,20 @@ WYD.ui = {
     this.changed();
   },
 
+  // 戦利品フィルターの画面
+  filterHtml() {
+    const f = this.state.settings.filter;
+    const C = WYD.data.crafting;
+    const slots = WYD.data.items.slots;
+    const opts = (cur) => C.filterLevels.map((l) => `<option value="${l.id}" ${l.id === cur ? "selected" : ""}>${l.label}</option>`).join("");
+    const flag = (id, label) => `<label class="filter-flag"><input type="checkbox" data-filter-flag="${id}" ${f[id] ? "checked" : ""}> ${label}</label>`;
+    return `${flag("on", "<b>フィルターを使う</b>（ONの間は上の「自動分解」のかわりにこちらが使われる）")}
+      <div class="filter-grid">${Object.keys(slots).map((k) => `<span>${slots[k]}</span><select data-filter-slot="${k}">${opts(f.slots[k] || "normal")}</select>`).join("")}</div>
+      ${flag("keepUpgrades", "今の装備より強いものは、上の決まりに関係なく拾う")}
+      ${flag("keepSocketed", "ソケット2つ以上のノーマル（ルーンワードの土台）は拾う")}
+      <p class="muted">ユニークとセットはいつも拾います。拾わない装備はその場で素材になります。</p>`;
+  },
+
   // 鍛造の画面
   openForge(item) {
     if (!item) return;
@@ -614,6 +640,8 @@ WYD.ui = {
     }
     this.$("auto-salvage").value = s.settings.autoSalvage;
     this.$("auto-equip").checked = !!s.settings.autoEquip;
+    this.$("filter-open").classList.toggle("active", !!s.settings.filter.on);
+    this.$("auto-salvage").disabled = !!s.settings.filter.on;
     this.$("pause").textContent = this.paused ? "再開" : "停止";
     this.$("pause").classList.toggle("active", this.paused);
     this.$("sound-toggle").textContent = `音：${s.settings.sound ? "ON" : "OFF"}`;

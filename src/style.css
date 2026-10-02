@@ -283,3 +283,9 @@ button.danger { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px #
 .forge-row button { font-size: 12px; padding: 1px 8px; }
 .forge-pot { margin: 8px 0 4px; font-size: 13px; }
 #forge-close { display: block; margin: 10px auto 0; }
+
+/* 戦利品フィルター */
+.filter-box { width: 420px; }
+.filter-grid { display: grid; grid-template-columns: 60px 1fr; gap: 4px 10px; align-items: center; margin: 10px 0; font-size: 13px; }
+.filter-flag { display: block; font-size: 13px; margin: 6px 0; }
+#filter-close { display: block; margin: 10px auto 0; }

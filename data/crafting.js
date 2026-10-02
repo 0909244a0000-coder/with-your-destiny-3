@@ -19,6 +19,16 @@ WYD.data.crafting = {
     { id: "rare",   label: "レア以下",     upTo: "rare" },
   ],
 
+  // 戦利品フィルター（Path of Exile のしくみ）：部位ごとに「このレア度から拾う」を決める。拾わない装備はその場で素材になる
+  //   ユニーク・セットはいつも拾う。keepUpgrades = 今の装備より強いものは拾う、keepSocketed = ソケット2つ以上のノーマルは拾う
+  filterLevels: [
+    { id: "normal", label: "全部拾う" },
+    { id: "magic", label: "マジック以上" },
+    { id: "rare", label: "レア以上" },
+    { id: "legend", label: "レジェンド以上" },
+    { id: "none", label: "拾わない" },
+  ],
+
   rerollCost: { normal: 0, magic: 10, rare: 25, legend: 60, unique: 40, set: 35 },
 
   // 鍛造（Last Epoch のしくみ）：装備ごとに「鍛造の余地」があり、それを使って能力を1つずつ狙って強くする。

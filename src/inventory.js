@@ -107,12 +107,29 @@ WYD.inventory = {
 
   // 自動分解の対象か（設定で選んだレア度以下。レジェンドとユニークは対象外）
   shouldAutoSalvage(state, item) {
+    const f = state.settings.filter;
+    if (f && f.on) return !this.filterKeeps(state, item);
     const opt = WYD.data.crafting.autoSalvageOptions.find((o) => o.id === state.settings.autoSalvage);
     if (!opt || !opt.upTo) return false;
     // ソケットが2つ以上のノーマル装備はルーンワードの土台になるので残す
     if (item.rarity === "normal" && (item.sockets || []).length >= 2) return false;
     const order = WYD.data.items.rarities.map((r) => r.id);
     return order.indexOf(item.rarity) <= order.indexOf(opt.upTo);
+  },
+
+  // 戦利品フィルターで拾うか
+  filterKeeps(state, item) {
+    const f = state.settings.filter;
+    if (item.rarity === "unique" || item.rarity === "set") return true;
+    if (f.keepSocketed && item.rarity === "normal" && (item.sockets || []).length >= 2) return true;
+    if (f.keepUpgrades) {
+      const cur = state.equipment[item.slot];
+      if (!cur || this.itemScore(item) > this.itemScore(cur) * (1 + WYD.data.items.autoEquip.minGain)) return true;
+    }
+    const min = f.slots[item.slot] || "normal";
+    if (min === "none") return false;
+    const order = WYD.data.items.rarities.map((r) => r.id);
+    return order.indexOf(item.rarity) >= order.indexOf(min);
   },
 
   // 捨てたときにもらえる素材の数
