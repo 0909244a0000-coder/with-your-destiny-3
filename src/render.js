@@ -95,8 +95,10 @@ WYD.render = {
     this.playerPos = w.player;
     // 奥（画面の上）にいるものから描く（手前のキャラが奥のキャラにかぶさるように）
     for (const e of w.enemies.slice().sort((a, b) => a.y - b.y)) this.drawEnemy(ctx, e);
+    WYD.shrines.draw(ctx, w);
     WYD.allies.draw(ctx, w);
     this.drawPlayer(ctx, w.player);
+    WYD.shrines.drawActive(ctx, w);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
     const R = WYD.data.player.rangedAttack;
     if (R) for (const b of w.bolts) {

@@ -59,6 +59,7 @@ WYD.world = {
       if (p.haste.timeLeft <= 0) p.haste = null;
     }
     WYD.lgems.update(w, dt);
+    WYD.shrines.update(w, state, stats, dt);
     // オーラの輪（ONのオーラだけ残る）
     for (const id in p.auras || {}) {
       p.auras[id].timeLeft -= dt;
@@ -416,6 +417,12 @@ WYD.world = {
 
     // 宝物ゴブリンがいれば、まずそれを追いかける
     const target = w.enemies.find((e) => WYD.data.enemies[e.kind].treasure) || this.nearestEnemy(w, p);
+    // 祠が近くにあれば、先に触りに行く
+    const shrine = WYD.shrines.goal(w, target);
+    if (shrine) {
+      this.moveToward(p, shrine, stats.moveSpeed * dt, 0);
+      return;
+    }
     if (!target) {
       // 敵がいないときは真ん中へ戻る
       this.moveToward(p, { x: map.width / 2, y: map.height / 2 }, stats.moveSpeed * 0.5 * dt, 4);
@@ -1115,7 +1122,7 @@ WYD.world = {
 
     const area = this.area(state);
     const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult * this.floorPower(state);
-    this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult * WYD.season.mult(state, "expMult")));
+    this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult * WYD.season.mult(state, "expMult") * WYD.shrines.expMult()));
 
     WYD.records.add(state, "kills");
     if (this.hasAffix(e, "explosive")) {

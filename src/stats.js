@@ -119,7 +119,7 @@ WYD.stats = {
       const active = Object.keys(WYD.data.skills).filter((id) => (pl.skills[id] || 0) > 0 && pl.skillEnabled[id]).length;
       asceticBonus = Math.max(0, WYD.data.skillSlots - active) * powers.ascetic.percentPerSlot;
     }
-    return {
+    const out = {
       maxHp: Math.round((P.base.maxHp + P.perLevel.maxHp * lv + b.maxHp + pb.maxHp) * (1 + WYD.lgems.value(state, "life") / 100)),
       attack: (P.base.attack + P.perLevel.attack * lv + b.attack + pb.attack) * this.mightMult(state),
       defense: P.base.defense + P.perLevel.defense * lv + b.defense + pb.defense,
@@ -133,6 +133,7 @@ WYD.stats = {
       critMultiplier: P.critMultiplier + fx.critDamage / 100,
       effects: fx,
     };
+    return WYD.shrines.apply(out);   // 祠の効果（src/shrines.js）
   },
 
   // オーラ「力」（kind: "aura"・auraType: "might"）をONにしていれば、攻撃力の倍率
