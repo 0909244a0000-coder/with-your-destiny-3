@@ -511,6 +511,11 @@ WYD.world = {
       if (used) {
         WYD.vfx.cast(w, id, p.x, p.y, def.radius);
         p.skillCooldowns[id] = def.cooldown * (1 - stats.effects.cooldown / 100);
+        // 画面下のスキルの並びで、残り時間の影と光る枠を出すため
+        p.skillCooldownMax = p.skillCooldownMax || {};
+        p.skillCooldownMax[id] = p.skillCooldowns[id];
+        p.skillCastAt = p.skillCastAt || {};
+        p.skillCastAt[id] = w.time;
         // 型のおまけ：足元に燃える地面などを残す
         const lf = extra && extra.leaveField;
         if (lf) {

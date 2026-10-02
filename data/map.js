@@ -21,6 +21,8 @@ WYD.data.map = {
     darknessPerFloor: 0.05, // 1階深くなるごとに足す暗さ（ボスの間がいちばん暗い）
     maxDarkness: 0.9,
   },
+  // 画面の左下に、使っているスキルを並べる（暗い影＝次に使えるまでの時間、光る枠＝今使った）
+  skillBar: { size: 38, gap: 6, x: 12, bottom: 12, flash: 0.35, shade: "rgba(0,0,0,0.65)", border: "rgba(232,216,168,0.7)", flashColor: "#fff3b0", back: "rgba(20,16,12,0.8)" },
   playerBar: { width: 48, height: 6, gap: 6, color: "#3fd06a", lowColor: "#ffb03a", lowAt: 0.3 },   // 主人公の頭の上のHPの棒（スマホでもHPが見えるように）
   playerRing: 0.8,      // 主人公の足元の輪の濃さ（0〜1）。主人公がどこにいるか分かるように
   decorationCount: 40,  // 飾り（草・石）の数
