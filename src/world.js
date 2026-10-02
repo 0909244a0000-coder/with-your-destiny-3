@@ -28,6 +28,16 @@ WYD.world = {
     };
   },
 
+  // ボスを倒した直後のゆっくり：実際の経過時間 dt を受けて、ゲームを進める時間の倍率を返す
+  timeScale(w, dt) {
+    const b = w.bossDefeat;
+    if (!b) return 1;
+    const D = WYD.data.boss.defeat;
+    b.time += dt;
+    if (b.time > D.time) w.bossDefeat = null;
+    return b.time < D.slowTime ? D.slowScale : 1;
+  },
+
   // 1コマ分すすめる（dt = 経過秒数）
   update(w, state, dt) {
     const stats = WYD.stats.compute(state);
@@ -1182,6 +1192,7 @@ WYD.world = {
       w.bossDone = true;
       delete state.bossDeaths[area.id];
       this.bossDefeated(state, area, def);
+      w.bossDefeat = { name: def.name, time: 0 };
       // ボスを倒したら、すこしして地下1階にもどる（もう一度もぐって集められる）
       w.returnTimer = WYD.data.boss.bossAppearDelay * 2;
     } else if (!this.isBossRoom(state)) {

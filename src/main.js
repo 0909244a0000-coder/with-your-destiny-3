@@ -45,7 +45,8 @@ window.WYD = window.WYD || {};
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     const steps = WYD.ui.paused ? 0 : state.settings.speed;   // 一時停止中は進めない
-    for (let i = 0; i < steps; i++) WYD.world.update(world, state, dt);
+    const slow = steps ? WYD.world.timeScale(world, dt) : 1;   // ボスを倒した直後はゆっくり
+    for (let i = 0; i < steps; i++) WYD.world.update(world, state, dt * slow);
     WYD.render.draw(ctx, world, state);
     WYD.music.update(state, world);
     WYD.ui.frame();

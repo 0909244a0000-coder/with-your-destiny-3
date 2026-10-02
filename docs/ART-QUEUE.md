@@ -137,6 +137,23 @@ X2 ドルイドが呼ぶ狼：灰色のたくましい狼、緑にかすかに�
 では X1 から始めてください。
 ```
 
+## ブロック8：攻撃の瞬間のポーズ（主人公4職業）
+いまは同じ絵が前に踏み込むだけ。この絵があると、攻撃の瞬間だけ絵が切り替わる（バーバリアン・ソーサレスはもうある）。
+```
+これからゲームの絵を順番に作ってもらいます。ルールを守ってください。
+- 1回の返事で作る絵は1枚だけ。作ったら、絵の番号と「次は○番」とだけ書いて止まる。私が「次」と送ったら次を作る
+- 前に作ってもらった同じキャラの絵と、顔・体・装備・色を同じにして、ポーズだけ変える（見本の絵をこのあと貼ります）
+- 全部共通：ダークファンタジーのアクションRPG（Diablo風）、絵画調。斜め上から見下ろす3/4ビュー、右向き、全身。背景は透明（無理なら真っ黒の無地）。文字・枠なし。正方形1024×1024
+
+A1 ネクロマンサー：杖を前に突き出し、先の頭蓋骨から緑の光を放つ瞬間
+A2 パラディン：戦鎚を大きく振り下ろす瞬間、盾は体の前
+A3 アサシン：両手の爪の刃で前に斬りかかる瞬間、低く踏み込んだ姿勢
+A4 ドルイド：杖を振りかざし、つるが前に伸びる瞬間
+
+では A1 から始めてください（見本の絵を貼ります）。
+```
+**見本として一緒に貼る絵**：`assets/player_necromancer.png`・`player_paladin.png`・`player_assassin.png`・`player_druid.png`（このチャットに貼れば、こちらから送り直せます）
+
 ---
 
 ## 番号 → ファイル名（受け取り用）
@@ -153,5 +170,6 @@ X2 ドルイドが呼ぶ狼：灰色のたくましい狼、緑にかすかに�
 | T1 | `assets/vfx/trap.png` | 罠の描き方 |
 | E1・E2 | `assets/vfx/magicCircle.png`・`fireball.png` | `data/vfx.js` の `textures` |
 | G1 | `assets/items/sash.png` | `data/items.js` の `icons` |
+| A1〜A4 | `assets/player_necromancer_attack.png`・`player_paladin_attack.png`・`player_assassin_attack.png`・`player_druid_attack.png` | `data/classes.js` の各職業 `player.poses.attack` |
 | X1 | `assets/enemies/goblin.png` | `data/enemies.js` の `goblin`（`imageFilter` を消す） |
 | X2 | `assets/ally_wolf.png` | `druid.skills.dru_wolves` の `image`（`imageFilter` を `null` に） |

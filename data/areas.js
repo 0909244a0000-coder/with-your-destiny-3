@@ -134,6 +134,8 @@ WYD.data.boss = {
   bossRoomMaxEnemies: 3,   // ボスの間に同時にいるふつうの敵の数
   bossAppearDelay: 1.5,
   // ボスが出たときの演出：上下に黒い帯が入り、名前を大きく出す（time 秒）
+  // ボスを倒したとき：slowTime 秒（実際の時間）だけ動きを slowScale 倍にゆっくりにし、白く光って「討伐」を出す（time 秒）
+  defeat: { slowTime: 1.0, slowScale: 0.25, flash: 0.45, time: 2.4, label: "討伐", labelColor: "#ffe08a", font: 52 },
   intro: { time: 2.6, bar: 0.12, label: "― ボス出現 ―", labelColor: "#e0c070", font: 44 },    // ボスの間に入ってからボスが出るまでの秒数
 
   // 何度もボスに倒されたら、そのボスが少しずつ弱くなる（倒すと元にもどる。試練・地図では弱くならない）
