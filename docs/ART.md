@@ -167,6 +167,12 @@ A single full-body character sprite for a dark fantasy action RPG, 3/4 top-down 
 A single sprite sheet image, 1536x1536, arranged as an exact 3 columns by 3 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Druid skill icons, left-to-right, top-to-bottom: 1 Werebear: a roaring bear head, 2 Werewolf: a howling wolf head, 3 Summon Wolves: three wolf silhouettes, 4 Tornado: a swirling green tornado, 5 Oak Bark: a shield of tree bark, 6 Rolling Boulder: a large boulder with motion lines, 7 Fissure: a ground crack spewing lava, 8 Feral Howl: a golden sound wave from a wolf, 9 Grasping Vines: thorny vines coiling upward.
 ```
 
+### バーバリアン・ソーサレスに足したスキルのアイコン（6つ）
+**3列×2行** → `--grid 3x2 --names bar_ancients,bar_orders,bar_cry,sorc_hydra,sorc_static,sorc_warmth`、置いたらバーバリアンの3つは `data/skills.js` の `WYD.data.skillIcons`、ソーサレスの3つは `sorceress.skillIcons` に書く
+```
+A single sprite sheet image, 1536x1024, arranged as an exact 3 columns by 2 rows grid of equal square cells (512x512 each) with clear empty gutters between cells. Skill icons, left-to-right, top-to-bottom: 1 Call of the Ancients: three ghostly barbarian warriors, 2 Battle Orders: a war horn with red light, 3 Rallying Cry: a shouting face with green rings, 4 Hydra: a three-headed fire serpent, 5 Static Field: crackling blue electricity in a circle, 6 Warmth: a glowing orange hearth flame. Dark fantasy (Diablo-like), painterly. No text.
+```
+
 ### 傭兵の絵（3枚）
 今は敵の絵の色を変えて仮に使っています（`data/mercenary.js` の `image`・`imageFilter`）。置いたら `image` をこの名前にし、`imageFilter` を `null` にする（512px以上・透明背景・`prepare_sprite.py` で256pxに）。
 - `assets/merc_spear.png`

@@ -90,6 +90,33 @@ WYD.data.skills = {
     damagePerLevel: 0.15,
     color: "#5fd9a0",
   },
+  // 呼び出しスキル：強い戦士の霊を呼ぶ（しくみは手下と同じ raise。src/allies.js）
+  bar_ancients: {
+    kind: "raise", name: "祖霊の召喚",
+    desc: "いにしえの戦士の霊を3体呼び出す。霊は敵を斬り、敵の攻撃も引きつける。",
+    startLevel: 0, maxLevel: 10, cooldown: 6,
+    countBase: 3, countPerLevel: 0,
+    hpRatio: 0.5, attackBase: 0.45, attackPerLevel: 0.06, defenseRatio: 0.8,
+    duration: 20, moveSpeed: 120, attackSpeed: 1.0, range: 28, radius: 13,
+    spawnSpread: 35, followDistance: 45, firstAttackDelay: 0.4,
+    color: "#d8e0ff",
+    image: "assets/player.png",
+    imageFilter: "grayscale(1) brightness(1.5) sepia(0.3) hue-rotate(180deg) opacity(0.75)",   // 霊らしく白く透けた色
+  },
+  // オーラ：ONのあいだずっと攻撃力アップ（しくみは aura。src/world.js）
+  bar_orders: {
+    kind: "aura", auraType: "might", name: "戦の雄叫び",
+    desc: "オーラ：雄叫びで闘志を高め、攻撃力が上がり続ける。",
+    startLevel: 0, maxLevel: 10, cooldown: 1,
+    radius: 110, mightBase: 12, mightPerLevel: 3.5, color: "#ff8a4a",
+  },
+  // オーラ：ONのあいだずっとHP回復
+  bar_cry: {
+    kind: "aura", auraType: "heal", name: "鼓舞の叫び",
+    desc: "オーラ：叫びで自分と仲間を奮い立たせ、HPが回復し続ける。最大HPの何%か。",
+    startLevel: 0, maxLevel: 10, cooldown: 1,
+    radius: 140, healPercentBase: 1.0, healPercentPerLevel: 0.22, color: "#9fffb0",
+  },
 };
 
 // スキルのアイコンの絵（スキル名 → ファイル）。例: whirl: "assets/skills/whirl.png"
@@ -106,4 +133,4 @@ WYD.data.skillIcons = {
 WYD.data.skillSlots = 3;
 
 // AIがスキルを試す順番
-WYD.data.skillOrder = ["vajra", "hanuman", "nagapasha", "whirl", "sudarshana", "agni"];
+WYD.data.skillOrder = ["vajra", "bar_orders", "bar_cry", "hanuman", "bar_ancients", "nagapasha", "whirl", "sudarshana", "agni"];

@@ -285,3 +285,37 @@ Object.assign(WYD.data.runes.skills, {
     { id: "crush", name: "締めつけ", desc: "威力2倍。縛る時間は短い", mods: { damage: ["mul", 2], bind: ["mul", 0.6] } },
   ],
 });
+
+// バーバリアン・ソーサレスに足したスキルの型
+Object.assign(WYD.data.runes.skills, {
+  bar_ancients: [
+    { id: "elder", name: "長老", desc: "1体だけ、とても強い祖霊を呼ぶ", mods: { countBase: ["set", 1], hpRatio: ["mul", 3], attackBase: ["mul", 2.6], radius: ["mul", 1.5] } },
+    { id: "lasting", name: "消えぬ霊", desc: "いられる時間2倍", mods: { duration: ["mul", 2] } },
+    { id: "fury", name: "怒れる霊", desc: "攻撃力1.5倍。HPは少し下がる", mods: { attackBase: ["mul", 1.5], hpRatio: ["mul", 0.8] } },
+  ],
+  bar_orders: [
+    { id: "strong", name: "鬨の声", desc: "攻撃力の上がり方1.4倍", mods: { mightBase: ["mul", 1.4], mightPerLevel: ["mul", 1.4] } },
+    { id: "early", name: "初陣", desc: "最初から大きく上がる（Lvごとの伸びは小さい）", mods: { mightBase: ["mul", 1.7], mightPerLevel: ["mul", 0.5] } },
+    { id: "growth", name: "歴戦", desc: "Lvごとの伸びが大きい（最初は小さい）", mods: { mightBase: ["mul", 0.6], mightPerLevel: ["mul", 1.9] } },
+  ],
+  bar_cry: [
+    { id: "strong", name: "大音声", desc: "回復1.5倍", mods: { heal: ["mul", 1.5] } },
+    { id: "fast", name: "絶えぬ叫び", desc: "0.5秒ごとに回復（1回は少し少ない）", mods: { cooldown: ["set", 0.5], heal: ["mul", 0.6] } },
+    { id: "wide", name: "響く声", desc: "手下に届く範囲2倍", mods: { radius: ["mul", 2] } },
+  ],
+  sorc_hydra: [
+    { id: "many", name: "多頭竜", desc: "置ける数 +2。1回の威力は少し下がる", mods: { maxTrapsBase: ["add", 2], damage: ["mul", 0.8] } },
+    { id: "long", name: "長命の竜", desc: "いられる時間1.8倍", mods: { duration: ["mul", 1.8] } },
+    { id: "rapid", name: "連射", desc: "吐く間隔0.65倍。1回の威力は少し下がる", mods: { fireInterval: ["mul", 0.65], damage: ["mul", 0.85] } },
+  ],
+  sorc_static: [
+    { id: "wide", name: "雷雲", desc: "範囲1.4倍。威力は少し下がる", mods: { radius: ["mul", 1.4], damage: ["mul", 0.8] } },
+    { id: "hot", name: "高電圧", desc: "威力1.5倍。範囲は少し狭い", mods: { damage: ["mul", 1.5], radius: ["mul", 0.8] } },
+    { id: "leech", name: "吸電", desc: "与えたダメージの4%を回復", extra: { lifesteal: 4 } },
+  ],
+  sorc_warmth: [
+    { id: "strong", name: "灼熱の心", desc: "回復1.5倍", mods: { heal: ["mul", 1.5] } },
+    { id: "fast", name: "絶えぬ炎", desc: "0.5秒ごとに回復（1回は少し少ない）", mods: { cooldown: ["set", 0.5], heal: ["mul", 0.6] } },
+    { id: "wide", name: "炉の輪", desc: "手下に届く範囲2倍", mods: { radius: ["mul", 2] } },
+  ],
+});
