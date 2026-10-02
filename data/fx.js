@@ -9,6 +9,8 @@ WYD.data.fx = {
   hit:      { count: 6,  speed: 140, life: 0.35, size: 2.2, color: "#fff2c0" },  // 攻撃が当たった火花
   blood:    { count: 5,  speed: 90,  life: 0.5,  size: 2.6 },                    // 敵の色の血しぶき
   crit:     { count: 14, speed: 220, life: 0.45, size: 2.8, color: "#ffd447" },  // 会心の火花
+  // 倒れた敵の体：time 秒かけて横にたおれ（tilt ラジアン）、沈みながら消える。maxCount 体まで
+  corpse:   { time: 0.7, tilt: 1.3, sink: 0.25, maxCount: 30 },
   death:    { count: 18, speed: 150, life: 0.7,  size: 3.2 },                    // 敵が倒れたとき（敵の色）
   bigDeath: { count: 70, speed: 260, life: 1.2,  size: 4.0 },                    // 精鋭・ボスが倒れたとき
   playerHit:{ count: 6,  speed: 110, life: 0.4,  size: 2.4, color: "#ff4a4a" },  // 主人公が殴られたとき

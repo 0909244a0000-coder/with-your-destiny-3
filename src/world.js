@@ -207,6 +207,7 @@ WYD.world = {
     w.projectiles = [];
     w.traps = [];
     w.fields = [];
+    w.corpses = [];
     w.hazards = [];
     w.pools = [];
     w.drops = w.drops.filter((d) => ["unique", "set", "legend"].includes(d.item.rarity));
@@ -1409,6 +1410,7 @@ WYD.world = {
     w.traps = [];
     w.mercTimer = null;   // 傭兵は少したってから戻る
     w.fields = [];
+    w.corpses = [];
     w.hazards = [];
     w.pools = [];
     w.projectiles = [];

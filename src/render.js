@@ -98,6 +98,16 @@ WYD.render = {
     // 奥（画面の上）にいるものから描く（手前のキャラが奥のキャラにかぶさるように）
     WYD.breach.draw(ctx, w);   // 裂け目は敵の下に
     WYD.traps.draw(ctx, w);
+    // 倒れた敵：横にたおれながら沈んで消える
+    const CO = WYD.data.fx.corpse;
+    for (const c of w.corpses || []) {
+      const k = Math.min(1, c.time / CO.time);
+      ctx.globalAlpha = 1 - k;
+      const size = c.r * WYD.data.map.spriteScale;
+      this.drawCircleOrImage(ctx, c.x, c.y, c.r, "#000", c.image, false,
+        { dx: 0, dy: size * CO.sink * k, sx: 1, sy: 1 - 0.3 * k, rot: -CO.tilt * Math.min(1, k * 2.5), flip: c.flip }, c.filter);
+    }
+    ctx.globalAlpha = 1;
     for (const e of w.enemies.slice().sort((a, b) => a.y - b.y)) this.drawEnemy(ctx, e);
     WYD.shrines.draw(ctx, w);
     WYD.allies.draw(ctx, w);

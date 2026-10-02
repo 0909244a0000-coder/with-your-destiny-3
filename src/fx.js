@@ -35,6 +35,12 @@ WYD.fx = {
   death(w, e) {
     const F = WYD.data.fx;
     const def = WYD.data.enemies[e.kind];
+    // 倒れた体を少しのあいだ残す（絵があるときだけ。向きは倒れた瞬間のまま）
+    w.corpses = w.corpses || [];
+    if (w.corpses.length < F.corpse.maxCount) {
+      w.corpses.push({ x: e.x, y: e.y, r: def.radius, image: WYD.render.poseImage(e, def), filter: e.imageFilter || def.imageFilter,
+        flip: e.face || 1, time: 0 });
+    }
     const big = e.boss || e.elite;
     WYD.sound.play(big ? "bigDeath" : "death");
     this.burst(w, e.x, e.y, big ? F.bigDeath : F.death, def.color, { gravity: true });
@@ -59,6 +65,10 @@ WYD.fx = {
       p.y += p.vy * dt;
     }
     w.particles = w.particles.filter((p) => p.life > 0);
+    if (w.corpses) {
+      for (const c of w.corpses) c.time += dt;
+      w.corpses = w.corpses.filter((c) => c.time < F.corpse.time);
+    }
     for (const f of w.fields) {
       if (Math.random() < F.ember.perSecond * dt) {
         const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * f.radius;
