@@ -276,6 +276,8 @@ WYD.data.enemies = {
     rarityBonus: 6,
     boss: true,
     slam: { interval: 6, windup: 1.0, radius: 110, damageMult: 2.2 },
+    // 分身：本体と同じ姿の分身を呼ぶ（HPは本体の hpRatio 倍。分身は大技を使わず、倒しても何も落とさない）
+    clone: { interval: 12, firstDelay: 5, count: 2, hpRatio: 0.15, attackMult: 0.5, max: 4 },
   },
   asuraKing: {
     name: "阿修羅王",
@@ -294,6 +296,8 @@ WYD.data.enemies = {
     rarityBonus: 7,
     boss: true,
     slam: { interval: 5, windup: 0.9, radius: 120, damageMult: 2.2 },
+    // 突進：予告の線が出たあと、その方向へ一気に走り抜ける。線の上にいると大ダメージ
+    charge: { interval: 7, firstDelay: 4, windup: 0.9, speed: 650, length: 360, width: 34, damageMult: 2.0, color: "#6aa0ff" },
   },
   mahisha: {
     name: "水牛魔マヒシャ",
@@ -312,6 +316,8 @@ WYD.data.enemies = {
     rarityBonus: 8,
     boss: true,
     slam: { interval: 5, windup: 0.8, radius: 130, damageMult: 2.5 },
+    // 毒の沼：主人公の足元に毒の沼をまく。沼の中にいると、少しずつ削られる
+    pools: { interval: 8, firstDelay: 3, count: 2, radius: 60, duration: 6, dpsMult: 0.35, spread: 60, color: "#7dbf3a" },
   },
   archbishop: {
     name: "堕天の大司教",

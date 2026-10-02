@@ -12,6 +12,7 @@ WYD.world = {
       },
       fields: [],   // 地面に残る炎の陣など
       hazards: [],  // 少しして爆発する場所（精鋭の「爆砕」）
+      pools: [],    // 毒の沼（ボスの技）
       allies: [],   // 味方の手下（ネクロマンサーの骸骨。src/allies.js）
       projectiles: [], // 敵が撃った弾
       particles: [],   // エフェクトの粒（src/fx.js）
@@ -57,6 +58,7 @@ WYD.world = {
     }
     this.updateFields(w, state, stats, dt);
     this.updateHazards(w, stats, dt);
+    this.updatePools(w, dt);
     if (p.chill > 0) p.chill = Math.max(0, p.chill - dt);
     for (const id in p.skillCooldowns) p.skillCooldowns[id] = Math.max(0, p.skillCooldowns[id] - dt);
 
@@ -190,6 +192,7 @@ WYD.world = {
     w.projectiles = [];
     w.fields = [];
     w.hazards = [];
+    w.pools = [];
     w.drops = w.drops.filter((d) => ["unique", "set", "legend"].includes(d.item.rarity));
     w.spawnTimer = 1;
     w.bossTimer = null;
@@ -370,7 +373,30 @@ WYD.world = {
     const slow = p.chill > 0 ? this.eliteAffix("frozen").slowMult : 1;
     dt *= slow;
     // 爆発の輪の中にいたら、まず外へ逃げる
-    const danger = w.hazards.find((h) => WYD.util.dist(h, p) < h.radius + WYD.data.player.radius);
+    const danger = w.hazards.find((h) => WYD.util.dist(h, p) < h.radius + WYD.data.player.radius) ||
+      w.pools.find((h) => WYD.util.dist(h, p) < h.radius + WYD.data.player.radius);
+    // 突進の予告の線の上にいたら、横へよける
+    const PR = WYD.data.player.radius;
+    for (const e of w.enemies) {
+      const c = e.charging;
+      if (!c || c.phase !== "windup") continue;
+      const dx = c.to.x - c.from.x, dy = c.to.y - c.from.y;
+      const len2 = dx * dx + dy * dy || 1;
+      const t = Math.max(0, Math.min(1, ((p.x - c.from.x) * dx + (p.y - c.from.y) * dy) / len2));
+      const qx = c.from.x + dx * t, qy = c.from.y + dy * t;
+      const dist = Math.hypot(p.x - qx, p.y - qy);
+      if (dist >= c.width + PR) continue;
+      // 線と直角の向き（今いる側）へ逃げる
+      const len = Math.sqrt(len2);
+      let nx = -dy / len, ny = dx / len;
+      if ((p.x - qx) * nx + (p.y - qy) * ny < 0) { nx = -nx; ny = -ny; }
+      const map = WYD.data.map;
+      const tx = p.x + nx * (c.width + PR * 2), ty = p.y + ny * (c.width + PR * 2);
+      // 壁ぎわで逃げられないときは反対側へ
+      const ok = tx > 20 && tx < map.width - 20 && ty > 20 && ty < map.height - 20;
+      this.moveToward(p, ok ? { x: tx, y: ty } : { x: p.x - nx * 200, y: p.y - ny * 200 }, stats.moveSpeed * dt, 0);
+      return;
+    }
     if (danger) {
       // 逃げる先は、爆発ごとに1回だけ決める（壁ぎわでも輪の外に出られる所）
       if (!danger.escape) danger.escape = this.escapePoint(p, danger);
@@ -630,8 +656,12 @@ WYD.world = {
       }
       const reach = def.range + WYD.data.player.radius;
       const d = WYD.util.dist(e, p);
-      if (def.barrage) this.updateBarrage(w, e, def.barrage, dt);
-      if (def.slam && this.updateSlam(w, e, def.slam, stats, d, dt)) {
+      if (def.barrage && !e.clone) this.updateBarrage(w, e, def.barrage, dt);
+      if (e.boss && !e.clone && this.updateBossSkills(w, state, e, def, stats, dt)) {
+        if (p.dead) return;
+        continue;   // 突進の準備中・走っている間は、ほかのことをしない
+      }
+      if (def.slam && !e.clone && this.updateSlam(w, e, def.slam, stats, d, dt)) {
         if (p.dead) return;
         continue;   // 大技の準備中は動かない
       }
@@ -757,6 +787,89 @@ WYD.world = {
       if (p.hp <= 0) this.playerDied(w);
     }
     w.projectiles = w.projectiles.filter((b) => b.life > 0);
+  },
+
+  // ボス専用の技（分身・突進・毒の沼）。突進の準備中・走っている間は true
+  updateBossSkills(w, state, e, def, stats, dt) {
+    const p = w.player;
+    e.skillTimers = e.skillTimers || {};
+    const ready = (name, spec) => {
+      const t = e.skillTimers[name] = (e.skillTimers[name] == null ? spec.firstDelay : e.skillTimers[name]) - dt;
+      if (t > 0) return false;
+      e.skillTimers[name] = spec.interval * (e.slamIntervalMult || 1);
+      return true;
+    };
+    // 分身
+    const C = def.clone;
+    if (C && ready("clone", C) && w.enemies.filter((x) => x.clone).length < C.max) {
+      for (let i = 0; i < C.count; i++) {
+        const c = this.spawnEnemy(w, state, e.kind, this.farPosition(w));
+        c.clone = true;
+        c.maxHp = Math.round(e.maxHp * C.hpRatio);
+        c.hp = c.maxHp;
+        c.attack = e.attack * C.attackMult;
+        w.effects.push({ type: "ring", x: c.x, y: c.y, radius: 40, color: def.color, time: 0, duration: 0.4 });
+      }
+      WYD.ui.log(`${def.name}が分身した！`, WYD.data.boss.nameColor);
+    }
+    // 毒の沼
+    const P = def.pools;
+    if (P && !p.dead && ready("pools", P)) {
+      for (let i = 0; i < P.count; i++) {
+        w.pools.push({ x: p.x + WYD.util.rand(-P.spread, P.spread), y: p.y + WYD.util.rand(-P.spread, P.spread),
+          radius: P.radius, timeLeft: P.duration, duration: P.duration, dps: e.attack * P.dpsMult, color: P.color });
+      }
+    }
+    // 突進
+    const H = def.charge;
+    if (!H) return false;
+    const c = e.charging;
+    if (c) {
+      if (c.phase === "windup") {
+        c.t -= dt;
+        if (c.t <= 0) c.phase = "dash";
+        return true;
+      }
+      const step = H.speed * dt;
+      const left = WYD.util.dist(e, c.to);
+      const move = Math.min(step, left);
+      e.x += (c.to.x - e.x) / (left || 1) * move;
+      e.y += (c.to.y - e.y) / (left || 1) * move;
+      if (!c.hit && !p.dead && WYD.util.dist(e, p) < H.width + WYD.data.player.radius) {
+        c.hit = true;
+        const hit = this.calcDamage(e.attack * H.damageMult, stats.defense + (p.buff ? p.buff.defense : 0), 0);
+        p.hp -= hit.damage;
+        this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
+        WYD.fx.shake(w, WYD.data.fx.shakeSlam);
+        if (p.hp <= 0) this.playerDied(w);
+      }
+      if (left <= step) e.charging = null;
+      return true;
+    }
+    if (!p.dead && ready("charge", H)) {
+      const map = WYD.data.map;
+      const d = WYD.util.dist(e, p) || 1;
+      const to = {
+        x: WYD.util.clamp(e.x + (p.x - e.x) / d * H.length, 20, map.width - 20),
+        y: WYD.util.clamp(e.y + (p.y - e.y) / d * H.length, 20, map.height - 20),
+      };
+      e.charging = { phase: "windup", t: H.windup, from: { x: e.x, y: e.y }, to, width: H.width, color: H.color };
+      return true;
+    }
+    return false;
+  },
+
+  // 毒の沼：中にいるとダメージ。時間で消える
+  updatePools(w, dt) {
+    const p = w.player;
+    for (const pool of w.pools) {
+      pool.timeLeft -= dt;
+      if (!p.dead && WYD.util.dist(pool, p) < pool.radius) {
+        p.hp -= pool.dps * dt;
+        if (p.hp <= 0) this.playerDied(w);
+      }
+    }
+    w.pools = w.pools.filter((x) => x.timeLeft > 0);
   },
 
   // ボスの弾幕：一定時間ごとに、まわりへ弾をたくさん撃つ（怒ると間隔が短くなる）
@@ -951,6 +1064,12 @@ WYD.world = {
 
   enemyDied(w, state, e) {
     const def = WYD.data.enemies[e.kind];
+    if (e.clone) {
+      // 分身：消えるだけ
+      w.enemies = w.enemies.filter((x) => x !== e);
+      w.effects.push({ type: "ring", x: e.x, y: e.y, radius: 30, color: def.color, time: 0, duration: 0.3 });
+      return;
+    }
     WYD.fx.death(w, e);
     const diff = WYD.data.difficulty;
     const inTrial = WYD.trial.active(state);
@@ -1186,6 +1305,7 @@ WYD.world = {
     w.allies = [];
     w.fields = [];
     w.hazards = [];
+    w.pools = [];
     w.projectiles = [];
     w.bolts = [];
     w.enemies = [];

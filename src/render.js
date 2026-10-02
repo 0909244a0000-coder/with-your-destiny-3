@@ -67,6 +67,30 @@ WYD.render = {
 
     for (const f of w.fields) this.drawField(ctx, f);
     for (const h of w.hazards || []) this.drawHazard(ctx, h);
+    for (const pool of w.pools || []) {
+      // 毒の沼
+      ctx.globalAlpha = 0.3 * Math.min(1, pool.timeLeft / 0.5);
+      ctx.fillStyle = pool.color;
+      ctx.beginPath();
+      ctx.arc(pool.x, pool.y, pool.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    for (const e of w.enemies) {
+      // 突進の予告の線
+      const c = e.charging;
+      if (!c || c.phase !== "windup") continue;
+      ctx.strokeStyle = c.color;
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth = c.width * 2;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(c.from.x, c.from.y);
+      ctx.lineTo(c.to.x, c.to.y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.lineCap = "butt";
+    }
     this.clock = w.time || 0;
     this.playerPos = w.player;
     // 奥（画面の上）にいるものから描く（手前のキャラが奥のキャラにかぶさるように）
@@ -434,8 +458,10 @@ WYD.render = {
       ctx.arc(e.x, e.y, def.radius + 4, 0, Math.PI * 2);
       ctx.stroke();
     }
+    if (e.clone) ctx.globalAlpha = 0.55;   // 分身はうすく
     this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, this.poseImage(e, def), e.hitFlash > 0,
       this.pose(e, this.playerPos, this.clock), def.imageFilter);
+    ctx.globalAlpha = 1;
     if (e.shielded) {
       // 精鋭の「守護」：光の盾
       ctx.strokeStyle = E.affixes.find((a) => a.id === "shielding").color;
