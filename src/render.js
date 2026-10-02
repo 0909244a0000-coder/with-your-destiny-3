@@ -606,6 +606,19 @@ WYD.render = {
       ctx.arc(e.x, e.y, def.radius + 6, 0, Math.PI * 2);
       ctx.stroke();
       ctx.globalAlpha = 1;
+      // 頭の上で上下にゆれる金色の矢印（暗がりでもどこにいるか分かるように）
+      const G = WYD.data.goblin;
+      const top = Math.max(G.arrowSize * 2 + 2, e.y - def.radius * WYD.data.map.spriteScale * 0.9 - G.arrowGap + Math.sin((this.clock || 0) * 5) * 4);
+      ctx.fillStyle = G.color;
+      ctx.strokeStyle = "rgba(0,0,0,0.8)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(e.x - G.arrowSize, top - G.arrowSize);
+      ctx.lineTo(e.x + G.arrowSize, top - G.arrowSize);
+      ctx.lineTo(e.x, top);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fill();
     }
     if (e.enraged) {
       // 怒ったボス：脈打つ赤いオーラ

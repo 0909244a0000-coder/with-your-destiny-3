@@ -43,6 +43,7 @@
 - 明かり（`src/render.js` の `drawLight`）は2回に分けてかける：地面の直後に「地面用」、キャラの上に `data/map.js` の `light.unitDarkness` の割合だけ。重ねると地面は前と同じ暗さ、遠くの敵は前より明るく見える
 - 倒れた敵は、すぐ消さずに横にたおれて沈みながら消える（`w.corpses`。`src/fx.js` の `death` で足し、`src/render.js` で敵より先に描く。時間・角度・数の上限は `data/fx.js` の `corpse`）
 - ボスが出たとき：上下に黒い帯が入り、名前を大きく出す（`w.bossIntro`、`src/render.js` の `drawBossIntro`。上の文字・ボスの体力の棒より下に描く。時間・文字は `data/areas.js` の `boss.intro`）。その間は階の名前の帯を出さない
+- 宝物ゴブリンの頭の上に、ゆれる金色の矢印（大きさは `data/elites.js` の `goblin.arrowSize`）
 - 戦いの画面の左下に、使っているスキルを並べる（`src/render.js` の `drawSkillBar`、大きさや色は `data/map.js` の `skillBar`）。暗い影が次に使えるまでの時間、光る枠が今使ったしるし。絵がないスキルは頭の1文字。スマホで画面が縮んでも `minShownPx` より小さく見えないよう、大きく描く
 - 傭兵：`src/mercenary.js`・`data/mercenary.js`。戦い方は手下と同じ `src/allies.js`（source が "merc"、時間で崩れない）。いなければ `WYD.mercenary.update` が出す（倒れたら `reviveTime` 秒後）。加護は `src/stats.js` で星座と同じように足す。セーブは `state.mercenary = { type, rank }`。絵は仮（敵の絵の色替え）。`tools/balance-sim.js` の6つ目の引数で傭兵を雇わせられる（4職で最後のボスは18〜19分、雇わないと17〜21分）
 - 伝説の宝石：`src/legendaryGems.js`（`WYD.lgems`）・`data/legendaryGems.js`。セーブは `state.lgems = { owned: { id: ランク }, equipped: [...] }`。手に入る・ランク上げは `src/trial.js` の finish（成功時）から。効果は `playerHit`（ダメージ倍率・迅速の重なり）、通常攻撃の間隔、`enemyDied`（強者の災い）、`src/stats.js`（命＝最大HP、血＝吸血）。自動プレイで試練20分後にランク8〜13、試練の最高段階は入れる前とほぼ同じ（10〜14）。パラディンは試練が少し苦手（段階10くらい）
