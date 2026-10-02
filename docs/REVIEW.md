@@ -17,7 +17,9 @@ npx playwright install chromium
 | `fuzz-test.js` | ボタンをでたらめに押し続け、エラーと壊れた数値を探す | `node tools/fuzz-test.js druid 1500` |
 | `combo-test.js` | 職業 × 季節 × 遊び方の組み合わせを動かし、エラーを探す | `node tools/combo-test.js` |
 
-- `balance-sim.js` の引数：`[分数] [職業] [試練の分数] [スキル3つ(カンマ区切り、- で省略)] [傭兵]`
+- `balance-sim.js` の引数：`[分数] [職業] [試練の分数] [スキル3つ(カンマ区切り、- で省略)] [傭兵(- で省略)] [育て方]`
+- 育て方：`game`（省略時）はゲームの「スキルを自動で上げる」と「自動装備」をそのまま使う。`sim` は前からの測り方（data の先頭3スキル・道具の点数で装備）
+- `deathCauses` は「エリア:とどめを刺した敵と攻撃の種類」（例：`inferno:業火の溶岩の巨人の攻撃`）
 - 職業：`barbarian` `sorceress` `necromancer` `paladin` `assassin` `druid`
 - 傭兵：`spear` `archer` `mage`
 - 1回に数分かかります。結果は運でぶれるので、**同じ条件で2〜3回**測ってください。
