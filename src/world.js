@@ -60,6 +60,7 @@ WYD.world = {
     }
     WYD.lgems.update(w, dt);
     WYD.shrines.update(w, state, stats, dt);
+    WYD.breach.update(w, state, stats, dt);
     // オーラの輪（ONのオーラだけ残る）
     for (const id in p.auras || {}) {
       p.auras[id].timeLeft -= dt;
@@ -182,7 +183,7 @@ WYD.world = {
       w.banner.time += dt;
       if (w.banner.time > 2.5) w.banner = null;
     }
-    if (w.descendNext) {
+    if (w.descendNext && !w.breach) {   // 裂け目が開いている間は、閉じてから降りる
       w.descendNext = false;
       this.changeFloor(w, state, 1);
     }
@@ -1122,7 +1123,7 @@ WYD.world = {
 
     const area = this.area(state);
     const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult * this.floorPower(state);
-    this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult * WYD.season.mult(state, "expMult") * WYD.shrines.expMult()));
+    this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult * WYD.season.mult(state, "expMult") * WYD.shrines.expMult() * WYD.breach.expMult(e)));
 
     WYD.records.add(state, "kills");
     if (this.hasAffix(e, "explosive")) {
@@ -1237,6 +1238,7 @@ WYD.world = {
     WYD.gems.onKill(w, state, e);
     WYD.maps.onKill(w, state, e);
     WYD.uber.onKill(w, state, e);
+    WYD.breach.onKill(w, state, e);
     WYD.records.check(state);
   },
 

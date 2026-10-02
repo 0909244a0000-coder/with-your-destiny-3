@@ -94,6 +94,7 @@ WYD.render = {
     this.clock = w.time || 0;
     this.playerPos = w.player;
     // 奥（画面の上）にいるものから描く（手前のキャラが奥のキャラにかぶさるように）
+    WYD.breach.draw(ctx, w);   // 裂け目は敵の下に
     for (const e of w.enemies.slice().sort((a, b) => a.y - b.y)) this.drawEnemy(ctx, e);
     WYD.shrines.draw(ctx, w);
     WYD.allies.draw(ctx, w);
@@ -495,7 +496,7 @@ WYD.render = {
     }
     if (e.clone) ctx.globalAlpha = 0.55;   // 分身はうすく
     this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, this.poseImage(e, def), e.hitFlash > 0,
-      this.pose(e, this.playerPos, this.clock), def.imageFilter);
+      this.pose(e, this.playerPos, this.clock), e.imageFilter || def.imageFilter);
     ctx.globalAlpha = 1;
     if (e.shielded) {
       // 精鋭の「守護」：光の盾
