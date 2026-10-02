@@ -1,8 +1,10 @@
 // 組み合わせテスト：3職業 × 季節 × 遊び方（ふつう・ボス・試練・日替わり・地図・双王）を60秒ずつ動かし、エラーを探す
-// 使い方：NODE_PATH=/opt/node-tools/node_modules node tools/combo-test.js
-const { chromium } = require('/opt/node-tools/node_modules/playwright');
+// 使い方：node tools/combo-test.js
+const { chromium } = require('playwright');
+// このクラウド環境では入っているブラウザを使う。ほかの環境（Codex など）では Playwright の標準のブラウザ
+const exe = require('fs').existsSync('/opt/pw-browsers/chromium') ? { executablePath: '/opt/pw-browsers/chromium' } : {};
 (async () => {
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const b = await chromium.launch(exe);
   const pg = await b.newPage();
   const errs = new Map(); pg.on('pageerror', e => { const k = e.message + ' @ ' + (e.stack || '').split('\n')[1]; errs.set(k, (errs.get(k) || 0) + 1); });
   await pg.goto('file://' + require('path').resolve(__dirname, '../index.html'));

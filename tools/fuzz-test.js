@@ -1,10 +1,12 @@
 // でたらめ操作テスト：ボタン・マス・選択肢をランダムに押し続け、エラーと壊れた数値を探す
-// 使い方：NODE_PATH=/opt/node-tools/node_modules node tools/fuzz-test.js barbarian 2000
-const { chromium } = require('/opt/node-tools/node_modules/playwright');
+// 使い方：node tools/fuzz-test.js barbarian 2000
+const { chromium } = require('playwright');
+// このクラウド環境では入っているブラウザを使う。ほかの環境（Codex など）では Playwright の標準のブラウザ
+const exe = require('fs').existsSync('/opt/pw-browsers/chromium') ? { executablePath: '/opt/pw-browsers/chromium' } : {};
 (async () => {
   const cls = process.argv[2] || 'barbarian';
   const steps = Number(process.argv[3]) || 3000;
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const b = await chromium.launch(exe);
   const pg = await b.newPage({ viewport: { width: 1440, height: 1600 } });
   const errs = new Map();
   pg.on('pageerror', e => { const k = e.message + ' @ ' + (e.stack || '').split('\n').slice(1, 3).join(' | '); errs.set(k, (errs.get(k) || 0) + 1); });
