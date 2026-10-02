@@ -16,7 +16,7 @@ WYD.save = {
       version: 1,
       classId: WYD.classes.id,   // 職業
       player: { level: 1, exp: 0, skillPoints: 0, skills, skillEnabled: enabled,
-        paragon: { level: 0, exp: 0, points: 0, alloc: {} },   // 修練（レベル上限のあと）
+        paragon: { level: 0, exp: 0, points: 0, board: {} },   // 修練（レベル上限のあと）。board = 取ったマス（"行,列" → true）
         runes: {} },   // スキルの型（スキル名 → 型の名前）
       equipment: {},   // slot -> item
       inventory: [],   // item の配列
@@ -71,6 +71,13 @@ WYD.save = {
       state.player = Object.assign(base.player, saved.player);
       state.player.skills = Object.assign(this.newState().player.skills, saved.player && saved.player.skills);
       state.player.paragon = Object.assign(this.newState().player.paragon, saved.player && saved.player.paragon);
+      // ボードがなかった頃のセーブ：振っていたポイントをもどす
+      const pgs = state.player.paragon;
+      if (pgs.alloc) {
+        for (const k in pgs.alloc) pgs.points += pgs.alloc[k];
+        delete pgs.alloc;
+      }
+      pgs.board = Object.assign({}, pgs.board);
       state.player.runes = Object.assign({}, saved.player && saved.player.runes);
       state.player.skillEnabled = Object.assign(this.newState().player.skillEnabled, saved.player && saved.player.skillEnabled);
       state.settings = Object.assign(this.newState().settings, saved.settings);

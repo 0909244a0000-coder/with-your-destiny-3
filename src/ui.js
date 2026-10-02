@@ -59,15 +59,19 @@ WYD.ui = {
       if (confirm(`「${name}」に切り替えますか？（今のキャラのセーブはそのまま残ります）`)) WYD.classes.switchTo(e.target.value, s);
       else e.target.value = WYD.classes.id;
     };
-    // 修練ポイントを振る
+    // パラゴンボード
     this.$("paragon").onclick = (e) => {
-      const btn = e.target.closest("button[data-paragon]");
-      if (!btn) return;
-      const pg = s.player.paragon;
-      const st = WYD.data.player.paragon.stats[btn.dataset.paragon];
-      if (pg.points <= 0 || (st.max != null && (pg.alloc[btn.dataset.paragon] || 0) >= st.max)) return;
-      pg.points--;
-      pg.alloc[btn.dataset.paragon] = (pg.alloc[btn.dataset.paragon] || 0) + 1;
+      if (!e.target.closest("#board-open")) return;
+      this.$("board-body").innerHTML = this.boardHtml();
+      this.$("board").hidden = false;
+    };
+    this.$("board-close").onclick = () => { this.$("board").hidden = true; };
+    this.$("board-body").onclick = (e) => {
+      const cell = e.target.closest("[data-cell]");
+      if (!cell) return;
+      const [r, c] = cell.dataset.cell.split(",").map(Number);
+      if (!WYD.board.take(s, r, c)) return;
+      this.$("board-body").innerHTML = this.boardHtml();
       this.changed();
     };
     this.$("sound-toggle").onclick = () => {
@@ -966,19 +970,31 @@ WYD.ui = {
       <span class="skill-rune-desc">${cur ? cur.desc : ""}</span></div>`;
   },
 
-  // 修練ポイントの振り分け
+  // 修練（キャラ欄）：ポイントとボードを開くボタン
   paragonHtml() {
-    const G = WYD.data.player.paragon;
     const pg = this.state.player.paragon;
-    const rows = Object.keys(G.stats).map((k) => {
-      const st = G.stats[k];
-      const n = pg.alloc[k] || 0;
-      const v = n * st.per;
-      const full = st.max != null && n >= st.max;
-      return `<div class="paragon-row"><span>${st.name} +${Number.isInteger(v) ? v : v.toFixed(2)}${st.percent ? "%" : ""}${full ? "（上限）" : ""}</span>
-        <button data-paragon="${k}" ${pg.points > 0 && !full ? "" : "disabled"}>＋</button></div>`;
-    }).join("");
-    return `<div class="build-title">修練ポイント：<b style="color:var(--accent)">${pg.points}</b>（レベル上限のあとの経験値でたまる）</div>${rows}`;
+    return `<div class="build-title">修練ポイント：<b style="color:var(--accent)">${pg.points}</b>（レベル上限のあとの経験値でたまる）
+      <button id="board-open">パラゴンボード</button>　取ったマス ${Object.keys(pg.board).length}</div>`;
+  },
+
+  // パラゴンボードの画面
+  boardHtml() {
+    const s = this.state;
+    const B = WYD.data.player.paragon.board;
+    const rows = B.layout.map((line, r) => [...line].map((ch, c) => {
+      if (ch === ".") return `<div class="bcell empty"></div>`;
+      const t = B.tiles[ch];
+      const own = WYD.board.owned(s, r, c);
+      const can = WYD.board.canTake(s, r, c);
+      return `<div class="bcell ${t.kind}${own ? " own" : ""}${can ? " can" : ""}" data-cell="${r},${c}" style="--bc:${B.colors[t.kind]}"
+        title="${WYD.board.tileText(t)}${own ? "（取得ずみ）" : can ? "（クリックで取る）" : ""}"></div>`;
+    }).join("")).join("");
+    const pb = WYD.stats.paragonBonus(s);
+    const sum = Object.keys(pb).filter((k) => pb[k]).map((k) => WYD.data.items.stats[k] ? WYD.util.formatStat(k, pb[k]) : `${B.magicFindName} +${pb[k]}%`).join("、");
+    return `<div class="dev-head">修練ポイント：<b>${s.player.paragon.points}</b>　<small class="muted">光っているマス（取ったマスのとなり）をクリックで取る。マスにマウスを乗せると中身が出る</small></div>
+      <div class="board-grid" style="grid-template-columns: repeat(${B.layout[0].length}, 26px)">${rows}</div>
+      <div class="board-legend">${Object.keys(B.colors).map((k) => `<span style="color:${B.colors[k]}">■</span>${{ normal: "ふつう", magic: "マジック", rare: "レア", legend: "伝説" }[k]}`).join("　")}</div>
+      <p class="muted">今の合計：${sum || "なし"}</p>`;
   },
 
   // 装備から今効いている特殊効果（合計）と固有能力のまとめ

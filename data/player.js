@@ -51,16 +51,47 @@ WYD.data.player = {
     expBase: 40000,      // 修練レベル1つぶんに必要な経験値
     expGrowth: 1.03,     // 修練レベルが上がるごとに必要な量が何倍になるか
     pointsPerLevel: 1,
-    // ポイント1つで上がる量。max = 振れるポイントの上限（なければ上限なし）
-    stats: {
-      attack:      { name: "攻撃力", per: 2 },
-      defense:     { name: "防御力", per: 1.5 },
-      maxHp:       { name: "最大HP", per: 10 },
-      critChance:  { name: "会心率", per: 0.25, percent: true, max: 80 },
-      attackSpeed: { name: "攻撃速度", per: 0.5, percent: true, max: 60 },
-      skillDamage: { name: "スキル威力", per: 1, percent: true },
-      hpRegen:     { name: "HP回復/秒", per: 0.3 },
-      magicFind:   { name: "レア発見", per: 2, percent: true, max: 100 },   // 落ちる装備のレアの出やすさ
+    // パラゴンボード（Diablo 4 のしくみ）：修練ポイント1つでマスを1つ取る。取れるのは、もう取ったマスのとなり（上下左右）だけ。
+    //   layout … 盤面。1文字が1マス（"." はマスなし、"S" は始まり＝はじめから取ってある）
+    //   tiles  … 文字ごとのマスの中身。kind（normal / magic / rare / legend：色と大きさ）、stats（能力）、effects（特殊効果）、
+    //            power と params と desc（固有能力。data/uniques.js と同じしくみ）
+    //   能力の名前は data/items.js の stats と同じ。magicFind = レア発見（%）
+    board: {
+      layout: [
+        "..WaaLkkX..",
+        "..a..s..k..",
+        "..a..s..k..",
+        "Ydd..m..rrZ",
+        "..d..s..r..",
+        "..dccsKKr..",
+        "....AsH....",
+        ".....s.....",
+        "...hhshh...",
+        ".....s.....",
+        ".....S.....",
+      ],
+      tiles: {
+        S: { kind: "normal", stats: {} },
+        s: { kind: "normal", stats: { attack: 1, maxHp: 5 } },
+        a: { kind: "normal", stats: { attack: 3 } },
+        d: { kind: "normal", stats: { defense: 2 } },
+        h: { kind: "normal", stats: { maxHp: 15 } },
+        c: { kind: "normal", stats: { critChance: 0.5 } },
+        k: { kind: "normal", stats: { skillDamage: 2 } },
+        r: { kind: "normal", stats: { hpRegen: 0.3 } },
+        m: { kind: "magic", stats: { magicFind: 10 } },
+        A: { kind: "magic", stats: { attack: 8, attackSpeed: 3 } },
+        H: { kind: "magic", stats: { maxHp: 40, defense: 3 } },
+        K: { kind: "magic", stats: { skillDamage: 6 } },
+        W: { kind: "rare", stats: { attack: 6 }, effects: { critDamage: 15 } },
+        X: { kind: "rare", stats: { skillDamage: 10 }, effects: { cooldown: 5 } },
+        Y: { kind: "rare", stats: { defense: 6 }, effects: { thorns: 15 } },
+        Z: { kind: "rare", stats: { maxHp: 30 }, effects: { killHeal: 2 } },
+        L: { kind: "legend", stats: { skillDamage: 5 }, power: "eliteHunter", params: { percent: 25 },
+             desc: "精鋭とボスに与えるダメージ +{percent}%" },
+      },
+      colors: { normal: "#8a7d66", magic: "#5b8cff", rare: "#ffd447", legend: "#ff8a2a" },
+      magicFindName: "レア発見",
     },
   },
 };

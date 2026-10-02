@@ -215,9 +215,8 @@ WYD.inventory = {
     pl.skillPoints += skill;
     pl.runes = {};
     const pg = pl.paragon;
-    let paragon = 0;
-    for (const k in pg.alloc) paragon += pg.alloc[k];
-    pg.alloc = {};
+    const paragon = Object.keys(pg.board).length;
+    pg.board = {};
     pg.points += paragon;
     return { skill, paragon };
   },
