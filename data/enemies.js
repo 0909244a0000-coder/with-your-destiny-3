@@ -171,7 +171,6 @@ WYD.data.enemies = {
   },
 
   // ---- 奈落の大聖堂（4つ目のエリア）----
-  // 絵はまだないので、今ある絵の色を変えて仮に使う（imageFilter。本番の絵が来たら消す）
   fallenKnight: {
     name: "堕ちた聖騎士",
     color: "#8a90a8",
@@ -207,8 +206,8 @@ WYD.data.enemies = {
   wailingSpirit: {
     name: "嘆きの霊",
     color: "#9fc8ff",
-    image: "assets/enemies/preta.png",
-    imageFilter: "hue-rotate(180deg) brightness(1.3) opacity(0.75)",
+    image: "assets/enemies/wailingSpirit.png",
+    imageFilter: "opacity(0.85)",   // 霊なので少し透かす
     radius: 12,
     hp: 60,
     attack: 10,
@@ -241,13 +240,13 @@ WYD.data.enemies = {
   // ---- 凍てつく深淵（5つ目のエリア。絵は仮：今ある絵の色を変えたもの）----
   frostWraith: {
     name: "霜の亡者", color: "#bfe4ff",
-    image: "assets/enemies/preta.png", imageFilter: "hue-rotate(170deg) saturate(0.6) brightness(1.4)",
+    image: "assets/enemies/frostWraith.png",
     radius: 12, hp: 70, attack: 11, defense: 2, attackSpeed: 1.0, moveSpeed: 95, range: 22,
     exp: 15, dropChance: 0.26, rarityBonus: 1.5,
   },
   iceGiant: {
     name: "氷の巨人", color: "#8ab8e0",
-    image: "assets/enemies/rakshasa.png", imageFilter: "hue-rotate(180deg) saturate(0.5) brightness(1.2)",
+    image: "assets/enemies/iceGiant.png",
     radius: 20, hp: 220, attack: 17, defense: 7, attackSpeed: 0.6, moveSpeed: 55, range: 32,
     exp: 30, dropChance: 0.38, rarityBonus: 1.8,
   },
