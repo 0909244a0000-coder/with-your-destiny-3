@@ -102,6 +102,27 @@ WYD.data.areas = [
     floors: 3,
     killsPerFloor: 66,
   },
+  {
+    // 6つ目：炎の地獄。地面の絵はまだないので、火葬場の絵に赤い色をかぶせて仮に使う
+    id: "inferno",
+    name: "業火の玉座",
+    bgColor: "#2a1210",
+    grassColor: "#4a1a10",
+    stoneColor: "#6a3a2a",
+    groundImage: "assets/areas/smashana.png",
+    groundTint: "rgba(255,80,30,0.3)",
+    powerMult: 8.0,
+    itemLevelBonus: 19,
+    enemies: [
+      { kind: "fireImp", weight: 35 },
+      { kind: "lavaGolem", weight: 22 },
+      { kind: "hellArcher", weight: 22 },
+      { kind: "pyromancer", weight: 18 },
+    ],
+    boss: "hellLord",
+    floors: 3,
+    killsPerFloor: 72,
+  },
 ];
 
 // ボス戦の共通設定

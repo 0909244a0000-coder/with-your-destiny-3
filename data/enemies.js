@@ -266,6 +266,34 @@ WYD.data.enemies = {
     ranged: { keepDistance: 210, range: 310, speed: 200, size: 7, color: "#9fdcff" },
   },
 
+  // ---- 業火の玉座（6つ目のエリア。絵は仮：今ある絵の色を変えたもの）----
+  fireImp: {
+    name: "業火の小鬼", color: "#ff7a3a",
+    image: "assets/enemies/pishacha.png", imageFilter: "hue-rotate(-30deg) saturate(1.8) brightness(1.2)",
+    radius: 11, hp: 65, attack: 11, defense: 2, attackSpeed: 1.0, moveSpeed: 105, range: 20,
+    exp: 16, dropChance: 0.26, rarityBonus: 1.6,
+  },
+  lavaGolem: {
+    name: "溶岩の巨人", color: "#d0502a",
+    image: "assets/enemies/daitya.png", imageFilter: "hue-rotate(-20deg) saturate(1.6) brightness(0.9)",
+    radius: 21, hp: 240, attack: 14, defense: 8, attackSpeed: 0.5, moveSpeed: 50, range: 32,
+    exp: 32, dropChance: 0.38, rarityBonus: 1.9,
+  },
+  hellArcher: {
+    name: "地獄の射手", color: "#ff9a5a",
+    image: "assets/enemies/yakshaArcher.png", imageFilter: "hue-rotate(-30deg) saturate(1.6) brightness(1.1)",
+    radius: 12, hp: 70, attack: 13, defense: 2, attackSpeed: 0.65, moveSpeed: 70, range: 22,
+    exp: 17, dropChance: 0.28, rarityBonus: 1.6,
+    ranged: { keepDistance: 190, range: 290, speed: 260, size: 5, color: "#ffb04a" },
+  },
+  pyromancer: {
+    name: "業火の術師", color: "#ffc04a",
+    image: "assets/enemies/nagaCaster.png", imageFilter: "hue-rotate(-60deg) saturate(1.5) brightness(1.2)",
+    radius: 14, hp: 100, attack: 14, defense: 3, attackSpeed: 0.5, moveSpeed: 60, range: 22,
+    exp: 21, dropChance: 0.32, rarityBonus: 1.7,
+    ranged: { keepDistance: 210, range: 310, speed: 200, size: 8, color: "#ff6a2a" },
+  },
+
   // ---- 宝物ゴブリン（まれに出て逃げ回る。data/elites.js の goblin も見る）----
   goblin: {
     name: "宝物ゴブリン",
@@ -368,6 +396,28 @@ WYD.data.enemies = {
     // 氷の吐息：予告の線のあと突進（阿修羅王と同じしくみ）と、まわりへの氷のつぶて
     charge: { interval: 9, firstDelay: 5, windup: 1.1, speed: 520, length: 380, width: 40, damageMult: 1.8, color: "#bfe4ff" },
     barrage: { interval: 6, count: 10, speed: 170, size: 6, color: "#d0f0ff", damageMult: 0.45 },
+  },
+  hellLord: {
+    name: "業火の魔王",
+    color: "#e0402a",
+    image: "assets/enemies/asuraKing.png",
+    imageFilter: "sepia(1) saturate(4) hue-rotate(-25deg) brightness(0.85)",   // 仮の絵
+    poses: { attack: null, windup: null },
+    radius: 38,
+    hp: 1250,
+    attack: 17,
+    defense: 11,
+    attackSpeed: 0.65,
+    moveSpeed: 72,
+    range: 48,
+    exp: 900,
+    dropChance: 1.0,
+    rarityBonus: 11,
+    boss: true,
+    // 分身（羅刹王と同じ）・炎の沼（水牛魔と同じ）・炎の弾（大司教と同じ）を使う。大技（slam）はなし（近接の職業がきつすぎたので）
+    clone: { interval: 14, firstDelay: 6, count: 2, hpRatio: 0.12, attackMult: 0.35, max: 4 },
+    pools: { interval: 9, firstDelay: 4, count: 2, radius: 60, duration: 6, dpsMult: 0.3, spread: 60, color: "#ff5a1a" },
+    barrage: { interval: 7, count: 10, speed: 170, size: 7, color: "#ff8a3a", damageMult: 0.3 },
   },
   archbishop: {
     name: "堕天の大司教",

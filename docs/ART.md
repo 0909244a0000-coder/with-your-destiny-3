@@ -187,6 +187,24 @@ A seamless tileable top-down floor texture for a dark fantasy game: cracked blue
 Western dark fantasy (Diablo-like), painterly, high contrast. No text, no frame.
 ```
 
+### 6つ目のエリア「業火の玉座」の絵
+今は地面＝火葬場の絵に赤い色をかぶせたもの、敵とボス＝今ある絵の色を変えたもの。届いたら `image` を差し替え、`groundTint`・`imageFilter` を消す。
+
+**地面（1枚）** → `assets/areas/inferno.png`
+```
+A seamless tileable top-down floor texture for a dark fantasy game: cracked black basalt with glowing lava seams, ash, charred bones, embers. Painterly, low contrast so characters stand out. No text.
+```
+
+**敵とボス（5枚。512px以上・透明背景・3/4見下ろし・右向き）** → `assets/enemies/<名前>.png`
+```
+1 fireImp: a small horned imp of red skin and flickering flames, with claws.
+2 lavaGolem: a hulking golem of black rock with molten lava cracks.
+3 hellArcher: a demonic archer in charred armor with a burning bow.
+4 pyromancer: a fire cultist in red robes conjuring a fireball.
+5 hellLord (BOSS, larger): the lord of hell, a towering horned demon with burning wings and a flaming blade.
+Western dark fantasy (Diablo-like), painterly, high contrast. No text, no frame.
+```
+
 ## 制作済みの仕様・再制作用プロンプト
 
 以下は今回制作した絵の仕様です。再制作のために元のプロンプトとIDを残しています。

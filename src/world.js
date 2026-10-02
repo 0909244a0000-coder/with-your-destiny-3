@@ -120,7 +120,8 @@ WYD.world = {
           boss.attack *= 1 - ease;
           WYD.ui.log(`（何度も挑んだので、ボスが弱っている：-${Math.round(ease * 100)}%）`, "#c9b48a");
         }
-        boss.slamTimer = WYD.data.enemies[area.boss].slam.interval;
+        const slam = WYD.data.enemies[area.boss].slam;   // 大技のないボスもいる
+        if (slam) boss.slamTimer = slam.interval;
         WYD.ui.log(`ボス「${WYD.data.enemies[area.boss].name}」が現れた！`, WYD.data.boss.nameColor);
         WYD.sound.play("bossAppear");
         WYD.ui.markDirty();

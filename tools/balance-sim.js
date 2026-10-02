@@ -22,6 +22,7 @@ const MERC = process.argv[6] || null; // 雇う傭兵（spear・archer・mage。
     const score = (it) => it ? it.stats.reduce((a, l) => a + l.value * ({ attack: 4, defense: 2.5, maxHp: 0.4, hpRegen: 4, attackSpeed: 1.5, critChance: 1.5, moveSpeed: 0.3, skillDamage: 0.8 }[l.stat] || 0), 0) + (it.effects || []).length * 6 + (it.unique ? 30 : 0) : 0;
     const ids = SKILLS || Object.keys(WYD.data.skills); const order = [ids[0], ids[1], ids[2], ids[0], ids[1], ids[0], ids[2], ids[0]];
     let deaths = 0, wasDead = false, t = 0;
+    const deathCauses = {};
     const events = [];
     const log = (m) => events.push(`${Math.round(t / 60)}分 Lv${s.player.level} ${m}`);
     const origLog = WYD.ui.log.bind(WYD.ui);
@@ -42,7 +43,13 @@ const MERC = process.argv[6] || null; // 雇う傭兵（spear・archer・mage。
     while (t < limit) {
       WYD.world.update(w, s, dt);
       t += dt;
-      if (w.player.dead && !wasDead) { deaths++; if (w.enemies.some(e => e.boss)) log('ボス戦で倒れた'); }
+      if (w.player.dead && !wasDead) {
+        deaths++; if (w.enemies.some(e => e.boss)) log('ボス戦で倒れた');
+        // どこで・何の近くで倒れたか（いちばん近い敵の種類と、精鋭かどうか）
+        const near = w.enemies.slice().sort((a, b) => WYD.util.dist(a, w.player) - WYD.util.dist(b, w.player))[0];
+        const key = `${s.area}:${near ? near.kind + (near.elite ? '(精鋭)' : '') : '?'}`;
+        deathCauses[key] = (deathCauses[key] || 0) + 1;
+      }
       wasDead = w.player.dead;
       if (t >= nextManage) {
         nextManage += 10;
@@ -65,7 +72,7 @@ const MERC = process.argv[6] || null; // 雇う傭兵（spear・archer・mage。
       }
       trial = s.trial;
     }
-    return { events, lgems: s.lgems, trial, deaths, level: s.player.level, area: s.area, maxDiff: s.maxDifficulty, mats: s.materials,
+    return { events, deathCauses, lgems: s.lgems, trial, deaths, level: s.player.level, area: s.area, maxDiff: s.maxDifficulty, mats: s.materials,
       eq: Object.values(s.equipment).map(i => i.name + '(' + i.rarity + ')') };
   }, [MINUTES, TRIAL_MINUTES, SKILLS, MERC]);
   console.log(JSON.stringify(res, null, 1), 'secs', (Date.now()-t0)/1000);

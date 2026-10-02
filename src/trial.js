@@ -67,7 +67,8 @@ WYD.trial = {
       for (const kind of kinds) {
         const g = WYD.world.spawnEnemy(w, state, kind, WYD.world.farPosition(w));
         g.boss = true;
-        g.slamTimer = WYD.data.enemies[kind].slam.interval;
+        const slam = WYD.data.enemies[kind].slam;   // 大技のないボスもいる
+        if (slam) g.slamTimer = slam.interval;
         WYD.ui.log(`${state.trialRun.uber ? "双王" : "守護者"}「${WYD.data.enemies[kind].name}」が現れた！`, T.color);
       }
       WYD.sound.play("bossAppear");
