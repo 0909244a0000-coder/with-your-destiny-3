@@ -384,6 +384,7 @@ details.menu .menu-body button, details.menu .menu-body label { text-align: left
 /* 装備・持ち物の画面（戦いの画面の上に重ねて開く） */
 .stage-btns { position: absolute; top: 8px; right: 8px; z-index: 3; display: flex; gap: 6px; }
 .stage-btns button { font-size: 13px; padding: 6px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.7); }
+#mute-btn.muted { opacity: 0.6; }
 #town-btn.in-town { background: linear-gradient(#6a2a1e, #3a1610); border-color: #ff8a5a; }
 .bag-btn #bag-badge { color: var(--muted); font-size: 11px; }
 .bag-btn.full #bag-badge { color: #ff8a6a; }

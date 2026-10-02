@@ -128,6 +128,8 @@ WYD.ui = {
         this.togglePause();
       } else if (e.key === "i" || e.key === "I") {
         this.toggleBag();
+      } else if (e.key === "m" || e.key === "M") {
+        this.toggleMute();
       } else if (e.key === "h" || e.key === "H") {
         WYD.town.toggle(this.world, s);
       } else if (e.key === "Escape" && !this.$("bag").hidden) {
@@ -143,6 +145,7 @@ WYD.ui = {
     // 装備・持ち物の画面：戦いの画面の上のボタンで開く。外側（暗いところ）を押しても閉じる
     this.$("bag-open").onclick = () => this.toggleBag(true);
     this.$("town-btn").onclick = () => WYD.town.toggle(this.world, s);
+    this.$("mute-btn").onclick = () => this.toggleMute();
     this.$("bag-close").onclick = () => this.toggleBag(false);
     this.$("bag").onclick = (e) => { if (e.target.id === "bag") this.toggleBag(false); };
     this.$("auto-diff").onchange = (e) => {
@@ -1055,6 +1058,9 @@ WYD.ui = {
     this.$("inv-count").textContent = `${s.inventory.length} / ${size}`;
     this.$("bag-badge").textContent = `${s.inventory.length}/${size}`;
     const inTown = !!(this.world && this.world.town);
+    const muted = !s.settings.sound && s.settings.music === false;
+    this.$("mute-btn").textContent = muted ? "🔇" : "🔊";
+    this.$("mute-btn").classList.toggle("muted", muted);
     this.$("town-btn").textContent = inTown ? "⚔ 戦場へ" : "🏕 拠点へ";
     this.$("town-btn").classList.toggle("in-town", inTown);
     this.$("bag-open").classList.toggle("full", s.inventory.length >= size);
@@ -1527,6 +1533,16 @@ WYD.ui = {
   },
 
   // スマホ：装備を触ったら、説明と「どうするか」のボタンを窓で出す（ふつうのモードのときだけ）。出したら true
+  // 効果音と音楽をまとめて切り替える（どちらかが鳴っていれば両方消す。両方消えていれば両方つける）
+  toggleMute() {
+    const st = this.state.settings;
+    const on = !!st.sound || st.music !== false;
+    st.sound = !on;
+    st.music = !on;
+    this.log(on ? "音を消した（M キーかボタンで戻す）" : "音を出した");
+    this.changed();
+  },
+
   // 装備・持ち物の画面を開く・閉じる（show を省くと切り替え）
   toggleBag(show) {
     const bag = this.$("bag");

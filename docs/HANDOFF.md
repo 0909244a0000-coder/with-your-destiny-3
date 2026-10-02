@@ -48,6 +48,7 @@
 - 落ちている装備の名前は重なったら上にずらし、うすい黒の板の上に書く（`src/render.js` の `drawDropLabels`、`data/map.js` の `dropLabel`）
 - 持ち物・倉庫・装備欄は、長押し（指でもマウスでも、`data/items.js` の `longPressMs`）で「どうするか」の窓（捨てる・倉庫へ など）が出る（`WYD.ui.bindLongPress`）。iPad にキーボードやマウスをつけると PC 扱いになり、指では右クリックできなかったため。指の長押しで出る右クリックではいきなり捨てない（`fingerUsed`）。スマホ扱いは `hover: none` か `pointer: coarse`
 - 装備・持ち物の画面：装備・宝石・カナイの箱・持ち物・倉庫・地図のパネルは、右の列ではなく `#bag`（戦いの画面に重ねて開く窓）の中にある。戦いの画面の右上の「🎒 装備・持ち物」ボタンか I キーで開く、Esc・外側で閉じる（`WYD.ui.toggleBag`）。戦いの画面は `.stage` で包み、大きさのCSSは `.stage` にかける。持ち物・倉庫はマウスを乗せて Delete キーでも捨てられる（`discardHovered`）
+- 音のON・OFF：戦いの画面の右上「🔊」か M キーで、効果音と音楽をまとめて切り替える（`WYD.ui.toggleMute`。中身は `settings.sound` と `settings.music`）。右クリックで捨てるのは `bindRightDiscard`（右ボタンを押した時点で捨てる。指の長押しでは捨てない）
 - 持ち物の「並べ替え」（ロック→レア度→部位→強さの順。`WYD.inventory.sort`）と「捨てるモード」（ONのあいだクリック・タップで捨てる、ロックは捨てない。`WYD.ui.discardMode`・`discardAt`）。持ち主の環境で右クリックの捨てるが効かなかったため
 - パネルの書きかえは `WYD.ui.putHtml(id, html)`：中身が前と同じなら書きかえない。装備のマスが変わったときだけマウスの説明を消す（前は敵を倒すたびに作り直し・説明を消していて、点滅していた）。`setHtml(item)` はセット装備の説明で、別もの
 - 拠点（野営地）：`src/town.js`・`data/town.js`。戦いの画面の右上「🏕 拠点へ」か H キー。`w.town` のあいだ `world.update` は戦わず（HP満タン）、`render.draw` は野営地を描く。出るとその階の敵が出直す。試練などを始めたら自動で戦場へ。拠点にいるかはセーブしない
