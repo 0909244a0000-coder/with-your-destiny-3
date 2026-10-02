@@ -987,12 +987,26 @@ WYD.world = {
         if (drop.item.ancient) WYD.ui.notice(`${WYD.loot.label(drop.item)}を拾った！`, WYD.data.items.ancient.colors[drop.item.ancient]);
         else WYD.ui.log(`${WYD.loot.label(drop.item)}（${r.name}）を拾った`, r.color);
         WYD.ui.markDirty();
+      } else if (D.fullSalvage.includes(drop.item.rarity)) {
+        // 持ち物がいっぱい：ノーマル・マジックは拾ったその場で素材にする
+        drop.picked = true;
+        const n = WYD.inventory.salvage(state, drop.item);
+        if (n > 0) this.addText(w, drop.x, drop.y - 10, `+${n}`, WYD.data.crafting.materialColor);
+        this.fullWarning(w, `持ち物がいっぱいなので、ノーマル・マジックは素材にしています（いらない装備を捨てるか、「拾う・装備」で自動分解をONに）`);
+        WYD.ui.markDirty();
       } else if (!drop.warned) {
         drop.warned = true;
-        WYD.ui.log("持ち物がいっぱいで拾えない！", "#ff6b6b");
+        this.fullWarning(w, "持ち物がいっぱいで拾えない！");
       }
     }
     w.drops = w.drops.filter((d) => !d.picked && d.age < D.groundLifetime);
+  },
+
+  // 持ち物がいっぱいの知らせは、しばらく出しすぎない
+  fullWarning(w, text) {
+    if (w.time - (w.fullWarnAt == null ? -Infinity : w.fullWarnAt) < WYD.data.items.fullWarnInterval) return;
+    w.fullWarnAt = w.time;
+    WYD.ui.log(text, "#ff6b6b");
   },
 
   updateEffects(w, dt) {
