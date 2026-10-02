@@ -36,6 +36,12 @@
 
 ### 第3回の発注：エフェクトの絵とポーズ違い（上から順に優先）
 
+**受け取り状況（ゲームに入れた）**：元の画像ファイルが取れなかったので、持ち主のスマホのスクショから切り出して入れた（画質は低め。元の画像が手に入ったら、同じファイル名で差し替えればそのまま良くなる）。
+- エフェクト11枚：slash・whirl・iceNova・fireBurst・fireGround・lightning・axe・meteor・shield・chains・shockwave（黒い背景のまま）
+- ポーズ8枚：player_attack・player_sorceress_attack・ravana／asuraKing／mahisha の attack と windup（灰色の背景を抜いた）
+- ソーサレスのスキルアイコン6個、装備アイコン6個（staff・shield・tome・amulet・talisman・belt）
+- **まだ**：エフェクトの `magicCircle`（足元の魔法陣）と `fireball`（ソーサレスの火の玉）、装備の `sash`（飾り帯）。届いた絵の中の「紫の光の筋」と「緑のどくろの霧」は発注になかったので使っていない
+
 ゲーム側の受け口はできています。絵を置いて、下の「書く場所」に場所を書けば、すぐゲームに出ます（書かなければ今の見た目のまま）。
 
 #### A. エフェクトの絵（13枚）→ `assets/vfx/<名前>.png`、書く場所は `data/vfx.js` の `textures`

@@ -25,7 +25,7 @@ WYD.data.classes = {
       weaponName: "杖",
       color: "#ff8a4a",
       image: "assets/player_sorceress.png",
-      poses: { attack: null },   // 例: "assets/player_sorceress_attack.png"
+      poses: { attack: "assets/player_sorceress_attack.png" },
       base: { maxHp: 95, attack: 11, defense: 1, attackSpeed: 1.0, critChance: 6, hpRegen: 1, moveSpeed: 120 },
       perLevel: { maxHp: 11, attack: 2.3, defense: 0.7 },
       // 通常攻撃を「火の玉」にする（敵と距離をとって撃つ）
@@ -100,7 +100,10 @@ WYD.data.classes = {
       },
     },
     skillOrder: ["sorc_shield", "sorc_warmth", "sorc_static", "sorc_haste", "sorc_hydra", "sorc_freeze", "sorc_nova", "sorc_chain", "sorc_meteor"],
-    skillIcons: {},
+    skillIcons: {
+      sorc_nova: "assets/skills/sorc_nova.png", sorc_shield: "assets/skills/sorc_shield.png", sorc_chain: "assets/skills/sorc_chain.png",
+      sorc_meteor: "assets/skills/sorc_meteor.png", sorc_haste: "assets/skills/sorc_haste.png", sorc_freeze: "assets/skills/sorc_freeze.png",
+    },
   },
 
   // 骸骨の手下を呼び出して、いっしょに戦う職業

@@ -7,7 +7,7 @@ WYD.data.player = {
   weaponName: "双剣",           // 初期の武器種（表示用）
   color: "#4fa3ff",             // 絵がないときの丸の色
   image: "assets/player.png",    // バーバリアンの透過スプライト（立ち姿）
-  poses: { attack: null },       // ポーズ違いの絵（例: attack: "assets/player_attack.png"）。攻撃の瞬間に差し替える
+  poses: { attack: "assets/player_attack.png" },   // ポーズ違いの絵。攻撃の瞬間に差し替える
   radius: 14,                   // 体の大きさ（当たり判定・表示）
   escapeDirections: 16,         // 爆発の輪から逃げるとき、何方向を試すか
 

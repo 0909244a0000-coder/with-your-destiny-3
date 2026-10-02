@@ -6,18 +6,18 @@ WYD.data = WYD.data || {};
 WYD.data.vfx = {
   // 絵のファイル（例: slash: "assets/vfx/slash.png"）
   textures: {
-    slash: null,        // 斬撃の弧（バーバリアンの通常攻撃）
-    whirl: null,        // 旋風の渦（旋風斬）
-    iceNova: null,      // 氷の衝撃の輪（フロストノヴァ）
-    fireBurst: null,    // 炎の爆発（爆発・隕石の着地）
-    fireGround: null,   // 燃える地面（焦土・メテオ・劫火の腕輪）
-    lightning: null,    // 稲妻（チェインライトニング・雷鳴）
-    axe: null,          // 回る投げ斧（連鎖の投げ斧）
-    meteor: null,       // 落ちてくる隕石（メテオ）
+    slash: "assets/vfx/slash.png",        // 斬撃の弧（バーバリアンの通常攻撃）
+    whirl: "assets/vfx/whirl.png",        // 旋風の渦（旋風斬）
+    iceNova: "assets/vfx/iceNova.png",      // 氷の衝撃の輪（フロストノヴァ）
+    fireBurst: "assets/vfx/fireBurst.png",    // 炎の爆発（爆発・隕石の着地）
+    fireGround: "assets/vfx/fireGround.png",   // 燃える地面（焦土・メテオ・劫火の腕輪）
+    lightning: "assets/vfx/lightning.png",    // 稲妻（チェインライトニング・雷鳴）
+    axe: "assets/vfx/axe.png",          // 回る投げ斧（連鎖の投げ斧）
+    meteor: "assets/vfx/meteor.png",       // 落ちてくる隕石（メテオ）
     magicCircle: null,  // 足元の魔法陣（鉄の皮膚・マナシールド・狂戦士の怒り・魔力の奔流）
-    shield: null,       // 体を包む光の球（鉄の皮膚・マナシールドの間）
-    chains: null,       // 縛る鎖・氷（鉄鎖の束縛・凍てつく檻の間）
-    shockwave: null,    // 衝撃波の輪（ボスの大技）
+    shield: "assets/vfx/shield.png",       // 体を包む光の球（鉄の皮膚・マナシールドの間）
+    chains: "assets/vfx/chains.png",       // 縛る鎖・氷（鉄鎖の束縛・凍てつく檻の間）
+    shockwave: "assets/vfx/shockwave.png",    // 衝撃波の輪（ボスの大技）
     fireball: null,     // 火の玉（ソーサレスの通常攻撃）
   },
 

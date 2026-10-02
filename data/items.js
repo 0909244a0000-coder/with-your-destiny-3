@@ -87,6 +87,12 @@ WYD.data.items = {
     sandals: "assets/items/sandals.png",
     ring: "assets/items/ring.png",
     rosary: "assets/items/rosary.png",
+    staff: "assets/items/staff.png",
+    shield: "assets/items/shield.png",
+    tome: "assets/items/tome.png",
+    amulet: "assets/items/amulet.png",
+    talisman: "assets/items/talisman.png",
+    belt: "assets/items/belt.png",
   },
 
   // 追加能力（マジック以上に付く）
