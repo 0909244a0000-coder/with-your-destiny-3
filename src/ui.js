@@ -136,6 +136,11 @@ WYD.ui = {
     };
     this.$("auto-salvage").innerHTML = WYD.data.crafting.autoSalvageOptions
       .map((o) => `<option value="${o.id}">${o.label}</option>`).join("");
+    this.$("auto-skill").onchange = (e) => {
+      s.settings.autoSkill = e.target.checked;
+      if (s.settings.autoSkill) this.autoSkill();
+      this.changed();
+    };
     this.$("auto-equip").onchange = (e) => {
       s.settings.autoEquip = e.target.checked;
       this.changed();
@@ -787,6 +792,28 @@ WYD.ui = {
     pl.skillEnabled[id] = !pl.skillEnabled[id];
   },
 
+  // スキルポイントを自動で振る（設定「スキルを自動で上げる」）
+  //   1. ONの枠が空いていて、まだ覚えていないスキルがあれば覚える（AIが試す順番の早いもの）
+  //   2. ONのスキルのうち、レベルの低いものから上げる
+  //   3. ONのスキルが全部最大なら、覚えているほかのスキルを上げる
+  autoSkill() {
+    const pl = this.state.player;
+    const S = WYD.data.skills;
+    const order = WYD.data.skillOrder.filter((id) => S[id]);
+    let guard = 0;
+    while (pl.skillPoints > 0 && guard++ < 200) {
+      const lv = (id) => pl.skills[id] || 0;
+      const open = (id) => lv(id) < S[id].maxLevel;
+      let pick = null;
+      if (this.activeSkillCount() < WYD.data.skillSlots) pick = order.find((id) => lv(id) === 0);
+      if (!pick) pick = order.filter((id) => lv(id) > 0 && pl.skillEnabled[id] && open(id)).sort((a, b) => lv(a) - lv(b))[0];
+      if (!pick) pick = order.filter((id) => lv(id) > 0 && open(id)).sort((a, b) => lv(a) - lv(b))[0];
+      if (!pick) pick = order.find((id) => open(id));
+      if (!pick) break;
+      this.levelUpSkill(pick);
+    }
+  },
+
   levelUpSkill(id) {
     const pl = this.state.player;
     const def = WYD.data.skills[id];
@@ -874,6 +901,7 @@ WYD.ui = {
     }
     this.$("auto-salvage").value = s.settings.autoSalvage;
     this.$("auto-equip").checked = !!s.settings.autoEquip;
+    this.$("auto-skill").checked = !!s.settings.autoSkill;
     this.$("season").value = WYD.season.current(s).id;
     this.$("season").title = `季節のルール：${WYD.season.current(s).desc}`;
     this.$("filter-open").classList.toggle("active", !!s.settings.filter.on);
