@@ -1023,6 +1023,14 @@ WYD.world = {
         if (drop.item.ancient) WYD.ui.notice(`${WYD.loot.label(drop.item)}を拾った！`, WYD.data.items.ancient.colors[drop.item.ancient]);
         else WYD.ui.log(`${WYD.loot.label(drop.item)}（${r.name}）を拾った`, r.color);
         WYD.ui.markDirty();
+      } else if (D.protectDrops.includes(drop.item.rarity) && state.stash.length < D.stashSize) {
+        // 持ち物がいっぱい：ユニーク・セットは倉庫へ送る
+        drop.picked = true;
+        state.stash.push(drop.item);
+        WYD.records.found(state, drop.item);
+        WYD.records.check(state);
+        WYD.ui.log(`持ち物がいっぱいなので、${WYD.loot.label(drop.item)}を倉庫へ送った`, WYD.loot.rarityInfo(drop.item.rarity).color);
+        WYD.ui.markDirty();
       } else if (D.fullSalvage.includes(drop.item.rarity)) {
         // 持ち物がいっぱい：ノーマル・マジックは拾ったその場で素材にする
         drop.picked = true;
@@ -1032,10 +1040,16 @@ WYD.world = {
         WYD.ui.markDirty();
       } else if (!drop.warned) {
         drop.warned = true;
-        this.fullWarning(w, "持ち物がいっぱいで拾えない！");
+        if (D.protectDrops.includes(drop.item.rarity)) WYD.ui.notice(`持ち物も倉庫もいっぱい：${WYD.loot.label(drop.item)}は地面に残しておく（あけると拾う）`, "#ff8a6a");
+        else this.fullWarning(w, "持ち物がいっぱいで拾えない！");
       }
     }
-    w.drops = w.drops.filter((d) => !d.picked && d.age < D.groundLifetime);
+    w.drops = w.drops.filter((d) => !d.picked && (d.age < D.groundLifetime || D.protectDrops.includes(d.item.rarity)));
+  },
+
+  // 落ちている装備を片づける（エリアの移動・試練の開始など）。ユニーク・セットは消さずに残す
+  clearDrops(w) {
+    w.drops = w.drops.filter((d) => WYD.data.items.protectDrops.includes(d.item.rarity));
   },
 
   // 持ち物がいっぱいの知らせは、しばらく出しすぎない

@@ -820,7 +820,7 @@ WYD.ui = {
     s.bossProgress = 0;
     s.floor = 1;
     WYD.world.resetEnemies(this.world, s, false);
-    this.world.drops = [];
+    WYD.world.clearDrops(this.world);
     this.log(`「${next.name}」へ移動した`, "#ff8a2a");
     const intro = WYD.data.story.areaIntro[next.id];
     if (intro) this.log(intro, "#c9b48a");
