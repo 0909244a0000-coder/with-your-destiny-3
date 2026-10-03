@@ -1,0 +1,14 @@
+{
+  "name": "With Your Destiny Ⅲ",
+  "short_name": "WYD3",
+  "description": "ブラウザで遊べる自動戦闘のハクスラ",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0a09",
+  "theme_color": "#0b0a09",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

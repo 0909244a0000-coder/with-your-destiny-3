@@ -1,0 +1,1 @@
+assassin {"nanStats":[],"inv":20,"mats":94311,"trial":false} reload ok: 50 errors: 0
