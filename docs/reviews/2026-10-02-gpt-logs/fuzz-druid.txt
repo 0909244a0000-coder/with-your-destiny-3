@@ -1,0 +1,1 @@
+druid {"nanStats":[],"inv":26,"mats":93472,"trial":true} reload ok: 50 errors: 0
