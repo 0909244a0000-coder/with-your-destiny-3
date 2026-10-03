@@ -107,6 +107,9 @@ WYD.stats = {
     for (const c of WYD.devotion.owned(state)) {
       for (const k in c.bonus.stats || {}) b[k] = (b[k] || 0) + c.bonus.stats[k];
     }
+    // 熟練（OFF にしたスキルのレベルで上がる能力。data/mastery.js）
+    const ms = this.masteryBonus(state);
+    for (const k in ms) b[k] = (b[k] || 0) + ms[k];
     const mb = WYD.mercenary.bonus(state);   // 傭兵の加護
     for (const k in mb.stats || {}) b[k] = (b[k] || 0) + mb.stats[k];
     const fx = this.effectTotals(state);
@@ -135,6 +138,20 @@ WYD.stats = {
     };
     WYD.forms.apply(out);   // 変身（src/forms.js）
     return WYD.shrines.apply(out);   // 祠の効果（src/shrines.js）
+  },
+
+  // 熟練：レベルがあって OFF のスキルごとに、しくみに応じた能力を足す（id を渡すとそのスキルのぶんだけ）
+  masteryBonus(state, onlyId) {
+    const out = {};
+    const pl = state.player;
+    const M = WYD.data.mastery.perLevel;
+    for (const id of onlyId ? [onlyId] : Object.keys(WYD.data.skills)) {
+      const lv = pl.skills[id] || 0;
+      const per = M[WYD.classes.kindOf(id)];
+      if (lv <= 0 || !per || (pl.skillEnabled[id] && !onlyId)) continue;
+      for (const k in per) out[k] = (out[k] || 0) + per[k] * lv;
+    }
+    return out;
   },
 
   // オーラ「力」（kind: "aura"・auraType: "might"）をONにしていれば、攻撃力の倍率

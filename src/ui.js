@@ -1040,6 +1040,7 @@ WYD.ui = {
         </div>
         <div class="skill-desc">${def.desc}（${Math.round(WYD.runes.effectiveDef(s, id).cooldown * 10) / 10}秒ごと）</div>
         ${WYD.skillInfo.html(s, id, lv)}
+        ${this.masteryHtml(id, lv, on)}
         ${this.runeHtml(id, lv)}
       </div>`;
     }).join("");
@@ -1553,6 +1554,21 @@ WYD.ui = {
   },
 
   // スマホ：装備を触ったら、説明と「どうするか」のボタンを窓で出す（ふつうのモードのときだけ）。出したら true
+  // 熟練（OFF のスキルで上がる能力）の一行。ON のときは「OFF にすると」と小さく
+  masteryHtml(id, lv, on) {
+    const M = WYD.data.mastery;
+    const ms = WYD.stats.masteryBonus(this.state, id);
+    const per = M.perLevel[WYD.classes.kindOf(id)];
+    if (!per) return "";
+    const show = lv > 0 ? ms : per;
+    const fmt = (k, v) => { const info = WYD.data.items.stats[k]; return `${info.name} +${Math.round(v * 10) / 10}${info.percent ? "%" : ""}`; };
+    const text = Object.keys(show).map((k) => fmt(k, show[k])).join("、");
+    if (lv <= 0) return `<div class="skill-mastery muted">${M.label}：OFF にしておくと 1レベルごとに ${text}</div>`;
+    return on
+      ? `<div class="skill-mastery muted">${M.label}：OFF にすると ${text}</div>`
+      : `<div class="skill-mastery" style="color:${M.color}">◇ ${M.label}（OFF 中）：${text}</div>`;
+  },
+
   // 効果音と音楽をまとめて切り替える（どちらかが鳴っていれば両方消す。両方消えていれば両方つける）
   toggleMute() {
     const st = this.state.settings;

@@ -453,3 +453,4 @@ header .menus details.menu .menu-body { left: auto; right: 0; }
 .codex-home.here { color: #7dff8a; font-weight: bold; }
 .codex-area { margin: 8px 0 2px; padding: 2px 6px; font-size: 12px; color: #c9b48a; background: rgba(0,0,0,0.3); border-left: 3px solid #8a6d32; }
 .codex-area.here { color: #7dff8a; border-left-color: #7dff8a; }
+.skill-mastery { font-size: 11px; margin-top: 2px; }
