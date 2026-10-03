@@ -30,6 +30,8 @@ WYD.data.map = {
   // 画面の左下に、使っているスキルを並べる（暗い影＝次に使えるまでの時間、光る枠＝今使った）
   // minShownPx：スマホで画面が縮んでも、1つの四角がこの大きさ（画面上のピクセル）より小さくならないように大きく描く
   skillBar: { size: 38, minShownPx: 26, gap: 6, x: 12, bottom: 12, flash: 0.35, shade: "rgba(0,0,0,0.65)", border: "rgba(232,216,168,0.7)", flashColor: "#fff3b0", back: "rgba(20,16,12,0.8)" },
+  // 左上のエリア名と危険度の文字（スマホでも読める大きさに）。画面がこの割合より縮んで見えるときは、右上のボタンと重ならないよう右下に出す
+  hud: { font: 16, minShownPx: 11, compactBelow: 0.6, margin: 12 },
   playerBar: { width: 48, height: 6, gap: 6, color: "#3fd06a", lowColor: "#ffb03a", lowAt: 0.3 },   // 主人公の頭の上のHPの棒（スマホでもHPが見えるように）
   // 落ちている装備の名前（重なったら上にずらす。maxShift 段まで）
   dropLabel: { font: 12, pad: 3, back: "rgba(0,0,0,0.55)", maxShift: 6 },

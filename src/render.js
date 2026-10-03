@@ -166,6 +166,9 @@ WYD.render = {
 
     // ダメージの数字：出た瞬間にふくらんで、上にのぼりながら消える
     const T = WYD.data.fx.text;
+    // スマホなどで画面が縮んで見えるときは、そのぶん大きく描く
+    const shown = ctx.canvas.clientWidth / WYD.data.map.width || 1;
+    const tScale = Math.max(1, T.minShownPx / (T.size * shown));
     ctx.textAlign = "center";
     ctx.lineWidth = 3;
     ctx.strokeStyle = "rgba(0,0,0,0.75)";
@@ -173,7 +176,7 @@ WYD.render = {
       const k = t.time / T.life;
       const pop = 1 + (T.pop - 1) * Math.max(0, 1 - t.time / 0.12);
       ctx.globalAlpha = Math.min(1, (1 - k) * 2);
-      ctx.font = `bold ${Math.round((t.big ? T.critSize : T.size) * pop)}px sans-serif`;
+      ctx.font = `bold ${Math.round((t.big ? T.critSize : T.size) * pop * tScale)}px sans-serif`;
       ctx.strokeText(t.text, t.x, t.y);
       ctx.fillStyle = t.color;
       ctx.fillText(t.text, t.x, t.y);
@@ -184,10 +187,19 @@ WYD.render = {
     this.drawBossDefeat(ctx, w);
 
     // 左上：マップ名と危険度
-    ctx.textAlign = "left";
-    ctx.font = "bold 16px sans-serif";
+    const H = WYD.data.map.hud;
+    const hudSize = Math.max(H.font, Math.round(H.minShownPx / shown));
+    const compact = shown < H.compactBelow;
+    const hx = compact ? WYD.data.map.width - H.margin : H.margin;
+    const hy = compact ? WYD.data.map.height - H.margin : 8 + hudSize;
+    ctx.textAlign = compact ? "right" : "left";
+    ctx.font = `bold ${hudSize}px sans-serif`;
     ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillText(`${area.name}　${WYD.world.floorName(state)}${WYD.trial.active(state) ? "" : `　危険度 ${state.difficulty}`}`, 12, 24);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(0,0,0,0.6)";
+    const hudText = `${area.name}　${WYD.world.floorName(state)}${WYD.trial.active(state) ? "" : `　危険度 ${state.difficulty}`}`;
+    ctx.strokeText(hudText, hx, hy);
+    ctx.fillText(hudText, hx, hy);
     this.drawBossBar(ctx, w);
     this.drawSkillBar(ctx, w, state);
     WYD.trial.draw(ctx, w, state);
