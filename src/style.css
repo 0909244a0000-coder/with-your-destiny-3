@@ -399,3 +399,50 @@ details.menu .menu-body button, details.menu .menu-body label { text-align: left
   .stage-btns { top: 4px; right: 4px; gap: 4px; }
   .stage-btns button { font-size: 12px; padding: 4px 8px; }
 }
+
+/* ---- 上のバー：操作をまとまり（.grp）ごとに枠で囲み、高さをそろえる。折り返すときはまとまりごと ---- */
+html { background: #0b0a09; }
+[hidden] { display: none !important; }
+header { gap: 8px 16px; }
+header .controls { flex: 1 1 100%; order: 3; gap: 6px; }
+header .grp {
+  display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+  height: 32px; padding: 0 8px;
+  background: rgba(0, 0, 0, 0.28); border: 1px solid #2c251b; border-radius: 4px;
+}
+header .grp > span:first-child, header .grp > label { color: var(--muted); font-size: 13px; }
+header .grp b { min-width: 1.2em; text-align: center; color: var(--text); }
+header .grp button, header .grp select { height: 24px; padding: 0 8px; font-size: 13px; }
+header .grp .muted { font-size: 11px; }
+header .menus { display: inline-flex; gap: 6px; margin-left: auto; order: 2; }
+#season { max-width: 150px; }
+header .menus details.menu > summary { height: 32px; line-height: 30px; padding: 0 12px; }
+header .menus details.menu .menu-body { left: auto; right: 0; }
+
+/* ---- 広い画面：右の列（ステータス・スキル）は画面の高さに収めて、その中だけ動かす ---- */
+@media (min-width: 901px) {
+  aside { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; scrollbar-width: thin; }
+}
+
+/* ---- せまい画面：上のバーを小さく ---- */
+@media (max-width: 900px) {
+  header { padding: 6px 8px; gap: 6px; }
+  h1 { font-size: 16px; }
+  h1 small { display: none; }
+  header .controls { gap: 4px; }
+  header .grp { height: auto; min-height: 28px; padding: 2px 6px; flex-wrap: wrap; max-width: 100%; }
+  header .grp button, header .grp select { height: 22px; padding: 0 6px; font-size: 12px; }
+  header .menus details.menu > summary { height: 28px; line-height: 26px; padding: 0 8px; font-size: 12px; }
+  #class-select { max-width: 120px; }
+  #season { max-width: 130px; }
+}
+@media (max-width: 600px) {
+  /* スマホ縦：補足の文（次の階まで など）は隠して、上のバーを短く */
+  #boss-progress, #diff-progress, #trial-best { display: none; }
+  header h1 { display: none; }   /* 題名は隠して、メニューを1段目に */
+  header .grp > span:first-child, header .grp > label { font-size: 12px; }
+}
+@media (max-width: 600px) {
+  /* スマホ縦：持ち物・倉庫は4列にして、名前と印が重ならないように */
+  #inventory.grid, #stash.grid { grid-template-columns: repeat(4, 1fr); }
+}
