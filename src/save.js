@@ -158,7 +158,8 @@ WYD.save = {
 
   // ---------- バックアップ（ファイルに書き出す・読み込む） ----------
   // このゲームのセーブ（全部のキャラ、控えもふくむ）をまとめて1つのファイルにする
-  exportAll(state) {
+  // share が true なら、できる端末では共有の窓を出す。"shared" か "downloaded" を返す
+  exportAll(state, share) {
     this.write(state);
     const data = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -166,16 +167,28 @@ WYD.save = {
       if (k && k.startsWith("wyd3-")) data[k] = localStorage.getItem(k);
     }
     const file = { format: "wyd3-backup", version: 1, exportedAt: new Date().toISOString(), data };
-    const blob = new Blob([JSON.stringify(file)], { type: "application/json" });
-    const a = document.createElement("a");
+    const text = JSON.stringify(file);
     const d = new Date();
     const pad = (n) => String(n).padStart(2, "0");
+    const name = `wyd3-backup-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+    // スマホ：共有の窓（LINE・メール・AirDrop など）で、そのままほかの端末へ送れるようにする。
+    // 共有できるファイルの種類が決まっているので、中身は同じ JSON のまま .txt にする
+    if (share && navigator.canShare) {
+      const f = new File([text], `${name}.txt`, { type: "text/plain" });
+      if (navigator.canShare({ files: [f] })) {
+        navigator.share({ files: [f], title: "With Your Destiny Ⅲ のセーブ" }).catch(() => {});
+        return "shared";
+      }
+    }
+    const blob = new Blob([text], { type: "application/json" });
+    const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `wyd3-backup-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`;
+    a.download = `${name}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    return "downloaded";
   },
 
   // 書き出したファイルを読み込んで、セーブを置きかえる。うまくいったら true

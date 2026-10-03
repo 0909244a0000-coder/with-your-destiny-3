@@ -36,8 +36,8 @@ WYD.ui = {
     this.$("codex-close").onclick = () => { this.$("codex").hidden = true; };
     // セーブのバックアップ
     this.$("backup-export").onclick = () => {
-      WYD.save.exportAll(s);
-      this.log("セーブをファイルに書き出した（ダウンロードの場所に保存されます）", "#7dff8a");
+      if (WYD.save.exportAll(s, this.isTouch()) === "shared") this.log("セーブを共有の窓で送る（送った先の端末で「設定」→「読み込む」）", "#7dff8a");
+      else this.log("セーブをファイルに書き出した（ダウンロードの場所に保存されます）", "#7dff8a");
     };
     this.$("backup-import").onclick = () => this.$("backup-file").click();
     this.$("backup-file").onchange = (e) => {
