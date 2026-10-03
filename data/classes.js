@@ -43,7 +43,7 @@ WYD.data.classes = {
         kind: "whirl", name: "フロストノヴァ",
         desc: "周りの敵すべてに冷気の衝撃。攻撃力×倍率のダメージ。",
         startLevel: 1, maxLevel: 10, cooldown: 5,
-        radius: 110, damageBase: 1.3, damagePerLevel: 0.28, minTargets: 1, color: "#9fdcff",
+        radius: 110, damageBase: 1.6, damagePerLevel: 0.36, minTargets: 1, color: "#9fdcff",
       },
       sorc_shield: {
         kind: "vajra", name: "マナシールド",
@@ -76,7 +76,7 @@ WYD.data.classes = {
         desc: "周りの敵を凍らせ、しばらく動けなくしてダメージ。ボスには効きにくい。",
         startLevel: 0, maxLevel: 10, cooldown: 10,
         radius: 130, minTargets: 2, bindBase: 1.8, bindPerLevel: 0.2, bossBindMult: 0.3,
-        damageBase: 0.7, damagePerLevel: 0.15, color: "#9fe8ff",
+        damageBase: 1.4, damagePerLevel: 0.3, color: "#9fe8ff",
       },
       sorc_hydra: {
         kind: "trap", name: "ハイドラ",
@@ -169,7 +169,7 @@ WYD.data.classes = {
         kind: "whirl", name: "骨の嵐",
         desc: "周りに骨の破片をまき散らし、敵すべてにダメージ。",
         startLevel: 0, maxLevel: 10, cooldown: 5,
-        radius: 100, damageBase: 1.2, damagePerLevel: 0.26, minTargets: 2, color: "#e8e2c8",
+        radius: 100, damageBase: 1.6, damagePerLevel: 0.36, minTargets: 2, color: "#e8e2c8",
       },
       nec_armor: {
         kind: "vajra", name: "骨の鎧",
@@ -202,7 +202,7 @@ WYD.data.classes = {
         desc: "地面から亡者の手が伸び、周りの敵をつかんで動けなくしてダメージ。ボスには効きにくい。",
         startLevel: 0, maxLevel: 10, cooldown: 10,
         radius: 125, minTargets: 2, bindBase: 1.7, bindPerLevel: 0.2, bossBindMult: 0.3,
-        damageBase: 0.6, damagePerLevel: 0.14, color: "#9a8aff",
+        damageBase: 1.2, damagePerLevel: 0.28, color: "#9a8aff",
       },
       nec_decay: {
         kind: "aura", auraType: "damage", name: "腐敗の気",
@@ -266,7 +266,7 @@ WYD.data.classes = {
         kind: "agni", name: "天の裁き",
         desc: "敵の多い場所に光の柱を下ろし、中の敵を焼き続ける。",
         startLevel: 0, maxLevel: 10, cooldown: 8,
-        range: 220, radius: 85, duration: 4, tick: 0.5, damageBase: 0.5, damagePerLevel: 0.1, color: "#fff6c8",
+        range: 220, radius: 85, duration: 4, tick: 0.5, damageBase: 0.55, damagePerLevel: 0.12, color: "#fff6c8",
       },
       pal_vow: {
         kind: "hanuman", name: "聖戦の誓い",
@@ -279,7 +279,7 @@ WYD.data.classes = {
         desc: "光の鎖で周りの敵を縛り、しばらく動けなくしてダメージ。ボスには効きにくい。",
         startLevel: 0, maxLevel: 10, cooldown: 10,
         radius: 120, minTargets: 2, bindBase: 1.6, bindPerLevel: 0.2, bossBindMult: 0.3,
-        damageBase: 0.7, damagePerLevel: 0.15, color: "#fff2a8",
+        damageBase: 1.4, damagePerLevel: 0.3, color: "#fff2a8",
       },
       // ---- オーラ（kind: "aura"）。ONにしているあいだ、ずっと効き続ける ----
       // auraType … "damage"（周りの敵を焼く）・"heal"（HPを回復）・"might"（攻撃力アップ）
@@ -371,7 +371,7 @@ WYD.data.classes = {
         desc: "念の力で周りの敵の心を縛り、しばらく動けなくしてダメージ。ボスには効きにくい。",
         startLevel: 0, maxLevel: 10, cooldown: 10,
         radius: 125, minTargets: 2, bindBase: 1.7, bindPerLevel: 0.2, bossBindMult: 0.3,
-        damageBase: 0.65, damagePerLevel: 0.14, color: "#c08aff",
+        damageBase: 1.3, damagePerLevel: 0.28, color: "#c08aff",
       },
       asn_shadow: {
         kind: "raise", name: "影の戦士",
@@ -470,7 +470,7 @@ WYD.data.classes = {
         kind: "whirl", name: "竜巻",
         desc: "まわりに竜巻を起こし、周りの敵すべてにダメージ。",
         startLevel: 0, maxLevel: 10, cooldown: 4.5,
-        radius: 100, damageBase: 1.3, damagePerLevel: 0.26, minTargets: 1, color: "#cfeedd",
+        radius: 100, damageBase: 1.5, damagePerLevel: 0.31, minTargets: 1, color: "#cfeedd",
       },
       dru_bark: {
         kind: "vajra", name: "樹皮の守り",
@@ -503,7 +503,7 @@ WYD.data.classes = {
         desc: "地面から蔓が伸びて周りの敵に絡みつき、動けなくしてダメージ。ボスには効きにくい。",
         startLevel: 0, maxLevel: 10, cooldown: 10,
         radius: 125, minTargets: 2, bindBase: 1.8, bindPerLevel: 0.2, bossBindMult: 0.3,
-        damageBase: 0.6, damagePerLevel: 0.14, color: "#6adf6a",
+        damageBase: 1.2, damagePerLevel: 0.28, color: "#6adf6a",
       },
     },
     autoBuild: ["dru_bear", "dru_wolf", "dru_wolves"],   // 「おまかせ」で先に覚えてONにするスキル

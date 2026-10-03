@@ -57,8 +57,8 @@ WYD.data.skills = {
     radius: 80,           // 陣の大きさ
     duration: 4,          // 陣が残る秒数
     tick: 0.5,            // 何秒ごとにダメージを与えるか
-    damageBase: 0.5,      // 1回あたりの倍率（攻撃力×これ）
-    damagePerLevel: 0.1,
+    damageBase: 0.55,      // 1回あたりの倍率（攻撃力×これ）
+    damagePerLevel: 0.12,
     color: "#ff7a2a",
   },
   // 強化スキル：攻撃速度アップ
@@ -86,8 +86,8 @@ WYD.data.skills = {
     bindBase: 1.5,        // 縛る秒数
     bindPerLevel: 0.2,
     bossBindMult: 0.3,    // ボスを縛る時間の倍率
-    damageBase: 0.8,
-    damagePerLevel: 0.15,
+    damageBase: 1.6,
+    damagePerLevel: 0.3,
     color: "#5fd9a0",
   },
   // 呼び出しスキル：強い戦士の霊を呼ぶ（しくみは手下と同じ raise。src/allies.js）
