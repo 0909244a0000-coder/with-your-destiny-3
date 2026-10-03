@@ -36,7 +36,7 @@ WYD.cube = {
     for (const k in state.cube.slots) {
       const id = state.cube.slots[k];
       const def = id && WYD.data.uniques.list.find((u) => u.id === id);
-      if (def && (!def.classOnly || def.classOnly === WYD.classes.id)) out.push(def);
+      if (def && WYD.loot.forClass([def]).length) out.push(def);
     }
     return out;
   },

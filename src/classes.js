@@ -53,6 +53,11 @@ WYD.classes = {
     return (def && def.kind) || id;
   },
 
+  // 今の職業に、そのしくみのスキルがあるか
+  hasKind(kind) {
+    return Object.keys(WYD.data.skills).some((id) => this.kindOf(id) === kind);
+  },
+
   // しくみの名前から、今の職業のスキルの名前を探す（ユニーク装備の説明に使う）
   skillNameByKind(kind) {
     for (const id in WYD.data.skills) {

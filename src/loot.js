@@ -113,9 +113,11 @@ WYD.loot = {
     return WYD.gems.rollSockets(item);
   },
 
-  // 今の職業で出るものだけ（classOnly がほかの職業のものを除く）
+  // 今の職業で出るものだけ（classOnly がほかの職業のものを除く。
+  // スキルを強くする能力 skillBoost〜 は、そのしくみのスキルが今の職業にあるときだけ）
   forClass(list) {
-    return list.filter((x) => !x.classOnly || x.classOnly === WYD.classes.id);
+    return list.filter((x) => (!x.classOnly || x.classOnly === WYD.classes.id) &&
+      !(x.power && x.power.startsWith("skillBoost") && x.params && !WYD.classes.hasKind(x.params.kind)));
   },
 
   // 装備の表示名（強化していれば「+3 名前」）
