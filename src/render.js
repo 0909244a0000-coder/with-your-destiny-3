@@ -752,13 +752,31 @@ WYD.render = {
 
   drawDrop(ctx, drop) {
     const r = WYD.loot.rarityInfo(drop.item.rarity);
+    const L = WYD.data.fx.dropLook;
     const bounce = Math.max(0, 1 - drop.age * 3) * 10;
+    // 太古・始原は柱と光の色を変える
+    const color = (drop.item.ancient && WYD.data.items.ancient.colors[drop.item.ancient]) || r.color;
+    // 良い装備は足もとが光る
+    if (L.glowRarities.includes(drop.item.rarity) || drop.item.ancient) {
+      const k = 1 + L.glowPulse * Math.sin(drop.age * L.glowSpeed);
+      const g = ctx.createRadialGradient(drop.x, drop.y, 0, drop.x, drop.y, L.glowRadius * k);
+      g.addColorStop(0, color);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(drop.x, drop.y, L.glowRadius * k, L.glowRadius * k * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
     // 良い装備は光の柱で知らせる（ディアブロの「ドロップの光」）
     const beam = WYD.data.fx.lootBeam[drop.item.rarity];
     if (beam) {
       const g = ctx.createLinearGradient(0, drop.y - beam, 0, drop.y);
       g.addColorStop(0, "rgba(0,0,0,0)");
-      g.addColorStop(1, r.color);
+      g.addColorStop(1, color);
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       ctx.globalAlpha = 0.7 + 0.2 * Math.sin(drop.age * 6);
@@ -767,14 +785,29 @@ WYD.render = {
       ctx.fillRect(drop.x - 1.5, drop.y - beam * 1.2, 3, beam * 1.2);
       ctx.restore();
     }
+    // 装備の絵があれば絵で（うしろにレア度の色の丸）。なければひし形
+    const img = this.getImage(WYD.loot.iconOf(drop.item));
     ctx.save();
     ctx.translate(drop.x, drop.y - bounce);
-    ctx.rotate(Math.PI / 4);
-    ctx.fillStyle = r.color;
-    ctx.fillRect(-6, -6, 12, 12);
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(-6, -6, 12, 12);
+    if (img) {
+      ctx.globalAlpha = L.backAlpha;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(0, 0, L.backRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.drawImage(img, -L.iconSize / 2, -L.iconSize / 2, L.iconSize, L.iconSize);
+    } else {
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = color;
+      ctx.fillRect(-6, -6, 12, 12);
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-6, -6, 12, 12);
+    }
     ctx.restore();
   },
 
@@ -789,7 +822,7 @@ WYD.render = {
       const bounce = Math.max(0, 1 - drop.age * 3) * 10;
       const w = ctx.measureText(drop.item.name).width + L.pad * 2;
       const h = L.font + L.pad;
-      let y = drop.y - 14 - bounce;
+      let y = drop.y - WYD.data.fx.dropLook.iconSize / 2 - 4 - bounce;
       for (let tries = 0; tries < L.maxShift; tries++) {
         const hit = placed.some((b) => Math.abs(b.x - drop.x) < (b.w + w) / 2 && Math.abs(b.y - y) < h);
         if (!hit) break;

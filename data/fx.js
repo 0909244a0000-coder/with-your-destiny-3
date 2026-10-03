@@ -40,4 +40,15 @@ WYD.data.fx = {
 
   // 落ちている装備の光の柱（レア度 → 柱の高さ。書いていないレア度は柱なし）
   lootBeam: { rare: 40, legend: 90, unique: 110, set: 110 },
+
+  // 落ちている装備の見た目：絵（アイコン）で出し、良い装備は足もとが光る。太古・始原は柱の色も変わる
+  dropLook: {
+    iconSize: 26,        // 地面に落ちた装備の絵の大きさ
+    backRadius: 13,      // 絵のうしろの丸（レア度の色）
+    backAlpha: 0.35,
+    glowRarities: ["legend", "unique", "set"],   // 足もとが光るレア度
+    glowRadius: 26,      // 光の輪の大きさ
+    glowPulse: 0.2,      // 光の輪がふくらむ割合
+    glowSpeed: 4,        // 光の輪の速さ
+  },
 };
