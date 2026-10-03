@@ -54,10 +54,21 @@ WYD.loot = {
     });
   },
 
+  // 今いるエリアがそのユニーク・セットの「よく落ちるエリア」（home）なら mult、ちがえば 1（試練の中は 1）
+  homeMult(state, def, mult) {
+    return def.home && state && def.home === state.area && !WYD.trial.active(state) ? mult : 1;
+  },
+
+  // よく落ちるエリアの名前（なければ null）
+  homeName(def) {
+    const a = def && def.home && WYD.data.areas.find((x) => x.id === def.home);
+    return a ? a.name : null;
+  },
+
   // ユニーク装備を作る（def を省くとランダムに選ぶ）
   createUnique(state, itemLevel, def) {
     const U = WYD.data.uniques;
-    def = def || WYD.util.pickWeighted(this.forClass(U.list), (x) => x.weight);
+    def = def || WYD.util.pickWeighted(this.forClass(U.list), (x) => x.weight * this.homeMult(state, x, U.homeMult));
     const base = WYD.data.items.bases.find((b) => b.id === def.base);
     const stats = [];
     for (const stat in base.main) {
@@ -82,7 +93,7 @@ WYD.loot = {
   // セット装備を作る（setId・pieceId を省くとランダム）
   createSetPiece(state, itemLevel, setId, pieceId) {
     const S = WYD.data.sets;
-    const set = setId ? S.list.find((x) => x.id === setId) : WYD.util.pick(this.forClass(S.list));
+    const set = setId ? S.list.find((x) => x.id === setId) : WYD.util.pickWeighted(this.forClass(S.list), (x) => this.homeMult(state, x, S.homeMult));
     const piece = pieceId ? set.pieces.find((x) => x.id === pieceId) : WYD.util.pick(set.pieces);
     const base = WYD.data.items.bases.find((b) => b.id === piece.base);
     const stats = [];

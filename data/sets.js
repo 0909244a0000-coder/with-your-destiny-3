@@ -11,10 +11,12 @@ WYD.data.sets = {
   color: "#3fd06a",          // セット装備の名前の色
   chanceFromBoss: 0.3,       // ボスを倒したときに1個落とす確率
   chanceFromElite: 0.05,     // 精鋭を倒したときに1個落とす確率
+  // home … よく落ちるエリア。そのエリアでは、そのセットが選ばれやすさ homeMult 倍（職業専用のセットはパーターラ）
+  homeMult: 4,
 
   list: [
     {
-      id: "undying", name: "不死者の鎧",
+      id: "undying", home: "smashana", name: "不死者の鎧",
       pieces: [
         { id: "undying_crown", name: "不死者の冠", base: "crown", stats: { maxHp: [20, 40] } },
         { id: "undying_mail", name: "不死者の鎖かたびら", base: "chainmail", stats: { defense: [4, 8] } },
@@ -28,7 +30,7 @@ WYD.data.sets = {
       },
     },
     {
-      id: "thunderlord", name: "雷帝の装い",
+      id: "thunderlord", home: "frost", name: "雷帝の装い",
       pieces: [
         { id: "thunder_dagger", name: "雷帝の短剣", base: "chakram", stats: { critChance: [3, 6] } },
         { id: "thunder_robe", name: "雷帝のローブ", base: "robe", stats: { skillDamage: [8, 15] } },
@@ -42,7 +44,7 @@ WYD.data.sets = {
       },
     },
     {
-      id: "pyre", name: "業火の遺産",
+      id: "pyre", home: "inferno", name: "業火の遺産",
       pieces: [
         { id: "pyre_staff", name: "業火の杖", base: "staff", stats: { skillDamage: [10, 18] } },
         { id: "pyre_helm", name: "業火の兜", base: "turban", stats: { defense: [3, 6] } },
@@ -57,7 +59,7 @@ WYD.data.sets = {
     },
     {
       // バーバリアンでだけ落ちる
-      id: "immortalKing", name: "不滅の王の遺産", classOnly: "barbarian",
+      id: "immortalKing", home: "patala", name: "不滅の王の遺産", classOnly: "barbarian",
       pieces: [
         { id: "ik_blade", name: "不滅の王の剣", base: "dual_blades", stats: { attack: [5, 9] } },
         { id: "ik_mail", name: "不滅の王の鎧", base: "chainmail", stats: { defense: [5, 9] } },
@@ -72,7 +74,7 @@ WYD.data.sets = {
     },
     {
       // ソーサレスでだけ落ちる
-      id: "talRasha", name: "大魔術師の装い", classOnly: "sorceress",
+      id: "talRasha", home: "patala", name: "大魔術師の装い", classOnly: "sorceress",
       pieces: [
         { id: "tr_orb", name: "大魔術師の杖", base: "staff", stats: { skillDamage: [12, 20] } },
         { id: "tr_robe", name: "大魔術師の法衣", base: "robe", stats: { maxHp: [20, 40] } },
@@ -87,7 +89,7 @@ WYD.data.sets = {
     },
     {
       // ネクロマンサーでだけ落ちる（classOnly）
-      id: "boneLord", name: "骸の王の装い", classOnly: "necromancer",
+      id: "boneLord", home: "patala", name: "骸の王の装い", classOnly: "necromancer",
       pieces: [
         { id: "bonelord_staff", name: "骸の王の杖", base: "staff", stats: { skillDamage: [10, 18] } },
         { id: "bonelord_robe", name: "骸の王の法衣", base: "robe", stats: { maxHp: [20, 40] } },
@@ -102,7 +104,7 @@ WYD.data.sets = {
     },
     {
       // パラディンでだけ落ちる
-      id: "crusader", name: "聖戦士の誓い", classOnly: "paladin",
+      id: "crusader", home: "patala", name: "聖戦士の誓い", classOnly: "paladin",
       pieces: [
         { id: "crusader_hammer", name: "聖戦士の鎚", base: "great_blade", stats: { attack: [5, 9] } },
         { id: "crusader_shield", name: "聖戦士の盾", base: "shield", stats: { defense: [4, 7] } },
@@ -117,7 +119,7 @@ WYD.data.sets = {
     },
     {
       // アサシンでだけ落ちる
-      id: "shadowGuild", name: "影の結社", classOnly: "assassin",
+      id: "shadowGuild", home: "patala", name: "影の結社", classOnly: "assassin",
       pieces: [
         { id: "guild_claw", name: "結社の鉤爪", base: "chakram", stats: { attack: [4, 8] } },
         { id: "guild_mask", name: "結社の仮面", base: "turban", stats: { critChance: [2, 5] } },
@@ -132,7 +134,7 @@ WYD.data.sets = {
     },
     {
       // ドルイドでだけ落ちる
-      id: "wildheart", name: "野生の魂", classOnly: "druid",
+      id: "wildheart", home: "patala", name: "野生の魂", classOnly: "druid",
       pieces: [
         { id: "wild_staff", name: "野生の杖", base: "staff", stats: { attack: [3, 6] } },
         { id: "wild_pelt", name: "野生の毛皮", base: "robe", stats: { maxHp: [25, 45] } },

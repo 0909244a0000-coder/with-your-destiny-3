@@ -171,6 +171,15 @@ WYD.world = {
   },
 
   // 落ちる装備のアイテムレベル
+  // ボス・精鋭が落とすユニーク・セットのアイテムレベル：今のエリアの補正を、行ったことのある一番奥のエリアの補正へ
+  // deepLevelShare だけ近づける（前のエリアで狙って周回しても弱くなりすぎない。data/uniques.js）
+  rareItemLevel(state) {
+    if (WYD.trial.active(state)) return this.itemLevel(state);
+    const cur = this.area(state).itemLevelBonus;
+    const deep = Math.max(...WYD.data.areas.filter((a) => state.unlockedAreas.includes(a.id)).map((a) => a.itemLevelBonus));
+    return state.difficulty + Math.round(cur + (deep - cur) * WYD.data.uniques.deepLevelShare);
+  },
+
   itemLevel(state) {
     return WYD.trial.active(state) ? WYD.trial.itemLevel(state) : state.difficulty + this.area(state).itemLevelBonus;
   },
@@ -1278,7 +1287,7 @@ WYD.world = {
     const U = WYD.data.uniques;
     const uniqueChance = e.boss ? U.chanceFromBoss : e.elite ? U.chanceFromElite : 0;
     if (Math.random() < uniqueChance) {
-      const item = WYD.loot.createUnique(state, this.itemLevel(state));
+      const item = WYD.loot.createUnique(state, this.rareItemLevel(state));
       w.drops.push({ x: e.x, y: e.y, item, age: 0 });
       WYD.ui.notice(`ユニーク装備「${item.name}」が落ちた！`, U.color);
       WYD.sound.play("uniqueDrop");
@@ -1287,7 +1296,7 @@ WYD.world = {
     const SE = WYD.data.sets;
     const setChance = e.boss ? SE.chanceFromBoss : e.elite ? SE.chanceFromElite : 0;
     if (Math.random() < setChance) {
-      const item = WYD.loot.createSetPiece(state, this.itemLevel(state));
+      const item = WYD.loot.createSetPiece(state, this.rareItemLevel(state));
       w.drops.push({ x: e.x + 12, y: e.y + 8, item, age: 0 });
       WYD.ui.notice(`セット装備「${item.name}」が落ちた！`, SE.color);
       WYD.sound.play("uniqueDrop");

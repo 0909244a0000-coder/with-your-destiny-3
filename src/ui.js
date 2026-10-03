@@ -824,6 +824,7 @@ WYD.ui = {
     this.log(`「${next.name}」へ移動した`, "#ff8a2a");
     const intro = WYD.data.story.areaIntro[next.id];
     if (intro) this.log(intro, "#c9b48a");
+    this.logHomeDrops(next.id);
     this.changed();
   },
 
@@ -1269,9 +1270,21 @@ WYD.ui = {
     const U = WYD.data.uniques;
     const uList = WYD.loot.forClass(U.list);
     const uFound = uList.filter((u) => s.codex.uniques[u.id]).length;
-    const uniques = uList.map((u) => s.codex.uniques[u.id]
+    // よく落ちるエリア（今いるエリアなら目立たせる）
+    const homeTag = (def) => {
+      const name = WYD.loot.homeName(def);
+      if (!name) return def.uberOnly ? ` <small class="codex-home">📍 奈落の双王</small>` : "";
+      return ` <small class="codex-home${def.home === s.area ? " here" : ""}">📍 ${name}</small>`;
+    };
+    const uCard = (u) => s.codex.uniques[u.id]
       ? `<div class="codex-item"><b style="color:${rarity("unique").color}">${u.name}</b> <small class="muted">${baseName(u.base)}</small><br><small>${WYD.loot.uniqueDesc(u)}</small></div>`
-      : `<div class="codex-item unknown"><b>？？？</b> <small class="muted">${baseName(u.base)}</small></div>`).join("");
+      : `<div class="codex-item unknown"><b>？？？</b> <small class="muted">${baseName(u.base)}</small></div>`;
+    // エリアごとにまとめる（どこを周回すれば何が出やすいかの表）。よく落ちるエリアがないもの（奈落の双王など）は最後
+    const groups = WYD.data.areas.map((a) => ({ key: a.id, title: a.name, list: uList.filter((u) => u.home === a.id) }));
+    groups.push({ key: "", title: "奈落の双王など", list: uList.filter((u) => !u.home) });
+    const uniques = groups.filter((g) => g.list.length).map((g) =>
+      `<div class="codex-area${g.key === s.area ? " here" : ""}">📍 ${g.title}${g.key === s.area ? "（今ここ）" : ""} <small>${g.list.filter((u) => s.codex.uniques[u.id]).length}/${g.list.length}</small></div>` +
+      g.list.map(uCard).join("")).join("");
     // セット図鑑
     const SE = WYD.data.sets;
     const sets = WYD.loot.forClass(SE.list).map((set) => {
@@ -1279,13 +1292,13 @@ WYD.ui = {
       const pieces = set.pieces.map((p) => s.codex.setPieces[p.id]
         ? `<span style="color:${SE.color}">${p.name}</span>` : `<span class="muted">？？？（${baseName(p.base)}）</span>`).join("、");
       const bonuses = Object.keys(set.bonuses).map((n) => `<div><small>（${n}つ）${this.bonusText(set.bonuses[n])}</small></div>`).join("");
-      return `<div class="codex-item"><b style="color:${SE.color}">${set.name}</b> <small class="muted">${have}/${set.pieces.length}</small><br><small>${pieces}</small>${bonuses}</div>`;
+      return `<div class="codex-item"><b style="color:${SE.color}">${set.name}</b> <small class="muted">${have}/${set.pieces.length}</small>${homeTag(set)}<br><small>${pieces}</small>${bonuses}</div>`;
     }).join("");
     return `<div class="codex-cols">
       <div><h3>記録</h3>${counters}<h3>実績 <small>${done}/${R.achievements.length}</small></h3>${achievements}</div>
-      <div><h3>挑戦の記録</h3>${this.runHistoryHtml()}
-      <h3>ルーンワード <small>ノーマル装備のソケットを、この順番でうめる</small></h3>${this.runewordListHtml()}
-      <h3>ユニーク図鑑 <small>${uFound}/${uList.length}</small></h3>${uniques}<h3>セット図鑑</h3>${sets}</div>
+      <div><h3>ユニーク図鑑 <small>${uFound}/${uList.length}　📍 のエリアのボス・精鋭がよく落とす</small></h3>${uniques}<h3>セット図鑑</h3>${sets}
+      <h3>挑戦の記録</h3>${this.runHistoryHtml()}
+      <h3>ルーンワード <small>ノーマル装備のソケットを、この順番でうめる</small></h3>${this.runewordListHtml()}</div>
     </div>`;
   },
 
@@ -1411,9 +1424,11 @@ WYD.ui = {
       `<div class="${l.main ? "main" : "affix"}">${WYD.util.formatStat(l.stat, WYD.loot.lineValue(item, l))}</div>`
     ).join("");
     const u = WYD.loot.uniqueInfo(item);
+    const setDef = WYD.loot.setInfo(item);
+    const home = WYD.loot.homeName(u || (setDef && setDef.set));
     const uniqueLine = (u
       ? `<div class="unique-power" style="color:${WYD.data.uniques.color}">◆ 固有能力<br><small>${WYD.loot.uniqueDesc(u)}</small></div>`
-      : "") + this.setHtml(item);
+      : "") + this.setHtml(item) + (home ? `<div class="tip-home">📍 よく落ちる：${home}</div>` : "");
     const fxLines = this.itemEffects(item).map(({ def, value }) =>
       `<div class="effect" style="color:${WYD.data.effects.color}">✦ ${def.name}<br><small>${WYD.util.formatEffect(def, value)}</small></div>`
     ).join("");
@@ -1546,6 +1561,19 @@ WYD.ui = {
     st.music = !on;
     this.log(on ? "音を消した（M キーかボタンで戻す）" : "音を出した");
     this.changed();
+  },
+
+  // このエリアでよく落ちるユニーク・セットを知らせる（まだ持っていないものの数も）
+  logHomeDrops(areaId) {
+    const s = this.state;
+    const us = WYD.loot.forClass(WYD.data.uniques.list).filter((u) => u.home === areaId);
+    const ss = WYD.loot.forClass(WYD.data.sets.list).filter((x) => x.home === areaId);
+    if (!us.length && !ss.length) return;
+    const newU = us.filter((u) => !s.codex.uniques[u.id]).length;
+    const parts = [];
+    if (us.length) parts.push(`ユニーク${us.length}種（未発見 ${newU}）`);
+    if (ss.length) parts.push(`セット「${ss.map((x) => x.name).join("」「")}」`);
+    this.log(`📍 このエリアのボス・精鋭がよく落とす：${parts.join("・")}（「やり込み」→「図鑑と記録」で見られる）`, WYD.data.uniques.color);
   },
 
   // 装備・持ち物の画面を開く・閉じる（show を省くと切り替え）
