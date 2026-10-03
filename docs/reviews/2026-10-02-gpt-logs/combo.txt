@@ -1,0 +1,7 @@
+barbarian ok
+sorceress ok
+necromancer ok
+paladin ok
+assassin ok
+druid ok
+errors 0
