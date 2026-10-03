@@ -1,0 +1,758 @@
+[
+  {
+    "class": "barbarian",
+    "condition": "新規セーブ・冒険10分・手動操作なし・標準自動装備ON・自動スキルOFF・エリア切替なし",
+    "snapshots": [
+      {
+        "minute": 1,
+        "level": 7,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 6,
+        "active": [
+          "whirl"
+        ],
+        "deaths": 0,
+        "inventory": 7
+      },
+      {
+        "minute": 2,
+        "level": 10,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 9,
+        "active": [
+          "whirl"
+        ],
+        "deaths": 0,
+        "inventory": 22
+      },
+      {
+        "minute": 3,
+        "level": 15,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 14,
+        "active": [
+          "whirl"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 4,
+        "level": 16,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 15,
+        "active": [
+          "whirl"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 5,
+        "level": 17,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 16,
+        "active": [
+          "whirl"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 6,
+        "level": 18,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 17,
+        "active": [
+          "whirl"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 7,
+        "level": 19,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 18,
+        "active": [
+          "whirl"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 8,
+        "level": 19,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 18,
+        "active": [
+          "whirl"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 9,
+        "level": 20,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 19,
+        "active": [
+          "whirl"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 10,
+        "level": 20,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 19,
+        "active": [
+          "whirl"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      }
+    ]
+  },
+  {
+    "class": "sorceress",
+    "condition": "新規セーブ・冒険10分・手動操作なし・標準自動装備ON・自動スキルOFF・エリア切替なし",
+    "snapshots": [
+      {
+        "minute": 1,
+        "level": 7,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 6,
+        "active": [
+          "sorc_nova"
+        ],
+        "deaths": 0,
+        "inventory": 4
+      },
+      {
+        "minute": 2,
+        "level": 11,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 10,
+        "active": [
+          "sorc_nova"
+        ],
+        "deaths": 0,
+        "inventory": 25
+      },
+      {
+        "minute": 3,
+        "level": 14,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 13,
+        "active": [
+          "sorc_nova"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 4,
+        "level": 15,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 14,
+        "active": [
+          "sorc_nova"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 5,
+        "level": 16,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 15,
+        "active": [
+          "sorc_nova"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 6,
+        "level": 17,
+        "area": "forest",
+        "floor": 4,
+        "skillPoints": 16,
+        "active": [
+          "sorc_nova"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 7,
+        "level": 18,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 17,
+        "active": [
+          "sorc_nova"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 8,
+        "level": 19,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 18,
+        "active": [
+          "sorc_nova"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 9,
+        "level": 19,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 18,
+        "active": [
+          "sorc_nova"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 10,
+        "level": 20,
+        "area": "forest",
+        "floor": 4,
+        "skillPoints": 19,
+        "active": [
+          "sorc_nova"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      }
+    ]
+  },
+  {
+    "class": "necromancer",
+    "condition": "新規セーブ・冒険10分・手動操作なし・標準自動装備ON・自動スキルOFF・エリア切替なし",
+    "snapshots": [
+      {
+        "minute": 1,
+        "level": 6,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 5,
+        "active": [
+          "nec_raise"
+        ],
+        "deaths": 0,
+        "inventory": 3
+      },
+      {
+        "minute": 2,
+        "level": 10,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 9,
+        "active": [
+          "nec_raise"
+        ],
+        "deaths": 0,
+        "inventory": 13
+      },
+      {
+        "minute": 3,
+        "level": 13,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 12,
+        "active": [
+          "nec_raise"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 4,
+        "level": 15,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 14,
+        "active": [
+          "nec_raise"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 5,
+        "level": 16,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 15,
+        "active": [
+          "nec_raise"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 6,
+        "level": 17,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 16,
+        "active": [
+          "nec_raise"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 7,
+        "level": 18,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 17,
+        "active": [
+          "nec_raise"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 8,
+        "level": 18,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 17,
+        "active": [
+          "nec_raise"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 9,
+        "level": 19,
+        "area": "forest",
+        "floor": 4,
+        "skillPoints": 18,
+        "active": [
+          "nec_raise"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      },
+      {
+        "minute": 10,
+        "level": 19,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 18,
+        "active": [
+          "nec_raise"
+        ],
+        "deaths": 0,
+        "inventory": 30
+      }
+    ]
+  },
+  {
+    "class": "paladin",
+    "condition": "新規セーブ・冒険10分・手動操作なし・標準自動装備ON・自動スキルOFF・エリア切替なし",
+    "snapshots": [
+      {
+        "minute": 1,
+        "level": 6,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 5,
+        "active": [
+          "pal_zeal"
+        ],
+        "deaths": 1,
+        "inventory": 4
+      },
+      {
+        "minute": 2,
+        "level": 11,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 10,
+        "active": [
+          "pal_zeal"
+        ],
+        "deaths": 1,
+        "inventory": 28
+      },
+      {
+        "minute": 3,
+        "level": 15,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 14,
+        "active": [
+          "pal_zeal"
+        ],
+        "deaths": 1,
+        "inventory": 30
+      },
+      {
+        "minute": 4,
+        "level": 16,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 15,
+        "active": [
+          "pal_zeal"
+        ],
+        "deaths": 1,
+        "inventory": 30
+      },
+      {
+        "minute": 5,
+        "level": 17,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 16,
+        "active": [
+          "pal_zeal"
+        ],
+        "deaths": 1,
+        "inventory": 30
+      },
+      {
+        "minute": 6,
+        "level": 17,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 16,
+        "active": [
+          "pal_zeal"
+        ],
+        "deaths": 1,
+        "inventory": 30
+      },
+      {
+        "minute": 7,
+        "level": 18,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 17,
+        "active": [
+          "pal_zeal"
+        ],
+        "deaths": 1,
+        "inventory": 30
+      },
+      {
+        "minute": 8,
+        "level": 19,
+        "area": "forest",
+        "floor": 4,
+        "skillPoints": 18,
+        "active": [
+          "pal_zeal"
+        ],
+        "deaths": 1,
+        "inventory": 30
+      },
+      {
+        "minute": 9,
+        "level": 19,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 18,
+        "active": [
+          "pal_zeal"
+        ],
+        "deaths": 1,
+        "inventory": 30
+      },
+      {
+        "minute": 10,
+        "level": 20,
+        "area": "forest",
+        "floor": 4,
+        "skillPoints": 19,
+        "active": [
+          "pal_zeal"
+        ],
+        "deaths": 1,
+        "inventory": 30
+      }
+    ]
+  },
+  {
+    "class": "assassin",
+    "condition": "新規セーブ・冒険10分・手動操作なし・標準自動装備ON・自動スキルOFF・エリア切替なし",
+    "snapshots": [
+      {
+        "minute": 1,
+        "level": 5,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 4,
+        "active": [
+          "asn_blade"
+        ],
+        "deaths": 2,
+        "inventory": 2
+      },
+      {
+        "minute": 2,
+        "level": 9,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 8,
+        "active": [
+          "asn_blade"
+        ],
+        "deaths": 2,
+        "inventory": 8
+      },
+      {
+        "minute": 3,
+        "level": 14,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 13,
+        "active": [
+          "asn_blade"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 4,
+        "level": 15,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 14,
+        "active": [
+          "asn_blade"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 5,
+        "level": 16,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 15,
+        "active": [
+          "asn_blade"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 6,
+        "level": 17,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 16,
+        "active": [
+          "asn_blade"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 7,
+        "level": 18,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 17,
+        "active": [
+          "asn_blade"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 8,
+        "level": 19,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 18,
+        "active": [
+          "asn_blade"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 9,
+        "level": 20,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 19,
+        "active": [
+          "asn_blade"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 10,
+        "level": 20,
+        "area": "forest",
+        "floor": 4,
+        "skillPoints": 19,
+        "active": [
+          "asn_blade"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      }
+    ]
+  },
+  {
+    "class": "druid",
+    "condition": "新規セーブ・冒険10分・手動操作なし・標準自動装備ON・自動スキルOFF・エリア切替なし",
+    "snapshots": [
+      {
+        "minute": 1,
+        "level": 4,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 3,
+        "active": [
+          "dru_bear"
+        ],
+        "deaths": 2,
+        "inventory": 1
+      },
+      {
+        "minute": 2,
+        "level": 7,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 6,
+        "active": [
+          "dru_bear"
+        ],
+        "deaths": 2,
+        "inventory": 5
+      },
+      {
+        "minute": 3,
+        "level": 11,
+        "area": "forest",
+        "floor": 4,
+        "skillPoints": 10,
+        "active": [
+          "dru_bear"
+        ],
+        "deaths": 2,
+        "inventory": 19
+      },
+      {
+        "minute": 4,
+        "level": 13,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 12,
+        "active": [
+          "dru_bear"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 5,
+        "level": 14,
+        "area": "forest",
+        "floor": 3,
+        "skillPoints": 13,
+        "active": [
+          "dru_bear"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 6,
+        "level": 15,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 14,
+        "active": [
+          "dru_bear"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 7,
+        "level": 16,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 15,
+        "active": [
+          "dru_bear"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 8,
+        "level": 17,
+        "area": "forest",
+        "floor": 4,
+        "skillPoints": 16,
+        "active": [
+          "dru_bear"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 9,
+        "level": 17,
+        "area": "forest",
+        "floor": 1,
+        "skillPoints": 16,
+        "active": [
+          "dru_bear"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      },
+      {
+        "minute": 10,
+        "level": 18,
+        "area": "forest",
+        "floor": 2,
+        "skillPoints": 17,
+        "active": [
+          "dru_bear"
+        ],
+        "deaths": 2,
+        "inventory": 30
+      }
+    ]
+  }
+]
