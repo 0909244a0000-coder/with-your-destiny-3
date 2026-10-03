@@ -17,6 +17,24 @@ WYD.render = {
   },
 
   patterns: {},
+  rims: {},
+  // 絵のふちを光らせた絵を作って取っておく（同じ絵と色なら使い回す）
+  rimImage(img, src, color) {
+    const key = src + "|" + color;
+    if (!this.rims[key]) {
+      const pad = Math.ceil(img.width * WYD.data.map.rim.blur * 2);
+      const c = document.createElement("canvas");
+      c.width = img.width + pad * 2;
+      c.height = img.height + pad * 2;
+      const g = c.getContext("2d");
+      g.shadowColor = color;
+      g.shadowBlur = img.width * WYD.data.map.rim.blur;
+      g.drawImage(img, pad, pad);
+      this.rims[key] = { canvas: c, pad };
+    }
+    return this.rims[key];
+  },
+  unitLabels: [],   // 精鋭などの名前（drawEnemy でためて、drawUnitLabels でまとめて書く）
   patternFor(ctx, img) {
     if (!this.patterns[img.src]) this.patterns[img.src] = ctx.createPattern(img, "repeat");
     return this.patterns[img.src];
@@ -115,6 +133,7 @@ WYD.render = {
         { dx: 0, dy: size * CO.sink * k, sx: 1, sy: 1 - 0.3 * k, rot: -CO.tilt * Math.min(1, k * 2.5), flip: c.flip }, c.filter);
     }
     ctx.globalAlpha = 1;
+    this.unitLabels = [];
     for (const e of w.enemies.slice().sort((a, b) => a.y - b.y)) this.drawEnemy(ctx, e);
     WYD.shrines.draw(ctx, w);
     WYD.allies.draw(ctx, w);
@@ -141,6 +160,7 @@ WYD.render = {
     // 光るものと落ちている装備は、明かりの暗さの上に描く（暗がりでも見えるように）
     for (const drop of w.drops) this.drawDrop(ctx, drop);
     this.drawDropLabels(ctx, w.drops);
+    this.drawUnitLabels(ctx);
     for (const ef of w.effects) this.drawEffect(ctx, ef);
     WYD.fx.draw(ctx, w);
 
@@ -393,7 +413,7 @@ WYD.render = {
 
   // flash = true のときは白く光らせる（攻撃が当たったとき）、pose = 絵の動き
   // filter = 絵の色を変える（仮の絵に使う。例 "grayscale(1)"）
-  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash, pose, filter) {
+  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash, pose, filter, rim) {
     const img = this.getImage(imageSrc);
     if (img) {
       const M = WYD.data.map;
@@ -411,7 +431,14 @@ WYD.render = {
       ctx.scale(p.sx * p.flip, p.sy);
       if (flash) ctx.filter = "brightness(2.2)";
       else if (filter) ctx.filter = filter;
-      ctx.drawImage(img, -size / 2, -size * 0.9, size, size);
+      // ふちの光（data/map.js の rim）：光らせた絵（作り置き）を、まわりの余白のぶん大きく描く
+      const glow = rim && !flash ? this.rimImage(img, imageSrc, rim) : null;
+      if (glow) {
+        const pad = glow.pad * size / img.width;
+        ctx.drawImage(glow.canvas, -size / 2 - pad, -size * 0.9 - pad, size + pad * 2, size + pad * 2);
+      } else {
+        ctx.drawImage(img, -size / 2, -size * 0.9, size, size);
+      }
       ctx.restore();
       return;
     }
@@ -610,7 +637,7 @@ WYD.render = {
     const formImg = form && !p.dead && form.image;
     const filter = formImg ? form.filter : form && form.filter ? [P.imageFilter, form.filter].filter(Boolean).join(" ") : P.imageFilter;
     this.drawCircleOrImage(ctx, p.x, p.y, P.radius * (form ? form.scale : 1), p.dead ? "#555" : form ? form.color : P.color,
-      formImg || this.poseImage(p, P), false, this.pose(p, p.swingTarget, this.clock), filter);
+      formImg || this.poseImage(p, P), false, this.pose(p, p.swingTarget, this.clock), filter, p.dead ? null : WYD.data.map.rim.player);
     // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
     if (p.buff && !p.dead) {
       const size = P.radius * WYD.data.map.spriteScale * 1.3;
@@ -694,8 +721,9 @@ WYD.render = {
       ctx.stroke();
     }
     if (e.clone) ctx.globalAlpha = 0.55;   // 分身はうすく
+    const RIM = WYD.data.map.rim;
     this.drawCircleOrImage(ctx, e.x, e.y, def.radius, e.hitFlash > 0 ? "#ffffff" : def.color, this.poseImage(e, def), e.hitFlash > 0,
-      this.pose(e, this.playerPos, this.clock), e.imageFilter || def.imageFilter);
+      this.pose(e, this.playerPos, this.clock), e.imageFilter || def.imageFilter, e.boss ? RIM.boss : e.elite ? RIM.elite : RIM.enemy);
     ctx.globalAlpha = 1;
     if (e.shielded) {
       // 精鋭の「守護」：光の盾
@@ -738,16 +766,33 @@ WYD.render = {
     if (e.boss) {
       // ボスの名前は画面の上の大きなHPバーに出すので、頭の上には出さない
     } else if (e.elite) {
-      ctx.textAlign = "center";
-      ctx.font = "bold 12px sans-serif";
-      ctx.fillStyle = E.color;
-      ctx.fillText(e.name, e.x, by - 4);
+      this.unitLabels.push({ x: e.x, y: by - 4, text: e.name, color: E.color, bold: true });
     } else if (def.showName) {
-      ctx.textAlign = "center";
-      ctx.font = "12px sans-serif";
-      ctx.fillStyle = "#e6c7ff";
-      ctx.fillText(def.name, e.x, by - 4);
+      this.unitLabels.push({ x: e.x, y: by - 4, text: def.name, color: "#e6c7ff" });
     }
+  },
+
+  // 精鋭などの名前：明かりの暗さの上に、重なったら上にずらして、うすい黒の板の上に書く
+  drawUnitLabels(ctx) {
+    const L = WYD.data.map.unitLabel;
+    ctx.textAlign = "center";
+    const placed = [];
+    for (const lb of this.unitLabels.sort((a, b) => b.y - a.y)) {
+      ctx.font = `${lb.bold ? "bold " : ""}${L.font}px sans-serif`;
+      const w = ctx.measureText(lb.text).width + L.pad * 2;
+      const h = L.font + L.pad;
+      let y = lb.y;
+      for (let tries = 0; tries < L.maxShift; tries++) {
+        if (!placed.some((b) => Math.abs(b.x - lb.x) < (b.w + w) / 2 && Math.abs(b.y - y) < h)) break;
+        y -= h;
+      }
+      placed.push({ x: lb.x, y, w });
+      ctx.fillStyle = L.back;
+      ctx.fillRect(lb.x - w / 2, y - L.font, w, h);
+      ctx.fillStyle = lb.color;
+      ctx.fillText(lb.text, lb.x, y);
+    }
+    this.unitLabels = [];
   },
 
   drawDrop(ctx, drop) {

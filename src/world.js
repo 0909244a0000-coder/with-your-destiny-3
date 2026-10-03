@@ -1500,6 +1500,7 @@ WYD.world = {
   },
 
   addText(w, x, y, text, color, big) {
-    w.texts.push({ x: x + WYD.util.rand(-6, 6), y, text, color, time: 0, big: !!big });
+    const T = WYD.data.fx.text;
+    w.texts.push({ x: x + WYD.util.rand(-T.jitterX, T.jitterX), y: y + WYD.util.rand(-T.jitterY, T.jitterY), text, color, time: 0, big: !!big });
   },
 };
