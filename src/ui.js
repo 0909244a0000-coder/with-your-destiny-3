@@ -118,6 +118,11 @@ WYD.ui = {
       if (!confirm(`${C.materialName}を${cost}個使って、スキルと修練のポイントを全部もどしますか？（スキルの型も外れます）`)) return;
       const r = WYD.inventory.respec(s);
       this.log(`振り直した：スキルポイント +${r.skill}、修練ポイント +${r.paragon}（${C.materialName} -${cost}）`, "#7dff8a");
+      // 自動で振る設定のままだと、次に敵を倒した瞬間に全部振られてしまうので、いったんOFFにして選び直してもらう
+      if (s.settings.autoSkill) {
+        s.settings.autoSkill = false;
+        this.log(WYD.data.story.skillGuide.respecNote, WYD.data.story.skillGuide.color);
+      }
       this.changed();
     };
     // キーボード：スペース＝一時停止、1・2・4＝速度（文字を入力している所では効かない）

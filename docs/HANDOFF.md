@@ -73,6 +73,7 @@
 - 絵（ブロック9〜11）：ユニークの専用アイコン `assets/items/unique_<id>.png`（`data/uniques.js` の `icon`。`WYD.loot.iconOf` が先に見る。31個すべて）。職業ごとのスキルのエフェクト（骨の飛槍・祝福の鎚・手裏剣・転がる岩は chainStyle、竜巻・骨の嵐・絡みつく蔓は skillCast、竜巻・天の裁きの地面は groundStyle、ドルイドが縛った敵は蔓＝`bindStyle`）。野営地のテント・宝箱・たき火は `data/town.js` の image（なければ図形）。`tools/prepare_sprite.py --bg black|checker` で背景を消せる
 - スキルの動き：跳ね返るスキル（投げ斧・骨の飛槍・祝福の鎚・手裏剣・転がる岩）は前の敵から次の敵へ残像をひいて飛び、着いたところに衝撃の輪（`data/vfx.js` の chainStyle mode "fly"、flySpeed・trail・impact）。絵は出た瞬間に少しふくらむ（pop）。echo: true の絵は、うすく大きい2枚目を逆に回して重ねる。範囲・地面・縛る・変身のスキルは使った瞬間に小さく画面が揺れる（castShake）
 - 当たりの火花と斬撃（ブロック12）：攻撃が当たるたびに属性の火花（`data/vfx.js` の hitBySkill → hitByClass。会心は1.5倍。エフェクトが maxEffects より多いときは出さない）。飛んでいくスキルは、着いたときに impact の火花。通常攻撃の斬撃は職業ごと（`data/classes.js` の player.slash：パラディン slashHoly・アサシン slashClaw・ドルイド slashBeast）
+- 振り直し：「スキルを自動で上げる」がONのまま振り直すと、次に敵を倒した瞬間（経験値が入るたび）に全部自動で振られていた。振り直したら autoSkill をいったんOFFにして、スキル欄の「今だけおまかせ／これからずっとおまかせ」か「＋」で選び直してもらう（`data/story.js` の skillGuide.respecNote）
 - 持ち物の「並べ替え」（ロック→レア度→部位→強さの順。`WYD.inventory.sort`）と「捨てるモード」（ONのあいだクリック・タップで捨てる、ロックは捨てない。`WYD.ui.discardMode`・`discardAt`）。持ち主の環境で右クリックの捨てるが効かなかったため
 - パネルの書きかえは `WYD.ui.putHtml(id, html)`：中身が前と同じなら書きかえない。装備のマスが変わったときだけマウスの説明を消す（前は敵を倒すたびに作り直し・説明を消していて、点滅していた）。`setHtml(item)` はセット装備の説明で、別もの
 - 拠点（野営地）：`src/town.js`・`data/town.js`。戦いの画面の右上「🏕 拠点へ」か H キー。`w.town` のあいだ `world.update` は戦わず（HP満タン）、`render.draw` は野営地を描く。出るとその階の敵が出直す。試練などを始めたら自動で戦場へ。拠点にいるかはセーブしない
