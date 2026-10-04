@@ -16,7 +16,7 @@ WYD.data.map = {
   // blur = ぼかしの大きさ（絵の幅に対する割合）。光らせた絵は最初に1回だけ作って使い回す（毎回ぼかすと重いので）
   rim: { enemy: "rgba(255,70,50,0.6)", elite: "rgba(90,160,255,0.85)", boss: "rgba(255,40,40,0.85)", player: "rgba(255,220,140,0.65)", blur: 0.05 },
   // 精鋭などの名前：重なったら上にずらし、うすい黒の板の上に書く
-  unitLabel: { font: 12, pad: 3, back: "rgba(0,0,0,0.5)", maxShift: 5 },
+  unitLabel: { font: 12, minShownPx: 11, pad: 3, back: "rgba(0,0,0,0.78)", maxShift: 5 },
   groundDim: 0.35,      // 地面の絵を暗くする強さ（0〜1）。キャラを目立たせるため
   // 明かり：主人公のまわりだけ明るく、離れるほど暗くする（ディアブロの「たいまつの明かり」）
   light: {
@@ -34,7 +34,7 @@ WYD.data.map = {
   hud: { font: 16, minShownPx: 11, compactBelow: 0.6, margin: 12 },
   playerBar: { width: 48, height: 6, gap: 6, color: "#3fd06a", lowColor: "#ffb03a", lowAt: 0.3 },   // 主人公の頭の上のHPの棒（スマホでもHPが見えるように）
   // 落ちている装備の名前（重なったら上にずらす。maxShift 段まで）
-  dropLabel: { font: 12, pad: 3, back: "rgba(0,0,0,0.55)", maxShift: 6 },
+  dropLabel: { font: 12, minShownPx: 11, pad: 3, back: "rgba(0,0,0,0.78)", maxShift: 6 },
   playerRing: 0.8,      // 主人公の足元の輪の濃さ（0〜1）。主人公がどこにいるか分かるように
   decorationCount: 40,  // 飾り（草・石）の数
   decorationSeed: 7,

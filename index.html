@@ -44,6 +44,7 @@
       <summary>設定</summary>
       <div class="menu-body">
         <label title="レベルが上がったとき、スキルポイントを自動で振る（枠が空いていれば新しいスキルを覚え、あとはONのスキルの低いものから上げる）"><input type="checkbox" id="auto-skill"> スキルを自動で上げる</label>
+        <label><input type="checkbox" id="quiet-fx"> 揺れ・閃光を控えめに</label>
         <button id="sound-toggle" title="効果音（最初に画面をクリックすると鳴りはじめる）">音：ON</button>
         <button id="music-toggle" title="BGM（エリア・ボス・試練で曲が変わる）">音楽：ON</button>
         <button id="help">遊び方</button>
@@ -159,9 +160,14 @@
         <h2>装備・持ち物</h2>
         <button id="bag-close" title="閉じる（I か Esc キー）">閉じる ✕</button>
       </div>
+      <nav class="bag-nav" aria-label="持ち物の画面内移動">
+        <button data-bag-target="inventory-panel">持ち物</button>
+        <button data-bag-target="equipment-panel">装備</button>
+        <button data-bag-target="stash-panel">倉庫</button>
+      </nav>
       <div class="bag-cols">
         <div class="bag-col">
-          <section class="panel">
+          <section class="panel" id="equipment-panel">
             <h2>装備 <small>クリックで外す／長押しでほかの操作</small></h2>
             <div id="equipment" class="grid"></div>
             <div id="builds" class="builds"></div>
@@ -176,9 +182,8 @@
           </section>
         </div>
         <div class="bag-col">
-          <section class="panel">
+          <section class="panel" id="inventory-panel">
             <h2>持ち物 <small id="inv-count"></small> <small id="materials"></small></h2>
-            <div id="inventory" class="grid"></div>
             <div class="inv-buttons">
               <button id="sort-inv" title="レア度の高い順、同じなら部位・強さの順に並べる">並べ替え</button>
               <button id="discard-mode" title="ONのあいだ、持ち物・倉庫の装備をクリックすると捨てる（ロックした装備は捨てない）">捨てるモード：OFF</button>
@@ -188,9 +193,10 @@
               <button id="enhance-mode">強化モード：OFF</button>
               <button id="forge-mode" title="装備をクリックすると、能力を1つずつ狙って鍛えられる（Last Epoch の鍛造）">鍛造</button>
             </div>
+            <div id="inventory" class="grid"></div>
             <p class="muted" id="inv-help">左クリック：装備する／捨てる：「捨てるモード」をONにしてクリック</p>
           </section>
-          <section class="panel">
+          <section class="panel" id="stash-panel">
             <h2>倉庫 <small id="stash-count"></small> <button id="stash-toggle">開く</button></h2>
             <div id="stash-body" hidden>
               <div id="stash" class="grid"></div>

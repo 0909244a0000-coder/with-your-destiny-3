@@ -68,7 +68,8 @@ WYD.render = {
     // 画面の揺れ：地面とキャラだけずらす（文字やバーはずらさない）
     const sh = WYD.fx.shakeOffset(w);
     ctx.save();
-    ctx.translate(sh.x, sh.y);
+    const shakeScale = state.settings.quietFx ? WYD.data.fx.quiet.shakeScale : 1;
+    ctx.translate(sh.x * shakeScale, sh.y * shakeScale);
 
     // 地面：絵があれば敷きつめる、なければ色でぬる
     const ground = this.getImage(area.groundImage);
@@ -159,10 +160,11 @@ WYD.render = {
     this.drawLight(ctx, w.player, state, WYD.data.map.light.unitDarkness);
     // 光るものと落ちている装備は、明かりの暗さの上に描く（暗がりでも見えるように）
     for (const drop of w.drops) this.drawDrop(ctx, drop);
-    this.drawDropLabels(ctx, w.drops);
-    this.drawUnitLabels(ctx);
     for (const ef of w.effects) this.drawEffect(ctx, ef);
     WYD.fx.draw(ctx, w);
+    // 名前は火花より手前に描き、光の中でも読めるようにする。
+    this.drawDropLabels(ctx, w.drops);
+    this.drawUnitLabels(ctx);
 
     // ダメージの数字：出た瞬間にふくらんで、上にのぼりながら消える
     const T = WYD.data.fx.text;
@@ -184,7 +186,7 @@ WYD.render = {
     ctx.globalAlpha = 1;
     ctx.restore();
     this.drawBossIntro(ctx, w);   // 上の文字やボスの体力の棒より下に描く
-    this.drawBossDefeat(ctx, w);
+    this.drawBossDefeat(ctx, w, state);
 
     // 左上：マップ名と危険度
     const H = WYD.data.map.hud;
@@ -242,13 +244,13 @@ WYD.render = {
 
   // 階を移ったとき：暗転から明るくなり、真ん中に階の名前を出す
   // ボスを倒したとき：白い光が消えていき、「討伐」と名前を出す
-  drawBossDefeat(ctx, w) {
+  drawBossDefeat(ctx, w, state) {
     const b = w.bossDefeat;
     if (!b) return;
     const D = WYD.data.boss.defeat;
     const map = WYD.data.map;
     if (b.time < D.flash) {
-      ctx.fillStyle = `rgba(255,250,230,${0.6 * (1 - b.time / D.flash)})`;
+      ctx.fillStyle = `rgba(255,250,230,${0.6 * (1 - b.time / D.flash) * (state.settings.quietFx ? WYD.data.fx.quiet.flashScale : 1)})`;
       ctx.fillRect(0, 0, map.width, map.height);
     }
     const k = Math.min(1, b.time / 0.25, (D.time - b.time) / 0.6);
@@ -785,24 +787,37 @@ WYD.render = {
   },
 
   // 精鋭などの名前：明かりの暗さの上に、重なったら上にずらして、うすい黒の板の上に書く
+  fitLabel(ctx, text, maxWidth) {
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    let short = text;
+    while (short.length && ctx.measureText(short + "…").width > maxWidth) short = short.slice(0, -1);
+    return short + "…";
+  },
+
   drawUnitLabels(ctx) {
     const L = WYD.data.map.unitLabel;
+    const shown = ctx.canvas.clientWidth / WYD.data.map.width || 1;
+    const font = Math.max(L.font, L.minShownPx / shown);
+    const pad = L.pad * font / L.font;
     ctx.textAlign = "center";
     const placed = [];
     for (const lb of this.unitLabels.sort((a, b) => b.y - a.y)) {
-      ctx.font = `${lb.bold ? "bold " : ""}${L.font}px sans-serif`;
-      const w = ctx.measureText(lb.text).width + L.pad * 2;
-      const h = L.font + L.pad;
-      let y = lb.y;
+      ctx.font = `${lb.bold ? "bold " : ""}${font}px sans-serif`;
+      const text = this.fitLabel(ctx, lb.text, WYD.data.map.width - pad * 2);
+      const w = ctx.measureText(text).width + pad * 2;
+      const h = font + pad;
+      const x = Math.max(w / 2, Math.min(WYD.data.map.width - w / 2, lb.x));
+      let y = Math.max(font, lb.y);
       for (let tries = 0; tries < L.maxShift; tries++) {
-        if (!placed.some((b) => Math.abs(b.x - lb.x) < (b.w + w) / 2 && Math.abs(b.y - y) < h)) break;
+        if (!placed.some((b) => Math.abs(b.x - x) < (b.w + w) / 2 && Math.abs(b.y - y) < h)) break;
         y -= h;
       }
-      placed.push({ x: lb.x, y, w });
+      y = Math.max(font, y);
+      placed.push({ x, y, w });
       ctx.fillStyle = L.back;
-      ctx.fillRect(lb.x - w / 2, y - L.font, w, h);
+      ctx.fillRect(x - w / 2, y - font, w, h);
       ctx.fillStyle = lb.color;
-      ctx.fillText(lb.text, lb.x, y);
+      ctx.fillText(text, x, y);
     }
     this.unitLabels = [];
   },
@@ -871,25 +886,31 @@ WYD.render = {
   // 落ちている装備の名前：重なるものは上にずらし、うすい黒の板の上に書く（たくさん落ちても読める）
   drawDropLabels(ctx, drops) {
     const L = WYD.data.map.dropLabel;
-    ctx.font = `${L.font}px sans-serif`;
+    const shown = ctx.canvas.clientWidth / WYD.data.map.width || 1;
+    const font = Math.max(L.font, L.minShownPx / shown);
+    const pad = L.pad * font / L.font;
+    ctx.font = `${font}px sans-serif`;
     ctx.textAlign = "center";
     const placed = [];
     for (const drop of drops.slice().sort((a, b) => b.y - a.y)) {
       const r = WYD.loot.rarityInfo(drop.item.rarity);
       const bounce = Math.max(0, 1 - drop.age * 3) * 10;
-      const w = ctx.measureText(drop.item.name).width + L.pad * 2;
-      const h = L.font + L.pad;
+      const text = this.fitLabel(ctx, drop.item.name, WYD.data.map.width - pad * 2);
+      const w = ctx.measureText(text).width + pad * 2;
+      const h = font + pad;
+      const x = Math.max(w / 2, Math.min(WYD.data.map.width - w / 2, drop.x));
       let y = drop.y - WYD.data.fx.dropLook.iconSize / 2 - 4 - bounce;
       for (let tries = 0; tries < L.maxShift; tries++) {
-        const hit = placed.some((b) => Math.abs(b.x - drop.x) < (b.w + w) / 2 && Math.abs(b.y - y) < h);
+        const hit = placed.some((b) => Math.abs(b.x - x) < (b.w + w) / 2 && Math.abs(b.y - y) < h);
         if (!hit) break;
         y -= h;
       }
-      placed.push({ x: drop.x, y, w });
+      y = Math.max(font, y);
+      placed.push({ x, y, w });
       ctx.fillStyle = L.back;
-      ctx.fillRect(drop.x - w / 2, y - L.font, w, h);
+      ctx.fillRect(x - w / 2, y - font, w, h);
       ctx.fillStyle = r.color;
-      ctx.fillText(drop.item.name, drop.x, y - 1);
+      ctx.fillText(text, x, y - 1);
     }
   },
 

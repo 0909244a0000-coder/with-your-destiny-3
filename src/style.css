@@ -454,3 +454,49 @@ header .menus details.menu .menu-body { left: auto; right: 0; }
 .codex-area { margin: 8px 0 2px; padding: 2px 6px; font-size: 12px; color: #c9b48a; background: rgba(0,0,0,0.3); border-left: 3px solid #8a6d32; }
 .codex-area.here { color: #7dff8a; border-left-color: #7dff8a; }
 .skill-mastery { font-size: 11px; margin-top: 2px; }
+
+/* 読みやすさと操作導線：石・鉄・金の雰囲気を保ち、情報の面を整える */
+:root { --text: #eee4ce; --muted: #b7aa91; --line: #574833; }
+.panel { background: linear-gradient(160deg, #211c15, #14120f); box-shadow: inset 0 0 0 1px #50412e, 0 4px 12px #0006; border-radius: 6px; }
+h2 { padding-bottom: 8px; border-bottom-color: #574833; }
+button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid #f1cf7a; outline-offset: 3px; }
+.skill { padding: 10px 0; border-top-color: #44392a; }
+.skill-head { flex-wrap: wrap; }
+.skill-desc { line-height: 1.65; }
+.skill-info, .skill-mastery { line-height: 1.65; }
+.cell { height: 64px; padding: 5px; background: linear-gradient(145deg, #211c16, #0d0c0a); }
+.cell:hover:not(.blank) { background: #30271b; }
+.cell .item-icon { opacity: 1; width: 30px; height: 30px; }
+.bag-box { padding-top: 0; scroll-padding-top: 120px; }
+.bag-head { position: sticky; top: 0; z-index: 3; margin: 0; padding: 12px 0 8px; background: var(--panel); }
+.bag-head h2 { border: 0; padding: 0; }
+.bag-nav { position: sticky; top: 56px; z-index: 2; display: flex; gap: 8px; padding: 0 0 12px; background: var(--panel); border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.bag-nav button { flex: 1; min-height: 36px; }
+.inv-buttons { margin: 0 0 12px; }
+.inv-buttons button { min-height: 32px; }
+#inv-count { color: #f1cf7a; }
+.sheet-box { display: flex; flex-direction: column; max-height: calc(100dvh - 32px); padding: 0; overflow: hidden; }
+#sheet-body { display: flex; flex-direction: column; min-height: 0; }
+.sheet-details { overflow-y: auto; padding: 16px; overscroll-behavior: contain; }
+.sheet-btns { flex: none; margin: 0; padding: 12px; border-top: 1px solid var(--line); background: #211b13; }
+.sheet-btns button { min-height: 44px; }
+@media (max-width: 900px) {
+  .bag-box { padding: 0 12px 12px; }
+  .bag-cols { display: flex; flex-direction: column; }
+  .bag-col { width: 100%; }
+  .bag-col:last-child { order: -1; }
+  .bag-head { min-height: 56px; }
+  .bag-head button, .bag-nav button, .inv-buttons button { min-height: 40px; }
+  .sheet-box { padding: 0; overflow: hidden; max-height: calc(100dvh - 20px); }
+  header .grp button, header .grp select { min-height: 32px; height: auto; }
+  header .menus details.menu > summary { height: 34px; line-height: 32px; }
+  .menu-body label { padding: 8px 0; }
+  .skill-head button { min-height: 40px; min-width: 40px; }
+  .skill-info, .skill-mastery { font-size: 12px; }
+  .stage-btns button { min-height: 32px; }
+}
+@media (max-width: 600px) {
+  aside > .panel:has(#skills) { order: -1; }
+  .cell { height: 70px; font-size: 12px; }
+  .cell small { font-size: 11px; }
+}

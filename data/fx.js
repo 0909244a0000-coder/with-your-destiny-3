@@ -3,6 +3,7 @@ window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
 WYD.data.fx = {
+  quiet: { shakeScale: 0.25, flashScale: 0.25 }, // 控えめ表示。演出だけを弱め、戦闘は変えない
   maxParticles: 700,     // 同時に出せる粒の数（重くなったら減らす）
 
   // 粒の出し方：count = 数、speed = 飛ぶ速さ、life = 消えるまでの秒数、size = 大きさ

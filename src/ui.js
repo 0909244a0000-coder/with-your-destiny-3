@@ -146,6 +146,14 @@ WYD.ui = {
     this.$("bag-open").onclick = () => this.toggleBag(true);
     this.$("town-btn").onclick = () => WYD.town.toggle(this.world, s);
     this.$("mute-btn").onclick = () => this.toggleMute();
+    document.querySelector(".bag-nav").onclick = (e) => {
+      const button = e.target.closest("[data-bag-target]");
+      if (button) this.$(button.dataset.bagTarget).scrollIntoView({ block: "start" });
+    };
+    this.$("quiet-fx").onchange = (e) => {
+      s.settings.quietFx = e.target.checked;
+      this.changed();
+    };
     this.$("bag-close").onclick = () => this.toggleBag(false);
     this.$("bag").onclick = (e) => { if (e.target.id === "bag") this.toggleBag(false); };
     this.$("auto-diff").onchange = (e) => {
@@ -981,6 +989,7 @@ WYD.ui = {
     this.$("auto-salvage").disabled = !!s.settings.filter.on;
     this.$("pause").textContent = this.paused ? "再開" : "停止";
     this.$("pause").classList.toggle("active", this.paused);
+    this.$("quiet-fx").checked = !!s.settings.quietFx;
     this.$("sound-toggle").textContent = `効果音：${s.settings.sound ? "ON" : "OFF"}`;
     this.$("music-toggle").textContent = `音楽：${s.settings.music !== false ? "ON" : "OFF"}`;
     this.$("auto-diff").checked = s.settings.autoDifficulty;
@@ -1638,7 +1647,7 @@ WYD.ui = {
     acts.push(btn("lock", item.locked ? "ロックを外す" : "ロックする"));
     if (where !== "eq") acts.push(btn("discard", `捨てる（${mat} +${WYD.inventory.salvageValue(s, item)}）`, "danger"));
     acts.push(btn("close", "閉じる"));
-    this.$("sheet-body").innerHTML = `${html}<div class="sheet-btns">${acts.join("")}</div>`;
+    this.$("sheet-body").innerHTML = `<div class="sheet-details">${html}</div><div class="sheet-btns">${acts.join("")}</div>`;
     this.$("sheet").hidden = false;
     return true;
   },
