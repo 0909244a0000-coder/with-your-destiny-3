@@ -966,10 +966,11 @@ WYD.ui = {
     const area = WYD.world.area(s);
     const opened = WYD.data.areas.filter((a) => s.unlockedAreas.includes(a.id));
     const ai = opened.indexOf(area);
-    this.$("area-name").textContent = area.name;
+    const atCamp = !!this.world.town;
+    this.$("area-name").textContent = atCamp ? WYD.data.town.name : area.name;
     this.$("area-down").disabled = ai <= 0;
     this.$("area-up").disabled = ai >= opened.length - 1;
-    this.$("boss-progress").textContent = WYD.trial.active(s) ? "" : WYD.world.isBossRoom(s)
+    this.$("boss-progress").textContent = atCamp ? `（出発先：${area.name}・${WYD.world.floorName(s)}）` : WYD.trial.active(s) ? "" : WYD.world.isBossRoom(s)
       ? `（${WYD.world.floorName(s)}）`
       : `（${WYD.world.floorName(s)}・次の階まで ${s.bossProgress}/${area.killsPerFloor}体）`;
     this.$("diff-value").textContent = s.difficulty;

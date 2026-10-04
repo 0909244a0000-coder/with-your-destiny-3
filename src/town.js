@@ -144,17 +144,20 @@ WYD.town = {
     R.drawPlayer(ctx, w.player);
     // 文字
     const serif = getComputedStyle(document.documentElement).getPropertyValue("--serif") || "serif";
+    const shown = ctx.canvas.clientWidth / map.width || 1;
+    const font = Math.max(map.hud.font, Math.round(map.hud.minShownPx / shown));
+    const hint = shown < map.hud.compactBelow ? T.compactHint : T.hint;
     ctx.textAlign = "left";
-    ctx.font = "bold 16px sans-serif";
+    ctx.font = `bold ${font}px sans-serif`;
     ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillText(`${T.name}${T.label}`, 12, 24);
+    ctx.fillText(`${T.name}${T.label}`, map.hud.margin, font + map.hud.margin);
     ctx.textAlign = "center";
-    ctx.font = `bold 15px ${serif}`;
+    ctx.font = `bold ${font}px ${serif}`;
     ctx.lineWidth = 4;
     ctx.strokeStyle = "rgba(0,0,0,0.8)";
-    ctx.strokeText(T.hint, map.width / 2, map.height - 70);
+    ctx.strokeText(hint, map.width / 2, map.height - 70);
     ctx.fillStyle = "#e0c070";
-    ctx.fillText(T.hint, map.width / 2, map.height - 70);
+    ctx.fillText(hint, map.width / 2, map.height - 70);
     ctx.lineWidth = 1;
   },
 };

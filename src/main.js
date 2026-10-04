@@ -14,18 +14,17 @@ window.WYD = window.WYD || {};
   WYD.ui.init(state, world);
   WYD.results.init(world);
   WYD.sound.init();
-  WYD.ui.log("ようこそ。戦いは自動で進みます。装備とスキルを選んで強くなろう。", "#ffd447");
+  WYD.ui.log("ようこそ野営地へ。装備とスキルを整え、「戦場へ」から冒険に出よう。", "#ffd447");
   const cls = WYD.data.classes[WYD.classes.id];
   if (cls.desc) WYD.ui.log(`${cls.name}：${cls.desc}`, WYD.data.player.color);
   if (WYD.save.restoredFromBackup) WYD.ui.log("セーブが壊れていたので、前回の控えから読み込みました", "#ff8a2a");
   WYD.offline.apply(state, world, lastSeen);
+  WYD.town.enter(world, state);   // 新規・再開とも安全な拠点から。保存したエリア・階は保つ。
   // 初めて遊ぶとき（前に遊んだ記録がないとき）だけ、遊び方を出す
   if (!state.seenHelp) {
     state.seenHelp = true;
     if (!lastSeen) {
       WYD.ui.showStory("intro");   // 短い説明（くわしくは「設定」→「遊び方」）
-      const intro = WYD.data.story.areaIntro[state.area];
-      if (intro) WYD.ui.log(intro, "#c9b48a");
     }
   }
 

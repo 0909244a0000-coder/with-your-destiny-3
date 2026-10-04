@@ -4,20 +4,34 @@ window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
 WYD.data.vfx = {
-  // 薄い・同じ円に見えやすいスキルは、絵に加えて固有の線と動きで見せる。
-  signature: {
-    duration: 0.65, radius: 62, lineWidth: 3.5, spokes: 8, trapSides: 4, alpha: 0.7,
-    expansion: 0.65, spin: 1.6, flatten: 0.65, coreRatio: 0.3,
-    styles: { whirl: "blades", vajra: "shield", hanuman: "fury", nagapasha: "bind", raise: "summon", shift: "shift", trap: "trap", aura: "aura", agni: "field" },
-    classColors: { barbarian: "#bde9ff", sorceress: "#8dccff", necromancer: "#a8f3ab", paladin: "#ffe7a0", assassin: "#cc9fff", druid: "#b2eda0" },
+  // 線画の紋章を使わず、煙・炎・光の絵で発動の質感を分ける。
+  castProfiles: {
+    vajra: { key: "holyWisp", size: 108, duration: 0.65, from: 0.55, to: 1.05, alpha: 0.65, flatten: 0.9, rise: 22 },
+    hanuman: { key: "rageWisp", size: 126, duration: 0.7, from: 0.55, to: 1.15, alpha: 0.75, flatten: 0.9, rise: 26 },
+    nagapasha: { key: "chains", size: 112, duration: 0.55, from: 1.1, to: 0.65, alpha: 0.6, flatten: 0.65 },
+    raise: { key: "graveWisp", size: 132, duration: 0.85, from: 0.55, to: 1.2, alpha: 0.65, flatten: 0.8, rise: 22 },
+    shift: { key: "rageWisp", size: 132, duration: 0.65, from: 0.55, to: 1.1, alpha: 0.7, flatten: 0.85, rise: 22 },
+    trap: { key: "shadowWisp", size: 94, duration: 0.55, from: 0.6, to: 1.1, alpha: 0.55, flatten: 0.65 },
+    aura: { key: "holyWisp", size: 118, duration: 0.7, from: 0.5, to: 1.15, alpha: 0.55, flatten: 0.65, rise: 12 },
   },
-  trapShot: { duration: 0.28, tail: 0.28, headSize: 8, lineWidth: 3, zigzags: 8, bend: 7, phaseSpeed: 24, fireLength: 2.5, shadowArc: 1.5, coreColor: "#fff0bd" },
-  trapStyles: { sorc_hydra: "fire", asn_sentry: "lightning", asn_death: "shadow" },
+  castOverrides: {
+    sorc_shield: { key: "shield", alpha: 0.55 }, sorc_haste: { key: "shadowWisp", alpha: 0.65 },
+    nec_armor: { key: "graveWisp" }, asn_cloak: { key: "shadowWisp" }, asn_burst: { key: "shadowWisp" },
+    asn_shadow: { key: "shadowWisp" }, sorc_hydra: { key: "rageWisp" },
+    dru_wolves: { key: "graveWisp" }, dru_bark: { key: "graveWisp" },
+    pal_fire: { key: "rageWisp" }, nec_decay: { key: "graveWisp" }, sorc_static: { key: "shadowWisp" },
+  },
+  trapShot: { duration: 0.28, size: 42, alpha: 0.8, tailCount: 2, tailGap: 0.06, tailAlpha: 0.22 },
+  trapStyles: { sorc_hydra: "fireball", asn_sentry: "lightning", asn_death: "shadowWisp" },
   fieldCast: { nec_plague: "plague", pal_judgment: "holyGround", dru_fissure: "fireBurst", asn_fire: "fireBurst" },
-  auraMarks: { count: 6, radiusRatio: 0.92, size: 7, spin: 0.4, alpha: 0.65 },
+  auraMist: { alpha: 0.14, pulseAlpha: 0.05, spin: 0.12, radiusRatio: 0.9 },
 
   // 絵のファイル（例: slash: "assets/vfx/slash.png"）
   textures: {
+    graveWisp: "assets/vfx/graveWisp.png",
+    rageWisp: "assets/vfx/rageWisp.png",
+    holyWisp: "assets/vfx/holyWisp.png",
+    shadowWisp: "assets/vfx/shadowWisp.png",
     slash: "assets/vfx/slash.png",        // 斬撃の弧（バーバリアンの通常攻撃）
     whirl: "assets/vfx/whirl.png",        // 旋風の渦（旋風斬）
     iceNova: "assets/vfx/iceNova.png",      // 氷の衝撃の輪（フロストノヴァ）
@@ -112,9 +126,7 @@ WYD.data.vfx = {
   // スキルを使ったときに出す絵（スキル名 → 絵の名前）
   skillCast: {
     whirl: "whirl", sorc_nova: "iceNova",
-    vajra: "magicCircle", sorc_shield: "magicCircle",
-    hanuman: "magicCircle", sorc_haste: "magicCircle",
-    nagapasha: "magicCircle", sorc_freeze: "iceNova",
+    sorc_freeze: "iceNova",
     dru_tornado: "tornado", nec_nova: "boneStorm", dru_vines: "vines",
   },
   // 敵から敵へ飛ぶスキルの見た目（"segment" = 稲妻のように線でつなぐ、"hit" = 当たった敵ごとに絵）
@@ -131,6 +143,7 @@ WYD.data.vfx = {
   // 縛られた敵に重ねる絵（職業 → 絵の名前。ここにない職業は chains）
   bindStyle: { druid: "vines" },
   meteorFall: 0.45,     // メテオの隕石が落ちてくるまでの秒数
+  trapRangeAlpha: 0.05, // 射程の目安は発射中だけ薄く。常時の大きな点線円は出さない
   trapImageScale: 2.6,  // 罠の絵の大きさ（罠の半径の何倍の幅で描くか）
   groundPulse: 0.08,    // 燃える地面のゆらぎの大きさ
 };

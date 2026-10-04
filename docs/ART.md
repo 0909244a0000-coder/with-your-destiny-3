@@ -23,6 +23,8 @@
 - 絵の場所を `data/` に書く方法は `assets/README.md`
 
 ## 受け取り済み（ゲームに入っている）
+
+2026-10-04：煙と光のエフェクト4枚を追加（`assets/vfx/graveWisp.png`・`rageWisp.png`・`holyWisp.png`・`shadowWisp.png`）。黒背景、256px、加算合成。組み込み画像生成ツールで2×2シートを作り、`tools/prepare_sprite.py --grid 2x2 --size 256` で切り出し。指示文は `docs/reviews/2026-10-04-codex-redo.md`。
 羅刹王ラーヴァナ（`ravana`）、阿修羅王（`asuraKing`）、羅刹（`rakshasa`）、夜叉（`yaksha`）、餓鬼（`preta`）、ナーガ（`naga`）
 
 追加済み（このPR）：

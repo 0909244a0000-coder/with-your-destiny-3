@@ -60,7 +60,7 @@ WYD.traps = {
     for (const t of w.traps || []) {
       const r = t.radius;
       ctx.save();
-      ctx.globalAlpha = 0.25;
+      ctx.globalAlpha = t.flash > 0 ? WYD.data.vfx.trapRangeAlpha : 0;
       ctx.strokeStyle = t.color;
       ctx.setLineDash([3, 5]);
       ctx.beginPath();

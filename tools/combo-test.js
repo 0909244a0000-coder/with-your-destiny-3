@@ -12,7 +12,9 @@ const exe = require('fs').existsSync('/opt/pw-browsers/chromium') ? { executable
     await pg.evaluate((c) => { localStorage.clear(); localStorage.setItem('wyd3-active-class', c); WYD.resetting = true; }, cls);
     await pg.reload(); await pg.click('#modal-ok');
     const r = await pg.evaluate(() => {
-      const s = WYD.state, w = WYD.currentWorld; const out = [];
+      const s = WYD.state, w = WYD.currentWorld;
+      WYD.town.leave(w, s); // 拠点スタートから戦場へ出て測る
+      const out = [];
       s.settings.speed = 0; s.player.level = 40; s.cleared = true; s.unlockedAreas = WYD.data.areas.map(a => a.id); s.trial.best = 4; s.difficulty = 3; s.maxDifficulty = 3;
       for (const id in WYD.data.skills) { s.player.skills[id] = 6; } const ids = Object.keys(WYD.data.skills); ids.forEach((id, i) => s.player.skillEnabled[id] = i < 3);
       for (const id of ids) { const l = WYD.runes.list(id); if (l.length) s.player.runes[id] = l[Math.floor(Math.random() * l.length)].id; }
