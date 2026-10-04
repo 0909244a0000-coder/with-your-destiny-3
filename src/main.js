@@ -3,6 +3,7 @@ window.WYD = window.WYD || {};
 
 (function () {
   WYD.classes.apply();   // 今の職業の数値・スキル・セーブの場所を決める
+  for (const src of WYD.data.player.preloadImages || []) WYD.render.getImage(src);
   const state = WYD.save.load();
   const lastSeen = state.lastSeen;
   const world = WYD.world.create();

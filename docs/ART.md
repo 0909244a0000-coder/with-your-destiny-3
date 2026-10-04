@@ -337,3 +337,6 @@ Dark fantasy action-RPG enemy sprite in the style of Tibetan thangka painting an
   python3 tools/prepare_sprite.py assets/sheets/skills.png assets/skills --grid 3x2 --names whirl,vajra,sudarshana,agni,hanuman,nagapasha
   ```
 - 新規PNG32枚の寸法・透明背景・ファイル破損を確認。画像参照36件すべての実ファイルを確認。既存のID・数値・セーブ形式を変更していません。新規セーブと、旧IDの装備を含む既存形式のセーブを読み込み、状態・能力値がmainと一致することも確認。
+
+## 2026-10-05 冥爆術師
+黒い礼装・白い仮面・羽根状の肩当て、紫と琥珀の爆炎で統一。`assets/player_bombmancer{,_attack}.png`、`assets/bomb_hunter.png`、`assets/skills/bomb_*.png`、`assets/vfx/bombOrb.png`・`bombBurst.png`・`bombSmoke.png`。画像15枚約2.05MB。キャラと使い魔は透明、FXは黒背景で加算。生成指示全文・整形方法は `docs/reviews/2026-10-05-codex-bombmancer.md`。

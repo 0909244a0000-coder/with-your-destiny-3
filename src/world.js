@@ -93,6 +93,7 @@ WYD.world = {
     this.updateSpawns(w, state, dt);
     this.updatePlayer(w, state, stats, dt);
     this.updateBolts(w, state, stats, dt);
+    WYD.bombs.update(w, state, stats, dt);
     WYD.mercenary.update(w, state, stats, dt);
     WYD.allies.update(w, state, stats, dt);
     WYD.traps.update(w, state, stats, dt);
@@ -233,6 +234,7 @@ WYD.world = {
     const area = this.area(state);
     state.floor = WYD.util.clamp(state.floor + delta, 1, area.floors + 1);
     w.enemies = [];
+    WYD.bombs.clear(w);
     w.projectiles = [];
     w.traps = [];
     w.fields = [];
@@ -1445,6 +1447,7 @@ WYD.world = {
     if (p.dead) return;
     WYD.results.add(w, null, { deaths: 1 });
     p.dead = true;
+    WYD.bombs.clear(w);
     p.hp = 0;
     p.respawnTimer = WYD.data.player.respawnSeconds;
     const D = WYD.data.story.death;
@@ -1501,6 +1504,7 @@ WYD.world = {
     w.projectiles = [];
     w.bolts = [];
     w.enemies = [];
+    WYD.bombs.clear(w);
     w.spawnTimer = 1;
   },
 
@@ -1509,6 +1513,7 @@ WYD.world = {
   resetEnemies(w, state, keepBoss) {
     if (keepBoss) this.keepBoss(w, state);
     w.enemies = [];
+    WYD.bombs.clear(w);
     w.projectiles = [];
     w.spawnTimer = 0.5;
   },

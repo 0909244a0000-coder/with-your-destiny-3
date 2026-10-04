@@ -147,7 +147,7 @@ WYD.render = {
     const R = WYD.data.player.rangedAttack;
     if (R) for (const b of w.bolts) {
       // 火の玉の絵があれば、飛ぶ向きに回して描く
-      const fb = WYD.vfx.img("fireball");
+      const fb = WYD.vfx.img(R.texture || "fireball");
       if (fb) {
         ctx.save();
         ctx.translate(b.x, b.y);
@@ -163,6 +163,7 @@ WYD.render = {
     // 光るものと落ちている装備は、明かりの暗さの上に描く（暗がりでも見えるように）
     for (const drop of w.drops) this.drawDrop(ctx, drop);
     for (const ef of w.effects) this.drawEffect(ctx, ef);
+    WYD.bombs.draw(ctx, w);
     WYD.fx.draw(ctx, w);
     // 名前は火花より手前に描き、光の中でも読めるようにする。
     this.drawDropLabels(ctx, w.drops);
