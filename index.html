@@ -197,15 +197,14 @@
             <h2>持ち物 <small id="inv-count"></small> <small id="materials"></small></h2>
             <div class="inv-buttons">
               <button id="sort-inv" title="レア度の高い順、同じなら部位・強さの順に並べる">並べ替え</button>
-              <button id="discard-mode" title="ONのあいだ、持ち物・倉庫の装備をクリックすると捨てる（ロックした装備は捨てない）">捨てるモード：OFF</button>
-              <button id="discard-normal">ノーマルを全部捨てる</button>
-              <button id="discard-magic">マジック以下を全部捨てる</button>
+              <button id="discard-all" title="持ち物を全て素材にする。ロックした装備・装備中・倉庫は対象外。実行前に確認します">全て捨てる</button>
+              <button id="bag-gamble-open">キャダラの賭け</button>
               <button id="craft-mode">つけ直しモード：OFF</button>
               <button id="enhance-mode">強化モード：OFF</button>
               <button id="forge-mode" title="装備をクリックすると、能力を1つずつ狙って鍛えられる（Last Epoch の鍛造）">鍛造</button>
             </div>
             <div id="inventory" class="grid"></div>
-            <p class="muted" id="inv-help">左クリック：装備する／捨てる：「捨てるモード」をONにしてクリック</p>
+            <p class="muted" id="inv-help">装備を触ると操作を選べます。「全て捨てる」は確認後に持ち物を分解します（ロック除く）</p>
           </section>
           <section class="panel" id="stash-panel">
             <h2>倉庫 <small id="stash-count"></small> <button id="stash-toggle">開く</button></h2>

@@ -8,7 +8,6 @@ WYD.ui = {
   craftMode: false,   // つけ直しモード（クリックで特殊効果をつけ直す）
   paused: false,      // 一時停止中か（セーブしない）
   enhanceMode: false, // 強化モード（クリックで +1 する）
-  discardMode: false, // 捨てるモード（クリックで捨てる。右クリックが使えない環境でも捨てられるように）
   forgeMode: false,   // 鍛造モード（クリックで鍛造の画面をひらく）
   forgeItem: null,    // 鍛造の画面で鍛えている装備
   cubeMode: false,    // カナイの箱に入れるモード（クリックでユニークを分解して覚える）
@@ -132,6 +131,8 @@ WYD.ui = {
         this.toggleMute();
       } else if (e.key === "h" || e.key === "H") {
         WYD.town.toggle(this.world, s);
+      } else if (e.key === "Escape" && !this.$("gamble").hidden) {
+        this.closeGamble();
       } else if (e.key === "Escape" && !this.$("bag").hidden) {
         this.toggleBag(false);
       } else if ((e.key === "Delete" || e.key === "Backspace") && this.hovered && !this.$("bag").hidden) {
@@ -187,28 +188,24 @@ WYD.ui = {
       }
     };
     const C = WYD.data.crafting;
-    this.$("discard-normal").onclick = () => {
-      const r = WYD.inventory.discardRarities(s, ["normal"]);
-      this.log(`ノーマル装備を${r.count}個捨てた（${C.materialName} +${r.gained}）`);
-      this.changed();
-    };
-    this.$("discard-magic").onclick = () => {
-      const r = WYD.inventory.discardRarities(s, ["normal", "magic"]);
-      this.log(`マジック以下の装備を${r.count}個捨てた（${C.materialName} +${r.gained}）`);
+    this.$("discard-all").onclick = () => {
+      const targets = s.inventory.filter((it) => !it.locked);
+      if (!targets.length) return;
+      const valuable = targets.filter((it) => it.rarity === "unique" || it.rarity === "set" || it.plus > 0 || it.forged > 0 || it.runeword).length;
+      const gained = targets.reduce((n, it) => n + WYD.inventory.salvageValue(s, it), 0);
+      const warning = valuable ? `\nユニーク・セット・強化・鍛造・ルーンワードの装備を${valuable}個含みます。` : "";
+      if (!confirm(`持ち物の装備${targets.length}個を全て捨てますか？${warning}\n${C.materialName} +${gained}。はめた宝石・ルーンは戻ります。\nロックした装備・装備中・倉庫は残ります。元には戻せません。`)) return;
+      const r = WYD.inventory.discardAll(s, targets);
+      this.log(`持ち物を${r.count}個捨てた（${C.materialName} +${r.gained}）`);
       this.changed();
     };
     this.$("sort-inv").onclick = () => {
       WYD.inventory.sort(s.inventory);
       this.changed();
     };
-    this.$("discard-mode").onclick = () => {
-      this.discardMode = !this.discardMode;
-      if (this.discardMode) this.craftMode = this.enhanceMode = this.cubeMode = this.forgeMode = false;
-      this.markDirty();
-    };
     this.$("craft-mode").onclick = () => {
       this.craftMode = !this.craftMode;
-      if (this.craftMode) this.enhanceMode = this.cubeMode = this.forgeMode = this.discardMode = false;
+      if (this.craftMode) this.enhanceMode = this.cubeMode = this.forgeMode = false;
       this.markDirty();
     };
     this.$("devotion-open").onclick = () => {
@@ -233,27 +230,17 @@ WYD.ui = {
       this.$("bounty-body").innerHTML = this.bountyHtml();
       this.changed();
     };
-    this.$("gamble-open").onclick = () => {
+    const openGamble = () => {
+      this.stopGambleHold();
       this.gambleLast = null;
       this.$("gamble-body").innerHTML = this.gambleHtml();
       this.$("gamble").hidden = false;
+      this.refreshGamble();
     };
-    this.$("gamble-close").onclick = () => { this.$("gamble").hidden = true; };
-    this.$("gamble-body").onclick = (e) => {
-      const btn = e.target.closest("[data-gamble]");
-      if (!btn) return;
-      const item = WYD.gamble.roll(s, btn.dataset.gamble);
-      if (item) {
-        this.gambleLast = item;
-        const r = WYD.loot.rarityInfo(item.rarity);
-        this.log(`キャダラの賭け：${WYD.loot.label(item)}（${r.name}）`, r.color);
-        if (["legend", "unique", "set"].includes(item.rarity)) WYD.sound.play("uniqueDrop");
-      } else {
-        this.log(WYD.inventory.isFull(s) ? "持ち物がいっぱい" : `${WYD.data.crafting.materialName}が足りない`, "#ff6b6b");
-      }
-      this.$("gamble-body").innerHTML = this.gambleHtml();
-      this.changed();
-    };
+    this.$("gamble-open").onclick = openGamble;
+    this.$("bag-gamble-open").onclick = openGamble;
+    this.$("gamble-close").onclick = () => this.closeGamble();
+    this.bindGambleHold();
     this.$("lgem-open").onclick = () => {
       this.$("lgem-body").innerHTML = this.lgemHtml();
       this.$("lgem").hidden = false;
@@ -324,7 +311,7 @@ WYD.ui = {
     };
     this.$("forge-mode").onclick = () => {
       this.forgeMode = !this.forgeMode;
-      if (this.forgeMode) this.craftMode = this.enhanceMode = this.cubeMode = this.discardMode = false;
+      if (this.forgeMode) this.craftMode = this.enhanceMode = this.cubeMode = false;
       this.markDirty();
     };
     this.$("forge-close").onclick = () => { this.$("forge").hidden = true; this.forgeItem = null; };
@@ -342,7 +329,7 @@ WYD.ui = {
     };
     this.$("cube-mode").onclick = () => {
       this.cubeMode = !this.cubeMode;
-      if (this.cubeMode) this.craftMode = this.enhanceMode = this.forgeMode = this.discardMode = false;
+      if (this.cubeMode) this.craftMode = this.enhanceMode = this.forgeMode = false;
       this.markDirty();
     };
     this.$("maps").onclick = (e) => {
@@ -369,7 +356,7 @@ WYD.ui = {
     };
     this.$("enhance-mode").onclick = () => {
       this.enhanceMode = !this.enhanceMode;
-      if (this.enhanceMode) this.craftMode = this.cubeMode = this.forgeMode = this.discardMode = false;
+      if (this.enhanceMode) this.craftMode = this.cubeMode = this.forgeMode = false;
       this.markDirty();
     };
 
@@ -409,10 +396,6 @@ WYD.ui = {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
       const index = Number(cell.dataset.index);
-      if (this.discardMode) {
-        this.discardAt("inv", index);
-        return;
-      }
       if (this.touchSheet("inv", index)) return;   // スマホ：触ると「どうするか」の窓
       if (e.ctrlKey || e.metaKey) this.toggleLock(s.inventory[index]);
       else if (this.forgeMode) this.openForge(s.inventory[index]);
@@ -440,10 +423,6 @@ WYD.ui = {
       if (this.eatClick()) return;
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
-      if (this.discardMode) {
-        this.discardAt("stash", Number(cell.dataset.index));
-        return;
-      }
       if (this.touchSheet("stash", Number(cell.dataset.index))) return;
       if (e.ctrlKey || e.metaKey) this.toggleLock(s.stash[Number(cell.dataset.index)]);
       else if (this.forgeMode) this.openForge(s.stash[Number(cell.dataset.index)]);
@@ -667,9 +646,87 @@ WYD.ui = {
       `<button data-gamble="${k}" ${s.materials >= cost && !WYD.inventory.isFull(s) ? "" : "disabled"}>${slots[k]}</button>`).join(" ");
     const last = this.gambleLast;
     const lastHtml = last ? `<div class="dev-row own"><div>もらった装備：<b style="color:${WYD.loot.rarityInfo(last.rarity).color}">${WYD.loot.label(last)}</b>（持ち物に入りました）</div></div>` : "";
-    return `<div class="dev-head">1回 ${mat} <b>${cost}</b>（持っている ${mat}：${s.materials}）　アイテムレベル ${WYD.gamble.itemLevel(s)}</div>
-      <p class="muted">部位を選ぶと、その部位の装備がランダムで1つもらえます。出やすさ：${odds}（ユニーク・セットがその部位にないときはレジェンド）。アイテムレベルは、行ったことのある一番奥のエリアと最高危険度で決まります。</p>
-      <div class="gamble-btns">${btns}</div>${lastHtml}`;
+    return `<div id="gamble-summary" class="dev-head"></div>
+      <p class="muted">部位をタップで1個、長押しで連続購入。指を離すと停止します。出やすさ：${odds}（その部位にユニーク・セットがなければレジェンド）。</p>
+      <div class="gamble-btns">${btns}</div><div id="gamble-last" aria-live="polite">${lastHtml}</div>`;
+  },
+
+  refreshGamble() {
+    const s = this.state, summary = this.$("gamble-summary");
+    if (!summary) return;
+    const cost = WYD.gamble.cost(s), full = WYD.inventory.isFull(s);
+    summary.textContent = `1回 ${WYD.data.crafting.materialName} ${cost} ／ 所持 ${s.materials} ／ 持ち物 ${s.inventory.length}/${WYD.data.items.inventorySize}`;
+    for (const btn of this.$("gamble-body").querySelectorAll("[data-gamble]")) {
+      btn.disabled = s.player.level < WYD.data.gamble.minLevel || s.materials < cost || full;
+    }
+    const last = this.gambleLast;
+    this.putHtml("gamble-last", `${full ? '<p class="muted">持ち物がいっぱいです。</p>' : s.materials < cost ? '<p class="muted">素材が足りません。</p>' : ''}${last ? `<div class="dev-row own">もらった装備：<b style="color:${WYD.loot.rarityInfo(last.rarity).color}">${WYD.loot.label(last)}</b></div>` : ''}`);
+    if (full || s.materials < cost || s.player.level < WYD.data.gamble.minLevel) this.stopGambleHold();
+  },
+
+  buyGamble(slot) {
+    if (this.$("gamble").hidden || document.hidden) { this.stopGambleHold(); return false; }
+    const item = WYD.gamble.roll(this.state, slot);
+    if (!item) { this.stopGambleHold(); this.refreshGamble(); return false; }
+    this.gambleLast = item;
+    const rarity = WYD.loot.rarityInfo(item.rarity);
+    this.log(`キャダラの賭け：${WYD.loot.label(item)}（${rarity.name}）`, rarity.color);
+    if (["legend", "unique", "set"].includes(item.rarity)) WYD.sound.play("uniqueDrop");
+    this.refreshGamble();
+    this.changed();
+    return true;
+  },
+
+  stopGambleHold() {
+    clearTimeout(this.gambleHoldTimer);
+    this.gambleHoldTimer = null;
+    this.gamblePointer = null;
+  },
+
+  closeGamble() {
+    this.gambleSuppressClick = true;
+    this.stopGambleHold();
+    this.$("gamble").hidden = true;
+    this.markDirty();
+  },
+
+  bindGambleHold() {
+    const body = this.$("gamble-body");
+    body.addEventListener("pointerdown", (e) => {
+      const btn = e.target.closest("[data-gamble]");
+      if (!btn || btn.disabled || e.button !== 0 || !e.isPrimary) return;
+      this.stopGambleHold();
+      this.gambleSuppressClick = false;
+      const pointer = this.gamblePointer = { id: e.pointerId, x: e.clientX, y: e.clientY };
+      btn.setPointerCapture(e.pointerId);
+      const repeat = () => {
+        if (this.gamblePointer !== pointer) return;
+        this.gambleSuppressClick = true;
+        if (this.buyGamble(btn.dataset.gamble) && this.gamblePointer === pointer)
+          this.gambleHoldTimer = setTimeout(repeat, WYD.data.gamble.hold.repeatMs);
+      };
+      this.gambleHoldTimer = setTimeout(repeat, WYD.data.gamble.hold.delayMs);
+    });
+    body.addEventListener("pointermove", (e) => {
+      const p = this.gamblePointer;
+      if (!p || e.pointerId !== p.id) return;
+      const btn = e.target.closest("[data-gamble]"), rect = btn && btn.getBoundingClientRect();
+      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > WYD.data.gamble.hold.moveTolerance ||
+          !rect || e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+        this.gambleSuppressClick = true;
+        this.stopGambleHold();
+      }
+    });
+    for (const event of ["pointerup", "pointercancel", "lostpointercapture"]) body.addEventListener(event, () => this.stopGambleHold());
+    body.addEventListener("contextmenu", (e) => { if (e.target.closest("[data-gamble]")) e.preventDefault(); });
+    body.onclick = (e) => {
+      const btn = e.target.closest("[data-gamble]");
+      if (!btn) return;
+      if (this.gambleSuppressClick && e.detail !== 0) { this.gambleSuppressClick = false; return; }
+      this.buyGamble(btn.dataset.gamble);
+    };
+    window.addEventListener("blur", () => { this.gambleSuppressClick = true; this.stopGambleHold(); });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) { this.gambleSuppressClick = true; this.stopGambleHold(); } });
   },
 
   // 伝説の宝石の画面
@@ -1088,18 +1145,16 @@ WYD.ui = {
     this.$("craft-mode").classList.toggle("active", this.craftMode);
     this.$("enhance-mode").textContent = `強化モード：${this.enhanceMode ? "ON" : "OFF"}`;
     this.$("enhance-mode").classList.toggle("active", this.enhanceMode);
-    this.$("discard-mode").textContent = `捨てるモード：${this.discardMode ? "ON" : "OFF"}`;
-    this.$("discard-mode").classList.toggle("active", this.discardMode);
-    this.$("inventory").classList.toggle("discarding", this.discardMode);
-    this.$("stash").classList.toggle("discarding", this.discardMode);
-    this.$("inv-help").textContent = this.discardMode
-      ? "捨てるモード：持ち物・倉庫の装備をクリック（スマホは触る）と捨てて素材にする。ロックした装備は捨てない。終わったらもう一度ボタンでOFF"
-      : this.enhanceMode
-      ? "強化モード：持ち物や装備をクリックすると、素材を使って +1 強化する（捨てると使った素材の半分がもどる）"
-      : this.craftMode
-      ? "つけ直しモード：持ち物や装備をクリックすると、素材を使って特殊効果をつけ直す"
-      : this.isTouch() ? "装備を触ると：説明・今の装備との比べ・装備する／倉庫へ／ロック／捨てる。まとめて捨てるときは「捨てるモード」"
-      : "左クリック：装備する／捨てる：「捨てるモード」をONにしてクリック（右クリック・Delete キーでも）／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック";
+    this.$("discard-all").disabled = !s.inventory.some((it) => !it.locked);
+    this.$("bag-gamble-open").textContent = s.player.level < WYD.data.gamble.minLevel
+      ? `キャダラの賭け（Lv${WYD.data.gamble.minLevel}〜）` : "キャダラの賭け";
+    this.$("bag-gamble-open").disabled = s.player.level < WYD.data.gamble.minLevel;
+    this.$("inv-help").textContent = this.enhanceMode
+      ? "強化モード：装備をクリックすると、素材を使って +1 強化する"
+      : this.craftMode ? "つけ直しモード：装備をクリックすると、素材を使って特殊効果をつけ直す"
+      : this.isTouch() ? "装備を触ると操作を選べます。「全て捨てる」は持ち物だけを確認後に分解（ロック除く）"
+      : "左クリック：装備／右クリック・Delete：捨てる／Shift＋クリック：倉庫／Ctrl＋クリック：ロック。「全て捨てる」は確認後に持ち物を分解（ロック除く）";
+    if (!this.$("gamble").hidden) this.refreshGamble();
     this.putHtml("inventory", this.cellsHtml(s.inventory, size));
     this.putHtml("gems", this.gemsHtml());
     this.putHtml("builds", this.buildsHtml());
@@ -1631,7 +1686,7 @@ WYD.ui = {
   },
 
   touchSheet(where, key, force) {
-    if ((!this.isTouch() && !force) || this.forgeMode || this.cubeMode || this.gemSelected || this.enhanceMode || this.craftMode || this.discardMode) return false;
+    if ((!this.isTouch() && !force) || this.forgeMode || this.cubeMode || this.gemSelected || this.enhanceMode || this.craftMode) return false;
     const s = this.state;
     const item = where === "inv" ? s.inventory[key] : where === "stash" ? s.stash[key] : s.equipment[key];
     if (!item) return false;

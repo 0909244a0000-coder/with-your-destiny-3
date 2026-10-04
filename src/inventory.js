@@ -156,6 +156,19 @@ WYD.inventory = {
     return { count, gained };
   },
 
+  // 明示した持ち物を全て分解。ロックは保護し、装備中・倉庫には触れない。
+  discardAll(state, targets = state.inventory.filter((it) => !it.locked)) {
+    const selected = new Set(targets);
+    let count = 0, gained = 0;
+    state.inventory = state.inventory.filter((it) => {
+      if (it.locked || !selected.has(it)) return true;
+      count++;
+      gained += this.salvage(state, it);
+      return false;
+    });
+    return { count, gained };
+  },
+
   // 自動分解の対象か（設定で選んだレア度以下。レジェンドとユニークは対象外）
   shouldAutoSalvage(state, item) {
     const f = state.settings.filter;
