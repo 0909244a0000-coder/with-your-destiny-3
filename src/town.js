@@ -59,6 +59,14 @@ WYD.town = {
     w.player.hp = stats.maxHp;
   },
 
+  // 置き物の絵を、足もとが (x, y) より少し下になるように描く。描けたら true
+  drawProp(ctx, P) {
+    const img = WYD.render.getImage(P.image);
+    if (!img) return false;
+    ctx.drawImage(img, P.x - P.size / 2, P.y - P.size * 0.6, P.size, P.size);
+    return true;
+  },
+
   draw(ctx, w, state) {
     const T = WYD.data.town, map = WYD.data.map, R = WYD.render;
     const t = w.time || 0;
@@ -80,50 +88,55 @@ WYD.town = {
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, map.width, map.height);
-    // テント
-    const N = T.tent;
-    ctx.fillStyle = N.color;
-    ctx.strokeStyle = N.edge;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(N.x, N.y - N.h / 2);
-    ctx.lineTo(N.x + N.w / 2, N.y + N.h / 2);
-    ctx.lineTo(N.x - N.w / 2, N.y + N.h / 2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#120d08";
-    ctx.beginPath();
-    ctx.moveTo(N.x, N.y - N.h * 0.05);
-    ctx.lineTo(N.x + N.w * 0.14, N.y + N.h / 2);
-    ctx.lineTo(N.x - N.w * 0.14, N.y + N.h / 2);
-    ctx.closePath();
-    ctx.fill();
-    // 倉庫の箱
-    const C = T.chest;
-    ctx.fillStyle = C.color;
-    ctx.strokeStyle = C.edge;
-    ctx.fillRect(C.x - C.w / 2, C.y - C.h / 2, C.w, C.h);
-    ctx.strokeRect(C.x - C.w / 2, C.y - C.h / 2, C.w, C.h);
-    ctx.beginPath();
-    ctx.moveTo(C.x - C.w / 2, C.y - C.h * 0.1);
-    ctx.lineTo(C.x + C.w / 2, C.y - C.h * 0.1);
-    ctx.stroke();
-    // たき火（まき と 炎）
-    ctx.strokeStyle = "#3a2614";
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(F.x - F.radius, F.y + 8);
-    ctx.lineTo(F.x + F.radius, F.y - 2);
-    ctx.moveTo(F.x - F.radius, F.y - 2);
-    ctx.lineTo(F.x + F.radius, F.y + 8);
-    ctx.stroke();
-    for (let i = 0; i < 3; i++) {
-      const h = F.radius * (1.1 + 0.25 * Math.sin(t * 9 + i * 2));
-      ctx.fillStyle = ["#ff6a1a", "#ffa63a", "#ffe08a"][i];
+    const N = T.tent, C = T.chest;
+    // テント（絵があれば絵、なければ図形）
+    if (!this.drawProp(ctx, N)) {
+      ctx.fillStyle = N.color;
+      ctx.strokeStyle = N.edge;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(F.x + (i - 1) * 4, F.y - h * 0.35, F.radius * (0.55 - i * 0.13), h * (0.6 - i * 0.12), 0, 0, Math.PI * 2);
+      ctx.moveTo(N.x, N.y - N.h / 2);
+      ctx.lineTo(N.x + N.w / 2, N.y + N.h / 2);
+      ctx.lineTo(N.x - N.w / 2, N.y + N.h / 2);
+      ctx.closePath();
       ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#120d08";
+      ctx.beginPath();
+      ctx.moveTo(N.x, N.y - N.h * 0.05);
+      ctx.lineTo(N.x + N.w * 0.14, N.y + N.h / 2);
+      ctx.lineTo(N.x - N.w * 0.14, N.y + N.h / 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // 倉庫の箱（絵があれば絵、なければ図形）
+    if (!this.drawProp(ctx, C)) {
+      ctx.fillStyle = C.color;
+      ctx.strokeStyle = C.edge;
+      ctx.fillRect(C.x - C.w / 2, C.y - C.h / 2, C.w, C.h);
+      ctx.strokeRect(C.x - C.w / 2, C.y - C.h / 2, C.w, C.h);
+      ctx.beginPath();
+      ctx.moveTo(C.x - C.w / 2, C.y - C.h * 0.1);
+      ctx.lineTo(C.x + C.w / 2, C.y - C.h * 0.1);
+      ctx.stroke();
+    }
+    // たき火（絵があれば絵、なければ図形）
+    if (!this.drawProp(ctx, F)) {
+      ctx.strokeStyle = "#3a2614";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(F.x - F.radius, F.y + 8);
+      ctx.lineTo(F.x + F.radius, F.y - 2);
+      ctx.moveTo(F.x - F.radius, F.y - 2);
+      ctx.lineTo(F.x + F.radius, F.y + 8);
+      ctx.stroke();
+      for (let i = 0; i < 3; i++) {
+        const h = F.radius * (1.1 + 0.25 * Math.sin(t * 9 + i * 2));
+        ctx.fillStyle = ["#ff6a1a", "#ffa63a", "#ffe08a"][i];
+        ctx.beginPath();
+        ctx.ellipse(F.x + (i - 1) * 4, F.y - h * 0.35, F.radius * (0.55 - i * 0.13), h * (0.6 - i * 0.12), 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
     ctx.lineWidth = 1;
     // 主人公

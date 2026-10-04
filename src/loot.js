@@ -209,6 +209,8 @@ WYD.loot = {
 
   // 装備のアイコンの絵のファイル（なければ null）
   iconOf(item) {
+    const u = this.uniqueInfo(item);
+    if (u && u.icon) return u.icon;
     const base = this.baseOf(item);
     return (base && WYD.data.items.icons[base.id]) || null;
   },

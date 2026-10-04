@@ -20,9 +20,10 @@ WYD.data.uniques = {
   //   params … 固有能力の数値
   //   weight … 大きいほど出やすい
   //   home   … よく落ちるエリア
+  //   icon   … 専用のアイコンの絵（なければ部位の絵）
   list: [
     {
-      id: "agniBangle", home: "inferno", name: "劫火の腕輪", base: "bracelet", weight: 10,
+      id: "agniBangle", icon: "assets/items/unique_agniBangle.png", home: "inferno", name: "劫火の腕輪", base: "bracelet", weight: 10,
       stats: { attack: [3, 6], skillDamage: [10, 20] },
       power: "whirlFire",
       desc: "{skill:whirl}を使うと足元の地面が燃え、{duration}秒間 {tick}秒ごとに攻撃力×{mult}倍で焼く",
@@ -36,7 +37,7 @@ WYD.data.uniques = {
       params: { extraTargets: 3, damagePercent: 40 },
     },
     {
-      id: "indraRing", home: "cathedral", name: "不壊の指輪", base: "ring", weight: 10,
+      id: "indraRing", icon: "assets/items/unique_indraRing.png", home: "cathedral", name: "不壊の指輪", base: "ring", weight: 10,
       stats: { maxHp: [20, 40], defense: [3, 6] },
       power: "vajraThorns",
       desc: "{skill:vajra}の発動中、受けたダメージの {percent}% を相手に返す",
@@ -50,28 +51,28 @@ WYD.data.uniques = {
       params: { radius: 80, mult: 0.6 },
     },
     {
-      id: "nagaCrown", home: "patala", name: "鎖の王冠", base: "crown", weight: 10,
+      id: "nagaCrown", icon: "assets/items/unique_nagaCrown.png", home: "patala", name: "鎖の王冠", base: "crown", weight: 10,
       stats: { maxHp: [25, 45], skillDamage: [5, 15] },
       power: "bindExplode",
       desc: "{skill:nagapasha}で縛られた敵が倒れると爆発し、周り{radius}に攻撃力×{mult}倍のダメージ",
       params: { radius: 90, mult: 1.5, color: "#5fd9a0" },
     },
     {
-      id: "kaliMala", home: "smashana", name: "屍爆の印章", base: "rosary", weight: 8,
+      id: "kaliMala", icon: "assets/items/unique_kaliMala.png", home: "smashana", name: "屍爆の印章", base: "rosary", weight: 8,
       stats: { hpRegen: [1, 2], critChance: [2, 5] },
       power: "killNova",
       desc: "敵を倒すと {chance}% の確率で死体が爆発し、周り{radius}に攻撃力×{mult}倍のダメージ",
       params: { chance: 30, radius: 80, mult: 1.2, color: "#ff4a6a" },
     },
     {
-      id: "asceticRobe", home: "cathedral", name: "隠者のローブ", base: "robe", weight: 8,
+      id: "asceticRobe", icon: "assets/items/unique_asceticRobe.png", home: "cathedral", name: "隠者のローブ", base: "robe", weight: 8,
       stats: { defense: [3, 6], maxHp: [15, 30] },
       power: "ascetic",
       desc: "スキルの空き枠1つにつき、スキル威力 +{percentPerSlot}%（使うスキルをしぼるほど強い）",
       params: { percentPerSlot: 45 },
     },
     {
-      id: "wardRing", home: "frost", name: "流星避けの指輪", base: "ring", weight: 8,
+      id: "wardRing", icon: "assets/items/unique_wardRing.png", home: "frost", name: "流星避けの指輪", base: "ring", weight: 8,
       stats: { maxHp: [15, 30], defense: [2, 4] },
       power: "projectileWard",
       desc: "敵の弾を {chance}% の確率ではじく（弾幕を撃つボスに強い）",
@@ -86,7 +87,7 @@ WYD.data.uniques = {
     },
     {
       // periodicSummon … 敵がいるとき、interval 秒ごとに味方を count 体呼ぶ（手下のしくみ。src/allies.js）
-      id: "ancestorHelm", home: "smashana", name: "祖霊の兜", base: "turban", weight: 7,
+      id: "ancestorHelm", icon: "assets/items/unique_ancestorHelm.png", home: "smashana", name: "祖霊の兜", base: "turban", weight: 7,
       stats: { defense: [3, 6], maxHp: [20, 35] },
       power: "periodicSummon",
       desc: "{interval}秒ごとに祖先の戦士を{count}体呼ぶ（{duration}秒いて、攻撃力×{attackMult}倍でなぐる）",
@@ -95,7 +96,7 @@ WYD.data.uniques = {
         color: "#ffcf6a", image: "assets/enemies/yaksha.png", imageFilter: "sepia(0.8) brightness(1.4) opacity(0.8)" },
     },
     {
-      id: "frostOrb", home: "frost", name: "氷霊の腕輪", base: "bracelet", weight: 7,
+      id: "frostOrb", icon: "assets/items/unique_frostOrb.png", home: "frost", name: "氷霊の腕輪", base: "bracelet", weight: 7,
       stats: { attackSpeed: [4, 8], skillDamage: [8, 15] },
       power: "periodicSummon",
       desc: "{interval}秒ごとに氷の精霊を{count}体呼ぶ（{duration}秒いて、攻撃力×{attackMult}倍でなぐる）",
@@ -105,14 +106,14 @@ WYD.data.uniques = {
     },
     // ---- 奈落の双王でだけ出る（weight 0 なので、ふつうには落ちない。uberOnly）----
     {
-      id: "abyssHeart", name: "奈落の心臓", base: "amulet", weight: 0, uberOnly: true,
+      id: "abyssHeart", icon: "assets/items/unique_abyssHeart.png", name: "奈落の心臓", base: "amulet", weight: 0, uberOnly: true,
       stats: { attack: [8, 14], skillDamage: [20, 30], critChance: [3, 5] },
       power: "eliteHunter",
       desc: "精鋭とボスに与えるダメージ +{percent}%",
       params: { percent: 50 },
     },
     {
-      id: "twinCrown", name: "双王の冠", base: "crown", weight: 0, uberOnly: true,
+      id: "twinCrown", icon: "assets/items/unique_twinCrown.png", name: "双王の冠", base: "crown", weight: 0, uberOnly: true,
       stats: { maxHp: [60, 90], defense: [8, 12] },
       power: "periodicSummon",
       desc: "{interval}秒ごとに双王の影を{count}体呼ぶ（{duration}秒いて、攻撃力×{attackMult}倍でなぐる）",
@@ -122,14 +123,14 @@ WYD.data.uniques = {
     },
     // ---- どの職業でも：スキルの「しくみ」を変えて遊び方を変える（power は skillBoost〜。そのしくみのスキルがある職業でだけ落ちる）----
     {
-      id: "stormMail", home: "frost", name: "嵐の鎖帷子", base: "chainmail", weight: 8,
+      id: "stormMail", icon: "assets/items/unique_stormMail.png", home: "frost", name: "嵐の鎖帷子", base: "chainmail", weight: 8,
       stats: { defense: [4, 8], maxHp: [15, 30] },
       power: "skillBoostWhirlStorm",
       desc: "{skill:whirl}の使える間隔が0.55倍、範囲が1.25倍になる（威力は0.85倍。回し続ける型）",
       params: { kind: "whirl", mods: { cooldown: ["mul", 0.55], radius: ["mul", 1.25], damage: ["mul", 0.85] } },
     },
     {
-      id: "aegisShield", home: "cathedral", name: "不動の大盾", base: "shield", weight: 8,
+      id: "aegisShield", icon: "assets/items/unique_aegisShield.png", home: "cathedral", name: "不動の大盾", base: "shield", weight: 8,
       stats: { defense: [5, 9], maxHp: [20, 35] },
       power: "skillBoostVajraAlways",
       desc: "{skill:vajra}をHPが減っていなくても使い、使える間隔が0.7倍、時間が1.4倍になる（ほぼずっと守りが上がる）",
@@ -143,49 +144,49 @@ WYD.data.uniques = {
       params: { kind: "sudarshana", mods: { targets: ["add", 4], jumpRange: ["mul", 1.5] } },
     },
     {
-      id: "ashTome", home: "inferno", name: "灰燼の魔導書", base: "tome", weight: 8,
+      id: "ashTome", icon: "assets/items/unique_ashTome.png", home: "inferno", name: "灰燼の魔導書", base: "tome", weight: 8,
       stats: { skillDamage: [10, 18], attack: [2, 4] },
       power: "skillBoostAgniSpam",
       desc: "{skill:agni}の使える間隔が0.5倍、範囲が1.2倍になる（1回の威力は0.8倍。地面を焼き続ける型）",
       params: { kind: "agni", mods: { cooldown: ["mul", 0.5], radius: ["mul", 1.2], damage: ["mul", 0.8] } },
     },
     {
-      id: "galeBoots", home: "patala", name: "疾風の長靴", base: "sandals", weight: 8,
+      id: "galeBoots", icon: "assets/items/unique_galeBoots.png", home: "patala", name: "疾風の長靴", base: "sandals", weight: 8,
       stats: { moveSpeed: [8, 14], attackSpeed: [3, 6] },
       power: "skillBoostHasteFar",
       desc: "{skill:hanuman}を遠くの敵にも使い（{triggerText}）、使える間隔が0.6倍になる",
       params: { kind: "hanuman", triggerText: "反応する距離3倍", mods: { triggerRange: ["mul", 3], cooldown: ["mul", 0.6] } },
     },
     {
-      id: "chainBelt", home: "patala", name: "縛鎖の帯", base: "belt", weight: 8,
+      id: "chainBelt", icon: "assets/items/unique_chainBelt.png", home: "patala", name: "縛鎖の帯", base: "belt", weight: 8,
       stats: { maxHp: [20, 35], defense: [2, 5] },
       power: "skillBoostBindSolo",
       desc: "{skill:nagapasha}を敵が1体でも使い、ボスを縛る時間が2.5倍、使える間隔が0.7倍になる（ボス戦向け）",
       params: { kind: "nagapasha", mods: { minTargets: ["set", 1], bossBindMult: ["mul", 2.5], cooldown: ["mul", 0.7] } },
     },
     {
-      id: "legionSash", home: "smashana", name: "軍勢の飾り帯", base: "sash", weight: 8,
+      id: "legionSash", icon: "assets/items/unique_legionSash.png", home: "smashana", name: "軍勢の飾り帯", base: "sash", weight: 8,
       stats: { maxHp: [15, 30], skillDamage: [6, 12] },
       power: "skillBoostRaiseLegion",
       desc: "{skill:raise}で呼ぶ数 +2、いられる時間が1.5倍になる",
       params: { kind: "raise", mods: { countBase: ["add", 2], duration: ["mul", 1.5] } },
     },
     {
-      id: "echoTalisman", home: "cathedral", name: "残響の護符", base: "talisman", weight: 8,
+      id: "echoTalisman", icon: "assets/items/unique_echoTalisman.png", home: "cathedral", name: "残響の護符", base: "talisman", weight: 8,
       stats: { maxHp: [15, 30], hpRegen: [1, 2] },
       power: "skillBoostAuraWide",
       desc: "すべてのオーラの届く範囲が1.7倍になる（仲間にも広く届く）",
       params: { kind: "aura", mods: { radius: ["mul", 1.7] } },
     },
     {
-      id: "trapperGreaves", home: "smashana", name: "罠師の脚甲", base: "leggings", weight: 8,
+      id: "trapperGreaves", icon: "assets/items/unique_trapperGreaves.png", home: "smashana", name: "罠師の脚甲", base: "leggings", weight: 8,
       stats: { defense: [3, 6], moveSpeed: [4, 8] },
       power: "skillBoostTrapRapid",
       desc: "すべての罠で、撃つ間隔が0.6倍、置いていられる時間が1.5倍になる",
       params: { kind: "trap", mods: { fireInterval: ["mul", 0.6], duration: ["mul", 1.5] } },
     },
     {
-      id: "moonAmulet", home: "frost", name: "月影の首飾り", base: "amulet", weight: 8,
+      id: "moonAmulet", icon: "assets/items/unique_moonAmulet.png", home: "frost", name: "月影の首飾り", base: "amulet", weight: 8,
       stats: { maxHp: [20, 35], attack: [3, 5] },
       power: "skillBoostShiftLong",
       desc: "すべての変身で、使える間隔が0.5倍、時間が1.3倍になる（ほぼずっと変身していられる）",
@@ -193,28 +194,28 @@ WYD.data.uniques = {
     },
     // ---- 職業専用：スキルを強くする（power は "skillBoost〜"。params.kind のスキルの数値を mods で変える。書き方は data/runes.js と同じ）----
     {
-      id: "giantBlade", home: "patala", name: "巨人の大剣", base: "great_blade", weight: 10, classOnly: "barbarian",
+      id: "giantBlade", icon: "assets/items/unique_giantBlade.png", home: "patala", name: "巨人の大剣", base: "great_blade", weight: 10, classOnly: "barbarian",
       stats: { attack: [6, 10], attackSpeed: [-5, 0] },
       power: "skillBoostWhirl",
       desc: "{skill:whirl}の範囲が1.4倍、威力が1.5倍になる",
       params: { kind: "whirl", mods: { radius: ["mul", 1.4], damage: ["mul", 1.5] } },
     },
     {
-      id: "berserkerHelm", home: "inferno", name: "狂戦士の兜", base: "turban", weight: 10, classOnly: "barbarian",
+      id: "berserkerHelm", icon: "assets/items/unique_berserkerHelm.png", home: "inferno", name: "狂戦士の兜", base: "turban", weight: 10, classOnly: "barbarian",
       stats: { defense: [3, 6], attackSpeed: [4, 8] },
       power: "skillBoostHaste",
       desc: "{skill:hanuman}の時間が2倍、上がる攻撃速度が1.3倍、使える間隔が0.7倍になる",
       params: { kind: "hanuman", mods: { duration: ["mul", 2], haste: ["mul", 1.3], cooldown: ["mul", 0.7] } },
     },
     {
-      id: "archmageStaff", home: "inferno", name: "大魔導の杖", base: "staff", weight: 10, classOnly: "sorceress",
+      id: "archmageStaff", icon: "assets/items/unique_archmageStaff.png", home: "inferno", name: "大魔導の杖", base: "staff", weight: 10, classOnly: "sorceress",
       stats: { skillDamage: [15, 25] },
       power: "skillBoostAgni",
       desc: "{skill:agni}の範囲が1.3倍、威力が1.6倍、燃える時間が1.5倍になる",
       params: { kind: "agni", mods: { radius: ["mul", 1.3], damage: ["mul", 1.6], duration: ["mul", 1.5] } },
     },
     {
-      id: "frostCrown", home: "frost", name: "氷結の冠", base: "crown", weight: 10, classOnly: "sorceress",
+      id: "frostCrown", icon: "assets/items/unique_frostCrown.png", home: "frost", name: "氷結の冠", base: "crown", weight: 10, classOnly: "sorceress",
       stats: { maxHp: [15, 30], skillDamage: [8, 14] },
       power: "skillBoostFreeze",
       desc: "{skill:nagapasha}で凍らせる時間が1.6倍、範囲が1.3倍、敵が1体でも使う",
@@ -222,21 +223,21 @@ WYD.data.uniques = {
     },
     {
       // classOnly … この職業でだけ落ちる（ほかの職業ではスキルがないので）
-      id: "boneCrown", home: "smashana", name: "骸の王冠", base: "crown", weight: 10, classOnly: "necromancer",
+      id: "boneCrown", icon: "assets/items/unique_boneCrown.png", home: "smashana", name: "骸の王冠", base: "crown", weight: 10, classOnly: "necromancer",
       stats: { maxHp: [20, 35], skillDamage: [8, 15] },
       power: "raiseBoost",
       desc: "{skill:raise}で呼べる数 +{extraCount}、手下の攻撃力 +{attackPercent}%",
       params: { extraCount: 2, attackPercent: 30 },
     },
     {
-      id: "crusaderCrown", home: "cathedral", name: "聖騎士の冠", base: "crown", weight: 10, classOnly: "paladin",
+      id: "crusaderCrown", icon: "assets/items/unique_crusaderCrown.png", home: "cathedral", name: "聖騎士の冠", base: "crown", weight: 10, classOnly: "paladin",
       stats: { maxHp: [20, 35], defense: [2, 4] },
       power: "skillBoostAura",
       desc: "すべてのオーラの範囲が1.3倍、効き目が1.4倍になる",
       params: { kind: "aura", mods: { radius: ["mul", 1.3], damage: ["mul", 1.4], heal: ["mul", 1.4], mightBase: ["mul", 1.4], mightPerLevel: ["mul", 1.4] } },
     },
     {
-      id: "shadowClaw", home: "patala", name: "影の鉤爪", base: "chakram", weight: 10, classOnly: "assassin",
+      id: "shadowClaw", icon: "assets/items/unique_shadowClaw.png", home: "patala", name: "影の鉤爪", base: "chakram", weight: 10, classOnly: "assassin",
       stats: { attack: [4, 8], critChance: [3, 6] },
       power: "skillBoostTrap",
       desc: "すべての罠で、置ける数 +2、威力が1.3倍になる",

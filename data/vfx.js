@@ -20,7 +20,15 @@ WYD.data.vfx = {
     shockwave: "assets/vfx/shockwave.png",    // 衝撃波の輪（ボスの大技）
     fireball: "assets/vfx/fireball.png", // 火の玉（ソーサレスの通常攻撃）
     plague: "assets/vfx/plague.png",
-    trap: "assets/vfx/trap.png",       // アサシンの罠の装置（なければ三角の図形）   // 毒の霧の地面（疫病の霧・腐敗の地）
+    trap: "assets/vfx/trap.png",
+    boneSpear: "assets/vfx/boneSpear.png",   // 骨の飛槍
+    holyHammer: "assets/vfx/holyHammer.png", // 祝福の鎚
+    shuriken: "assets/vfx/shuriken.png",     // 連鎖の手裏剣
+    boulder: "assets/vfx/boulder.png",       // 転がる岩
+    tornado: "assets/vfx/tornado.png",       // 竜巻
+    boneStorm: "assets/vfx/boneStorm.png",   // 骨の嵐
+    holyGround: "assets/vfx/holyGround.png", // 天の裁きの地面
+    vines: "assets/vfx/vines.png",           // 絡みつく蔓（ドルイドが縛った敵）       // アサシンの罠の装置（なければ三角の図形）   // 毒の霧の地面（疫病の霧・腐敗の地）
   },
 
   // 絵の動かし方（共通）
@@ -36,6 +44,13 @@ WYD.data.vfx = {
     axe:         { duration: 0.3,  size: 40,  scaleFrom: 1,   scaleTo: 1,   spin: 25,  additive: false },
     magicCircle: { duration: 0.8,  size: 120, scaleFrom: 0.6, scaleTo: 1.0, spin: 1.5, additive: true },
     shockwave:   { duration: 0.5,  size: 0,   scaleFrom: 0.3, scaleTo: 1.2, spin: 0,   additive: true },
+    boneSpear:   { duration: 0.3,  size: 54,  scaleFrom: 1,   scaleTo: 1,   spin: 0,   additive: false },
+    holyHammer:  { duration: 0.35, size: 50,  scaleFrom: 1,   scaleTo: 1,   spin: 20,  additive: false },
+    shuriken:    { duration: 0.3,  size: 40,  scaleFrom: 1,   scaleTo: 1,   spin: 30,  additive: false },
+    boulder:     { duration: 0.35, size: 50,  scaleFrom: 1,   scaleTo: 0.9, spin: 10,  additive: false },
+    tornado:     { duration: 0.55, size: 0,   scaleFrom: 0.5, scaleTo: 1.1, spin: 10,  additive: true },
+    boneStorm:   { duration: 0.45, size: 0,   scaleFrom: 0.4, scaleTo: 1.15, spin: 3,  additive: true },
+    vines:       { duration: 0.6,  size: 0,   scaleFrom: 0.5, scaleTo: 1.0, spin: 1,   additive: true },
   },
 
   // スキルを使ったときに出す絵（スキル名 → 絵の名前）
@@ -44,14 +59,20 @@ WYD.data.vfx = {
     vajra: "magicCircle", sorc_shield: "magicCircle",
     hanuman: "magicCircle", sorc_haste: "magicCircle",
     nagapasha: "magicCircle", sorc_freeze: "iceNova",
+    dru_tornado: "tornado", nec_nova: "boneStorm", dru_vines: "vines",
   },
   // 敵から敵へ飛ぶスキルの見た目（"segment" = 稲妻のように線でつなぐ、"hit" = 当たった敵ごとに絵）
-  chainStyle: { sudarshana: { mode: "hit", key: "axe" }, sorc_chain: { mode: "segment", key: "lightning" } },
+  chainStyle: { sudarshana: { mode: "hit", key: "axe" }, sorc_chain: { mode: "segment", key: "lightning" },
+    nec_spear: { mode: "hit", key: "boneSpear" }, pal_hammer: { mode: "hit", key: "holyHammer" },
+    asn_shuriken: { mode: "hit", key: "shuriken" }, dru_boulder: { mode: "hit", key: "boulder" } },
   // 地面に残るもの（燃える地面など）の絵。スキル名 → 絵の名前。ここにないスキルは fireGround。null なら絵を使わず色の円で描く
   groundStyle: {
     nec_plague: "plague", nec_nova: "plague",   // 毒の霧・腐敗の地
-    sorc_nova: null, dru_tornado: null,          // 霜の地面・風の渦（炎の絵は合わないので色の円）
+    sorc_nova: null, dru_tornado: "tornado",     // 霜の地面（炎の絵は合わないので色の円）・風の渦
+    pal_judgment: "holyGround", pal_fire: "holyGround",   // 聖なる光
   },
+  // 縛られた敵に重ねる絵（職業 → 絵の名前。ここにない職業は chains）
+  bindStyle: { druid: "vines" },
   meteorFall: 0.45,     // メテオの隕石が落ちてくるまでの秒数
   trapImageScale: 2.6,  // 罠の絵の大きさ（罠の半径の何倍の幅で描くか）
   groundPulse: 0.08,    // 燃える地面のゆらぎの大きさ

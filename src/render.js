@@ -757,7 +757,7 @@ WYD.render = {
     ctx.fillStyle = "#e33";
     ctx.fillRect(bx, by, bw * Math.max(0, e.hp / e.maxHp), bh);
 
-    if (e.stunTimer > 0 && !WYD.vfx.drawOn(ctx, "chains", e.x, e.y, def.radius * 3, 0.9)) {
+    if (e.stunTimer > 0 && !WYD.vfx.drawOn(ctx, WYD.data.vfx.bindStyle[WYD.classes.id] || "chains", e.x, e.y, def.radius * 3, 0.9)) {
       // 縛られている敵：緑の縄（鎖の絵がないとき）
       ctx.strokeStyle = WYD.data.anim.bindColor;
       ctx.lineWidth = 2;
