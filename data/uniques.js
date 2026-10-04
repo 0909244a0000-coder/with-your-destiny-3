@@ -30,7 +30,7 @@ WYD.data.uniques = {
       params: { radius: 90, duration: 3, tick: 0.5, mult: 0.4, color: "#ff7a2a" },
     },
     {
-      id: "vishnuDisc", home: "forest", name: "彷徨う刃", base: "chakram", weight: 10,
+      id: "vishnuDisc", icon: "assets/items/unique_vishnuDisc.png", home: "forest", name: "彷徨う刃", base: "chakram", weight: 10,
       stats: { attack: [4, 7], critChance: [3, 6] },
       power: "chakraBounce",
       desc: "{skill:sudarshana}が跳ね返る数 +{extraTargets}、威力 +{damagePercent}%",
@@ -44,7 +44,7 @@ WYD.data.uniques = {
       params: { percent: 150 },
     },
     {
-      id: "hanumanFists", home: "forest", name: "狂王の籠手", base: "gauntlets", weight: 10,
+      id: "hanumanFists", icon: "assets/items/unique_hanumanFists.png", home: "forest", name: "狂王の籠手", base: "gauntlets", weight: 10,
       stats: { attackSpeed: [5, 10], attack: [2, 5] },
       power: "hasteCleave",
       desc: "{skill:hanuman}の発動中、通常攻撃が周り{radius}の敵にも攻撃力×{mult}倍で当たる",
@@ -79,7 +79,7 @@ WYD.data.uniques = {
       params: { chance: 45, color: "#9fdcff" },
     },
     {
-      id: "hunterGauntlets", home: "forest", name: "狩人の籠手", base: "gauntlets", weight: 8,
+      id: "hunterGauntlets", icon: "assets/items/unique_hunterGauntlets.png", home: "forest", name: "狩人の籠手", base: "gauntlets", weight: 8,
       stats: { attack: [3, 6], critChance: [2, 4] },
       power: "eliteHunter",
       desc: "精鋭とボスに与えるダメージ +{percent}%",
@@ -137,7 +137,7 @@ WYD.data.uniques = {
       params: { kind: "vajra", mods: { triggerHpPercent: ["set", 100], cooldown: ["mul", 0.7], duration: ["mul", 1.4] } },
     },
     {
-      id: "twinFangs", home: "forest", name: "双牙の連刃", base: "dual_blades", weight: 8,
+      id: "twinFangs", icon: "assets/items/unique_twinFangs.png", home: "forest", name: "双牙の連刃", base: "dual_blades", weight: 8,
       stats: { attack: [5, 9], attackSpeed: [4, 8] },
       power: "skillBoostChainMany",
       desc: "{skill:sudarshana}の当たる数 +4、跳ねる距離が1.5倍になる（敵が多いほど強い）",
@@ -244,7 +244,7 @@ WYD.data.uniques = {
       params: { kind: "trap", mods: { maxTrapsBase: ["add", 2], damage: ["mul", 1.3] } },
     },
     {
-      id: "beastHeart", home: "forest", name: "獣王の心臓", base: "amulet", weight: 10, classOnly: "druid",
+      id: "beastHeart", icon: "assets/items/unique_beastHeart.png", home: "forest", name: "獣王の心臓", base: "amulet", weight: 10, classOnly: "druid",
       stats: { maxHp: [20, 40], attack: [3, 6] },
       power: "skillBoostShift",
       desc: "すべての変身で、時間が1.5倍、攻撃力の上がり方が1.3倍になる",
