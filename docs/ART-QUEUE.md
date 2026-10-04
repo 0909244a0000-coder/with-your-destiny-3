@@ -1,7 +1,7 @@
 # 絵の発注キュー（小分け版）
 
 **2026-10-02：ブロック1〜8 はすべて受け取り、ゲームに入れた。**
-**2026-10-03：ブロック9〜11 を足した（ユニークのアイコン・職業ごとのスキルのエフェクト・野営地）。上ほど効果が大きい。**
+**2026-10-04：ブロック9〜11 は受け取り済み。ブロック12（当たりの火花・職業ごとの斬撃）を足した。**
 
 **使い方（持ち主向け）**
 1. 下の「ブロック」を1つだけ、まるごとコピーして ChatGPT に貼る（ブロックは1つずつで完結している）
@@ -209,6 +209,28 @@ H3 たき火：石で囲んだたき火、明るく燃える炎と火の粉
 では H1 から始めてください。
 ```
 
+## ブロック12：当たったときの火花と、職業ごとの斬撃
+**まだ**。いまは当たったときの光が1種類（白い輪）で、近接の通常攻撃もバーバリアンの斬撃を使い回している。属性ごとの当たりと職業ごとの斬撃があると、スキルの派手さが一段上がる。
+```
+これからゲームのエフェクトの絵を順番に作ってもらいます。ルールを守ってください。
+- 1回の返事で作る絵は1枚だけ。作ったら、絵の番号と「次は○番」とだけ書いて止まる。私が「次」と送ったら次を作る
+- 全部共通：ダークファンタジー（Diablo風）の魔法のエフェクト、絵画調で光が強く、勢いのある形。真上から見た絵。背景は真っ黒の無地（黒い部分はゲームで透明になる）。真ん中に置く。文字・枠・人物・武器・地面なし。正方形1024×1024
+- K1〜K6 は「攻撃が当たった瞬間」の火花：真ん中から外へ飛び散る形。小さく一瞬だけ出るので、形をはっきり
+- K7〜K9 は「斬った軌跡」：左下から右上へ大きく弧を描く、三日月形の光の筋
+
+K1 白い衝撃の火花：白と薄い金の、星形にはじける火花と細い光の線
+K2 炎の当たり：オレンジと黄色の炎がはじけ、火の粉が飛ぶ
+K3 氷の当たり：青白い氷のかけらが砕けて飛び散る
+K4 聖なる当たり：金白色の光が十字にはじけ、光の粒
+K5 毒・死霊の当たり：緑の霧と骨のかけらがはじける
+K6 影の当たり：紫と黒の影の刃のかけらがはじける
+K7 金色の斬撃（パラディン）：太い金白色の光の弧
+K8 三本爪の斬撃（アサシン）：平行な三本の紫の細い光の弧
+K9 獣の爪痕（ドルイド）：緑に光る、荒々しい三本の引っかき傷の弧
+
+では K1 から始めてください。
+```
+
 ---
 
 ## 番号 → ファイル名（受け取り用）
@@ -231,3 +253,5 @@ H3 たき火：石で囲んだたき火、明るく燃える炎と火の粉
 | U1〜U6 | シートを `--grid 3x2` で切って `assets/items/unique_<id>.png`（並び：U1 vishnuDisc・hanumanFists・hunterGauntlets・twinFangs・beastHeart／U2 kaliMala・ancestorHelm・legionSash・trapperGreaves・boneCrown／U3 nagaCrown・galeBoots・chainBelt・giantBlade・shadowClaw／U4 indraRing・asceticRobe・aegisShield・echoTalisman・crusaderCrown／U5 wardRing・frostOrb・stormMail・moonAmulet・frostCrown／U6 agniBangle・ashTome・berserkerHelm・archmageStaff・abyssHeart・twinCrown） | `data/uniques.js` の各ユニークに `icon`（`WYD.loot.iconOf` が先に見るように） |
 | V1〜V8 | `assets/vfx/boneSpear.png`・`holyHammer.png`・`shuriken.png`・`boulder.png`・`tornado.png`・`boneStorm.png`・`holyGround.png`・`vines.png` | `data/vfx.js`：V1〜V4 は `chainStyle`（nec_spear・pal_hammer・asn_shuriken・dru_boulder）、V5・V6 は `skillCast`（dru_tornado・nec_nova）、V7 は `groundStyle`（pal_judgment）、V8 は縛るときの絵（dru_vines） |
 | H1〜H3 | `assets/town/tent.png`・`chest.png`・`fire.png` | `data/town.js` の tent・chest・fire に `image` |
+| K1〜K6 | `assets/vfx/hitSpark.png`・`hitFire.png`・`hitIce.png`・`hitHoly.png`・`hitPoison.png`・`hitShadow.png` | `data/vfx.js`：当たったときの絵（スキル・職業ごとの属性で選ぶ）と、fly の impact |
+| K7〜K9 | `assets/vfx/slashHoly.png`・`slashClaw.png`・`slashBeast.png` | `data/classes.js` の各職業の通常攻撃の斬撃（いまは全員 slash） |

@@ -22,9 +22,27 @@ WYD.vfx = {
       fall: o.fall || 0,   // 上から落ちてくる距離（px）
       time: -(o.delay || 0), duration: o.duration || a.duration || 0.4,
       from: a.scaleFrom != null ? a.scaleFrom : 1, to: a.scaleTo != null ? a.scaleTo : 1,
-      spin: a.spin || 0, additive: a.additive !== false,
+      spin: a.spin || 0, additive: a.additive !== false, echo: !!a.echo,
+      // 飛んでいく絵：fromX/fromY から x/y へ travel 秒で動く
+      fromX: o.fromX, fromY: o.fromY, travel: o.travel || 0,
     });
     return true;
+  },
+
+  // 跳ね返るスキル：前の点から次の点へ、絵が順に飛んでいく。着いたら衝撃の輪
+  flyChain(w, style, points, color) {
+    const V = WYD.data.vfx;
+    let delay = 0, any = false;
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1], b = points[i];
+      const travel = Math.max(0.04, Math.hypot(b.x - a.x, b.y - a.y) / V.flySpeed);
+      const angle = style.face ? Math.atan2(b.y - a.y, b.x - a.x) + ((V.anim[style.key] || {}).angleOffset || 0) : 0;
+      any = this.spawn(w, style.key, b.x, b.y, { fromX: a.x, fromY: a.y, travel, delay, angle,
+        duration: travel + ((V.anim[style.key] || {}).duration || 0.3) }) || any;
+      this.spawn(w, V.impact.key, b.x, b.y, { size: V.impact.size, delay: delay + travel, duration: V.impact.duration });
+      delay += travel;
+    }
+    return any;
   },
 
   // 2点を絵でつなぐ（稲妻）
@@ -48,8 +66,28 @@ WYD.vfx = {
   draw(ctx, ef) {
     const img = this.img(ef.key);
     if (!img || ef.time < 0) return;
-    const t = ef.time / ef.duration;
-    const scale = ef.from + (ef.to - ef.from) * t;
+    const V = WYD.data.vfx;
+    // 飛んでいる間：残像をひきながら進む
+    if (ef.travel && ef.time < ef.travel) {
+      const T = V.trail;
+      for (let k = T.count; k >= 0; k--) {
+        const tt = Math.max(0, ef.time - k * T.gap) / ef.travel;
+        const x = ef.fromX + (ef.x - ef.fromX) * tt, y = ef.fromY + (ef.y - ef.fromY) * tt;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(ef.angle + ef.spin * (ef.time - k * T.gap));
+        ctx.globalAlpha = k === 0 ? 1 : T.alpha * (1 - k / (T.count + 1));
+        if (ef.additive) ctx.globalCompositeOperation = "lighter";
+        ctx.drawImage(img, -ef.size / 2, -ef.size / 2, ef.size, ef.size);
+        ctx.restore();
+      }
+      return;
+    }
+    const t0 = ef.travel || 0;
+    const t = (ef.time - t0) / (ef.duration - t0);
+    // 出た瞬間に少し大きくなってから戻る（ぽんっ）
+    const pop = 1 + V.pop * Math.sin(Math.min(1, t * 4) * Math.PI);
+    const scale = (ef.from + (ef.to - ef.from) * t) * pop;
     ctx.save();
     ctx.translate(ef.x, ef.y - ef.fall * (1 - t));
     ctx.rotate(ef.angle + ef.spin * ef.time);
@@ -60,6 +98,13 @@ WYD.vfx = {
     } else {
       const s = ef.size * scale;
       ctx.drawImage(img, -s / 2, -s / 2, s, s);
+      // 2枚目：うすく大きく、逆向きに回す（厚みと勢い）
+      if (ef.echo) {
+        const E = V.echo;
+        ctx.rotate(ef.spin * ef.time * (E.spin - 1));
+        ctx.globalAlpha *= E.alpha;
+        ctx.drawImage(img, -s * E.scale / 2, -s * E.scale / 2, s * E.scale, s * E.scale);
+      }
     }
     ctx.restore();
   },

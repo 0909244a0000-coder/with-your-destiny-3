@@ -537,6 +537,8 @@ WYD.world = {
       this.castExtra = null;
       if (used) {
         WYD.vfx.cast(w, id, p.x, p.y, def.radius);
+        const shake = WYD.data.vfx.castShake[WYD.classes.kindOf(id)];
+        if (shake) WYD.fx.shake(w, shake);
         p.skillCooldowns[id] = def.cooldown * (1 - stats.effects.cooldown / 100);
         // 画面下のスキルの並びで、残り時間の影と光る枠を出すため
         p.skillCooldownMax = p.skillCooldownMax || {};
@@ -655,6 +657,8 @@ WYD.world = {
         for (let i = 1; i < points.length; i++) drawn = WYD.vfx.segment(w, style.key, points[i - 1], points[i]) || drawn;
       } else if (style && style.mode === "hit") {
         for (let i = 1; i < points.length; i++) drawn = WYD.vfx.spawn(w, style.key, points[i].x, points[i].y, { delay: i * 0.05 }) || drawn;
+      } else if (style && style.mode === "fly") {
+        drawn = WYD.vfx.flyChain(w, style, points, s.color);
       }
       if (!drawn || style.mode === "hit") w.effects.push({ type: "chain", points, color: s.color, time: 0, duration: 0.3 });
       return true;
