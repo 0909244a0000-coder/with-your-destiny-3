@@ -5,6 +5,7 @@ WYD.data = WYD.data || {};
 
 WYD.data.uber = {
   name: "奈落の双王",
+  sceneImage: "assets/areas/scenes/inferno.webp",
   keyName: "奈落の鍵",
   keysNeeded: 3,
   bosses: ["ravana", "asuraKing"],   // いっしょに出るボス

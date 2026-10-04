@@ -71,12 +71,14 @@ WYD.render = {
     const shakeScale = state.settings.quietFx ? WYD.data.fx.quiet.shakeScale : 1;
     ctx.translate(sh.x * shakeScale, sh.y * shakeScale);
 
-    // 地面：絵があれば敷きつめる、なければ色でぬる
-    const ground = this.getImage(area.groundImage);
+    const scene = this.getImage(area.sceneImage);
+    // 完成した景色は一枚で表示。読み込み中・画像欠損時は従来の地面に戻す。
+    const ground = scene ? null : this.getImage(area.groundImage);
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
-    if (ground) {
-      ctx.fillStyle = `rgba(0,0,0,${map.groundDim})`;
+    if (scene) this.drawScene(ctx, scene, state);
+    if (ground || scene) {
+      ctx.fillStyle = `rgba(0,0,0,${scene ? map.scene.dim : map.groundDim})`;
       ctx.fillRect(0, 0, map.width, map.height);
       if (area.groundTint) {
         ctx.fillStyle = area.groundTint;   // 仮の地面の色
@@ -84,7 +86,7 @@ WYD.render = {
       }
     }
     // 地面の絵がないときだけ、草や石の飾りを描く
-    for (const d of ground ? [] : this.decorations) {
+    for (const d of ground || scene ? [] : this.decorations) {
       ctx.fillStyle = d.kind === "grass" ? area.grassColor : area.stoneColor;
       ctx.beginPath();
       ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
@@ -92,7 +94,7 @@ WYD.render = {
     }
 
     // 明かり：地面はしっかり暗くし、キャラは下でうすく暗くする（遠くの敵も見分けられるように）
-    this.drawLight(ctx, w.player, state, "ground");
+    this.drawLight(ctx, w.player, state, scene ? "scene" : "ground");
     for (const f of w.fields) this.drawField(ctx, f);
     for (const h of w.hazards || []) this.drawHazard(ctx, h);
     for (const pool of w.pools || []) {
@@ -340,12 +342,25 @@ WYD.render = {
     const L = map.light;
     const full = Math.min(L.maxDarkness, L.darkness + L.darknessPerFloor * ((state.floor || 1) - 1));
     const unit = L.unitDarkness * full;
-    const dark = mult === "ground" ? 1 - (1 - full) / (1 - unit) : mult * full;
+    const ground = mult === "ground" || mult === "scene";
+    const dark = ground ? (1 - (1 - full) / (1 - unit)) * (mult === "scene" ? map.scene.lightScale : 1) : mult * full;
     const g = ctx.createRadialGradient(p.x, p.y, L.inner, p.x, p.y, L.outer);
     g.addColorStop(0, "rgba(0,0,0,0)");
     g.addColorStop(1, `rgba(0,0,0,${dark})`);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, map.width, map.height);
+  },
+
+  // 比率を保って一枚の景色を画面いっぱいに表示。切り取りは階ごとに固定で、戦闘乱数は使わない。
+  drawScene(ctx, img, state) {
+    const map = WYD.data.map;
+    const views = map.scene.views;
+    const floor = WYD.trial.active(state) ? 1 : (state.floor || 1);
+    const view = views[Math.max(0, Math.min(views.length - 1, floor - 1))];
+    const scale = Math.max(map.width / img.width, map.height / img.height) * view.zoom;
+    const sw = map.width / scale, sh = map.height / scale;
+    ctx.drawImage(img, (img.width - sw) * view.x, (img.height - sh) * view.y,
+      sw, sh, 0, 0, map.width, map.height);
   },
 
   // ボスがいるときは、画面の上にボスのHPを大きく出す

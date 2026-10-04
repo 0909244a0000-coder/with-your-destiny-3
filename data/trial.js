@@ -28,6 +28,6 @@ WYD.data.trial = {
     { kind: "fireImp", weight: 6 }, { kind: "lavaGolem", weight: 4 }, { kind: "hellArcher", weight: 5 }, { kind: "pyromancer", weight: 4 },
   ],
   // 見た目（地面）
-  bgColor: "#1d1a24", grassColor: "#2c2838", stoneColor: "#4a4458", groundImage: "assets/areas/patala.png",
+  bgColor: "#1d1a24", grassColor: "#2c2838", stoneColor: "#4a4458", groundImage: "assets/areas/patala.png", sceneImage: "assets/areas/scenes/patala.webp",
   color: "#c08aff",        // 試練の文字の色
 };

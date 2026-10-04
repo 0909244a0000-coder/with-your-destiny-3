@@ -9,6 +9,7 @@
 |---|---|---|
 | 主人公 | `assets/player.png` | `data/player.js` の `image` |
 | 敵・ボス | `assets/enemies/preta.png` | `data/enemies.js` の各敵の `image` |
+| エリアの景色（一枚） | `assets/areas/scenes/forest.webp` | `data/areas.js` の各エリアの `sceneImage` |
 | エリアの地面 | `assets/areas/forest.png` | `data/areas.js` の各エリアの `groundImage` |
 | スキルのアイコン | `assets/skills/whirl.png` | `data/skills.js` の `WYD.data.skillIcons` |
 | 装備のアイコン | `assets/items/dual_blades.png` | `data/items.js` の `icons` |

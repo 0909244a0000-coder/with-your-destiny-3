@@ -24,6 +24,9 @@
 
 ## 受け取り済み（ゲームに入っている）
 
+2026-10-05：6エリアの専用景色を追加（`assets/areas/scenes/forest.webp`・`smashana.webp`・`patala.webp`・`cathedral.webp`・`frost.webp`・`inferno.webp`）。一枚の横長背景、高い位置からの3/4見下ろし、中央は戦闘用の平らな低コントラスト地面、構造物は外周。元の512pxタイルとは別の描画形式。組み込み画像生成ツールで一枚ずつ生成してWebPへ縮小・圧縮。全指示文は `docs/reviews/2026-10-05-codex-backgrounds.md`。
+
+
 2026-10-04：煙と光のエフェクト4枚を追加（`assets/vfx/graveWisp.png`・`rageWisp.png`・`holyWisp.png`・`shadowWisp.png`）。黒背景、256px、加算合成。組み込み画像生成ツールで2×2シートを作り、`tools/prepare_sprite.py --grid 2x2 --size 256` で切り出し。指示文は `docs/reviews/2026-10-04-codex-redo.md`。
 羅刹王ラーヴァナ（`ravana`）、阿修羅王（`asuraKing`）、羅刹（`rakshasa`）、夜叉（`yaksha`）、餓鬼（`preta`）、ナーガ（`naga`）
 

@@ -18,6 +18,8 @@ WYD.trial = {
     return {
       id: "trial", name: state.trialRun.uber ? WYD.data.uber.name : state.trialRun.map ? WYD.maps.name(state.trialRun.map) : state.trialRun.daily ? "日替わりの試練" : "終わりのない試練",
       bgColor: T.bgColor, grassColor: T.grassColor, stoneColor: T.stoneColor, groundImage: T.groundImage,
+      sceneImage: state.trialRun.uber ? WYD.data.uber.sceneImage : state.trialRun.map
+        ? WYD.data.maps.sceneImages[(state.trialRun.map.tier - 1) % WYD.data.maps.sceneImages.length] : T.sceneImage,
       powerMult: T.powerBase * Math.pow(T.powerGrowth, n - 1),
       itemLevelBonus: 0, enemies: T.enemies, floors: 1, killsPerFloor: T.kills, boss: state.trialRun.guardian,
     };
