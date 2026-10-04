@@ -194,9 +194,17 @@ WYD.ui = {
       const valuable = targets.filter((it) => it.rarity === "unique" || it.rarity === "set" || it.plus > 0 || it.forged > 0 || it.runeword).length;
       const gained = targets.reduce((n, it) => n + WYD.inventory.salvageValue(s, it), 0);
       const warning = valuable ? `\nユニーク・セット・強化・鍛造・ルーンワードの装備を${valuable}個含みます。` : "";
-      if (!confirm(`持ち物の装備${targets.length}個を全て捨てますか？${warning}\n${C.materialName} +${gained}。はめた宝石・ルーンは戻ります。\nロックした装備・装備中・倉庫は残ります。元には戻せません。`)) return;
+      const builds = targets.filter((it) => WYD.inventory.keepReason(it, s) === "build").length;
+      const bases = targets.filter((it) => WYD.inventory.keepRunewordBase(s, it)).length;
+      if (!confirm(`持ち物の装備${targets.length}個を全て捨てますか？${warning}${builds ? `\n保存ビルド用 ${builds}個も失われます。` : ""}${bases ? `\nルーンワードの土台 ${bases}個も対象です。` : ""}\n${C.materialName} +${gained}。はめた宝石・ルーンは戻ります。\nロックした装備・装備中・倉庫は残ります。元には戻せません。`)) return;
       const r = WYD.inventory.discardAll(s, targets);
       this.log(`持ち物を${r.count}個捨てた（${C.materialName} +${r.gained}）`);
+      this.changed();
+    };
+    this.$("claim-pending").onclick = () => {
+      const count = WYD.inventory.claimPending(s);
+      this.log(count ? `未受取から${count}個を受け取りました` : "持ち物か倉庫に空きを作ると受け取れます", "#c9b48a");
+      WYD.save.write(s);
       this.changed();
     };
     this.$("sort-inv").onclick = () => {
@@ -885,7 +893,7 @@ WYD.ui = {
     s.bossProgress = 0;
     s.floor = 1;
     WYD.world.resetEnemies(this.world, s, false);
-    WYD.world.clearDrops(this.world);
+    WYD.world.clearDrops(this.world, this.state);
     this.log(`「${next.name}」へ移動した`, "#ff8a2a");
     const intro = WYD.data.story.areaIntro[next.id];
     if (intro) this.log(intro, "#c9b48a");
@@ -1131,7 +1139,12 @@ WYD.ui = {
     // 持ち物
     const size = WYD.data.items.inventorySize;
     this.$("inv-count").textContent = `${s.inventory.length} / ${size}`;
-    this.$("bag-badge").textContent = `${s.inventory.length}/${size}`;
+    const pending = (s.pendingLoot || []).length;
+    this.$("pending-loot-panel").hidden = !pending;
+    this.$("pending-loot-note").textContent = `未受取 ${pending}個：再読み込み・職業切替後も保管されます。${pending >= WYD.data.items.pendingLootLimit ? "戦闘停止中。受け取ると再開します。" : ""}`;
+    this.$("claim-pending").textContent = `未受取 ${pending}個を受け取る`;
+    this.$("claim-pending").disabled = s.inventory.length >= size && s.stash.length >= WYD.data.items.stashSize;
+    this.$("bag-badge").textContent = `${s.inventory.length}/${size}${pending ? ` 待${pending}` : ""}`;
     const inTown = !!(this.world && this.world.town);
     const muted = !s.settings.sound && s.settings.music === false;
     this.$("mute-btn").textContent = muted ? "🔇" : "🔊";
@@ -1496,6 +1509,7 @@ WYD.ui = {
     const uniqueLine = (u
       ? `<div class="unique-power" style="color:${WYD.data.uniques.color}">◆ 固有能力<br><small>${WYD.loot.uniqueDesc(u)}</small></div>`
       : "") + this.setHtml(item) + (home ? `<div class="tip-home">📍 よく落ちる：${home}</div>` : "");
+    const keep = WYD.inventory.keepReason(item, this.state);
     const fxLines = this.itemEffects(item).map(({ def, value }) =>
       `<div class="effect" style="color:${WYD.data.effects.color}">✦ ${def.name}<br><small>${WYD.util.formatEffect(def, value)}</small></div>`
     ).join("");
@@ -1503,6 +1517,7 @@ WYD.ui = {
       ${title ? `<div class="tip-title">${title}</div>` : ""}
       <div style="color:${WYD.gems.runeword(item) ? WYD.data.gems.runewordColor : r.color};font-weight:bold">${item.plus > 0 ? `<span style="color:${WYD.data.crafting.enhance.color}">+${item.plus}</span> ` : ""}${WYD.gems.runeword(item) ? `「${WYD.gems.runeword(item).name}」` : ""}${item.name}</div>
       <div class="tip-sub">${item.ancient ? `<b style="color:${WYD.data.items.ancient.colors[item.ancient]}">${WYD.data.items.ancient.names[item.ancient].replace("の", "")}</b>・` : ""}${r.name}・${WYD.data.items.slots[item.slot]}・アイテムLv ${item.level}</div>
+      ${keep ? `<div class="tip-sub">自動保護：${WYD.data.story.keepNote.reasons[keep]}ため${item.locked ? "（分解不可）" : "（手動の分解・全て捨てるは対象。残すならロック）"}</div>` : ""}
       ${lines}
       ${uniqueLine}
       ${fxLines}

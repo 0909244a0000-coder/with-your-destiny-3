@@ -40,6 +40,8 @@ WYD.world = {
 
   // 1コマ分すすめる（dt = 経過秒数）
   update(w, state, dt) {
+    // 未受取が増え続けてセーブを圧迫しないよう、受け取るまで戦闘を止める。
+    if ((state.pendingLoot || []).length >= WYD.data.items.pendingLootLimit) return;
     const stats = WYD.stats.compute(state);
     const p = w.player;
     if (p.hp === null) p.hp = stats.maxHp;
@@ -1028,6 +1030,7 @@ WYD.world = {
   // ---------- 落ちている装備 ----------
   updateDrops(w, state, dt) {
     const D = WYD.data.items;
+    const pendingBefore = (state.pendingLoot || []).length;
     for (const drop of w.drops) {
       drop.age += dt;
       if (drop.age < D.pickupDelay || drop.picked) continue;
@@ -1044,13 +1047,19 @@ WYD.world = {
         if (drop.item.ancient) WYD.ui.notice(`${WYD.loot.label(drop.item)}を拾った！`, WYD.data.items.ancient.colors[drop.item.ancient]);
         else WYD.ui.log(`${WYD.loot.label(drop.item)}（${r.name}）を拾った`, r.color);
         WYD.ui.markDirty();
-      } else if (D.protectDrops.includes(drop.item.rarity) && state.stash.length < D.stashSize) {
+      } else if (WYD.inventory.protectDrop(state, drop.item) && state.stash.length < D.stashSize) {
         // 持ち物がいっぱい：ユニーク・セットは倉庫へ送る
         drop.picked = true;
         state.stash.push(drop.item);
         WYD.records.found(state, drop.item);
         WYD.records.check(state);
         WYD.ui.log(`持ち物がいっぱいなので、${WYD.loot.label(drop.item)}を倉庫へ送った`, WYD.loot.rarityInfo(drop.item.rarity).color);
+        WYD.ui.markDirty();
+      } else if (WYD.inventory.protectDrop(state, drop.item)) {
+        state.pendingLoot = state.pendingLoot || [];
+        if (!state.pendingLoot.some((it) => it.id === drop.item.id)) state.pendingLoot.push(drop.item);
+        drop.picked = true;
+        this.fullWarning(w, "重要装備を未受取に保管しました。持ち物の『未受取を受け取る』で回収できます。");
         WYD.ui.markDirty();
       } else if (D.fullSalvage.includes(drop.item.rarity)) {
         // 持ち物がいっぱい：ノーマル・マジックは拾ったその場で素材にする
@@ -1065,12 +1074,16 @@ WYD.world = {
         else this.fullWarning(w, "持ち物がいっぱいで拾えない！");
       }
     }
-    w.drops = w.drops.filter((d) => !d.picked && (d.age < D.groundLifetime || D.protectDrops.includes(d.item.rarity)));
+    w.drops = w.drops.filter((d) => !d.picked && (d.age < D.groundLifetime || WYD.inventory.protectDrop(state, d.item)));
+    if (pendingBefore < D.pendingLootLimit && (state.pendingLoot || []).length >= D.pendingLootLimit) {
+      WYD.ui.notice("未受取がいっぱい：戦闘を停止しました。持ち物から受け取ると再開します。", "#ff8a6a");
+    }
+    if ((state.pendingLoot || []).length !== pendingBefore) WYD.save.write(state);
   },
 
   // 落ちている装備を片づける（エリアの移動・試練の開始など）。ユニーク・セットは消さずに残す
-  clearDrops(w) {
-    w.drops = w.drops.filter((d) => WYD.data.items.protectDrops.includes(d.item.rarity));
+  clearDrops(w, state) {
+    w.drops = w.drops.filter((d) => WYD.inventory.protectDrop(state, d.item));
   },
 
   // 持ち物がいっぱいの知らせは、しばらく出しすぎない

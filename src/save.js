@@ -19,6 +19,7 @@ WYD.save = {
         paragon: { level: 0, exp: 0, points: 0, board: {} },   // 修練（レベル上限のあと）。board = 取ったマス（"行,列" → true）
         runes: {} },   // スキルの型（スキル名 → 型の名前）
       equipment: {},   // slot -> item
+      pendingLoot: [], // 満杯で受け取れなかった重要装備（職業別に保存）
       inventory: [],   // item の配列
       stash: [],       // 倉庫（item の配列）
       nextItemId: 1,
@@ -124,7 +125,14 @@ WYD.save = {
       if (saved.settings && saved.settings.skipNormal && !saved.settings.autoSalvage) state.settings.autoSalvage = "normal";
       delete state.settings.skipNormal;
       if (!Array.isArray(state.stash)) state.stash = [];
-      for (const item of state.inventory.concat(state.stash, Object.values(state.equipment))) {
+      const ownedIds = new Set(state.inventory.concat(state.stash, Object.values(state.equipment)).filter(Boolean).map((it) => it.id));
+      state.pendingLoot = (Array.isArray(saved.pendingLoot) ? saved.pendingLoot : []).filter((it) => {
+        if (!it || !Number.isFinite(it.id) || ownedIds.has(it.id) || !Array.isArray(it.stats) || !WYD.data.items.slots[it.slot]) return false;
+        ownedIds.add(it.id);
+        state.nextItemId = Math.max(state.nextItemId, it.id + 1);
+        return true;
+      });
+      for (const item of state.inventory.concat(state.stash, state.pendingLoot, Object.values(state.equipment))) {
         if (!item) continue;
         // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
         if (!Array.isArray(item.effects)) item.effects = [];
@@ -206,7 +214,15 @@ WYD.save = {
   write(state) {
     try {
       state.lastSeen = Date.now();   // 放置中の進行に使う
-      localStorage.setItem(this.KEY, JSON.stringify(state));
+      // 保存直前のドロップも保護。元の世界は変更せず、読み込み後は未受取として復元する。
+      const w = WYD.state === state && WYD.currentWorld;
+      const ownedIds = new Set(state.inventory.concat(state.stash, Object.values(state.equipment)).filter(Boolean).map((it) => it.id));
+      const pendingLoot = (state.pendingLoot || []).concat(w ? w.drops.filter((d) => !d.picked && WYD.inventory.protectDrop(state, d.item)).map((d) => d.item) : []).filter((it) => {
+        if (ownedIds.has(it.id)) return false;
+        ownedIds.add(it.id);
+        return true;
+      });
+      localStorage.setItem(this.KEY, JSON.stringify(Object.assign({}, state, { pendingLoot })));
     } catch (e) {
       console.warn("セーブできませんでした。", e);
     }

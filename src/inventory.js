@@ -21,7 +21,7 @@ WYD.inventory = {
     const score = this.itemScore(item);
     let worst = -1;
     state.inventory.forEach((it, i) => {
-      if (this.keepReason(it)) return;
+      if (this.keepReason(it, state)) return;
       if (rank(it) > rank(item) || (rank(it) === rank(item) && this.itemScore(it) >= score)) return;
       const w = state.inventory[worst];
       if (worst < 0 || rank(it) < rank(w) || (rank(it) === rank(w) && this.itemScore(it) < this.itemScore(w))) worst = i;
@@ -53,36 +53,67 @@ WYD.inventory = {
   },
 
   // 自動で着替えないほうがいい装備（自分で選んだはずのもの）
-  keepEquipped(item) {
-    return !!this.keepReason(item);
+  keepEquipped(item, state) {
+    const reason = this.keepReason(item, state);
+    // 空の土台は外しても持ち物へ戻る。育成中の自動装備を止めない。
+    return !!reason && reason !== "base";
   },
 
   // 自動で着替えない理由（data/story.js の keepNote.reasons の名前）。着替えてよければ null
-  keepReason(item) {
+  keepReason(item, state) {
     if (!item) return null;
     if (item.locked) return "locked";
+    if (state && (state.builds || []).some((b) => b && Object.values(b.equipment || {}).includes(item.id))) return "build";
     if (item.rarity === "unique") return "unique";
     if (item.rarity === "set") return "set";
     if (item.plus > 0) return "plus";
     if ((item.sockets || []).some((x) => x)) return "gem";
+    if (item.forged > 0) return "forged";
+    if (this.keepRunewordBase(state, item)) return "base";
     return null;
   },
 
+  // フィルターで土台保護をOFFにした場合は、空のノーマル土台を保護しない。
+  keepRunewordBase(state, item) {
+    const f = state && state.settings.filter;
+    return item.rarity === "normal" && (item.sockets || []).length >= 2 && !(f && f.on && !f.keepSocketed);
+  },
+
+  protectDrop(state, item) {
+    return WYD.data.items.protectDrops.includes(item.rarity) || !!this.keepReason(item, state);
+  },
+
+  // 未受取は分解・自動装備せず、空いている持ち物／倉庫へそのまま移す。
+  claimPending(state) {
+    let count = 0;
+    state.pendingLoot = (state.pendingLoot || []).filter((item) => {
+      if (!this.add(state, item)) {
+        if (state.stash.length >= WYD.data.items.stashSize) return true;
+        state.stash.push(item);
+      }
+      WYD.records.found(state, item);
+      count++;
+      return false;
+    });
+    if (count) WYD.records.check(state);
+    return count;
+  },
+
   // 数値では強い装備を拾ったのに、守っている装備があって着替えなかったことを知らせる（同じ装備については1回だけ）
-  noteKept(cur, item) {
+  noteKept(cur, item, state) {
     const K = WYD.data.story.keepNote;
     this.keptNoted = this.keptNoted || new WeakSet();
     if (this.keptNoted.has(cur)) return;
     this.keptNoted.add(cur);
-    WYD.ui.log(K.text.replace("{new}", WYD.loot.label(item)).replace("{cur}", WYD.loot.label(cur)).replace("{why}", K.reasons[this.keepReason(cur)]), K.color);
+    WYD.ui.log(K.text.replace("{new}", WYD.loot.label(item)).replace("{cur}", WYD.loot.label(cur)).replace("{why}", K.reasons[this.keepReason(cur, state)]), K.color);
   },
 
   // 拾った装備が強ければ着替える。着替えたら true
   autoEquip(state, item) {
     const cur = state.equipment[item.slot];
     const before = this.itemScore(cur);
-    if (this.keepEquipped(cur)) {
-      if (this.itemScore(item) > before * (1 + WYD.data.items.autoEquip.minGain)) this.noteKept(cur, item);
+    if (this.keepEquipped(cur, state)) {
+      if (this.itemScore(item) > before * (1 + WYD.data.items.autoEquip.minGain)) this.noteKept(cur, item, state);
       return false;
     }
     if (cur && this.itemScore(item) <= before * (1 + WYD.data.items.autoEquip.minGain)) return false;
@@ -171,12 +202,13 @@ WYD.inventory = {
 
   // 自動分解の対象か（設定で選んだレア度以下。レジェンドとユニークは対象外）
   shouldAutoSalvage(state, item) {
+    if (this.keepReason(item, state)) return false;
     const f = state.settings.filter;
     if (f && f.on) return !this.filterKeeps(state, item);
     const opt = WYD.data.crafting.autoSalvageOptions.find((o) => o.id === state.settings.autoSalvage);
     if (!opt || !opt.upTo) return false;
     // ソケットが2つ以上のノーマル装備はルーンワードの土台になるので残す
-    if (item.rarity === "normal" && (item.sockets || []).length >= 2) return false;
+    if (this.keepRunewordBase(state, item)) return false;
     const order = WYD.data.items.rarities.map((r) => r.id);
     return order.indexOf(item.rarity) <= order.indexOf(opt.upTo);
   },
@@ -184,7 +216,7 @@ WYD.inventory = {
   // 戦利品フィルターで拾うか
   filterKeeps(state, item) {
     const f = state.settings.filter;
-    if (item.rarity === "unique" || item.rarity === "set") return true;
+    if (this.keepReason(item, state)) return true;
     if (f.keepSocketed && item.rarity === "normal" && (item.sockets || []).length >= 2) return true;
     if (f.keepUpgrades) {
       const cur = state.equipment[item.slot];

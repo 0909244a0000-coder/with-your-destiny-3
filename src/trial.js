@@ -38,7 +38,7 @@ WYD.trial = {
     const killTarget = uber ? 0 : Math.round(T.kills * WYD.daily.mult(state, "killsMult"));
     w.trial = { timeLeft: timeLimit, timeLimit, killTarget, kills: 0, guardianOut: false, done: false };
     WYD.world.resetEnemies(w, state, false);
-    WYD.world.clearDrops(w);
+    WYD.world.clearDrops(w, state);
     const name = uber ? WYD.data.uber.name : map ? WYD.maps.name(map) : daily ? "日替わりの試練" : "終わりのない試練";
     w.banner = { text: `${name}　段階 ${level}`, time: 0 };
     WYD.ui.log(`${name} 段階${level} に挑む（${timeLimit}秒で${killTarget}体倒し、守護者を討て）`, daily ? WYD.data.daily.color : T.color);

@@ -33,6 +33,7 @@ window.WYD = window.WYD || {};
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       hiddenAt = Date.now();
+      if (!WYD.resetting) WYD.save.write(state);
     } else if (hiddenAt) {
       WYD.offline.apply(state, world, hiddenAt);
       hiddenAt = null;
@@ -59,6 +60,11 @@ window.WYD = window.WYD || {};
     if (!WYD.resetting) WYD.save.write(state);
   }, 5000);
   window.addEventListener("beforeunload", () => {
+    if (!WYD.resetting) WYD.save.write(state);
+  });
+
+  // スマホでページを離れる場合も保存する（beforeunloadが発生しない環境向け）。
+  window.addEventListener("pagehide", () => {
     if (!WYD.resetting) WYD.save.write(state);
   });
 

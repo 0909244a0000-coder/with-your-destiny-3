@@ -195,6 +195,10 @@
         <div class="bag-col">
           <section class="panel" id="inventory-panel">
             <h2>持ち物 <small id="inv-count"></small> <small id="materials"></small></h2>
+            <div id="pending-loot-panel" hidden>
+              <p class="muted" id="pending-loot-note"></p>
+              <button id="claim-pending" style="min-height:48px;width:100%;margin-bottom:12px">未受取を受け取る</button>
+            </div>
             <div class="inv-buttons">
               <button id="sort-inv" title="レア度の高い順、同じなら部位・強さの順に並べる">並べ替え</button>
               <button id="discard-all" title="持ち物を全て素材にする。ロックした装備・装備中・倉庫は対象外。実行前に確認します">全て捨てる</button>
