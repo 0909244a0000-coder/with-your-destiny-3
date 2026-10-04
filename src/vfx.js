@@ -22,7 +22,7 @@ WYD.vfx = {
       fall: o.fall || 0,   // 上から落ちてくる距離（px）
       time: -(o.delay || 0), duration: o.duration || a.duration || 0.4,
       from: a.scaleFrom != null ? a.scaleFrom : 1, to: a.scaleTo != null ? a.scaleTo : 1,
-      spin: a.spin || 0, additive: a.additive !== false, echo: !!a.echo,
+      spin: a.spin || 0, additive: a.additive !== false, echo: !!a.echo, boost: a.boost || 1,
       // 飛んでいく絵：fromX/fromY から x/y へ travel 秒で動く
       fromX: o.fromX, fromY: o.fromY, travel: o.travel || 0,
     });
@@ -40,6 +40,7 @@ WYD.vfx = {
       any = this.spawn(w, style.key, b.x, b.y, { fromX: a.x, fromY: a.y, travel, delay, angle,
         duration: travel + ((V.anim[style.key] || {}).duration || 0.3) }) || any;
       this.spawn(w, V.impact.key, b.x, b.y, { size: V.impact.size, delay: delay + travel, duration: V.impact.duration });
+      if (style.impact) this.spawn(w, style.impact, b.x, b.y, { delay: delay + travel, angle: Math.random() * 6.28 });
       delay += travel;
     }
     return any;
@@ -55,6 +56,16 @@ WYD.vfx = {
       time: 0, duration: (WYD.data.vfx.anim[key] || {}).duration || 0.25, from: 1, to: 1, spin: 0, additive: true,
     });
     return true;
+  },
+
+  // 攻撃が当たったときの火花（スキル・職業ごとの属性の絵）。suppressHit の間は出さない（飛んでいく絵が着いたときに出すので）
+  hitSpark(w, e, skillId, crit) {
+    const V = WYD.data.vfx;
+    if (this.suppressHit || w.effects.length > V.maxEffects) return;
+    const key = (skillId && V.hitBySkill[skillId]) || V.hitByClass[WYD.classes.id] || "hitSpark";
+    const a = V.anim[key] || {};
+    this.spawn(w, key, e.x + WYD.util.rand(-6, 6), e.y - 8 + WYD.util.rand(-6, 6),
+      { angle: Math.random() * 6.28, size: (a.size || 46) * (crit ? V.hitCritScale : 1) });
   },
 
   // スキルを使ったときの絵
@@ -97,7 +108,7 @@ WYD.vfx = {
       ctx.drawImage(img, -ef.size / 2, -ef.size * 0.15, ef.size, ef.size * 0.3);
     } else {
       const s = ef.size * scale;
-      ctx.drawImage(img, -s / 2, -s / 2, s, s);
+      for (let i = 0; i < ef.boost; i++) ctx.drawImage(img, -s / 2, -s / 2, s, s);
       // 2枚目：うすく大きく、逆向きに回す（厚みと勢い）
       if (ef.echo) {
         const E = V.echo;

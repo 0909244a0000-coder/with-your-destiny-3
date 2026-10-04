@@ -28,7 +28,16 @@ WYD.data.vfx = {
     tornado: "assets/vfx/tornado.png",       // 竜巻
     boneStorm: "assets/vfx/boneStorm.png",   // 骨の嵐
     holyGround: "assets/vfx/holyGround.png", // 天の裁きの地面
-    vines: "assets/vfx/vines.png",           // 絡みつく蔓（ドルイドが縛った敵）       // アサシンの罠の装置（なければ三角の図形）   // 毒の霧の地面（疫病の霧・腐敗の地）
+    vines: "assets/vfx/vines.png",           // 絡みつく蔓（ドルイドが縛った敵）
+    slashHoly: "assets/vfx/slashHoly.png",   // パラディンの斬撃
+    slashClaw: "assets/vfx/slashClaw.png",   // アサシンの三本爪
+    slashBeast: "assets/vfx/slashBeast.png", // ドルイドの獣の爪痕
+    hitSpark: "assets/vfx/hitSpark.png",     // 当たったときの火花（白）
+    hitFire: "assets/vfx/hitFire.png",       // 炎
+    hitIce: "assets/vfx/hitIce.png",         // 氷
+    hitHoly: "assets/vfx/hitHoly.png",       // 聖なる光
+    hitPoison: "assets/vfx/hitPoison.png",   // 毒・死霊
+    hitShadow: "assets/vfx/hitShadow.png",   // 影       // アサシンの罠の装置（なければ三角の図形）   // 毒の霧の地面（疫病の霧・腐敗の地）
   },
 
   // 絵の動かし方（共通）
@@ -51,11 +60,21 @@ WYD.data.vfx = {
     tornado:     { duration: 0.55, size: 0,   scaleFrom: 0.5, scaleTo: 1.1, spin: 10,  additive: true, echo: true },
     boneStorm:   { duration: 0.45, size: 0,   scaleFrom: 0.4, scaleTo: 1.15, spin: 3,  additive: true, echo: true },
     vines:       { duration: 0.6,  size: 0,   scaleFrom: 0.5, scaleTo: 1.0, spin: 1,   additive: true, echo: true },
+    slashHoly:   { duration: 0.2,  size: 86,  scaleFrom: 0.8, scaleTo: 1.1, spin: 0,   additive: true, boost: 2 },
+    slashClaw:   { duration: 0.2,  size: 80,  scaleFrom: 0.8, scaleTo: 1.1, spin: 0,   additive: true, boost: 2 },
+    slashBeast:  { duration: 0.2,  size: 84,  scaleFrom: 0.8, scaleTo: 1.1, spin: 0,   additive: true, boost: 2 },
+    hitSpark:    { duration: 0.3, size: 74,  scaleFrom: 0.5, scaleTo: 1.2, spin: 2,   additive: true },
+    hitFire:     { duration: 0.3, size: 80,  scaleFrom: 0.5, scaleTo: 1.2, spin: 1,   additive: true },
+    hitIce:      { duration: 0.3, size: 76,  scaleFrom: 0.5, scaleTo: 1.2, spin: 1,   additive: true },
+    hitHoly:     { duration: 0.3, size: 80,  scaleFrom: 0.5, scaleTo: 1.2, spin: 0,   additive: true },
+    hitPoison:   { duration: 0.3, size: 80,  scaleFrom: 0.5, scaleTo: 1.2, spin: 1,   additive: true },
+    hitShadow:   { duration: 0.3, size: 76,  scaleFrom: 0.5, scaleTo: 1.2, spin: 2,   additive: true },
   },
 
   // 動きの演出（共通）
   //   pop … 出た瞬間に少し大きくなってから戻る割合（ぽんっと出る）
   //   echo … echo: true の絵は、うすく大きい2枚目を逆向きに回して重ねる（厚みを出す）
+  //   boost … アニメの項目に boost: 回数 があると、光を重ねて明るくする（暗い地面で見えにくい絵に）
   //   trail … 飛んでいく絵の残像（数・間隔の秒数・最初の濃さ）
   //   flySpeed … 飛んでいく絵の速さ（px/秒）。impact … 着いたところに出す衝撃の輪（絵の名前と大きさ）
   pop: 0.18,
@@ -63,6 +82,18 @@ WYD.data.vfx = {
   trail: { count: 4, gap: 0.025, alpha: 0.45 },
   flySpeed: 900,
   impact: { key: "shockwave", size: 46, duration: 0.25 },
+  // 当たったときの火花：スキル → 絵、なければ職業 → 絵。会心は大きく。画面のエフェクトが maxEffects より多いときは出さない（重くならないように）
+  hitBySkill: {
+    sorc_nova: "hitIce", sorc_freeze: "hitIce", sorc_meteor: "hitFire", agni: "hitFire", sorc_chain: "hitSpark",
+    pal_judgment: "hitHoly", pal_hammer: "hitHoly", pal_fire: "hitFire",
+    nec_spear: "hitPoison", nec_nova: "hitPoison", nec_plague: "hitPoison",
+    asn_fire: "hitFire", asn_shuriken: "hitShadow", asn_blade: "hitShadow",
+    dru_fissure: "hitFire", dru_boulder: "hitSpark", dru_tornado: "hitSpark",
+  },
+  hitByClass: { barbarian: "hitSpark", sorceress: "hitFire", necromancer: "hitPoison", paladin: "hitHoly", assassin: "hitShadow", druid: "hitSpark" },
+  hitCritScale: 1.5,
+  maxEffects: 140,
+
   // スキルを使ったときの画面の揺れ（スキルのしくみ → 強さと秒数）
   castShake: { whirl: { strength: 2.5, time: 0.12 }, agni: { strength: 3.5, time: 0.16 }, nagapasha: { strength: 2, time: 0.1 }, shift: { strength: 3, time: 0.15 } },
 
@@ -77,8 +108,8 @@ WYD.data.vfx = {
   // 敵から敵へ飛ぶスキルの見た目（"segment" = 稲妻のように線でつなぐ、"hit" = 当たった敵ごとに絵）
   // "fly" = 前の敵から次の敵へ、残像をひいて飛んでいき、着いたところに衝撃の輪
   chainStyle: { sudarshana: { mode: "fly", key: "axe" }, sorc_chain: { mode: "segment", key: "lightning" },
-    nec_spear: { mode: "fly", key: "boneSpear", face: true }, pal_hammer: { mode: "fly", key: "holyHammer" },
-    asn_shuriken: { mode: "fly", key: "shuriken" }, dru_boulder: { mode: "fly", key: "boulder" } },
+    nec_spear: { mode: "fly", key: "boneSpear", face: true, impact: "hitPoison" }, pal_hammer: { mode: "fly", key: "holyHammer", impact: "hitHoly" },
+    asn_shuriken: { mode: "fly", key: "shuriken", impact: "hitShadow" }, dru_boulder: { mode: "fly", key: "boulder" } },
   // 地面に残るもの（燃える地面など）の絵。スキル名 → 絵の名前。ここにないスキルは fireGround。null なら絵を使わず色の円で描く
   groundStyle: {
     nec_plague: "plague", nec_nova: "plague",   // 毒の霧・腐敗の地

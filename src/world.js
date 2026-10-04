@@ -484,7 +484,8 @@ WYD.world = {
         return;
       }
       p.swing = 0.15;
-      WYD.vfx.spawn(w, "slash", target.x, target.y, { angle: Math.atan2(target.y - p.y, target.x - p.x) });
+      const slashKey = WYD.vfx.has(WYD.data.player.slash) ? WYD.data.player.slash : "slash";
+      WYD.vfx.spawn(w, slashKey, target.x, target.y, { angle: Math.atan2(target.y - p.y, target.x - p.x) });
       this.playerHit(w, state, stats, target, stats.attack);
       this.tryThunder(w, state, stats, target);
       // 固有能力：狂王の籠手（狂戦士の怒りの間、周りにも当たる）
@@ -532,7 +533,9 @@ WYD.world = {
       // スキルの型（ルーン）を反映した数値と、おまけの効果
       const def = WYD.runes.effectiveDef(state, id);
       this.castExtra = WYD.runes.extra(state, id);
+      this.hitSkill = id;   // 当たったときの火花の絵を選ぶため
       const used = this.skillHandlers[WYD.classes.kindOf(id)].call(this, w, state, stats, def, lv);
+      this.hitSkill = null;
       const extra = this.castExtra;
       this.castExtra = null;
       if (used) {
@@ -649,9 +652,12 @@ WYD.world = {
         }
         cur = next;
       }
-      for (const e of hitList) this.playerHit(w, state, stats, e, stats.attack * mult);
-      // 絵があれば、稲妻の線や投げ斧の絵で見せる（なければ今までの線）
       const style = WYD.data.vfx.chainStyle[this.castingId];
+      // 飛んでいく絵のときは、当たりの火花は着いたときに出す（ここでは出さない）
+      WYD.vfx.suppressHit = !!(style && style.mode === "fly" && WYD.vfx.has(style.key));
+      for (const e of hitList) this.playerHit(w, state, stats, e, stats.attack * mult);
+      WYD.vfx.suppressHit = false;
+      // 絵があれば、稲妻の線や投げ斧の絵で見せる（なければ今までの線）
       let drawn = false;
       if (style && style.mode === "segment") {
         for (let i = 1; i < points.length; i++) drawn = WYD.vfx.segment(w, style.key, points[i - 1], points[i]) || drawn;
@@ -1105,6 +1111,7 @@ WYD.world = {
     WYD.lgems.onHit(w, state);
     const hit = this.calcDamage(attack, e.defense, stats.critChance, stats.critMultiplier);
     this.damageEnemy(w, state, e, hit.damage, hit.crit);
+    WYD.vfx.hitSpark(w, e, this.hitSkill, hit.crit);
     // スキルの型のおまけ：吸血・縛る（スキルを使っている最中だけ）
     const ex = this.castExtra;
     if (ex) {

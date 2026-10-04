@@ -233,6 +233,7 @@ WYD.data.classes = {
     desc: "聖なる騎士。オーラ（ONのあいだずっと効く）で、炎・回復・攻撃力アップを味方にまとい続ける。とても打たれ強い",
     player: {
       className: "パラディン",
+      slash: "slashHoly",       // 通常攻撃の斬撃の絵（data/vfx.js の textures。なければ slash）
       weaponName: "鎚",
       color: "#ffd75e",
       image: "assets/player_paladin.png",
@@ -325,6 +326,7 @@ WYD.data.classes = {
     desc: "素早い近接と、地面に置く罠で戦う。罠は置いておくだけで敵を撃ち続け、影の戦士が身代わりになる",
     player: {
       className: "アサシン",
+      slash: "slashClaw",       // 通常攻撃の斬撃の絵（data/vfx.js の textures。なければ slash）
       weaponName: "鉤爪",
       color: "#c08aff",
       image: "assets/player_assassin.png",
@@ -428,6 +430,7 @@ WYD.data.classes = {
     desc: "熊や狼に変身して戦う、自然の力の職業。狼の群れや竜巻、地割れも使える。変身の時間をどう使うかがカギ",
     player: {
       className: "ドルイド",
+      slash: "slashBeast",       // 通常攻撃の斬撃の絵（data/vfx.js の textures。なければ slash）
       weaponName: "杖",
       color: "#9adf6a",
       image: "assets/player_druid.png",
