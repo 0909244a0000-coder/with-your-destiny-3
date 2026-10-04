@@ -70,8 +70,146 @@ WYD.vfx = {
 
   // スキルを使ったときの絵
   cast(w, skillId, x, y, radius) {
-    const key = WYD.data.vfx.skillCast[skillId];
-    return key ? this.spawn(w, key, x, y, radius ? { size: radius * 2 } : null) : false;
+    const V = WYD.data.vfx, S = V.signature;
+    const def = WYD.data.skills[skillId] || {};
+    const kind = WYD.classes.kindOf(skillId);
+    const key = V.skillCast[skillId];
+    let drawn = key ? this.spawn(w, key, x, y, radius ? { size: radius * 2 } : null) : false;
+    if (w.effects.length < V.maxEffects && S.styles[kind]) {
+      w.effects.push({ type: "signature", x, y, radius: Math.min(radius || S.radius, S.radius * 2),
+        style: S.styles[kind], color: def.color || S.classColors[WYD.classes.id],
+        time: 0, duration: S.duration });
+      drawn = true;
+    }
+    return drawn;
+  },
+
+  trapShot(w, trap, enemy) {
+    if (w.effects.length >= WYD.data.vfx.maxEffects) return;
+    w.effects.push({ type: "trapShot", x: trap.x, y: trap.y, tx: enemy.x, ty: enemy.y,
+      style: WYD.data.vfx.trapStyles[trap.source] || "shadow", color: trap.color,
+      time: 0, duration: WYD.data.vfx.trapShot.duration });
+  },
+
+  drawSignature(ctx, ef) {
+    const S = WYD.data.vfx.signature;
+    const t = Math.max(0, Math.min(1, ef.time / ef.duration));
+    const r = ef.radius * (1 - S.expansion + S.expansion * t);
+    ctx.save();
+    ctx.translate(ef.x, ef.y);
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = S.alpha * Math.sin(Math.PI * t);
+    ctx.strokeStyle = ef.color;
+    ctx.fillStyle = ef.color;
+    ctx.lineWidth = S.lineWidth;
+    const ring = (radius) => { ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.stroke(); };
+    const ray = (a, inner, outer) => { ctx.beginPath(); ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner); ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer); ctx.stroke(); };
+    if (["summon", "trap", "aura", "field"].includes(ef.style)) ctx.scale(1, S.flatten);
+    if (ef.style === "blades") {
+      // 分かれた刃が外へ広がる。全職業を同じ一枚の輪にしない。
+      for (let i = 0; i < S.spokes; i++) {
+        const a = i * Math.PI * 2 / S.spokes + t * S.spin;
+        ctx.beginPath(); ctx.arc(0, 0, r, a, a + Math.PI / S.spokes); ctx.stroke();
+        ray(a, r * (1 - S.coreRatio), r);
+      }
+    } else if (ef.style === "shield") {
+      // 防御：閉じた多角形が立ち上がり、内側にも盾の線。
+      ctx.rotate(-t * S.spin);
+      for (const scale of [1, 1 - S.coreRatio]) {
+        ctx.beginPath();
+        for (let i = 0; i <= S.spokes; i++) { const a = i * Math.PI * 2 / S.spokes; const x = Math.cos(a) * r * scale, y = Math.sin(a) * r * scale; if (!i) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+        ctx.stroke();
+      }
+    } else if (ef.style === "fury" || ef.style === "shift") {
+      // 強化・変身：外へ開く爪と放射線。円だけの演出と区別する。
+      for (let i = 0; i < S.spokes; i++) {
+        const a = i * Math.PI * 2 / S.spokes + t * S.spin;
+        ray(a, r * S.coreRatio, r);
+        ctx.beginPath(); ctx.arc(Math.cos(a) * r, Math.sin(a) * r, r * S.coreRatio, a + Math.PI, a + Math.PI * 1.5); ctx.stroke();
+      }
+    } else if (ef.style === "bind") {
+      // 束縛：内へ締まる輪と、放射状に閉じる鎖。
+      const close = ef.radius * (1 - t * S.expansion);
+      ring(close);
+      for (let i = 0; i < S.spokes; i++) ray(i * Math.PI * 2 / S.spokes, close * S.coreRatio, close);
+    } else if (ef.style === "trap") {
+      // 罠の設置は角張った装置の紋章。召喚の円とは違う形。
+      ctx.rotate(-t * S.spin);
+      for (let i = 0; i < S.trapSides; i++) {
+        const a = i * Math.PI * 2 / S.trapSides;
+        ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(r * S.coreRatio, -r); ctx.lineTo(r, -r); ctx.lineTo(r, -r * S.coreRatio); ctx.stroke(); ctx.restore();
+      }
+    } else if (ef.style === "field") {
+      // 地面の呪文は枝分かれする亀裂。
+      for (let i = 0; i < S.spokes; i++) {
+        const a = i * Math.PI * 2 / S.spokes;
+        ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(r * S.coreRatio, r * S.coreRatio); ctx.lineTo(r, 0); ctx.moveTo(r * S.coreRatio, r * S.coreRatio); ctx.lineTo(r * (1 - S.coreRatio), r * (1 - S.coreRatio)); ctx.stroke(); ctx.restore();
+      }
+    } else if (ef.style === "aura") {
+      // オーラの発動は外へ広がる花弁状の光。
+      for (let i = 0; i < S.spokes; i++) {
+        const a = i * Math.PI * 2 / S.spokes;
+        ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(r * S.coreRatio, 0); ctx.quadraticCurveTo(r, -r * S.coreRatio, r, 0); ctx.quadraticCurveTo(r, r * S.coreRatio, r * S.coreRatio, 0); ctx.stroke(); ctx.restore();
+      }
+    } else {
+      // 召喚：円の中で星の紋章が回る。
+      ctx.rotate(t * S.spin); ring(r);
+      ctx.beginPath();
+      for (let i = 0; i <= S.spokes * 2; i++) {
+        const a = i * Math.PI / S.spokes, radius = r * (i % 2 ? S.coreRatio : 1 - S.coreRatio);
+        const x = Math.cos(a) * radius, y = Math.sin(a) * radius;
+        if (!i) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+    ctx.restore();
+  },
+
+  drawTrapShot(ctx, ef) {
+    const T = WYD.data.vfx.trapShot;
+    const t = Math.min(1, ef.time / ef.duration);
+    const dx = ef.tx - ef.x, dy = ef.ty - ef.y, d = Math.hypot(dx, dy) || 1;
+    ctx.save();
+    ctx.strokeStyle = ef.color; ctx.fillStyle = ef.color;
+    ctx.lineWidth = T.lineWidth; ctx.globalAlpha = 1 - t;
+    ctx.globalCompositeOperation = "lighter";
+    ctx.beginPath();
+    if (ef.style === "lightning") {
+      ctx.moveTo(ef.x, ef.y);
+      for (let i = 1; i <= T.zigzags; i++) {
+        const k = i / T.zigzags, bend = i === T.zigzags ? 0 : Math.sin(i * Math.PI / 2 + ef.time * T.phaseSpeed) * T.bend;
+        ctx.lineTo(ef.x + dx * k - dy / d * bend, ef.y + dy * k + dx / d * bend);
+      }
+      ctx.stroke();
+    } else {
+      const start = Math.max(0, t - T.tail);
+      ctx.moveTo(ef.x + dx * start, ef.y + dy * start);
+      ctx.lineTo(ef.x + dx * t, ef.y + dy * t); ctx.stroke();
+      ctx.translate(ef.x + dx * t, ef.y + dy * t);
+      ctx.rotate(Math.atan2(dy, dx));
+      const head = T.headSize * (1 - t);
+      if (ef.style === "fire") {
+        // 火は先の尖った炎、影は弧を引く幽体。色だけでなく形で区別する。
+        ctx.beginPath(); ctx.moveTo(head, 0); ctx.lineTo(-head * T.fireLength, -head); ctx.quadraticCurveTo(-head, 0, -head * T.fireLength, head); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = T.coreColor; ctx.beginPath(); ctx.ellipse(0, 0, head, head / T.fireLength, 0, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.arc(0, 0, head, 0, Math.PI * T.shadowArc); ctx.stroke();
+        ctx.beginPath(); ctx.arc(-head, 0, head, Math.PI / 2, Math.PI * T.shadowArc); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  },
+
+  drawAuraMarks(ctx, p, a) {
+    const M = WYD.data.vfx.auraMarks;
+    ctx.save(); ctx.translate(p.x, p.y + WYD.data.player.radius * 0.6); ctx.scale(1, WYD.data.fx.auraRing.flatten);
+    ctx.rotate(WYD.render.clock * M.spin); ctx.strokeStyle = a.color; ctx.globalAlpha = M.alpha; ctx.lineWidth = WYD.data.vfx.signature.lineWidth;
+    const r = a.radius * M.radiusRatio;
+    for (let i = 0; i < M.count; i++) {
+      const angle = i * Math.PI * 2 / M.count, x = Math.cos(angle) * r, y = Math.sin(angle) * r;
+      ctx.beginPath(); ctx.moveTo(x, y - M.size); ctx.lineTo(x + M.size, y); ctx.lineTo(x, y + M.size); ctx.lineTo(x - M.size, y); ctx.closePath(); ctx.stroke();
+    }
+    ctx.restore();
   },
 
   draw(ctx, ef) {

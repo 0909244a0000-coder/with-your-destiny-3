@@ -79,7 +79,7 @@ WYD.allies = {
         a.face = target.x >= a.x ? 1 : -1;
         if (a.ranged) w.effects.push({ type: "chain", points: [{ x: a.x, y: a.y - 8 }, { x: target.x, y: target.y }], color: a.shotColor || a.color, time: 0, duration: 0.2 });
         const hit = WYD.world.calcDamage(a.attack, target.defense, stats.critChance, stats.critMultiplier);
-        WYD.world.damageEnemy(w, state, target, hit.damage, hit.crit);
+        WYD.world.damageEnemy(w, state, target, hit.damage, hit.crit, a.source === "merc" ? "merc:" + state.mercenary.type : a.source === "unique" ? "effect:summon" : "skill:" + a.source, true);
       }
     }
     // 崩れた手下を消す

@@ -132,6 +132,17 @@
         <div id="skills"></div>
       </section>
 
+      <details class="panel combat-results" id="combat-results">
+        <summary>戦闘リザルト <small id="result-glance"></small></summary>
+        <div class="result-controls">
+          <label>集計 <select id="result-mode"><option value="session">計測全体</option><option value="recent">直近10秒</option></select></label>
+          <button id="result-record">計測停止</button><button id="result-reset">リセット</button>
+        </div>
+        <p class="muted" id="result-status"></p>
+        <div id="result-summary" class="result-summary"></div>
+        <div id="result-breakdown"></div>
+        <details class="result-help"><summary>数値の見方</summary><p>ダメージは敵の残りHPを超えた分と、無効化された分を除きます。会心率は会心判定のある命中だけで計算します。反射・雷鳴など判定がない攻撃は「—」。攻撃力上昇などの補助効果は元の攻撃に含みます。</p><p>時間はゲーム内の戦場時間（復活待ちを含む）。停止中・拠点・閉じていた間は除外。被ダメージ・回復は自分のHPが実際に減った・戻った量。記録はリセット・ページ再読み込み・職業変更で消えます。キャラ欄の従来DPSはHP超過分を含むため、このDPSとは異なる場合があります。</p></details>
+      </details>
     </aside>
   </main>
 
@@ -302,6 +313,7 @@
   <script src="data/sound.js"></script>
   <script src="data/classes.js"></script>
   <script src="data/vfx.js"></script>
+  <script src="data/results.js"></script>
   <script src="data/runes.js"></script>
   <script src="data/sets.js"></script>
   <script src="data/trial.js"></script>
@@ -359,6 +371,7 @@
   <script src="src/town.js"></script>
   <script src="src/render.js"></script>
   <script src="src/ui.js"></script>
+  <script src="src/results.js"></script>
   <script src="src/main.js"></script>
 </body>
 </html>

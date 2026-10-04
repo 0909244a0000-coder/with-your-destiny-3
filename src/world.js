@@ -46,6 +46,7 @@ WYD.world = {
     p.hp = Math.min(p.hp, stats.maxHp);
 
     w.time = (w.time || 0) + dt;   // 絵の動きに使う時計
+    WYD.results.tick(w, dt);
     this.trackMotion(w, dt);
     this.updateEffects(w, dt);
     for (const n of w.notices || []) n.time += dt;
@@ -62,7 +63,7 @@ WYD.world = {
       return;
     }
 
-    p.hp = Math.min(stats.maxHp, p.hp + stats.hpRegen * dt);
+    this.healPlayer(w, stats.maxHp, stats.hpRegen * dt, "regen");
     if (p.buff) {
       p.buff.timeLeft -= dt;
       if (p.buff.timeLeft <= 0) p.buff = null;
@@ -342,7 +343,7 @@ WYD.world = {
     }
     const burning = this.eliteAffix("burning");
     if (this.hasAffix(e, "burning") && !p.dead && WYD.util.dist(e, p) <= burning.auraRadius) {
-      p.hp -= e.attack * burning.auraDamage * dt;
+      this.receiveDamage(w, e.attack * burning.auraDamage * dt);
       if (p.hp <= 0) {
         this.playerDied(w, { by: this.enemyName(e), how: "burn" });
         return;
@@ -378,7 +379,7 @@ WYD.world = {
       if (!p.dead && WYD.util.dist(h, p) <= h.radius) {
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
         const hit = this.calcDamage(h.damage, defense, 0);
-        p.hp -= hit.damage;
+        this.receiveDamage(w, hit.damage);
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
         if (p.hp <= 0) this.playerDied(w, { by: h.by, how: "explode" });
       }
@@ -492,7 +493,7 @@ WYD.world = {
       const cleave = stats.powers.hasteCleave;
       if (cleave && p.haste) {
         for (const e of w.enemies.slice()) {
-          if (e !== target && WYD.util.dist(target, e) <= cleave.radius) this.playerHit(w, state, stats, e, stats.attack * cleave.mult);
+          if (e !== target && WYD.util.dist(target, e) <= cleave.radius) this.playerHit(w, state, stats, e, stats.attack * cleave.mult, "effect:hasteCleave");
         }
       }
     }
@@ -539,6 +540,7 @@ WYD.world = {
       const extra = this.castExtra;
       this.castExtra = null;
       if (used) {
+        WYD.results.add(w, "skill:" + id, { casts: 1 });
         WYD.vfx.cast(w, id, p.x, p.y, def.radius);
         const shake = WYD.data.vfx.castShake[WYD.classes.kindOf(id)];
         if (shake) WYD.fx.shake(w, shake);
@@ -551,7 +553,7 @@ WYD.world = {
         // 型のおまけ：足元に燃える地面などを残す
         const lf = extra && extra.leaveField;
         if (lf) {
-          w.fields.push({ texture: this.groundTexture(id), x: p.x, y: p.y, radius: lf.radius, timeLeft: lf.duration, duration: lf.duration,
+          w.fields.push({ source: "skill:" + id, texture: this.groundTexture(id), x: p.x, y: p.y, radius: lf.radius, timeLeft: lf.duration, duration: lf.duration,
             tick: lf.tick, tickTimer: lf.tick, mult: lf.mult * (1 + stats.skillDamage / 100), color: lf.color });
         }
       }
@@ -591,7 +593,7 @@ WYD.world = {
         const pct = (s.healPercentBase + s.healPercentPerLevel * (lv - 1)) * (1 + stats.skillDamage / 100) / 100;
         const hurtAllies = w.allies.filter((a) => a.hp < a.maxHp && WYD.util.dist(p, a) <= s.radius);
         if (p.hp >= stats.maxHp && !hurtAllies.length) return false;
-        p.hp = Math.min(stats.maxHp, p.hp + stats.maxHp * pct);
+        this.healPlayer(w, stats.maxHp, stats.maxHp * pct, "skill:" + this.castingId);
         for (const a of hurtAllies) a.hp = Math.min(a.maxHp, a.hp + a.maxHp * pct);
         return true;
       }
@@ -615,7 +617,7 @@ WYD.world = {
       // 固有能力：劫火の腕輪（足元の地面が燃える）
       const fire = stats.powers.whirlFire;
       if (fire) {
-        w.fields.push({ x: p.x, y: p.y, radius: fire.radius, timeLeft: fire.duration, duration: fire.duration,
+        w.fields.push({ source: "effect:whirlFire", x: p.x, y: p.y, radius: fire.radius, timeLeft: fire.duration, duration: fire.duration,
           tick: fire.tick, tickTimer: fire.tick, mult: fire.mult * (1 + stats.skillDamage / 100), color: fire.color });
       }
       return true;
@@ -625,7 +627,7 @@ WYD.world = {
       if (p.hp / stats.maxHp * 100 > s.triggerHpPercent) return false;
       const healPct = (s.healPercentBase + s.healPercentPerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
       const heal = Math.round(stats.maxHp * healPct / 100);
-      p.hp = Math.min(stats.maxHp, p.hp + heal);
+      this.healPlayer(w, stats.maxHp, heal, "skill:" + this.castingId);
       p.buff = { defense: s.defenseBase + s.defensePerLevel * (lv - 1), timeLeft: s.duration, color: s.color };
       this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
       return true;
@@ -684,9 +686,9 @@ WYD.world = {
       if (this.castingId === "sorc_meteor" && WYD.vfx.spawn(w, "meteor", best.x, best.y, { size: s.radius, fall: 240, duration: WYD.data.vfx.meteorFall })) {
         WYD.vfx.spawn(w, "fireBurst", best.x, best.y, { size: s.radius * 2.2, delay: WYD.data.vfx.meteorFall });
       } else {
-        WYD.vfx.spawn(w, "fireBurst", best.x, best.y, { size: s.radius * 2 });
+        WYD.vfx.spawn(w, WYD.data.vfx.fieldCast[this.castingId] || "fireBurst", best.x, best.y, { size: s.radius * 2 });
       }
-      w.fields.push({ texture: this.groundTexture(this.castingId), x: best.x, y: best.y, radius: s.radius, timeLeft: s.duration, duration: s.duration,
+      w.fields.push({ source: "skill:" + this.castingId, texture: this.groundTexture(this.castingId), x: best.x, y: best.y, radius: s.radius, timeLeft: s.duration, duration: s.duration,
         tick: s.tick, tickTimer: 0, mult, color: s.color });
       return true;
     },
@@ -723,7 +725,7 @@ WYD.world = {
       if (f.tickTimer > 0) continue;
       f.tickTimer = f.tick;
       for (const e of w.enemies.slice()) {
-        if (WYD.util.dist(f, e) <= f.radius) this.playerHit(w, state, stats, e, stats.attack * f.mult);
+        if (WYD.util.dist(f, e) <= f.radius) this.playerHit(w, state, stats, e, stats.attack * f.mult, f.source);
       }
     }
     w.fields = w.fields.filter((f) => f.timeLeft > 0);
@@ -790,7 +792,7 @@ WYD.world = {
         e.face = p.x >= e.x ? 1 : -1;
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
         const hit = this.calcDamage(e.attack, defense, 0);
-        p.hp -= hit.damage;
+        this.receiveDamage(w, hit.damage);
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
         WYD.fx.burst(w, p.x, p.y, WYD.data.fx.playerHit, null, { gravity: true });
         WYD.sound.play("hurt");
@@ -829,15 +831,15 @@ WYD.world = {
     const vt = stats.powers.vajraThorns;
     if (vt && w.player.buff) percent += vt.percent;
     const back = Math.round(damage * percent / 100);
-    if (back > 0) this.damageEnemy(w, state, e, back, false);
+    if (back > 0) this.damageEnemy(w, state, e, back, false, "effect:thorns", false);
   },
 
   // まわりの敵にまとめてダメージ（爆発）
-  explode(w, state, stats, x, y, radius, mult, color) {
+  explode(w, state, stats, x, y, radius, mult, color, source) {
     w.effects.push({ type: "ring", x, y, radius, color, time: 0, duration: 0.3 });
     WYD.vfx.spawn(w, "fireBurst", x, y, { size: radius * 2 });
     for (const e of w.enemies.slice()) {
-      if (WYD.util.dist({ x, y }, e) <= radius) this.playerHit(w, state, stats, e, stats.attack * mult);
+      if (WYD.util.dist({ x, y }, e) <= radius) this.playerHit(w, state, stats, e, stats.attack * mult, source);
     }
   },
 
@@ -880,7 +882,7 @@ WYD.world = {
       }
       const defense = stats.defense + (p.buff ? p.buff.defense : 0);
       const hit = this.calcDamage(b.attack, defense, 0);
-      p.hp -= hit.damage;
+      this.receiveDamage(w, hit.damage);
       this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
       // 特殊効果：茨の鎧（撃った敵が生きていれば返す）
       const owner = w.enemies.find((e) => e.id === b.ownerId);
@@ -939,7 +941,7 @@ WYD.world = {
       if (!c.hit && !p.dead && WYD.util.dist(e, p) < H.width + WYD.data.player.radius) {
         c.hit = true;
         const hit = this.calcDamage(e.attack * H.damageMult, stats.defense + (p.buff ? p.buff.defense : 0), 0);
-        p.hp -= hit.damage;
+        this.receiveDamage(w, hit.damage);
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
         WYD.fx.shake(w, WYD.data.fx.shakeSlam);
         if (p.hp <= 0) this.playerDied(w, { by: this.enemyName(e), how: "charge" });
@@ -966,7 +968,7 @@ WYD.world = {
     for (const pool of w.pools) {
       pool.timeLeft -= dt;
       if (!p.dead && WYD.util.dist(pool, p) < pool.radius) {
-        p.hp -= pool.dps * dt;
+        this.receiveDamage(w, pool.dps * dt);
         if (p.hp <= 0) this.playerDied(w, { by: pool.by, how: "pool" });
       }
     }
@@ -1007,7 +1009,7 @@ WYD.world = {
       if (WYD.util.dist(e, p) <= slam.radius) {
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
         const hit = this.calcDamage(e.attack * slam.damageMult, defense, 0);
-        p.hp -= hit.damage;
+        this.receiveDamage(w, hit.damage);
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
         if (p.hp <= 0) this.playerDied(w, { by: this.enemyName(e), how: "slam" });
       }
@@ -1087,6 +1089,18 @@ WYD.world = {
     WYD.fx.update(w, dt);
   },
 
+  // HPは従来と同じ計算で変更し、実際に減った・戻ったぶんだけ観測する。
+  receiveDamage(w, amount) {
+    WYD.results.add(w, null, { taken: Math.min(Math.max(0, w.player.hp), amount) });
+    w.player.hp -= amount;
+  },
+
+  healPlayer(w, maxHp, amount, source) {
+    const before = w.player.hp;
+    w.player.hp = Math.min(maxHp, before + amount);
+    WYD.results.add(w, source, { healing: Math.max(0, w.player.hp - before) });
+  },
+
   // ---------- 共通の処理 ----------
   calcDamage(attack, defense, critChance, critMultiplier) {
     const C = WYD.data.combat;
@@ -1098,7 +1112,8 @@ WYD.world = {
   },
 
   // プレイヤーの攻撃が当たったとき（特殊効果：背水の怒り・吸血）
-  playerHit(w, state, stats, e, attack) {
+  playerHit(w, state, stats, e, attack, source) {
+    source = source || (this.hitSkill ? "skill:" + this.hitSkill : "attack");
     if (e.hp <= 0) return;
     const p = w.player;
     const fx = stats.effects;
@@ -1110,16 +1125,16 @@ WYD.world = {
     attack *= WYD.lgems.damageMult(w, state, e);   // 伝説の宝石
     WYD.lgems.onHit(w, state);
     const hit = this.calcDamage(attack, e.defense, stats.critChance, stats.critMultiplier);
-    this.damageEnemy(w, state, e, hit.damage, hit.crit);
-    WYD.vfx.hitSpark(w, e, this.hitSkill, hit.crit);
+    this.damageEnemy(w, state, e, hit.damage, hit.crit, source, true);
+    WYD.vfx.hitSpark(w, e, source.startsWith("skill:") ? source.slice(6) : null, hit.crit);
     // スキルの型のおまけ：吸血・縛る（スキルを使っている最中だけ）
     const ex = this.castExtra;
     if (ex) {
-      if (ex.lifesteal && !p.dead) p.hp = Math.min(stats.maxHp, p.hp + hit.damage * ex.lifesteal / 100);
+      if (ex.lifesteal && !p.dead) this.healPlayer(w, stats.maxHp, hit.damage * ex.lifesteal / 100, source);
       if (ex.bind && e.hp > 0) e.stunTimer = Math.max(e.stunTimer || 0, e.boss ? ex.bind * WYD.data.runes.bossBindMult : ex.bind);
     }
     if (fx.lifesteal > 0 && !p.dead) {
-      p.hp = Math.min(stats.maxHp, p.hp + hit.damage * fx.lifesteal / 100);
+      this.healPlayer(w, stats.maxHp, hit.damage * fx.lifesteal / 100, "effect:lifesteal");
     }
   },
 
@@ -1133,10 +1148,10 @@ WYD.world = {
     }
     WYD.sound.play("thunder");
     const hit = this.calcDamage(stats.attack * def.power, e.defense, 0);
-    this.damageEnemy(w, state, e, hit.damage, false);
+    this.damageEnemy(w, state, e, hit.damage, false, "effect:thunder", false);
   },
 
-  damageEnemy(w, state, e, damage, crit) {
+  damageEnemy(w, state, e, damage, crit, source = "attack", canCrit = true) {
     if (e.hp <= 0) return;
     // 精鋭の「守護」：盾の間はダメージを受けない
     if (e.shielded) {
@@ -1146,6 +1161,7 @@ WYD.world = {
       }
       return;
     }
+    WYD.results.add(w, source, { damage: Math.min(e.hp, damage), hits: 1, eligible: canCrit ? 1 : 0, crits: canCrit && crit ? 1 : 0 });
     e.hp -= damage;
     e.hitFlash = 0.1;
     this.logDamage(w, damage);
@@ -1216,6 +1232,7 @@ WYD.world = {
     const expMult = (e.elite ? WYD.data.elites.expMult : 1) * area.powerMult * this.floorPower(state);
     this.gainExp(state, Math.round(def.exp * (1 + diff.expGrowth * d) * expMult * WYD.season.mult(state, "expMult") * WYD.shrines.expMult() * WYD.breach.expMult(e)));
 
+    WYD.results.add(w, null, { kills: 1 });
     WYD.records.add(state, "kills");
     if (this.hasAffix(e, "explosive")) {
       const A = this.eliteAffix("explosive");
@@ -1246,15 +1263,15 @@ WYD.world = {
     const p = w.player;
     if (stats.effects.killHeal > 0 && !p.dead) {
       const heal = Math.round(stats.maxHp * stats.effects.killHeal / 100);
-      p.hp = Math.min(stats.maxHp, p.hp + heal);
+      this.healPlayer(w, stats.maxHp, heal, "effect:killHeal");
       this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
     }
 
     // 固有能力：鎖の王冠（縛られた敵が爆発）／屍爆の印章（死体が爆発）
     const be = stats.powers.bindExplode;
-    if (be && e.stunTimer > 0 && !p.dead) this.explode(w, state, stats, e.x, e.y, be.radius, be.mult, be.color);
+    if (be && e.stunTimer > 0 && !p.dead) this.explode(w, state, stats, e.x, e.y, be.radius, be.mult, be.color, "effect:bindExplode");
     const kn = stats.powers.killNova;
-    if (kn && !p.dead && Math.random() * 100 < kn.chance) this.explode(w, state, stats, e.x, e.y, kn.radius, kn.mult, kn.color);
+    if (kn && !p.dead && Math.random() * 100 < kn.chance) this.explode(w, state, stats, e.x, e.y, kn.radius, kn.mult, kn.color, "effect:killNova");
 
     // 「自動」がONで最高より下にいるなら、しばらく倒し続けたら1つ上げる（試練の最中はしない）
     if (!inTrial && state.settings.autoDifficulty && state.difficulty < state.maxDifficulty) {
@@ -1413,6 +1430,7 @@ WYD.world = {
   playerDied(w, cause) {
     const p = w.player;
     if (p.dead) return;
+    WYD.results.add(w, null, { deaths: 1 });
     p.dead = true;
     p.hp = 0;
     p.respawnTimer = WYD.data.player.respawnSeconds;

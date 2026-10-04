@@ -12,6 +12,7 @@ window.WYD = window.WYD || {};
   canvas.height = WYD.data.map.height;
 
   WYD.ui.init(state, world);
+  WYD.results.init(world);
   WYD.sound.init();
   WYD.ui.log("ようこそ。戦いは自動で進みます。装備とスキルを選んで強くなろう。", "#ffd447");
   const cls = WYD.data.classes[WYD.classes.id];

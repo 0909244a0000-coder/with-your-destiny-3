@@ -500,3 +500,41 @@ button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px
   .cell { height: 70px; font-size: 12px; }
   .cell small { font-size: 11px; }
 }
+
+/* 戦闘リザルト：戦いを隠さず、右列の下で内訳を確認できる */
+.combat-results { flex: none; }
+.combat-results > summary { cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--accent); font-family: var(--serif); font-size: 15px; padding: 4px 0; }
+.combat-results > summary small { font-family: sans-serif; font-size: 11px; color: var(--text); }
+.result-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 4px; }
+.result-controls label { display: flex; gap: 6px; align-items: center; font-size: 12px; }
+.result-controls button, .result-controls select { min-height: 32px; font-size: 12px; }
+.result-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.result-summary > div { display: flex; flex-direction: column; gap: 4px; padding: 8px; background: #0d0c0a; border: 1px solid #403628; border-radius: 4px; }
+.result-summary span { font-size: 11px; color: var(--muted); }
+.result-summary b { font-size: 18px; font-variant-numeric: tabular-nums; }
+#result-breakdown { max-height: 360px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.result-row { padding: 10px 0; border-top: 1px solid #44392a; }
+.result-row-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.result-row-head > span { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; min-width: 0; }
+.result-row-head img { width: 22px; height: 22px; object-fit: contain; }
+.result-row-head b { font-size: 13px; color: var(--source-color); overflow-wrap: anywhere; }
+.result-row-head small { font-size: 10px; color: var(--muted); font-weight: normal; }
+.result-row-head strong { white-space: nowrap; font-size: 13px; font-variant-numeric: tabular-nums; }
+.result-share { height: 3px; background: #090806; margin: 6px 0; }
+.result-share i { display: block; height: 100%; background: var(--source-color); max-width: 100%; }
+.result-row-meta { font-size: 11px; color: var(--muted); line-height: 1.7; font-variant-numeric: tabular-nums; }
+.result-help { margin-top: 12px; font-size: 11px; line-height: 1.7; color: var(--muted); }
+.result-help summary { cursor: pointer; color: var(--accent); }
+@media (max-width: 900px) {
+  .combat-results { order: -2; width: 100%; }
+  .result-controls button, .result-controls select { min-height: 40px; }
+  .result-row-meta { font-size: 12px; }
+}
+@media (min-width: 901px) {
+  .combat-results { position: fixed; right: 12px; bottom: 12px; z-index: 8; width: 400px; max-height: min(65vh, 650px); overflow-y: auto; box-shadow: 0 4px 24px #000c, inset 0 0 0 1px #6c5836; }
+  .combat-results > summary { min-height: 32px; }
+  aside { padding-bottom: 60px; }
+}
+@media (min-width: 901px) {
+  .combat-results > summary { position: sticky; top: 0; z-index: 2; background: var(--panel); }
+}

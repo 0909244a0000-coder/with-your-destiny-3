@@ -600,6 +600,7 @@ WYD.render = {
     const AR = WYD.data.fx.auraRing;
     for (const id in p.dead ? {} : p.auras || {}) {
       const a = p.auras[id];
+      WYD.vfx.drawAuraMarks(ctx, p, a);
       const pulse = 0.5 + 0.5 * Math.sin(this.clock * AR.pulseSpeed + a.radius);
       ctx.strokeStyle = a.color;
       ctx.lineWidth = 2;
@@ -926,6 +927,8 @@ WYD.render = {
       ctx.globalAlpha = 1;
     }
     if (ef.type === "sprite") WYD.vfx.draw(ctx, ef);
+    if (ef.type === "signature") WYD.vfx.drawSignature(ctx, ef);
+    if (ef.type === "trapShot") WYD.vfx.drawTrapShot(ctx, ef);
     if (ef.type === "shock") {
       // ボスの大技の衝撃：一気に広がる赤い円
       const t = ef.time / ef.duration;

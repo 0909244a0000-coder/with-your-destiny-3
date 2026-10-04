@@ -4,6 +4,18 @@ window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
 WYD.data.vfx = {
+  // 薄い・同じ円に見えやすいスキルは、絵に加えて固有の線と動きで見せる。
+  signature: {
+    duration: 0.65, radius: 62, lineWidth: 3.5, spokes: 8, trapSides: 4, alpha: 0.7,
+    expansion: 0.65, spin: 1.6, flatten: 0.65, coreRatio: 0.3,
+    styles: { whirl: "blades", vajra: "shield", hanuman: "fury", nagapasha: "bind", raise: "summon", shift: "shift", trap: "trap", aura: "aura", agni: "field" },
+    classColors: { barbarian: "#bde9ff", sorceress: "#8dccff", necromancer: "#a8f3ab", paladin: "#ffe7a0", assassin: "#cc9fff", druid: "#b2eda0" },
+  },
+  trapShot: { duration: 0.28, tail: 0.28, headSize: 8, lineWidth: 3, zigzags: 8, bend: 7, phaseSpeed: 24, fireLength: 2.5, shadowArc: 1.5, coreColor: "#fff0bd" },
+  trapStyles: { sorc_hydra: "fire", asn_sentry: "lightning", asn_death: "shadow" },
+  fieldCast: { nec_plague: "plague", pal_judgment: "holyGround", dru_fissure: "fireBurst", asn_fire: "fireBurst" },
+  auraMarks: { count: 6, radiusRatio: 0.92, size: 7, spin: 0.4, alpha: 0.65 },
+
   // 絵のファイル（例: slash: "assets/vfx/slash.png"）
   textures: {
     slash: "assets/vfx/slash.png",        // 斬撃の弧（バーバリアンの通常攻撃）

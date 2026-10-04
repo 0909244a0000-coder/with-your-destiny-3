@@ -931,6 +931,7 @@ WYD.ui = {
       this.renderPanels();
     }
     this.updateBars();
+    WYD.results.render(this.world);
   },
 
   updateBars() {

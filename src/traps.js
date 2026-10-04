@@ -47,8 +47,8 @@ WYD.traps = {
       const prev = W.castExtra;
       W.castExtra = t.extra;
       for (const e of near) {
-        w.effects.push({ type: "chain", points: [{ x: t.x, y: t.y - 8 }, { x: e.x, y: e.y }], color: t.color, time: 0, duration: 0.15 });
-        W.playerHit(w, state, stats, e, stats.attack * t.mult);
+        WYD.vfx.trapShot(w, t, e);
+        W.playerHit(w, state, stats, e, stats.attack * t.mult, "skill:" + t.source);
       }
       W.castExtra = prev;
     }
