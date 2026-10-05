@@ -62,6 +62,7 @@ WYD.allies = {
       a.timeLeft -= dt;
       a.hitFlash = Math.max(0, a.hitFlash - dt);
       a.atkAnim = Math.max(0, a.atkAnim - dt);
+      if (a.stunTimer > 0) { a.stunTimer = Math.max(0, a.stunTimer - dt); continue; }
       const target = WYD.world.nearestEnemy(w, a);
       if (!target) {
         // 敵がいなければ主人公の近くへ
@@ -79,7 +80,7 @@ WYD.allies = {
         a.face = target.x >= a.x ? 1 : -1;
         if (a.ranged) w.effects.push({ type: "chain", points: [{ x: a.x, y: a.y - 8 }, { x: target.x, y: target.y }], color: a.shotColor || a.color, time: 0, duration: 0.2 });
         const hit = WYD.world.calcDamage(a.attack, target.defense, stats.critChance, stats.critMultiplier);
-        WYD.world.damageEnemy(w, state, target, hit.damage, hit.crit, a.source === "merc" ? "merc:" + state.mercenary.type : a.source === "unique" ? "effect:summon" : "skill:" + a.source, true);
+        WYD.world.damageEnemy(w, state, target, hit.damage, hit.crit, a.source === "merc" ? "merc:" + state.mercenary.type : a.source === "unique" ? "effect:summon" : "skill:" + a.source, true, a);
       }
     }
     // 崩れた手下を消す

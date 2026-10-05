@@ -1,0 +1,189 @@
+// 専用フレームだけで読み込む。各職業の通常の計算・技を独立して使う。
+window.WYD = window.WYD || {};
+WYD.arenaEngine = {
+  init(classId, snapshot, team, color, bridge) {
+    this.team = team; this.bridge = bridge;
+    WYD.classes.activeId = () => classId;
+    WYD.classes.apply();
+    // localStorage は arena-engine.html 冒頭でメモリへ置換済み。移行もコピーにだけ行う。
+    localStorage.setItem(WYD.save.KEY, JSON.stringify(snapshot));
+    this.state = WYD.save.load();
+    this.state.settings.autoSkill = false;
+    WYD.data.map.width = WYD.data.arena.width; WYD.data.map.height = WYD.data.arena.height;
+    this.world = WYD.world.create();
+    WYD.state = this.state; WYD.currentWorld = this.world;
+    WYD.ui = { state: this.state, world: this.world, log() {}, markDirty() {}, changed() {}, notice() {} };
+    WYD.save.write = () => {};
+    WYD.sound.play = () => {};
+    // 同じ画像を参加人数ぶん読み込まない。能力・乱数・戦闘状態は共有しない。
+    WYD.render.images = bridge.images;
+    WYD.render.getImage = bridge.getImage;
+    WYD.data.player.color = color;
+    const p = this.world.player;
+    Object.assign(p, { id: bridge.nextId(), kind: "arena:" + team + ":hero", arenaTeam: team, arenaMain: true, radius: WYD.data.player.radius, stunTimer: 0 });
+    p.hp = WYD.stats.compute(this.state).maxHp;
+    this.installCombat();
+    const P = WYD.data.player;
+    for (const path of [P.image, P.poses && P.poses.attack, ...(P.preloadImages || []), ...Object.values(WYD.data.vfx.textures), ...Object.values(WYD.data.skillIcons || {})]) WYD.render.getImage(path);
+    this.prepare();
+    return this;
+  },
+  installCombat() {
+    const E = this, W = WYD.world;
+    const damage = W.damageEnemy;
+    E.nativeDamage = damage;
+    const heal = W.healPlayer;
+    W.healPlayer = function(w, ...args) { if (!w.player.dead) return heal.call(this, w, ...args); };
+    for (const key of Object.keys(W.skillHandlers)) {
+      const handler = W.skillHandlers[key];
+      W.skillHandlers[key] = function(...args) { return E.world.player.dead ? false : handler.apply(this, args); };
+    }
+    E.blocked = function(w, target, actor, source) {
+      const receiver = E.bridge.owner(target);
+      const ward = target.arenaMain && receiver && receiver.stats.powers.projectileWard;
+      if (ward && source !== "effect:thorns" && (E.projectile || actor.ranged > 0) && Math.random() * 100 < ward.chance) {
+        W.addText(w, target.x, target.y, "はじいた", ward.color); return true;
+      }
+      return false;
+    };
+    const playerHit = W.playerHit;
+    W.playerHit = function(w, s, stats, target, attack, source) {
+      if (!target || target.hp <= 0 || target.arenaTeam === E.team || w.player.dead) return;
+      // 無効化した弾では吸血・拘束・命中時の宝石も発動させない。
+      if (E.blocked(w, target, w.player, source)) return;
+      E.wardChecked = true;
+      try { return playerHit.call(this, w, s, stats, target, attack, source); }
+      finally { E.wardChecked = false; }
+    };
+    const explode = W.explode;
+    W.explode = function(...args) {
+      const previous = E.projectile; E.projectile = false;
+      try { return explode.apply(this, args); } finally { E.projectile = previous; }
+    };
+    W.damageEnemy = function(w, s, target, amount, crit, source = "attack", canCrit = true, actor = w.player) {
+      if (!target || target.hp <= 0 || target.arenaTeam === E.team || actor.hp <= 0) return;
+      const receiver = E.bridge.owner(target);
+      if (!receiver || receiver.world.player.dead) return;
+      // 弾をはじく装備：通常遠隔弾・遠隔召喚・罠射撃に適用。範囲/反射には適用しない。
+      if (!E.wardChecked && E.blocked(w, target, actor, source)) return;
+      const actual = Math.min(target.hp, amount);
+      damage.call(this, w, s, target, amount, crit, source, canCrit);
+      receiver.recordTaken(actual, target);
+      E.bridge.hit(E, receiver, target, actual, source);
+      if (source !== "effect:thorns" && target.arenaMain) {
+        let percent = receiver.stats.effects.thorns;
+        const power = receiver.stats.powers.vajraThorns;
+        if (power && target.buff) percent += power.percent;
+        const back = Math.round(amount * percent / 100);
+        if (back > 0 && actor.hp > 0)
+          receiver.reflect(actor, back);
+      }
+      if (target.arenaMain && target.hp <= 0) receiver.die();
+    };
+    // 対戦では討伐効果だけを再現。経験値・装備・記録・危険度・試練を進めない。
+    W.enemyDied = function(w, s, target) {
+      w.enemies = w.enemies.filter(e => e !== target);
+      WYD.lgems.onKill(w, s, target);
+      WYD.results.add(w, null, { kills: 1 });
+      const stats = WYD.stats.compute(s), p = w.player;
+      if (stats.effects.killHeal > 0 && p.hp > 0) W.healPlayer(w, stats.maxHp, Math.round(stats.maxHp * stats.effects.killHeal / 100), "effect:killHeal");
+      const be = stats.powers.bindExplode, kn = stats.powers.killNova;
+      if (be && target.stunTimer > 0 && p.hp > 0) W.explode(w, s, stats, target.x, target.y, be.radius, be.mult, be.color, "effect:bindExplode");
+      if (kn && p.hp > 0 && Math.random() * 100 < kn.chance) W.explode(w, s, stats, target.x, target.y, kn.radius, kn.mult, kn.color, "effect:killNova");
+    };
+    const spawn = WYD.allies.spawn;
+    WYD.allies.spawn = function(...args) {
+      const a = spawn.apply(this, args);
+      a.id = E.bridge.nextId(); a.kind = "arena:" + E.team + ":ally:" + a.id;
+      a.arenaTeam = E.team; a.arenaMain = false; a.stunTimer = 0;
+      return a;
+    };
+    // 遠隔弾と罠の判定を区別する（通常のスキル処理は変えない）。
+    for (const [host, key] of [[W, "updateBolts"], [WYD.traps, "update"]]) {
+      const original = host[key];
+      host[key] = function(...args) { E.projectile = true; try { return original.apply(this, args); } finally { E.projectile = false; } };
+    }
+  },
+  prepare() {
+    this.stats = WYD.stats.compute(this.state);
+    const p = this.world.player;
+    p.maxHp = this.stats.maxHp; p.hp = Math.min(p.hp, p.maxHp);
+    p.defense = this.stats.defense + (p.buff ? p.buff.defense : 0);
+    p.attack = this.stats.attack; p.color = WYD.data.player.color;
+    this.world.allies = this.world.allies.filter(a => a.hp > 0 && a.timeLeft > 0);
+  },
+  units() { return [this.world.player, ...this.world.allies].filter(u => u.hp > 0 && !this.world.player.dead); },
+  setEnemies(units) {
+    this.world.enemies = units.filter(e => e.arenaTeam !== this.team && e.hp > 0);
+    for (const e of this.world.enemies) WYD.data.enemies[e.kind] = { name: e.arenaMain ? e.arenaName : e.name || "召喚", radius: e.radius, color: e.color || "#bbb", image: e.image, poses: {} };
+  },
+  recordTaken(amount, target) {
+    this.taken = (this.taken || 0) + amount;
+    WYD.results.add(this.world, null, { taken: target.arenaMain ? amount : 0 });
+  },
+  reflect(actor, amount) {
+    // 反射の再帰はしない。反射した側に与ダメージ、攻撃者の側に被ダメージを残す。
+    const receiver = this.bridge.owner(actor), actual = Math.min(actor.hp, amount);
+    if (!receiver || !(actual > 0)) return;
+    WYD.data.enemies[actor.kind] = { name: actor.arenaName || "召喚", radius: actor.radius, color: actor.color || "#bbb", poses: {} };
+    this.nativeDamage.call(WYD.world, this.world, this.state, actor, amount, false, "effect:thorns", false);
+    receiver.recordTaken(actual, actor);
+    this.bridge.hit(this, receiver, actor, actual, "effect:thorns");
+    if (actor.arenaMain && actor.hp <= 0) receiver.die();
+  },
+  tick(dt) {
+    const w = this.world, s = this.state, p = w.player, W = WYD.world;
+    w.time = (w.time || 0) + dt;
+    // 敵は他フレームの本人。相手のアニメーション時計を重ねて進めない。
+    W.trackMotion({ ...w, enemies: [] }, dt); W.updateEffects(w, dt);
+    if (p.dead || p.hp <= 0) return;
+    WYD.results.tick(w, dt);
+    WYD.forms.update(w, dt); WYD.lgems.update(w, dt);
+    if (p.buff && (p.buff.timeLeft -= dt) <= 0) p.buff = null;
+    if (p.haste && (p.haste.timeLeft -= dt) <= 0) p.haste = null;
+    for (const id in p.auras || {}) if ((p.auras[id].timeLeft -= dt) <= 0) delete p.auras[id];
+    for (const id in p.skillCooldowns) p.skillCooldowns[id] = Math.max(0, p.skillCooldowns[id] - dt);
+    this.prepare();
+    W.healPlayer(w, this.stats.maxHp, this.stats.hpRegen * dt, "regen");
+    W.updateFields(w, s, this.stats, dt);
+    // 拘束中も設置済みの技・手下は動く。本人の新規詠唱と移動は止まる。
+    const stunned = p.stunTimer > 0;
+    p.stunTimer = Math.max(0, p.stunTimer - dt);
+    if (!stunned && p.hp > 0) W.updatePlayer(w, s, this.stats, dt);
+    if (p.dead || p.hp <= 0) { this.die(); return; }
+    W.updateBolts(w, s, this.stats, dt);
+    WYD.bombs.update(w, s, this.stats, dt);
+    WYD.mercenary.update(w, s, this.stats, dt);
+    WYD.allies.update(w, s, this.stats, dt);
+    WYD.traps.update(w, s, this.stats, dt);
+  },
+  die() {
+    const w = this.world;
+    w.player.dead = true; w.player.hp = 0;
+    w.allies = []; w.fields = []; w.traps = []; w.bolts = []; WYD.bombs.clear(w);
+  },
+  summary() {
+    const r = WYD.results.snapshot(this.world), elapsed = r.elapsed;
+    return { damage: r.damage, taken: this.taken || 0, healing: r.healing, crit: WYD.results.crit(r), elapsed,
+      rows: Object.entries(r.rows).map(([id, row]) => ({ ...row, ...WYD.results.source(id), id, crit: WYD.results.crit(row) })).sort((a, b) => b.damage - a.damage) };
+  },
+  drawGround(ctx) {
+    for (const f of this.world.fields) WYD.vfx.drawGround(ctx, f, this.world.time || 0);
+    WYD.traps.draw(ctx, this.world);
+  },
+  drawUnits(ctx) {
+    const w = this.world, R = WYD.render;
+    R.clock = w.time || 0;
+    WYD.allies.draw(ctx, w); R.drawPlayer(ctx, w.player); WYD.bombs.draw(ctx, w);
+    const r = WYD.data.player.rangedAttack;
+    for (const b of w.bolts) {
+      const img = WYD.vfx.img(r && r.texture || "fireball");
+      if (img && r) { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.ty - b.y, b.tx - b.x)); ctx.globalCompositeOperation = "lighter"; ctx.drawImage(img, -r.size * 4, -r.size * 2, r.size * 8, r.size * 4); ctx.restore(); }
+    }
+  },
+  drawEffects(ctx, limits) {
+    const w = this.world;
+    for (const ef of w.effects.slice(-limits.effectsPerTeam)) WYD.render.drawEffect(ctx, ef);
+    WYD.fx.draw(ctx, { ...w, particles: w.particles.slice(-limits.particlesPerTeam) });
+  },
+};

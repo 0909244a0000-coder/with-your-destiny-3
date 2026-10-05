@@ -14,6 +14,7 @@ window.WYD = window.WYD || {};
 
   WYD.ui.init(state, world);
   WYD.results.init(world);
+  WYD.arena.init();
   WYD.sound.init();
   WYD.ui.log("ようこそ野営地へ。装備とスキルを整え、「戦場へ」から冒険に出よう。", "#ffd447");
   const cls = WYD.data.classes[WYD.classes.id];
@@ -32,6 +33,7 @@ window.WYD = window.WYD || {};
   // タブを裏にしている間は画面が止まるので、戻ってきたときに放置ぶんを渡す
   let hiddenAt = null;
   document.addEventListener("visibilitychange", () => {
+    if (WYD.arena && WYD.arena.opened) { hiddenAt = null; return; }
     if (document.hidden) {
       hiddenAt = Date.now();
       if (!WYD.resetting) WYD.save.write(state);
@@ -46,10 +48,10 @@ window.WYD = window.WYD || {};
     // タブを切り替えたあと等に一気に進みすぎないよう、1回の経過時間に上限をつける
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    const steps = WYD.ui.paused ? 0 : state.settings.speed;   // 一時停止中は進めない
+    const steps = WYD.ui.paused || WYD.arena.opened ? 0 : state.settings.speed;   // 観戦中は冒険を止める
     const slow = steps ? WYD.world.timeScale(world, dt) : 1;   // ボスを倒した直後はゆっくり
     for (let i = 0; i < steps; i++) WYD.world.update(world, state, dt * slow);
-    WYD.render.draw(ctx, world, state);
+    if (!WYD.arena.opened) WYD.render.draw(ctx, world, state);
     WYD.music.update(state, world);
     WYD.ui.frame();
     requestAnimationFrame(loop);

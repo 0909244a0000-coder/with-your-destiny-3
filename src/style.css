@@ -1,4 +1,46 @@
 /* 画面の見た目 */
+/* アリーナ：操作を大きくし、画面全体を縦にスクロールして観戦する。 */
+.modal-box.arena-box { width: min(1120px, 96vw); max-width: 1120px; max-height: 90dvh; overflow-y: auto; padding: 20px; box-sizing: border-box; overscroll-behavior: contain; }
+.arena-heading { position: sticky; top: -20px; z-index: 2; background: #221e18; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #8e7145; }
+.arena-heading h2 { margin: 0 0 4px; }
+.arena-note, .arena-help { font-size: 13px; line-height: 1.7; }
+.arena-controls, .arena-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0; }
+.arena-box button, .arena-box select { min-height: 48px; padding: 10px 14px; }
+.arena-controls label { display: flex; align-items: center; gap: 8px; }
+.arena-roster { display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 8px; }
+.arena-roster-card { display: flex; gap: 8px; align-items: center; background: #16131a; border: 1px solid #5e4b36; padding: 8px; min-height: 64px; cursor: pointer; }
+.arena-roster-card:has(input:checked) { border-color: #d9a441; background: #2d251b; }
+.arena-roster-card.unavailable { opacity: .5; cursor: default; }
+.arena-roster-card input { width: 20px; height: 20px; flex-shrink: 0; }
+.arena-roster-card img { width: 38px; height: 48px; object-fit: contain; }
+.arena-roster-card small { display: block; color: #b8aa98; margin-top: 4px; }
+#arena-start { border-color: #e8bc69; background: #4b361e; }
+#arena-status { min-height: 24px; color: #e8bc69; font-weight: bold; }
+#arena-canvas { display: block; width: 100%; height: auto; border: 1px solid #8e7145; border-radius: 4px; }
+.arena-live { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin: 12px 0; }
+.arena-live-card { padding: 10px; border-left: 3px solid var(--team); background: #18151b; }
+.arena-live-card b span { color: var(--team); }
+.arena-live-card small { color: #c1b7a6; }
+.arena-hp { height: 6px; background: #09070b; margin: 8px 0; }
+.arena-hp i { display: block; background: var(--team); height: 100%; }
+.arena-result { margin-top: 10px; background: #19161d; border: 1px solid #554634; padding: 12px; }
+.arena-result summary { color: var(--team); cursor: pointer; min-height: 36px; font-weight: bold; }
+.arena-result p { font-size: 13px; line-height: 1.6; }
+.arena-breakdown { display: grid; gap: 6px; }
+.arena-breakdown > div { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; padding: 8px 0; border-bottom: 1px solid #3c3340; }
+.arena-breakdown span { display: flex; align-items: center; gap: 8px; }
+.arena-breakdown img { width: 28px; height: 28px; }
+.arena-breakdown small { grid-column: 1 / -1; color: #b8aa98; }
+@media (max-width: 600px) {
+  .modal-box.arena-box { width: calc(100vw - 12px); max-width: calc(100vw - 20px); padding: 12px; }
+  .arena-heading { top: -12px; }
+  .arena-heading h2 { font-size: 21px; }
+  .arena-roster, .arena-live { grid-template-columns: 1fr; }
+  .arena-controls label { width: 100%; justify-content: space-between; }
+  .arena-controls select { min-width: 170px; }
+  .arena-actions button { flex: 1; }
+  .arena-heading > div > span { font-size: 12px; }
+}
 :root {
   --bg: #15130f;
   --panel: #221e18;

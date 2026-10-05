@@ -121,6 +121,7 @@ WYD.ui = {
     };
     // キーボード：スペース＝一時停止、1・2・4＝速度（文字を入力している所では効かない）
     document.addEventListener("keydown", (e) => {
+      if (WYD.arena && WYD.arena.opened) return;
       if (e.target.closest && e.target.closest("input, select, textarea")) return;
       if (e.code === "Space") {
         e.preventDefault();

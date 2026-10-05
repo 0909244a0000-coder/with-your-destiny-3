@@ -38,6 +38,7 @@
         <button id="lgem-open" title="試練で手に入る特別な宝石。成功するたびにランクが上がる（Diablo 3 の伝説の宝石）">伝説の宝石</button>
         <button id="devotion-open" title="信仰ポイントで星座を埋めて強くなる（Grim Dawn の星座）">星座</button>
         <button id="codex-open" title="図鑑（集めたユニーク・セット装備）、記録、実績">図鑑と記録</button>
+        <button id="arena-open" title="自分の育成キャラ同士で1対1・バトルロワイヤル">バトルアリーナ</button>
       </div>
     </details>
     <details class="menu">
@@ -288,6 +289,26 @@
     </div>
   </div>
 
+  <div id="arena" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="arena-title">
+    <div class="modal-box arena-box">
+      <div class="arena-heading"><div><h2 id="arena-title">バトルアリーナ</h2><span class="muted">育てたキャラ同士で、自動対戦</span></div><button id="arena-close">閉じる ×</button></div>
+      <p class="arena-note">現在のキャラは今の構成、別キャラは最後に保存した構成を使用。レベル・装備・型・星座・箱・宝石・傭兵をそのままコピーし、全快で開戦します。冒険は一時停止。試合の報酬や消費はありません。</p>
+      <div class="arena-controls">
+        <label>モード <select id="arena-mode"><option value="duel">1対1</option><option value="royale">バトルロワイヤル</option></select></label>
+        <label>観戦速度 <select id="arena-speed"><option value="1">×1</option><option value="2">×2</option><option value="4">×4</option></select></label>
+        <button id="arena-refresh">参加キャラを再読込</button>
+      </div>
+      <details id="arena-picks" open><summary>参加キャラを選ぶ</summary><div id="arena-roster" class="arena-roster"></div></details>
+      <p id="arena-selection" class="muted"></p>
+      <div class="arena-actions"><button id="arena-start">開戦</button><button id="arena-pause" disabled>試合を停止</button><button id="arena-stop" disabled>中止</button></div>
+      <p id="arena-status" role="status" aria-live="polite"></p>
+      <canvas id="arena-canvas" aria-label="アリーナ戦闘画面"></canvas>
+      <div id="arena-live" class="arena-live"></div>
+      <div id="arena-results"></div>
+      <p class="muted arena-help">未育成のキャラは参加できません。上の「キャラ」で別職業を育てると追加されます。召喚・傭兵は同じ陣営。<span id="arena-time-limit"></span>秒で決着しなければ残った陣営は同順位です。</p>
+      <div id="arena-frames" hidden></div>
+    </div>
+  </div>
   <div id="modal" class="modal" hidden>
     <div class="modal-box">
       <h2 id="modal-title"></h2>
@@ -337,6 +358,7 @@
   <script src="data/bounties.js"></script>
   <script src="data/town.js"></script>
   <script src="data/bombmancer.js"></script>
+  <script src="data/arena.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
   <script src="src/save.js"></script>
@@ -377,6 +399,7 @@
   <script src="src/render.js"></script>
   <script src="src/ui.js"></script>
   <script src="src/results.js"></script>
+  <script src="src/arena.js"></script>
   <script src="src/main.js"></script>
 </body>
 </html>
