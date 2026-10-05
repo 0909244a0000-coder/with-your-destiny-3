@@ -41,7 +41,11 @@ WYD.world = {
   // 1コマ分すすめる（dt = 経過秒数）
   update(w, state, dt) {
     // 未受取が増え続けてセーブを圧迫しないよう、受け取るまで戦闘を止める。
-    if ((state.pendingLoot || []).length >= WYD.data.items.pendingLootLimit) return;
+    if ((state.pendingLoot || []).length >= WYD.data.items.pendingLootLimit) {
+      // 戦闘停止中も入場演出は完了させる。暗転を残したままにしない。
+      this.updateEntrance(w, dt);
+      return;
+    }
     const stats = WYD.stats.compute(state);
     const p = w.player;
     if (p.hp === null) p.hp = stats.maxHp;
@@ -207,7 +211,7 @@ WYD.world = {
   },
 
   // 階の移り変わり：数を倒したら降りる、ボスを倒したらしばらくして地下1階へ
-  updateFloors(w, state, dt) {
+  updateEntrance(w, dt) {
     if (w.banner) {
       w.banner.time += dt;
       if (w.banner.time > 2.5) w.banner = null;
@@ -216,6 +220,10 @@ WYD.world = {
       w.bossIntro.time += dt;
       if (w.bossIntro.time > WYD.data.boss.intro.time) w.bossIntro = null;
     }
+  },
+
+  updateFloors(w, state, dt) {
+    this.updateEntrance(w, dt);
     if (w.descendNext && !w.breach) {   // 裂け目が開いている間は、閉じてから降りる
       w.descendNext = false;
       this.changeFloor(w, state, 1);
