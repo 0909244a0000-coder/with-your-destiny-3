@@ -174,7 +174,7 @@ WYD.loot = {
   // 固有能力の説明文（{名前} を params の数値に置きかえる）
   uniqueDesc(def) {
     return def.desc
-      .replace(/\{skill:(\w+)\}/g, (all, kind) => WYD.classes.skillNameByKind(kind))
+      .replace(/\{skill:(\w+)\}/g, (all, kind) => WYD.classes.skillNameByKind(kind) + (WYD.classes.hasKind(kind) ? "" : "（この職業では発動しない）"))
       .replace(/\{(\w+)\}/g, (all, key) => (key in def.params ? String(def.params[key]) : all));
   },
 

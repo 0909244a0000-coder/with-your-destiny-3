@@ -5,6 +5,8 @@ window.WYD = window.WYD || {};
 WYD.classes = {
   ACTIVE_KEY: "wyd3-active-class",
   id: "barbarian",
+  // applyで職業別データに置き換える前の技名を、対象外装備の説明用に残す。
+  baseSkills: WYD.data.skills,
 
   activeId() {
     let id = null;
@@ -63,6 +65,11 @@ WYD.classes = {
     for (const id in WYD.data.skills) {
       if (this.kindOf(id) === kind) return WYD.data.skills[id].name;
     }
-    return kind;
+    for (const skills of [this.baseSkills, ...Object.values(WYD.data.classes).map(c => c.skills)]) {
+      for (const id in skills || {}) {
+        if (id === kind || (skills[id].kind || id) === kind) return skills[id].name;
+      }
+    }
+    return "未対応のスキル";
   },
 };
