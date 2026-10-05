@@ -18,7 +18,9 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
     for (const id of ids) {
       await page.evaluate(id => { localStorage.setItem('wyd3-active-class', id); WYD.resetting = true; }, id);
       await page.reload();
-      fixtures[id] = await page.evaluate(() => {
+      fixtures[id] = await page.evaluate(seed => {
+        let random = seed;
+        Math.random = () => { random = (1664525 * random + 1013904223) >>> 0; return random / 4294967296; };
         WYD.resetting = true;
         const s = WYD.save.newState(); s.seenHelp = true; s.player.level = 40;
         s.settings.autoSkill = false; s.settings.autoEquip = false; s.settings.speed = 0;
@@ -35,7 +37,7 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
         const def = defs.find(d => !Object.values(s.equipment).some(it => it.unique === d.id));
         if (def) { s.cube.learned[def.id] = true; s.cube.slots[WYD.cube.slotOf(def)] = def.id; }
         return s;
-      });
+      }, 20261005 + ids.indexOf(id));
     }
     await page.evaluate(fixtures => {
       WYD.resetting = true;
@@ -58,7 +60,7 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
         let ticks = 0; while (A.running && ticks++ < 3601) A.advance();
         const sums = A.fighters.map(f => f.engine.summary());
         if (A.running || sums.some(r => !Number.isFinite(r.damage) || !Number.isFinite(r.taken)) || Math.abs(sums.reduce((a,r)=>a+r.damage-r.taken,0)) > .01) throw Error('対戦・集計異常');
-        A.draw(); out.push({ pair: ids[i] + '/' + ids[j], repeat, time: +A.time.toFixed(2), reason: A.reason });
+        A.draw(); out.push({ pair: ids[i] + '/' + ids[j], repeat, time: +A.time.toFixed(2), reason: A.reason, winner: A.reason === 'winner' ? A.fighters.find(f=>f.eliminatedAt==null).entry.id : null, fighters: A.fighters.map(f=>{const r=f.engine.summary();return{id:f.entry.id,rank:f.rank,damage:r.damage,taken:r.taken,healing:r.healing,crit:r.crit};}) });
       }
       return out;
     }, ids);
@@ -109,15 +111,16 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
       EA.setEnemies(EB.units()); EB.setEnemies(EA.units());
       EA.stats.effects.thorns = 0; EB.stats.effects.thorns = 0; EA.stats.powers = {}; EB.stats.powers = {};
       const friend = p.hp; D.world.damageEnemy(w,s,p,10,false); const friendlyFire = p.hp === friend;
-      const h = target.hp; D.world.damageEnemy(w,s,target,10,false); const hit = target.hp === h - 10;
-      EB.stats.effects.thorns = 100; const ah = p.hp; D.world.damageEnemy(w,s,target,10,false); const reflect = p.hp === ah - 10;
+      const C = D.data.arena.combat, near=(a,b)=>Math.abs(a-b)<1e-7;
+      const h = target.hp; D.world.damageEnemy(w,s,target,10,false); const hit = near(target.hp,h-10*C.damageScale);
+      EB.stats.effects.thorns = 100; const ah = p.hp; D.world.damageEnemy(w,s,target,10,false); const reflect = near(p.hp,ah-10*C.damageScale*C.reflectScale);
       // 両者に反射があっても再帰しない。
-      EA.stats.effects.thorns = 100; const both = target.hp; D.world.damageEnemy(w,s,target,10,false); const noRecursion = target.hp === both - 10;
+      EA.stats.effects.thorns = 100; const both = target.hp; D.world.damageEnemy(w,s,target,10,false); const noRecursion = near(target.hp,both-10*C.damageScale);
       EB.stats.effects.thorns = 0; EB.stats.powers.projectileWard = { chance: 100, color: '#fff' }; EA.projectile = true;
       p.hp = EA.stats.maxHp / 2; EA.stats.effects.lifesteal = 100; D.world.castExtra = { bind: 2, lifesteal: 100 };
       const ph = p.hp, th = target.hp; D.world.playerHit(w,s,EA.stats,target,100,'attack');
       const ward = p.hp === ph && target.hp === th && !target.stunTimer;
-      EA.projectile = false; D.world.playerHit(w,s,EA.stats,target,20,'attack'); const bind = target.stunTimer === 2;
+      EA.projectile = false; D.world.playerHit(w,s,EA.stats,target,20,'attack'); const bind = target.stunTimer === Math.min(2*C.bindScale,C.bindMax);
       D.world.castExtra = null; EB.stats.powers = {}; EB.world.player.stunTimer = 2;
       const xy = [target.x,target.y], cooldown = target.attackTimer; EB.tick(.05);
       const stun = target.x === xy[0] && target.y === xy[1] && target.attackTimer === cooldown;
@@ -127,7 +130,8 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
       // 生存者の順位は時間切れで同じ。攻撃しない強制拘束で時間切れを検証。
       for(const f of A.fighters) { f.engine.world.player.stunTimer=1000; f.engine.world.allies=[]; f.engine.state.mercenary.type=null; }
       A.time = WYD.data.arena.timeLimit; A.advance(); const timeout = A.reason === 'timeout' && A.fighters.every(f=>f.rank===1);
-      p.hp=1; target.hp=1; p.dead=false; target.dead=false; EB.stats.effects.thorns=100; D.world.playerHit(w,s,EA.stats,target,100,'attack'); D.world.healPlayer(w,EA.stats.maxHp,100,'regen'); const fatalReflection=p.dead && target.dead && p.hp===0 && target.hp===0;
+      D.world.enemyDied=(w,s,e)=>{w.enemies=w.enemies.filter(x=>x!==e);}; // 撃破時の事前回復を除き、死後の吸血だけを確認。
+      p.hp=.01; target.hp=1; p.dead=false; target.dead=false; EA.incoming=new WeakMap();EB.incoming=new WeakMap(); EB.stats.effects.thorns=100; D.world.playerHit(w,s,EA.stats,target,100,'attack'); D.world.healPlayer(w,EA.stats.maxHp,100,'regen'); const fatalReflection=p.dead && target.dead && p.hp===0 && target.hp===0;
       return { friendlyFire, hit, reflect, noRecursion, ward, bind, stun, memory, pause, timeout, fatalReflection };
     });
     for (const [k,v] of Object.entries(mechanics)) { assert.equal(v,true,k); console.log('ok', k); }

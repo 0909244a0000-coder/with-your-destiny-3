@@ -3,6 +3,7 @@ window.WYD = window.WYD || {};
 WYD.arenaEngine = {
   init(classId, snapshot, team, color, bridge) {
     this.team = team; this.bridge = bridge;
+    this.incoming = new WeakMap();
     WYD.classes.activeId = () => classId;
     WYD.classes.apply();
     // localStorage は arena-engine.html 冒頭でメモリへ置換済み。移行もコピーにだけ行う。
@@ -21,6 +22,7 @@ WYD.arenaEngine = {
     WYD.data.player.color = color;
     const p = this.world.player;
     Object.assign(p, { id: bridge.nextId(), kind: "arena:" + team + ":hero", arenaTeam: team, arenaMain: true, radius: WYD.data.player.radius, stunTimer: 0 });
+    this.bindControl(p);
     p.hp = WYD.stats.compute(this.state).maxHp;
     this.installCombat();
     const P = WYD.data.player;
@@ -33,10 +35,22 @@ WYD.arenaEngine = {
     const damage = W.damageEnemy;
     E.nativeDamage = damage;
     const heal = W.healPlayer;
-    W.healPlayer = function(w, ...args) { if (!w.player.dead) return heal.call(this, w, ...args); };
+    W.healPlayer = function(w, maxHp, amount, source) {
+      if (w.player.dead) return;
+      const hit = E.hitContext;
+      // 吸血は軽減後に実際に奪ったHPを基準にする（超過ダメージでも回復しない）。
+      if (hit && (source === "effect:lifesteal" || (source === hit.source && hit.extraLifesteal))) amount *= hit.raw > 0 ? hit.actual / hit.raw : 0;
+      return heal.call(this, w, maxHp, amount * E.healFactor(), source);
+    };
     for (const key of Object.keys(W.skillHandlers)) {
       const handler = W.skillHandlers[key];
-      W.skillHandlers[key] = function(...args) { return E.world.player.dead ? false : handler.apply(this, args); };
+      W.skillHandlers[key] = function(...args) {
+        if (E.world.player.dead) return false;
+        const allies = key === "aura" && args[3].auraType === "heal" ? E.world.allies.map(a => [a, a.hp]) : [];
+        const used = handler.apply(this, args);
+        for (const [a, before] of allies) if (a.hp > before) a.hp = before + (a.hp - before) * E.healFactor();
+        return used;
+      };
     }
     E.blocked = function(w, target, actor, source) {
       const receiver = E.bridge.owner(target);
@@ -51,9 +65,11 @@ WYD.arenaEngine = {
       if (!target || target.hp <= 0 || target.arenaTeam === E.team || w.player.dead) return;
       // 無効化した弾では吸血・拘束・命中時の宝石も発動させない。
       if (E.blocked(w, target, w.player, source)) return;
+      const previous = E.hitContext;
+      E.hitContext = { target, source: source || (this.hitSkill ? "skill:" + this.hitSkill : "attack"), raw: 0, actual: 0, extraLifesteal: !!(this.castExtra && this.castExtra.lifesteal) };
       E.wardChecked = true;
       try { return playerHit.call(this, w, s, stats, target, attack, source); }
-      finally { E.wardChecked = false; }
+      finally { E.wardChecked = false; E.hitContext = previous; }
     };
     const explode = W.explode;
     W.explode = function(...args) {
@@ -66,15 +82,21 @@ WYD.arenaEngine = {
       if (!receiver || receiver.world.player.dead) return;
       // 弾をはじく装備：通常遠隔弾・遠隔召喚・罠射撃に適用。範囲/反射には適用しない。
       if (!E.wardChecked && E.blocked(w, target, actor, source)) return;
+      const raw = amount;
+      const C = WYD.data.arena.combat;
+      amount = receiver.limitDamage(target, amount * (target.arenaMain ? C.damageScale : C.summonDamageScale) * E.pressureDamage());
       const actual = Math.min(target.hp, amount);
-      damage.call(this, w, s, target, amount, crit, source, canCrit);
+      if (E.hitContext && E.hitContext.target === target) Object.assign(E.hitContext, { raw, actual });
+      if (!(actual > 0)) return;
+      damage.call(this, w, s, target, actual, crit, source, canCrit);
       receiver.recordTaken(actual, target);
       E.bridge.hit(E, receiver, target, actual, source);
       if (source !== "effect:thorns" && target.arenaMain) {
         let percent = receiver.stats.effects.thorns;
         const power = receiver.stats.powers.vajraThorns;
         if (power && target.buff) percent += power.percent;
-        const back = Math.round(amount * percent / 100);
+        const C = WYD.data.arena.combat;
+        const back = actual * Math.min(C.reflectRatioCap, percent / 100 * C.reflectScale);
         if (back > 0 && actor.hp > 0)
           receiver.reflect(actor, back);
       }
@@ -96,6 +118,7 @@ WYD.arenaEngine = {
       const a = spawn.apply(this, args);
       a.id = E.bridge.nextId(); a.kind = "arena:" + E.team + ":ally:" + a.id;
       a.arenaTeam = E.team; a.arenaMain = false; a.stunTimer = 0;
+      E.bindControl(a);
       return a;
     };
     // 遠隔弾と罠の判定を区別する（通常のスキル処理は変えない）。
@@ -103,6 +126,40 @@ WYD.arenaEngine = {
       const original = host[key];
       host[key] = function(...args) { E.projectile = true; try { return original.apply(this, args); } finally { E.projectile = false; } };
     }
+  },
+  pressure() {
+    const C = WYD.data.arena.combat;
+    return WYD.util.clamp((this.bridge.time() - C.pressureStart) / C.pressureRamp, 0, 1);
+  },
+  pressureDamage() { return 1 + this.pressure() * (WYD.data.arena.combat.pressureDamageMax - 1); },
+  healFactor() {
+    const C = WYD.data.arena.combat;
+    return C.healScale * (1 - this.pressure() * (1 - C.pressureHealMin));
+  },
+  limitDamage(target, amount) {
+    const C = WYD.data.arena.combat, now = this.bridge.time();
+    const log = (this.incoming.get(target) || []).filter(x => x.t > now - C.windowSeconds);
+    const perWindow = target.arenaMain ? C.windowHpCap : C.summonWindowHpCap;
+    const perHit = target.arenaMain ? C.hitHpCap : C.summonHitHpCap;
+    const room = Math.max(0, target.maxHp * perWindow * this.pressureDamage() - log.reduce((sum, x) => sum + x.d, 0));
+    const actual = Math.max(0, Math.min(amount, target.hp, target.maxHp * perHit * this.pressureDamage(), room));
+    if (actual > 0) log.push({ t: now, d: actual });
+    this.incoming.set(target, log);
+    return actual;
+  },
+  bindControl(unit) {
+    const E = this, C = WYD.data.arena.combat;
+    let timer = 0, immuneUntil = 0;
+    Object.defineProperty(unit, "stunTimer", { enumerable: true, configurable: true,
+      get: () => timer,
+      set(value) {
+        if (!Number.isFinite(value)) return;
+        if (value <= timer) { timer = Math.max(0, value); return; }
+        if (timer > 0 || E.bridge.time() < immuneUntil) return;
+        timer = Math.min(value * C.bindScale, C.bindMax);
+        immuneUntil = E.bridge.time() + timer + C.bindImmunity;
+      },
+    });
   },
   prepare() {
     this.stats = WYD.stats.compute(this.state);
@@ -123,10 +180,10 @@ WYD.arenaEngine = {
   },
   reflect(actor, amount) {
     // 反射の再帰はしない。反射した側に与ダメージ、攻撃者の側に被ダメージを残す。
-    const receiver = this.bridge.owner(actor), actual = Math.min(actor.hp, amount);
+    const receiver = this.bridge.owner(actor), actual = receiver && receiver.limitDamage(actor, amount);
     if (!receiver || !(actual > 0)) return;
     WYD.data.enemies[actor.kind] = { name: actor.arenaName || "召喚", radius: actor.radius, color: actor.color || "#bbb", poses: {} };
-    this.nativeDamage.call(WYD.world, this.world, this.state, actor, amount, false, "effect:thorns", false);
+    this.nativeDamage.call(WYD.world, this.world, this.state, actor, actual, false, "effect:thorns", false);
     receiver.recordTaken(actual, actor);
     this.bridge.hit(this, receiver, actor, actual, "effect:thorns");
     if (actor.arenaMain && actor.hp <= 0) receiver.die();

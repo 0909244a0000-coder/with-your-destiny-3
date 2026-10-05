@@ -6,6 +6,8 @@ WYD.arena = {
     const $ = id => document.getElementById(id);
     this.$ = $;
     $("arena-time-limit").textContent = WYD.data.arena.timeLimit;
+    const C = WYD.data.arena.combat;
+    $("arena-rule-summary").textContent = `開戦時：本人へのダメージは本編の${C.damageScale * 100}%、一撃は最大HPの${C.hitHpCap * 100}%まで、${C.windowSeconds}秒の合計は${C.windowHpCap * 100}%まで。召喚・傭兵へのダメージは${C.summonDamageScale * 100}%。回復は${C.healScale * 100}%。吸血・反射は実際に奪ったHPから計算し、反射率は本編の${C.reflectScale * 100}%（最大${C.reflectRatioCap * 100}%）。拘束は最大${C.bindMax}秒、解除後${C.bindImmunity}秒は再拘束なし。${C.pressureStart}秒から消耗が進み、${C.pressureStart + C.pressureRamp}秒で火力補正・ダメージ上限が最大${C.pressureDamageMax}倍、回復は開戦時の${C.pressureHealMin * 100}%になります。`;
     $("arena-speed").innerHTML = WYD.data.arena.speeds.map(speed => `<option value="${speed}">×${speed}</option>`).join("");
     $("arena-open").onclick = () => this.open();
     $("arena-close").onclick = () => this.close();
@@ -124,6 +126,7 @@ WYD.arena = {
     this.bridge = {
       images: WYD.render.images,
       getImage: src => WYD.render.getImage(src),
+      time: () => this.time || 0,
       nextId: () => this.unitSerial++,
       owner: unit => this.fighters.find(f => f.team === unit.arenaTeam)?.engine,
       hit: (attacker, receiver, target, amount, source) => { this.lastHit = { from: attacker.team, to: receiver.team, amount, source }; },
@@ -200,7 +203,7 @@ WYD.arena = {
     this.lastRefresh = now;
     const esc = WYD.results.escape, n = WYD.results.number;
     const alive = this.fighters.filter(f => f.eliminatedAt == null);
-    if (this.running) this.$("arena-status").textContent = `${WYD.data.arena.modes[this.mode].name} · ${this.time.toFixed(1)}秒 / ${WYD.data.arena.timeLimit}秒 · 残り${alive.length}陣営`;
+    if (this.running) this.$("arena-status").textContent = `${WYD.data.arena.modes[this.mode].name} · ${this.time.toFixed(1)}秒 / ${WYD.data.arena.timeLimit}秒 · 残り${alive.length}陣営${this.time >= WYD.data.arena.combat.pressureStart ? " · 消耗：火力↑ 回復↓" : ""}`;
     else if (this.reason) this.$("arena-status").textContent = this.reason === "winner" ? `${alive[0].entry.name}の勝利！ ${this.time.toFixed(1)}秒` : this.reason === "timeout" ? `時間切れ。残った${alive.length}陣営は同順位です。` : "相打ち・引き分け！";
     this.$("arena-live").innerHTML = this.fighters.map((f, i) => {
       const p = f.engine.world.player, r = f.engine.summary(), hp = Math.max(0, p.hp);
