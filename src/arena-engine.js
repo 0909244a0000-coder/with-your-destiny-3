@@ -217,6 +217,7 @@ WYD.arenaEngine = {
   die() {
     const w = this.world;
     w.player.dead = true; w.player.hp = 0;
+    WYD.classSpecialization.clear(w);
     w.allies = []; w.fields = []; w.traps = []; w.bolts = []; WYD.bombs.clear(w);
   },
   summary() {
@@ -227,6 +228,7 @@ WYD.arenaEngine = {
   drawGround(ctx) {
     for (const f of this.world.fields) WYD.vfx.drawGround(ctx, f, this.world.time || 0);
     WYD.traps.draw(ctx, this.world);
+    WYD.classSpecialization.draw(ctx, this.world);
   },
   drawUnits(ctx) {
     const w = this.world, R = WYD.render;

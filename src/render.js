@@ -126,6 +126,7 @@ WYD.render = {
     // 奥（画面の上）にいるものから描く（手前のキャラが奥のキャラにかぶさるように）
     WYD.breach.draw(ctx, w);   // 裂け目は敵の下に
     WYD.traps.draw(ctx, w);
+    WYD.classSpecialization.draw(ctx, w);
     // 倒れた敵：横にたおれながら沈んで消える
     const CO = WYD.data.fx.corpse;
     for (const c of w.corpses || []) {

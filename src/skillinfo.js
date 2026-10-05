@@ -78,6 +78,8 @@ WYD.skillInfo = {
     });
     if (!parts.length) return "";
     const head = lv > 0 ? "" : "<span class=\"muted\">覚えると：</span>";
-    return `<div class="skill-info">${head}${parts.join("　")}</div>`;
+    const rule = WYD.data.classSpecialization && WYD.data.classSpecialization.skills[id];
+    const remains = id === "nec_nova" && rule ? `　屍体 ${(WYD.currentWorld.necRemains || []).length}/${rule.maxCorpses}` : "";
+    return `<div class="skill-info">${head}${parts.join("　")}${rule ? `<br>${rule.note}${remains}` : ""}</div>`;
   },
 };

@@ -4,7 +4,9 @@ WYD.bombs = {
   clear(w) { w.bombs = []; },
   cast(w, state, stats, s, lv) {
     const list = w.bombs || (w.bombs = []), p = w.player;
-    const targets = w.enemies.filter(e => e.hp > 0 && WYD.util.dist(p, e) <= s.range).sort((a, b) => WYD.util.dist(p, a) - WYD.util.dist(p, b));
+    const marked = e => list.some(b => b.mode === "brand" && b.target === e);
+    const targets = w.enemies.filter(e => e.hp > 0 && WYD.util.dist(p, e) <= s.range).sort((a, b) =>
+      (s.mode === "hunter" && WYD.data.classSpecialization ? Number(marked(b)) - Number(marked(a)) : 0) || WYD.util.dist(p, a) - WYD.util.dist(p, b));
     if (!targets.length) return false;
     const source = WYD.world.castingId;
     const mult = (s.damageBase + s.damagePerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
@@ -19,7 +21,9 @@ WYD.bombs = {
     if (s.mode === "finale") {
       const armed = list.filter(b => !b.triggered && (b.mode === "brand" || b.mode === "mine"));
       // 既存の爆弾の威力を使い、一度だけ増幅。持ち主のスキル別に集計する。
-      if (armed.length) armed.forEach((b, i) => { b.timer = Math.min(b.timer, i * WYD.data.bombs.chainDelay); b.triggered = true; b.attack *= s.chainBoost; b.extra = this.combineExtra(b.extra, WYD.runes.extra(state, source)); });
+      const R = WYD.data.classSpecialization && WYD.data.classSpecialization.skills.bomb_finale;
+      const boost = s.chainBoost + (R ? Math.min(armed.length, R.maxBonusBombs) * R.perBomb : 0);
+      if (armed.length) armed.forEach((b, i) => { b.timer = Math.min(b.timer, i * WYD.data.bombs.chainDelay); b.triggered = true; b.attack *= boost; b.extra = this.combineExtra(b.extra, WYD.runes.extra(state, source)); });
       // 起爆ボタンだけでも使えるが、既存爆弾がある時に威力を発揮する。
       if (list.length < WYD.data.bombs.maxActive) { add(targets[0], "brand"); list[list.length - 1].timer = 0; }
       return true;
