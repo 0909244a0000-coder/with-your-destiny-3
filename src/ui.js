@@ -26,6 +26,10 @@ WYD.ui = {
     // 操作バーの折り返しや文字サイズに合わせ、下のHUDを重ねない。
     const updateHudLayout = () => {
       const root = document.documentElement.style;
+      const canvasRect = this.$('game').getBoundingClientRect();
+      const scale = Math.min(canvasRect.width / WYD.data.map.width, canvasRect.height / WYD.data.map.height);
+      root.setProperty('--field-side', `${Math.max(0, (innerWidth - WYD.data.map.width * scale) / 2)}px`);
+      root.setProperty('--field-bottom', `${Math.max(0, (innerHeight - WYD.data.map.height * scale) / 2)}px`);
       const header = document.querySelector('.hud-top');
       const actions = document.querySelector('.stage-btns');
       const bagHead = document.querySelector('.bag-head');
@@ -1040,6 +1044,9 @@ WYD.ui = {
       this.renderPanels();
     }
     this.updateBars();
+    const skillCanvas = this.$("hud-skills"), skillCtx = skillCanvas.getContext("2d");
+    skillCtx.clearRect(0, 0, skillCanvas.width, skillCanvas.height);
+    WYD.render.drawSkillBar(skillCtx, this.world, this.state, true);
     WYD.runeSkillsUI.renderActive();
     WYD.results.render(this.world);
   },
@@ -1047,7 +1054,7 @@ WYD.ui = {
   updateBars() {
     const s = this.state;
     const dps = Math.round(WYD.world.dps(this.world));
-    this.$("dps").textContent = `秒間ダメージ（直近${WYD.data.combat.dpsWindow}秒）：${dps.toLocaleString()}`;
+    this.$("dps").textContent = `DPS ${dps.toLocaleString()}`;
     const stats = WYD.stats.compute(s);
     const hp = Math.max(0, Math.round(this.world.player.hp || 0));
     this.$("hp-bar").style.width = `${(hp / stats.maxHp) * 100}%`;

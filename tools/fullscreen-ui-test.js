@@ -15,6 +15,8 @@ const path = require('node:path');
     await page.evaluate(() => {
       WYD.state.player.level = 50;
       WYD.state.player.paragon.points = 100;
+      WYD.state.player.paragon.level = 133;
+      WYD.data.skillOrder.slice(0,3).forEach(id => { WYD.state.player.skills[id]=1; WYD.state.player.skillEnabled[id]=true; });
       WYD.state.cleared = true;
       WYD.ui.renderPanels();
       document.getElementById('trial-group').hidden = false;
@@ -44,6 +46,17 @@ const path = require('node:path');
       assert.equal(layout.canvasFit,'contain');
       assert(layout.buttons.some(b => b.id === 'dps-open'), '縦画面でもDPSテストへ到達');
       for (const button of layout.buttons) assert(button.inView && button.clickable, `${width}×${height} ${JSON.stringify(button)}`);
+      await page.locator('#game-log-panel summary').click();
+      const dock = await page.evaluate(() => {
+        const rect = sel => document.querySelector(sel).getBoundingClientRect();
+        const hp=rect('.live-vitals'), skills=rect('#hud-skills'), log=rect('.game-log'), panel=rect('.combat-panel'), actions=rect('.stage-btns');
+        const separate=(a,b)=>a.right<=b.left || b.right<=a.left || a.bottom<=b.top || b.bottom<=a.top;
+        const side=parseFloat(document.documentElement.style.getPropertyValue('--field-side'));
+        return {separate:separate(hp,skills)&&separate(log,hp)&&separate(log,skills),inView:log.top>=0&&panel.bottom<=innerHeight&&panel.left>=0&&panel.right<=innerWidth,actionsInside:innerWidth<=900||actions.right<=innerWidth-side};
+      });
+      assert(dock.separate && dock.inView && dock.actionsInside, JSON.stringify({width,height,dock}));
+      if(width===1920) await page.screenshot({path:'/tmp/hud-layout.png'});
+      await page.locator('#game-log-panel summary').click();
       await page.locator('#character-open').click();
       await assert.doesNotReject(() => page.locator('#rune-open').click());
       assert(await page.locator('#rune-lab').isVisible());

@@ -541,7 +541,8 @@ WYD.render = {
 
   // 主人公の頭の上のHPの棒（HPが減ると赤くなる）
   // 左下のスキルの並び：絵（なければスキルの色と頭の1文字）、残り時間の影、使った瞬間の光る枠
-  drawSkillBar(ctx, w, state) {
+  drawSkillBar(ctx, w, state, dock = false) {
+    if (!dock && ctx.canvas.id === "game" && document.getElementById("hud-skills")) return;
     const B = WYD.data.map.skillBar;
     const p = w.player, pl = state.player;
     const ids = WYD.data.skillOrder.filter((id) => (pl.skills[id] || 0) > 0 && pl.skillEnabled[id]);
@@ -549,10 +550,10 @@ WYD.render = {
     if(rune) ids.push("rune");
     // スマホなどで画面が縮んで見えるときは、そのぶん大きく描く
     const shown = ctx.canvas.clientWidth / WYD.data.map.width || 1;
-    const size = Math.max(B.size, Math.round(B.minShownPx / shown));
-    const y = WYD.data.map.height - B.bottom - size;
+    const size = dock ? 44 : Math.max(B.size, Math.round(B.minShownPx / shown));
+    const y = dock ? 3 : WYD.data.map.height - B.bottom - size;
     ids.forEach((id, i) => {
-      const x = B.x + i * (size + B.gap);
+      const x = (dock ? 3 : B.x) + i * (size + B.gap);
       const def = id === "rune" ? {name:"ル",color:WYD.runeSkills.def("element",rune.element).color} : WYD.data.skills[id];
       ctx.fillStyle = B.back;
       ctx.fillRect(x, y, size, size);

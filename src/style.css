@@ -824,3 +824,31 @@ body.drawer-open .game-screen::after { opacity:1; pointer-events:auto; }
   .game-log { bottom:calc(var(--actions-height,96px) + 122px); }
   .world-plaque { top:calc(var(--hud-bottom,100px) + 12px); }
 }
+
+/* HP・スキル・ログは同じフローに置き、成長後の長い表示でも重ねない。 */
+.combat-dock { position:fixed; z-index:4; left:50%; transform:translateX(-50%); bottom:calc(var(--field-bottom,0px) + 10px); width:min(640px,calc(100vw - 24px)); display:grid; gap:4px; }
+.combat-panel { display:grid; grid-template-columns:minmax(0,1fr) 220px; align-items:center; gap:20px; padding:24px 36px; background:url('../assets/ui/combat-panel.webp') center / 100% 100% no-repeat; }
+.combat-dock .live-vitals { position:static; width:auto; min-width:0; padding:0; border:0; background:none; box-shadow:none; backdrop-filter:none; }
+.combat-dock .live-vitals-head { display:grid; gap:2px; font-size:12px; }
+.combat-dock #char-name { overflow-wrap:anywhere; }
+.combat-dock #dps { font-size:10px; white-space:nowrap; }
+.combat-dock .game-log { position:static; width:100%; margin:0; box-sizing:border-box; }
+.combat-dock .game-log #log { max-height:min(110px,18vh); }
+.combat-skills { min-width:0; display:grid; gap:4px; }
+.combat-skills > span { color:#c5b28a; font-size:10px; letter-spacing:.12em; }
+#hud-skills { display:block; width:220px; height:50px; max-width:100%; }
+@media (min-width:901px) {
+ .stage-btns { right:calc(var(--field-side,0px) + 14px); max-width:calc(100vw - 2 * var(--field-side,0px) - 28px); }
+}
+@media (max-width:900px) {
+ .combat-dock { bottom:10px; width:min(600px,calc(100vw - 16px)); }
+ .combat-panel { padding:18px 28px; gap:12px; }
+}
+@media (max-width:900px) and (orientation:portrait) {
+ .combat-dock { bottom:calc(var(--actions-height,96px) + 26px); }
+}
+@media (max-width:520px) {
+ .combat-panel { grid-template-columns:minmax(0,1fr) 150px; gap:8px; padding:20px 22px; }
+ #hud-skills { width:150px; height:auto; }
+ .combat-dock .live-vitals-head { font-size:10px; }
+}
