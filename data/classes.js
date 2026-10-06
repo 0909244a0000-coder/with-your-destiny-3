@@ -134,7 +134,7 @@ WYD.data.classes = {
     },
     skills: {
       nec_raise: {
-        kind: "raise", name: "骸骨召喚",
+        kind: "raise", name: "骸骨召喚", hudLabel: "骸骨",
         desc: "骸骨の戦士を呼び出す。手下は敵を殴り、敵の攻撃も引きつける。時間がたつと崩れる。",
         startLevel: 1, maxLevel: 10, cooldown: 3,
         countBase: 2, countPerLevel: 0.35,     // 呼べる数（レベルごとに足して、小数は切り捨て）
@@ -151,7 +151,7 @@ WYD.data.classes = {
         imageFilter: null,
       },
       nec_mage: {
-        kind: "raise", name: "骸骨の魔術師",
+        kind: "raise", name: "骸骨の魔術師", hudLabel: "魔術師",
         desc: "遠くから魔法を撃つ骸骨を呼び出す。戦士より打たれ弱いが、離れたところから攻撃する。",
         startLevel: 0, maxLevel: 10, cooldown: 4,
         countBase: 1, countPerLevel: 0.25,

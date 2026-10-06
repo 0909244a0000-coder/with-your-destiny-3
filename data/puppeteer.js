@@ -29,6 +29,7 @@ WYD.data.mastery.perLevel.puppet = { maxHp: 3, defense: 0.6 };
 WYD.data.puppeteer = {
   puppet: { hpPerBodyHp: 2, hpPerDefense: 4, attackPerBodyAttack: 0.55, attackPerBodyHp: 0.16, attackPerDefense: 0.75,
     defensePerBodyDefense: 1, moveSpeed: 145, attackSpeed: 0.9, range: 28, radius: 14, followDistance: 58, firstAttackDelay: 0.35,
+    hudLabel: "人形", // HPバー横の召喚表示の名前
     color: "#9b8f86", visualScale:1.35, duration:3600, spawnSpread:38, hpRatio:1, defenseRatio:1, image: "assets/ally_puppet.png", poses: { attack: "assets/ally_puppet_attack.png" } },
   respawnCooldown: 6, summonCost: 4, lowHpReserve: 0.15, stitchRange:220,
   // 冒険（PvE）用と対人（アリーナ・PvP）用の人形。上の puppet を土台に、倍率と規則だけを変える。

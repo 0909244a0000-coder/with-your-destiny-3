@@ -927,3 +927,15 @@ body.drawer-open .game-screen::after { opacity:1; pointer-events:auto; }
  .endgame-icons { grid-template-columns:repeat(3,48px); gap:28px 10px; }
  .world-plaque { max-width:80px; }
 }
+
+/* HPバーの横の召喚の状態（ネクロマンサーの骸骨・傀儡師の人形） */
+.vital-row { display: flex; align-items: center; gap: 0 6px; flex-wrap: wrap; }
+.vital-row > .bar { flex: 1 1 160px; min-width: 0; } /* 狭い画面では召喚表示がHPバーの下へ回る */
+.summon-status { display: flex; gap: 4px; flex: none; margin-top: 5px; }
+.summon-status[hidden] { display: none; }
+.summon-chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 5px; font-size: 11px; line-height: 15px; white-space: nowrap;
+  background: rgba(10, 8, 6, 0.75); border: 1px solid #3d3427; border-radius: 3px; color: #e8dcc0; font-variant-numeric: tabular-nums; }
+.summon-chip b { font-weight: normal; color: #b9ab8c; }
+.summon-chip i { display: inline-block; width: 26px; height: 4px; background: #1a1612; border-radius: 2px; overflow: hidden; }
+.summon-chip u { display: block; height: 100%; background: #c9b27a; text-decoration: none; }
+@media (max-width: 480px) { .summon-chip i { display: none; } .summon-chip { padding: 1px 3px; } }

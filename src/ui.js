@@ -1054,6 +1054,30 @@ WYD.ui = {
     WYD.results.render(this.world);
   },
 
+  // HPバーの横の召喚の状態（骸骨の数・人形のHP）。呼べるスキルを持つ職業だけ表示
+  updateSummonStatus(stats) {
+    const w = this.world, s = this.state, chips = [];
+    const chip = (label, text, ratio, title) => `<span class="summon-chip" title="${title}"><b>${label}</b><i><u style="width:${Math.round(Math.max(0, Math.min(1, ratio)) * 100)}%"></u></i>${text}</span>`;
+    for (const id in WYD.data.skills) {
+      const def = WYD.data.skills[id], lv = s.player.skills[id] || 0;
+      if (def.kind !== "raise" || !def.hudLabel || lv <= 0) continue;
+      const mine = w.allies.filter((a) => a.source === id && a.hp > 0);
+      if (!s.player.skillEnabled[id] && !mine.length) continue;
+      const max = WYD.allies.maxCount(WYD.runes.effectiveDef(s, id), lv, stats);
+      const hp = mine.reduce((n, a) => n + a.hp, 0), maxHp = mine.reduce((n, a) => n + a.maxHp, 0);
+      chips.push(chip(def.hudLabel, `${mine.length}/${max}`, maxHp ? hp / maxHp : 0, `${def.name}：${mine.length}体 / 最大${max}体`));
+    }
+    if (WYD.classes.id === "puppeteer" && WYD.puppeteer) {
+      const a = WYD.puppeteer.active(w), label = WYD.data.puppeteer.puppet.hudLabel;
+      const wait = Math.max(0, (w.puppetRespawnAt || 0) - w.time);
+      chips.push(a ? chip(label, `${Math.round(a.hp / a.maxHp * 100)}%`, a.hp / a.maxHp, `${label}のHP ${Math.round(a.hp)} / ${Math.round(a.maxHp)}`)
+        : chip(label, wait > 0 ? `${wait.toFixed(1)}秒` : "なし", 0, wait > 0 ? `${label}を呼び直せるまで ${wait.toFixed(1)}秒` : `${label}はいない`));
+    }
+    const box = this.$("summon-status"), html = chips.join("");
+    if (box.hidden !== !html) box.hidden = !html;
+    if (this.summonHtml !== html) { box.innerHTML = html; this.summonHtml = html; }
+  },
+
   updateBars() {
     const s = this.state;
     const dps = Math.round(WYD.world.dps(this.world));
@@ -1062,6 +1086,7 @@ WYD.ui = {
     const hp = Math.max(0, Math.round(this.world.player.hp || 0));
     this.$("hp-bar").style.width = `${(hp / stats.maxHp) * 100}%`;
     this.$("hp-text").textContent = `HP ${hp} / ${stats.maxHp}`;
+    this.updateSummonStatus(stats);
     const need = WYD.stats.expToNext(s.player.level);
     const maxed = s.player.level >= WYD.data.player.maxLevel;
     if (maxed) {
