@@ -3,12 +3,37 @@ window.WYD = window.WYD || {};
 WYD.puppeteer = {
   config() { return WYD.data.puppeteer; },
   active(w) { return w.allies.find(a => a.puppet && a.hp > 0 && a.timeLeft > 0); },
+  powers(stats) { return (stats && stats.powers) || {}; },
+  // 満ちる糸巻き：人形のHPが十分あるとき、命令の消費を減らす
+  costPercent(w, stats, percent) {
+    const spare = this.powers(stats).puppetSpareThread, a = this.active(w);
+    return spare && a && a.hp / a.maxHp * 100 >= spare.threshold ? percent * spare.costPercent / 100 : percent;
+  },
   canPay(w, stats, percent) {
-    return !w.player.dead && w.player.hp - stats.maxHp * percent / 100 >= Math.max(1, stats.maxHp * this.config().lowHpReserve);
+    const cost = this.costPercent(w, stats, percent);
+    return !w.player.dead && w.player.hp - stats.maxHp * cost / 100 >= Math.max(1, stats.maxHp * this.config().lowHpReserve);
   },
   pay(w, stats, percent) {
-    w.player.hp -= stats.maxHp * percent / 100;
-    WYD.world.addText(w, w.player.x, w.player.y - 25, `-${Math.ceil(stats.maxHp * percent / 100)} HP`, '#d97083');
+    const amount = stats.maxHp * this.costPercent(w, stats, percent) / 100;
+    w.player.hp -= amount;
+    WYD.world.addText(w, w.player.x, w.player.y - 25, `-${Math.ceil(amount)} HP`, '#d97083');
+  },
+  // 無貌座の衣装：失ったHPの割合に応じて人形の攻撃力を上げる倍率
+  desperationMult(w, stats) {
+    const d = this.powers(stats).puppetDesperation;
+    if (!d) return 1;
+    const lost = Math.max(0, 1 - w.player.hp / stats.maxHp) * 100;
+    return 1 + Math.min(d.maxPercent, lost * d.perPercent) / 100;
+  },
+  // 藁の心臓：本体が受けるダメージの一部を人形が受ける。本体に残るダメージを返す
+  absorb(w, amount) {
+    const share = w.puppetScapegoat;
+    if (!share || WYD.classes.id !== 'puppeteer' || !(amount > 0)) return amount;
+    const a = this.active(w);
+    if (!a) return amount;
+    const taken = Math.min(a.hp, amount * share.sharePercent / 100);
+    a.hp -= taken;
+    return amount - taken;
   },
   values(stats) {
     const d = this.config().puppet;
@@ -33,12 +58,13 @@ WYD.puppeteer = {
   },
   update(w, state, stats) {
     if (WYD.classes.id !== 'puppeteer' || w.player.dead) return;
+    w.puppetScapegoat = this.powers(stats).puppetScapegoat || null;
     const a = this.active(w);
     if (a) {
       const v = this.values(stats);
       a.hp = Math.min(v.maxHp, a.hp + v.maxHp - a.maxHp);
       a.maxHp = v.maxHp;
-      a.attack = v.attack * (1 + stats.skillDamage / 100);
+      a.attack = v.attack * (1 + stats.skillDamage / 100) * this.desperationMult(w, stats);
       a.defense = v.defense * (a.guardUntil > w.time ? a.guardMult : 1);
       a.timeLeft = a.duration; // 戦闘中ずっといる。HPが尽きた場合のみ壊れる。
       return;
@@ -46,6 +72,13 @@ WYD.puppeteer = {
     if (w.puppetWasAlive) {
       w.puppetWasAlive = false;
       w.puppetRespawnAt = w.time + this.config().respawnCooldown;
+      // 幕引きの裁ち鋏：壊れたときに回復し、早く呼び直せる
+      const curtain = this.powers(stats).puppetCurtainCall;
+      if (curtain) {
+        w.puppetRespawnAt = w.time + curtain.respawnSeconds;
+        WYD.world.healPlayer(w, stats.maxHp, stats.maxHp * curtain.healPercent / 100, 'effect:puppetCurtainCall');
+        WYD.vfx.spawn(w, this.config().effects.thread.key, w.player.x, w.player.y, {size:this.config().effects.thread.size});
+      }
     }
     if (!w.enemies.some(e => e.hp > 0) || w.time < (w.puppetRespawnAt || 0)) return;
     this.spawn(w, stats, this.config().summonCost);

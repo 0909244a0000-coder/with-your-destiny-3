@@ -1119,6 +1119,7 @@ WYD.world = {
 
   // HPは従来と同じ計算で変更し、実際に減った・戻ったぶんだけ観測する。
   receiveDamage(w, amount) {
+    if (WYD.puppeteer) amount = WYD.puppeteer.absorb(w, amount); // 藁の心臓（傀儡師）
     WYD.results.add(w, null, { taken: Math.min(Math.max(0, w.player.hp), amount) });
     w.player.hp -= amount;
   },

@@ -61,3 +61,41 @@ WYD.data.vfx.hitByClass.puppeteer = "puppetSlash";
 for (const id of ["pup_pierce","pup_cut"]) WYD.data.vfx.hitBySkill[id] = "puppetSlash";
 for (const id of ["pup_bind","pup_needles"]) WYD.data.vfx.hitBySkill[id] = "puppetBind";
 WYD.data.vfx.hitBySkill.pup_finale = "puppetBurst";
+
+// ---------- 傀儡師専用のユニーク・セット（すべて新規の固有能力） ----------
+// どれも「HPを払って人形を動かす」という職業の軸に、違う向きの答えを出す。
+//   無貌座の衣装（セット）… HPを削るほど人形が強い（攻め）
+//   幕引きの裁ち鋏      … 人形を壊しては呼び直す（終幕の回転）
+//   満ちる糸巻き        … 人形を満タンに保つほど命令が安い（節約）
+//   藁の心臓            … 人形を盾にして本体を守る（守り）
+// 数値の意味は src/puppeteer.js の power 名の処理を参照。
+WYD.data.uniques.list.push(
+  { id: "curtainShears", home: "smashana", name: "幕引きの裁ち鋏", base: "dual_blades", weight: 10, classOnly: "puppeteer",
+    stats: { attack: [4, 8], maxHp: [15, 30] }, power: "puppetCurtainCall",
+    desc: "人形が壊れるたび（終幕を含む）、本体のHPを最大HPの{healPercent}%回復し、人形を呼び直せるまでの時間が{respawnSeconds}秒になる",
+    params: { healPercent: 12, respawnSeconds: 2 } },
+  { id: "fullSpool", home: "cathedral", name: "満ちる糸巻き", base: "bracelet", weight: 10, classOnly: "puppeteer",
+    stats: { defense: [3, 6], maxHp: [15, 30] }, power: "puppetSpareThread",
+    desc: "人形のHPが{threshold}%以上のとき、命令で使う本体のHPが{costPercent}%に減る",
+    params: { threshold: 90, costPercent: 50 } },
+  { id: "strawHeart", home: "frost", name: "藁の心臓", base: "amulet", weight: 10, classOnly: "puppeteer",
+    stats: { maxHp: [20, 40], defense: [3, 6] }, power: "puppetScapegoat",
+    desc: "人形がいる間、本体が受けるダメージの{sharePercent}%を人形が代わりに受ける",
+    params: { sharePercent: 35 } },
+);
+WYD.data.sets.list.push({
+  // 傀儡師でだけ落ちる
+  id: "facelessTroupe", home: "patala", name: "無貌座の衣装", classOnly: "puppeteer",
+  pieces: [
+    { id: "troupe_rod", name: "無貌座の操り棒", base: "staff", stats: { attack: [4, 8], skillDamage: [8, 14] } },
+    { id: "troupe_mask", name: "無貌座の仮面", base: "crown", stats: { maxHp: [25, 45] } },
+    { id: "troupe_coat", name: "無貌座の燕尾服", base: "chainmail", stats: { defense: [5, 9] } },
+    { id: "troupe_ring", name: "無貌座の指輪", base: "ring", stats: { defense: [3, 6] } },
+  ],
+  bonuses: {
+    2: { stats: { maxHp: 60, defense: 10 } },
+    4: { power: "puppetDesperation", params: { perPercent: 1.5, maxPercent: 90 },
+         desc: "本体のHPが減っているほど人形の攻撃力が上がる（失ったHP1%ごとに+{perPercent}%、最大+{maxPercent}%）" },
+  },
+});
+WYD.data.results.labels["effect:puppetCurtainCall"] = { name: "幕引きの裁ち鋏", group: "装備効果", color: "#e8c46a" };
