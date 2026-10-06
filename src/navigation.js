@@ -29,7 +29,7 @@ WYD.navigation = {
     document.querySelector('.bag-cols').prepend(skillsPanel);
     const workshop = document.createElement('section'); workshop.id='workshop-tools'; workshop.className='panel';
     workshop.innerHTML='<h2>強化工房</h2><p class="muted">加工方法を選んでから、装備またはかばんのアイテムを選択。</p>';
-    ['forge-mode','enhance-mode','craft-mode','rune-open'].forEach(id=>workshop.append($(id)));
+    ['forge-mode','enhance-mode','craft-mode'].forEach(id=>workshop.append($(id)));
     document.querySelector('.bag-cols').prepend(workshop);
     for(const [id,[file,label]] of Object.entries(icons)) {
       const button=$(id), badge=id==='bag-open'?$('bag-badge'):null;
