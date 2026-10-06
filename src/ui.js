@@ -23,15 +23,32 @@ WYD.ui = {
     this.world = world;
     const s = state;
 
+    // 操作バーの折り返しや文字サイズに合わせ、下のHUDを重ねない。
+    const updateHudLayout = () => {
+      const root = document.documentElement.style;
+      const header = document.querySelector('.hud-top');
+      const actions = document.querySelector('.stage-btns');
+      const bagHead = document.querySelector('.bag-head');
+      root.setProperty('--hud-bottom', `${Math.ceil(header.getBoundingClientRect().bottom)}px`);
+      const rect = actions.getBoundingClientRect();
+      root.setProperty('--actions-bottom', `${Math.ceil(rect.bottom)}px`);
+      root.setProperty('--actions-height', `${Math.ceil(rect.height)}px`);
+      if (bagHead.getBoundingClientRect().height) root.setProperty('--bag-head-height', `${Math.ceil(bagHead.getBoundingClientRect().height)}px`);
+    };
+    this.updateHudLayout = updateHudLayout;
+    if (window.ResizeObserver) {
+      this.hudObserver = new ResizeObserver(updateHudLayout);
+      for (const el of document.querySelectorAll('.hud-top,.stage-btns,.bag-head')) this.hudObserver.observe(el);
+    }
+    window.addEventListener('resize', updateHudLayout);
+    updateHudLayout();
+
     this.$("help").onclick = () => this.showStory("help");
     this.$("character-open").onclick = () => this.toggleCharacterDrawer();
     this.$("character-close").onclick = () => this.toggleCharacterDrawer(false);
     document.addEventListener("pointerdown", (e) => {
       const drawer = this.$("character-drawer");
-      if (drawer.classList.contains("open") && !e.target.closest("#character-drawer,#character-open")) this.toggleCharacterDrawer(false);
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.$("character-drawer").classList.contains("open")) this.toggleCharacterDrawer(false);
+      if (drawer.classList.contains("open") && !e.target.closest("#character-drawer,#character-open,.modal")) this.toggleCharacterDrawer(false);
     });
     // まとめメニュー：1つ開いたらほかは閉じる。メニューの外をクリックしたら閉じる
     const menus = [...document.querySelectorAll("details.menu")];
@@ -139,8 +156,21 @@ WYD.ui = {
     // キーボード：スペース＝一時停止、1・2・4＝速度（文字を入力している所では効かない）
     document.addEventListener("keydown", (e) => {
       if (WYD.arena?.opened || WYD.dps?.opened) return;
+      // 子ウィンドウを閉じるキーで、背後の装備/人物まで閉じない。
+      const childModal = [...document.querySelectorAll('.modal:not([hidden])')].find(el => el.id !== 'bag');
+      if (childModal) {
+        if (e.key === 'Escape' && childModal.id === 'gamble') { e.preventDefault(); this.closeGamble(); }
+        else if (e.key === 'Escape' && childModal.id === 'sheet') { e.preventDefault(); this.sheetAction('close'); }
+        return;
+      }
+      if (e.key === 'Escape') {
+        if (!this.$('bag').hidden) { e.preventDefault(); this.toggleBag(false); }
+        else if (this.$('character-drawer').classList.contains('open')) { e.preventDefault(); this.toggleCharacterDrawer(false); }
+        return;
+      }
       if (e.target.closest && e.target.closest("input, select, textarea")) return;
-      if (e.code === "Space") {
+      // ボタン/summary上のSpaceは通常の決定操作として使う。
+      if (e.code === "Space" && !e.target.closest('button,summary')) {
         e.preventDefault();
         this.togglePause();
       } else if (e.key === "i" || e.key === "I") {
@@ -149,10 +179,6 @@ WYD.ui = {
         this.toggleMute();
       } else if (e.key === "h" || e.key === "H") {
         WYD.town.toggle(this.world, s);
-      } else if (e.key === "Escape" && !this.$("gamble").hidden) {
-        this.closeGamble();
-      } else if (e.key === "Escape" && !this.$("bag").hidden) {
-        this.toggleBag(false);
       } else if ((e.key === "Delete" || e.key === "Backspace") && this.hovered && !this.$("bag").hidden) {
         e.preventDefault();
         this.discardHovered();
@@ -1690,13 +1716,15 @@ WYD.ui = {
   toggleBag(show) {
     const bag = this.$("bag");
     bag.hidden = show === undefined ? !bag.hidden : !show;
-    if (bag.hidden) { this.hideTooltip(); this.hovered = null; }
+    if (bag.hidden) { this.hideTooltip(); this.hovered = null; this.$('bag-open').focus(); }
     else {
       this.toggleCharacterDrawer(false);
       const cls = WYD.data.classes[WYD.classes.id];
       const portrait = this.$("equipment-portrait");
       if (portrait && cls?.player?.image) portrait.src = cls.player.image;
       this.$("equipment-class-name").textContent = cls?.name || "冒険者";
+      this.updateHudLayout();
+      this.$('bag-close').focus();
     }
     this.markDirty();
   },
@@ -1707,6 +1735,8 @@ WYD.ui = {
     drawer.classList.toggle("open", open);
     document.body.classList.toggle("drawer-open", open);
     this.$("character-open").setAttribute("aria-expanded", String(open));
+    if (open) this.$('character-close').focus();
+    else if (drawer.contains(document.activeElement)) this.$('character-open').focus();
     return open;
   },
 
