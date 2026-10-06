@@ -56,7 +56,7 @@ WYD.arena = {
     this.inertNodes = [...document.body.children].filter(x => x.id !== "arena" && !x.inert);
     for (const x of this.inertNodes) x.inert = true;
     this.$("arena").hidden = false;
-    this.$("arena-open").closest("details").open = false;
+    const menu = this.$("arena-open").closest("details"); if (menu) menu.open = false; // 円形メニューでは details の外にある
     this.refresh(); this.$("arena-close").focus();
   },
   close() {
