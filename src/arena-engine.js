@@ -311,6 +311,7 @@ WYD.arenaEngine = {
     WYD.bombs.update(w, s, this.stats, dt);
     WYD.runeSkills.update(w, s, this.stats, dt);
     WYD.mercenary.update(w, s, this.stats, dt);
+    WYD.puppeteer.update(w, s, this.stats, dt);
     WYD.allies.update(w, s, this.stats, dt);
     WYD.traps.update(w, s, this.stats, dt);
   },

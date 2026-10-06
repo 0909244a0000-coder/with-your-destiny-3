@@ -136,6 +136,7 @@ WYD.stats = {
       critMultiplier: P.critMultiplier + fx.critDamage / 100,
       effects: fx,
     };
+    if (P.maxHpMult != null) out.maxHp = Math.max(1, Math.round(out.maxHp * P.maxHpMult));
     WYD.forms.apply(out);   // 変身（src/forms.js）
     return WYD.shrines.apply(out);   // 祠の効果（src/shrines.js）
   },

@@ -100,6 +100,7 @@ WYD.world = {
     WYD.bombs.update(w, state, stats, dt);
     WYD.runeSkills.update(w, state, stats, dt);
     WYD.mercenary.update(w, state, stats, dt);
+    WYD.puppeteer.update(w, state, stats, dt);
     WYD.allies.update(w, state, stats, dt);
     WYD.traps.update(w, state, stats, dt);
     this.updateEnemies(w, state, stats, dt);
