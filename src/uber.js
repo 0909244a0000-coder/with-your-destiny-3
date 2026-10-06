@@ -50,6 +50,7 @@ WYD.uber = {
     state.materials += U.rewardMaterials;
     for (let i = 0; i < U.rewardGems; i++) WYD.gems.add(state, WYD.gems.key(WYD.util.pick(WYD.data.gems.gems).id, Math.min(WYD.data.gems.tiers.length - 1, WYD.gems.dropTier(state) + 1)));
     state.uber.kills++;
+    WYD.runeSkills.onUberWin(w, state);
     WYD.ui.notice(`${U.name}を討った！ ユニーク${U.rewardUniques}個・${WYD.data.crafting.materialName} +${U.rewardMaterials}・宝石${U.rewardGems}個`, U.color);
     WYD.sound.play("achievement");
   },

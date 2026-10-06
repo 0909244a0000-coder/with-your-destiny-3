@@ -16,9 +16,10 @@ WYD.save = {
       version: 1,
       classId: WYD.classes.id,   // 職業
       player: { level: 1, exp: 0, skillPoints: 0, skills, skillEnabled: enabled,
-        paragon: { level: 0, exp: 0, points: 0, board: {} },   // 修練（レベル上限のあと）。board = 取ったマス（"行,列" → true）
+        paragon: { level: 0, exp: 0, points: 0, board: {}, training: { owned: {}, active: null } },   // 修練（レベル上限のあと）。board = 取ったマス（"行,列" → true）
         runes: {} },   // スキルの型（スキル名 → 型の名前）
       equipment: {},   // slot -> item
+      pendingLoot: [], // 満杯で受け取れなかった重要装備（職業別に保存）
       inventory: [],   // item の配列
       stash: [],       // 倉庫（item の配列）
       nextItemId: 1,
@@ -30,7 +31,7 @@ WYD.save = {
       floor: 1,                                 // 今いる階（ふつうの階の数+1 がボスの間）
       bossProgress: 0,                          // 次の階へ降りるまでに倒した数
       settings: { speed: 1, autoSalvage: "none", autoDifficulty: false, sound: true, autoEquip: true, fullReplace: true, season: "none", music: true, quietFx: false,
-        filter: { on: false, slots: {}, keepUpgrades: true, keepSocketed: true } },
+        filter: { on: false, slots: {}, keepUpgrades: true } },
       seenHelp: false, // 遊び方を見たか（最初の1回だけ自動で出す）
       cleared: false,  // 最後のボスを倒したか
       trial: { best: 0, level: 1, autoNext: true, runs: 0 },   // 終わりのない試練の記録
@@ -39,6 +40,7 @@ WYD.save = {
       records: {},     // 数えた記録（data/records.js の counters）
       codex: { uniques: {}, setPieces: {} },   // 図鑑（見つけたユニーク・セット装備の id）
       achievements: {},   // 達成した実績の id
+      runeSkills: WYD.runeSkills.initial(),
       gems: {},        // 持っている宝石（"種類:段階" → 数）
       maps: [],        // 持っている地図（src/maps.js）
       runHistory: [],  // 成功した挑戦の記録（新しい順）
@@ -59,7 +61,7 @@ WYD.save = {
   load() {
     try {
       let text = localStorage.getItem(this.KEY);
-      if (!text) return this.newState();
+      if (!text) { const fresh = this.newState(); WYD.runeSkills.migrate(fresh); return fresh; }
       let saved;
       try {
         saved = JSON.parse(text);
@@ -85,6 +87,7 @@ WYD.save = {
         delete pgs.alloc;
       }
       pgs.board = Object.assign({}, pgs.board);
+      WYD.training.ensure(state);
       state.player.runes = Object.assign({}, saved.player && saved.player.runes);
       state.player.skillEnabled = Object.assign(this.newState().player.skillEnabled, saved.player && saved.player.skillEnabled);
       state.settings = Object.assign(this.newState().settings, saved.settings);
@@ -124,7 +127,20 @@ WYD.save = {
       if (saved.settings && saved.settings.skipNormal && !saved.settings.autoSalvage) state.settings.autoSalvage = "normal";
       delete state.settings.skipNormal;
       if (!Array.isArray(state.stash)) state.stash = [];
-      for (const item of state.inventory.concat(state.stash, Object.values(state.equipment))) {
+      const ownedIds = new Set(state.inventory.concat(state.stash, Object.values(state.equipment)).filter(Boolean).map((it) => it.id));
+      state.pendingLoot = (Array.isArray(saved.pendingLoot) ? saved.pendingLoot : []).filter((it) => {
+        if (!it || !Number.isFinite(it.id) || ownedIds.has(it.id) || !Array.isArray(it.stats) || !WYD.data.items.slots[it.slot]) return false;
+        ownedIds.add(it.id);
+        state.nextItemId = Math.max(state.nextItemId, it.id + 1);
+        return true;
+      });
+      // 倉庫廃止：旧アイテムは60枠のかばんへ、超過分は未受取に残す。
+      while (state.stash.length) {
+        const item = state.stash.shift();
+        if (state.inventory.length < WYD.data.items.inventorySize) state.inventory.push(item);
+        else state.pendingLoot.push(item);
+      }
+      for (const item of state.inventory.concat(state.stash, state.pendingLoot, Object.values(state.equipment))) {
         if (!item) continue;
         // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
         if (!Array.isArray(item.effects)) item.effects = [];
@@ -132,6 +148,12 @@ WYD.save = {
         if (!Array.isArray(item.sockets)) item.sockets = [];
         this.renameItem(item);
       }
+      if (!saved.runeSkills?.migrated) {
+        // 再設計前の原本は、通常バックアップの更新とは別に一度だけ残す。
+        try { const key = this.KEY + "-before-rune-skills-v1"; if (!localStorage.getItem(key)) localStorage.setItem(key, text); }
+        catch (e) { console.warn("移行前の控えを追加できませんでした。", e); }
+      }
+      WYD.runeSkills.migrate(state);
       WYD.records.backfill(state);
       return state;
     } catch (e) {
@@ -206,7 +228,15 @@ WYD.save = {
   write(state) {
     try {
       state.lastSeen = Date.now();   // 放置中の進行に使う
-      localStorage.setItem(this.KEY, JSON.stringify(state));
+      // 保存直前のドロップも保護。元の世界は変更せず、読み込み後は未受取として復元する。
+      const w = WYD.state === state && WYD.currentWorld;
+      const ownedIds = new Set(state.inventory.concat(state.stash, Object.values(state.equipment)).filter(Boolean).map((it) => it.id));
+      const pendingLoot = (state.pendingLoot || []).concat(w ? w.drops.filter((d) => !d.picked && WYD.inventory.protectDrop(state, d.item)).map((d) => d.item) : []).filter((it) => {
+        if (ownedIds.has(it.id)) return false;
+        ownedIds.add(it.id);
+        return true;
+      });
+      localStorage.setItem(this.KEY, JSON.stringify(Object.assign({}, state, { pendingLoot })));
     } catch (e) {
       console.warn("セーブできませんでした。", e);
     }

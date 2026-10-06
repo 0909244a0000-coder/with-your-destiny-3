@@ -4,8 +4,45 @@ window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
 WYD.data.vfx = {
+  // 線画の紋章を使わず、煙・炎・光の絵で発動の質感を分ける。
+  castProfiles: {
+    vajra: { key: "holyWisp", size: 108, duration: 0.65, from: 0.55, to: 1.05, alpha: 0.65, flatten: 0.9, rise: 22 },
+    hanuman: { key: "rageWisp", size: 126, duration: 0.7, from: 0.55, to: 1.15, alpha: 0.75, flatten: 0.9, rise: 26 },
+    nagapasha: { key: "chains", size: 112, duration: 0.55, from: 1.1, to: 0.65, alpha: 0.6, flatten: 0.65 },
+    raise: { key: "graveWisp", size: 132, duration: 0.85, from: 0.55, to: 1.2, alpha: 0.65, flatten: 0.8, rise: 22 },
+    shift: { key: "rageWisp", size: 132, duration: 0.65, from: 0.55, to: 1.1, alpha: 0.7, flatten: 0.85, rise: 22 },
+    trap: { key: "shadowWisp", size: 94, duration: 0.55, from: 0.6, to: 1.1, alpha: 0.55, flatten: 0.65 },
+    aura: { key: "holyWisp", size: 118, duration: 0.7, from: 0.5, to: 1.15, alpha: 0.55, flatten: 0.65, rise: 12 },
+  },
+  castOverrides: {
+    sorc_shield: { key: "arcaneBarrier", size: 116, duration: 0.6, alpha: 0.7, flatten: 1, rise: 0 }, sorc_haste: { key: "shadowWisp", alpha: 0.65 },
+    nec_armor: { key: "boneCarapace", size: 116, duration: 0.6, alpha: 0.7, flatten: 1, rise: 0 }, asn_cloak: { key: "shadowWisp" }, asn_burst: { key: "shadowWisp" },
+    asn_shadow: { key: "shadowWisp" }, sorc_hydra: { key: "rageWisp" },
+    dru_wolves: { key: "graveWisp" }, dru_bark: { key: "oakBulwark", size: 116, duration: 0.6, alpha: 0.75, flatten: 1, rise: 0 },
+    pal_fire: { key: "rageWisp" }, nec_decay: { key: "graveWisp" }, sorc_static: { key: "shadowWisp" },
+  },
+  trapShot: { duration: 0.28, size: 42, alpha: 0.8, tailCount: 2, tailGap: 0.06, tailAlpha: 0.22 },
+  trapStyles: { sorc_hydra: "fireball", asn_sentry: "lightning", asn_death: "shadowWisp" },
+  fieldCast: { nec_plague: "plague", pal_judgment: "holyGround", dru_fissure: "fireBurst", asn_fire: "fireBurst" },
+  auraMist: { alpha: 0.14, pulseAlpha: 0.05, spin: 0.12, radiusRatio: 0.9 },
+  // 範囲全体を白く塗らず、術者の姿と形で見分ける。性能/有効範囲には使わない。
+  buffStyles: {
+    sorceress: { key: "arcaneBarrier", sizeRatio: 1.4, alphaFactor: 0.55 },
+    necromancer: { key: "boneCarapace", sizeRatio: 1.4, alphaFactor: 0.7 },
+    druid: { key: "oakBulwark", sizeRatio: 1.5, alphaFactor: 0.8 },
+  },
+  auraStyles: {
+    pal_prayer: { key: "sanctuaryBloom", size: 110, alphaFactor: 0.7 },
+    pal_might: { key: "warEmbers", size: 100, alphaFactor: 0.7 },
+  },
+  groundAlpha: 0.9,
+
   // 絵のファイル（例: slash: "assets/vfx/slash.png"）
   textures: {
+    graveWisp: "assets/vfx/graveWisp.png",
+    rageWisp: "assets/vfx/rageWisp.png",
+    holyWisp: "assets/vfx/holyWisp.png",
+    shadowWisp: "assets/vfx/shadowWisp.png",
     slash: "assets/vfx/slash.png",        // 斬撃の弧（バーバリアンの通常攻撃）
     whirl: "assets/vfx/whirl.png",        // 旋風の渦（旋風斬）
     iceNova: "assets/vfx/iceNova.png",      // 氷の衝撃の輪（フロストノヴァ）
@@ -94,15 +131,34 @@ WYD.data.vfx = {
   hitCritScale: 1.5,
   maxEffects: 140,
 
+  // 専用4コマ。絵の範囲は命中判定ではなく演出サイズ。倍率や上限はここだけで管理。
+  impactSkills: { whirl: "steelWhirl", sorc_nova: "frostCrown", nec_nova: "corpseBloom", asn_blade: "violetAmbush" },
+  placedSkills: ["dru_tornado", "pal_judgment", "pal_prayer", "pal_might"],
+  stormTexture: "stormColumn",
+  bombTexture: "voidDetonation",
+  atlasQuietAlpha: 0.65,
+  atlases: {
+    steelWhirl: { columns: 2, rows: 2, frames: 4, alpha: 0.8, anchorY: 0.5, maxSize: 240 },
+    frostCrown: { columns: 2, rows: 2, frames: 4, alpha: 0.78, anchorY: 0.5, maxSize: 240 },
+    corpseBloom: { columns: 2, rows: 2, frames: 4, alpha: 0.8, anchorY: 0.68, maxSize: 220 },
+    holyJudgment: { columns: 2, rows: 2, frames: 4, alpha: 0.8, anchorY: 0.8, maxSize: 240 },
+    violetAmbush: { columns: 2, rows: 2, frames: 4, alpha: 0.85, anchorY: 0.5, maxSize: 190 },
+    stormColumn: { columns: 2, rows: 2, frames: 4, alpha: 0.75, anchorY: 0.8, maxSize: 210, loopFrames: [1, 2] },
+    voidDetonation: { columns: 2, rows: 2, frames: 4, alpha: 0.75, anchorY: 0.5, maxSize: 230 },
+    arcaneBarrier: { columns: 2, rows: 2, frames: 4, alpha: 0.7, anchorY: 0.5, maxSize: 150, loopFrames: [1, 2] },
+    boneCarapace: { columns: 2, rows: 2, frames: 4, alpha: 0.8, anchorY: 0.5, maxSize: 150, loopFrames: [1, 2] },
+    oakBulwark: { columns: 2, rows: 2, frames: 4, alpha: 0.8, anchorY: 0.5, maxSize: 170, loopFrames: [1, 2] },
+    sanctuaryBloom: { columns: 2, rows: 2, frames: 4, alpha: 0.75, anchorY: 0.72, maxSize: 140, loopFrames: [1, 2] },
+    warEmbers: { columns: 2, rows: 2, frames: 4, alpha: 0.75, anchorY: 0.72, maxSize: 130, loopFrames: [1, 2] },
+  },
+
   // スキルを使ったときの画面の揺れ（スキルのしくみ → 強さと秒数）
   castShake: { whirl: { strength: 2.5, time: 0.12 }, agni: { strength: 3.5, time: 0.16 }, nagapasha: { strength: 2, time: 0.1 }, shift: { strength: 3, time: 0.15 } },
 
   // スキルを使ったときに出す絵（スキル名 → 絵の名前）
   skillCast: {
     whirl: "whirl", sorc_nova: "iceNova",
-    vajra: "magicCircle", sorc_shield: "magicCircle",
-    hanuman: "magicCircle", sorc_haste: "magicCircle",
-    nagapasha: "magicCircle", sorc_freeze: "iceNova",
+    sorc_freeze: "iceNova",
     dru_tornado: "tornado", nec_nova: "boneStorm", dru_vines: "vines",
   },
   // 敵から敵へ飛ぶスキルの見た目（"segment" = 稲妻のように線でつなぐ、"hit" = 当たった敵ごとに絵）
@@ -119,6 +175,18 @@ WYD.data.vfx = {
   // 縛られた敵に重ねる絵（職業 → 絵の名前。ここにない職業は chains）
   bindStyle: { druid: "vines" },
   meteorFall: 0.45,     // メテオの隕石が落ちてくるまでの秒数
+  trapRangeAlpha: 0.05, // 射程の目安は発射中だけ薄く。常時の大きな点線円は出さない
   trapImageScale: 2.6,  // 罠の絵の大きさ（罠の半径の何倍の幅で描くか）
   groundPulse: 0.08,    // 燃える地面のゆらぎの大きさ
 };
+
+// 旧画像は残す。新規技へ流用するときは必ずコマ切り出し描画を通す。
+for (const key of Object.keys(WYD.data.vfx.atlases)) {
+  WYD.data.vfx.textures[key] = "assets/vfx/" + key + "Atlas.webp";
+  WYD.data.vfx.anim[key] = { duration: 0.6, scaleFrom: 0.9, scaleTo: 1.05, additive: true };
+}
+WYD.data.vfx.anim.violetAmbush.duration = 0.32;
+WYD.data.vfx.anim.holyJudgment.duration = 0.75;
+WYD.data.vfx.anim.stormColumn.duration = 0.7;
+for (const style of [...Object.values(WYD.data.vfx.buffStyles), ...Object.values(WYD.data.vfx.auraStyles)]) WYD.data.vfx.anim[style.key].duration = 1.4;
+WYD.data.vfx.fieldCast.pal_judgment = "holyJudgment";

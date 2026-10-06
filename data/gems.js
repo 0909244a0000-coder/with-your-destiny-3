@@ -56,7 +56,7 @@ WYD.data.gems = {
   runeDrop: { chanceNormal: 0.006, chanceElite: 0.12, chanceBoss: 0.8 },
   runeUpgradeCost: 10,          // 1つ上にするときの素材（ルーンの順番 × これ）
 
-  // ルーンワード：ノーマル装備で、ソケットの数とルーンの順番がぴったり合うと発動
+  // 旧セーブの継承専用。新しいルーンはdata/runeSkills.js。ソケットでは発動しない。
   //   group … はめられる部位（weapon / armor / jewelry。armor は頭・胴・手・足・盾・帯）
   //   bonus … stats（能力）・effects（特殊効果）・power と params と desc（固有能力。data/uniques.js と同じしくみ）
   runewords: [

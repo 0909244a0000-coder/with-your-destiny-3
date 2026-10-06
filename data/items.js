@@ -4,20 +4,21 @@ WYD.data = WYD.data || {};
 
 WYD.data.items = {
   inventorySize: 60,   // 持ち物に入る数（6列なので6の倍数に）
-  stashSize: 30,        // 倉庫に入る数
+  pendingLootLimit: 60, // 未受取がこの件数に達したら戦闘を停止し、受取で再開（重要品は消さない）
+  stashSize: 0,         // 倉庫廃止（旧保存はかばん／未受取へ移行）
   fullSalvage: ["normal", "magic"],   // 持ち物がいっぱいのとき、拾ったその場で素材にするレア度
   fullWarnInterval: 30,  // 「持ち物がいっぱい」の知らせを出す間隔（秒）
   longPressMs: 450,     // 装備の欄を長押し（ミリ秒）すると「どうするか」の窓（捨てる・倉庫へ など）が出る
   pickupDelay: 0.8,     // 落ちてから拾うまでの秒数
-  protectDrops: ["unique", "set"],   // 持ち物がいっぱいでも消さないレア度（倉庫に空きがあれば倉庫へ。なければ地面に残す。エリアを移っても残る）
+  protectDrops: ["unique", "set"],   // 持ち物がいっぱいでも消さないレア度（倉庫に空きがあれば倉庫へ。なければ保存される未受取へ）
   groundLifetime: 30,   // 拾えなかった装備が消えるまでの秒数
   levelScaling: 0.12,   // アイテムレベル+1ごとに数値が何割増えるか
 
   // レア度。weight が大きいほど出やすい。affixes = 追加能力の数 [最小, 最大]
   rarities: [
-    { id: "normal", name: "ノーマル",   color: "#d8d8d8", weight: 60, affixes: [0, 0] },
+    { id: "normal", name: "ノーマル",   color: "#d8d8d8", weight: 0, affixes: [0, 0] },
     { id: "magic",  name: "マジック",   color: "#5b8cff", weight: 28, affixes: [1, 2] },
-    { id: "rare",   name: "レア",       color: "#ffd447", weight: 10, affixes: [3, 4] },
+    { id: "rare",   name: "レア",       color: "#ffd447", weight: 0, affixes: [3, 4] },
     { id: "legend", name: "レジェンド", color: "#ff8a2a", weight: 2,  affixes: [5, 6] },
     // ユニークはふつうには出ない（weight 0）。ボスと精鋭がまれに落とす。data/uniques.js
     { id: "unique", name: "ユニーク",   color: "#e8c46a", weight: 0,  affixes: [0, 0] },

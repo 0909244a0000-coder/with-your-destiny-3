@@ -4,6 +4,7 @@ window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
 WYD.data.maps = {
+  sceneImages: ["forest", "smashana", "patala", "cathedral", "frost", "inferno"].map((id) => `assets/areas/scenes/${id}.webp`),
   maxTier: 16,
   maxHeld: 20,                 // 持てる地図の数
   stagePerTier: 1,             // 地図の段階1つで、試練の段階がいくつ上がるか

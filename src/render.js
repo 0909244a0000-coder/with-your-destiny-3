@@ -71,12 +71,14 @@ WYD.render = {
     const shakeScale = state.settings.quietFx ? WYD.data.fx.quiet.shakeScale : 1;
     ctx.translate(sh.x * shakeScale, sh.y * shakeScale);
 
-    // 地面：絵があれば敷きつめる、なければ色でぬる
-    const ground = this.getImage(area.groundImage);
+    const scene = this.getImage(area.sceneImage);
+    // 完成した景色は一枚で表示。読み込み中・画像欠損時は従来の地面に戻す。
+    const ground = scene ? null : this.getImage(area.groundImage);
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
-    if (ground) {
-      ctx.fillStyle = `rgba(0,0,0,${map.groundDim})`;
+    if (scene) this.drawScene(ctx, scene, state);
+    if (ground || scene) {
+      ctx.fillStyle = `rgba(0,0,0,${scene ? map.scene.dim : map.groundDim})`;
       ctx.fillRect(0, 0, map.width, map.height);
       if (area.groundTint) {
         ctx.fillStyle = area.groundTint;   // 仮の地面の色
@@ -84,7 +86,7 @@ WYD.render = {
       }
     }
     // 地面の絵がないときだけ、草や石の飾りを描く
-    for (const d of ground ? [] : this.decorations) {
+    for (const d of ground || scene ? [] : this.decorations) {
       ctx.fillStyle = d.kind === "grass" ? area.grassColor : area.stoneColor;
       ctx.beginPath();
       ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
@@ -92,7 +94,7 @@ WYD.render = {
     }
 
     // 明かり：地面はしっかり暗くし、キャラは下でうすく暗くする（遠くの敵も見分けられるように）
-    this.drawLight(ctx, w.player, state, "ground");
+    this.drawLight(ctx, w.player, state, scene ? "scene" : "ground");
     for (const f of w.fields) this.drawField(ctx, f);
     for (const h of w.hazards || []) this.drawHazard(ctx, h);
     for (const pool of w.pools || []) {
@@ -124,6 +126,7 @@ WYD.render = {
     // 奥（画面の上）にいるものから描く（手前のキャラが奥のキャラにかぶさるように）
     WYD.breach.draw(ctx, w);   // 裂け目は敵の下に
     WYD.traps.draw(ctx, w);
+    WYD.classSpecialization.draw(ctx, w);
     // 倒れた敵：横にたおれながら沈んで消える
     const CO = WYD.data.fx.corpse;
     for (const c of w.corpses || []) {
@@ -140,12 +143,13 @@ WYD.render = {
     WYD.allies.draw(ctx, w);
     this.drawPlayer(ctx, w.player);
     this.drawPlayerBar(ctx, w.player, state);
+    WYD.runeSkills.draw(ctx, w);
     WYD.shrines.drawActive(ctx, w);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
     const R = WYD.data.player.rangedAttack;
     if (R) for (const b of w.bolts) {
       // 火の玉の絵があれば、飛ぶ向きに回して描く
-      const fb = WYD.vfx.img("fireball");
+      const fb = WYD.vfx.img(R.texture || "fireball");
       if (fb) {
         ctx.save();
         ctx.translate(b.x, b.y);
@@ -161,6 +165,7 @@ WYD.render = {
     // 光るものと落ちている装備は、明かりの暗さの上に描く（暗がりでも見えるように）
     for (const drop of w.drops) this.drawDrop(ctx, drop);
     for (const ef of w.effects) this.drawEffect(ctx, ef);
+    WYD.bombs.draw(ctx, w);
     WYD.fx.draw(ctx, w);
     // 名前は火花より手前に描き、光の中でも読めるようにする。
     this.drawDropLabels(ctx, w.drops);
@@ -200,8 +205,10 @@ WYD.render = {
     ctx.lineWidth = 3;
     ctx.strokeStyle = "rgba(0,0,0,0.6)";
     const hudText = `${area.name}　${WYD.world.floorName(state)}${WYD.trial.active(state) ? "" : `　危険度 ${state.difficulty}`}`;
-    ctx.strokeText(hudText, hx, hy);
-    ctx.fillText(hudText, hx, hy);
+    if (ctx.canvas.id !== "game") {
+      ctx.strokeText(hudText, hx, hy);
+      ctx.fillText(hudText, hx, hy);
+    }
     this.drawBossBar(ctx, w);
     this.drawSkillBar(ctx, w, state);
     WYD.trial.draw(ctx, w, state);
@@ -340,12 +347,25 @@ WYD.render = {
     const L = map.light;
     const full = Math.min(L.maxDarkness, L.darkness + L.darknessPerFloor * ((state.floor || 1) - 1));
     const unit = L.unitDarkness * full;
-    const dark = mult === "ground" ? 1 - (1 - full) / (1 - unit) : mult * full;
+    const ground = mult === "ground" || mult === "scene";
+    const dark = ground ? (1 - (1 - full) / (1 - unit)) * (mult === "scene" ? map.scene.lightScale : 1) : mult * full;
     const g = ctx.createRadialGradient(p.x, p.y, L.inner, p.x, p.y, L.outer);
     g.addColorStop(0, "rgba(0,0,0,0)");
     g.addColorStop(1, `rgba(0,0,0,${dark})`);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, map.width, map.height);
+  },
+
+  // 比率を保って一枚の景色を画面いっぱいに表示。切り取りは階ごとに固定で、戦闘乱数は使わない。
+  drawScene(ctx, img, state) {
+    const map = WYD.data.map;
+    const views = map.scene.views;
+    const floor = WYD.trial.active(state) ? 1 : (state.floor || 1);
+    const view = views[Math.max(0, Math.min(views.length - 1, floor - 1))];
+    const scale = Math.max(map.width / img.width, map.height / img.height) * view.zoom;
+    const sw = map.width / scale, sh = map.height / scale;
+    ctx.drawImage(img, (img.width - sw) * view.x, (img.height - sh) * view.y,
+      sw, sh, 0, 0, map.width, map.height);
   },
 
   // ボスがいるときは、画面の上にボスのHPを大きく出す
@@ -523,21 +543,26 @@ WYD.render = {
 
   // 主人公の頭の上のHPの棒（HPが減ると赤くなる）
   // 左下のスキルの並び：絵（なければスキルの色と頭の1文字）、残り時間の影、使った瞬間の光る枠
-  drawSkillBar(ctx, w, state) {
+  drawSkillBar(ctx, w, state, dock = false) {
+    if (!dock && ctx.canvas.id === "game" && document.getElementById("hud-skills")) return;
     const B = WYD.data.map.skillBar;
     const p = w.player, pl = state.player;
     const ids = WYD.data.skillOrder.filter((id) => (pl.skills[id] || 0) > 0 && pl.skillEnabled[id]);
+    const rune = WYD.runeSkills.current(state);
+    if(rune) ids.push("rune");
     // スマホなどで画面が縮んで見えるときは、そのぶん大きく描く
     const shown = ctx.canvas.clientWidth / WYD.data.map.width || 1;
-    const size = Math.max(B.size, Math.round(B.minShownPx / shown));
-    const y = WYD.data.map.height - B.bottom - size;
+    const size = dock ? 44 : Math.max(B.size, Math.round(B.minShownPx / shown));
+    const y = dock ? 3 : WYD.data.map.height - B.bottom - size;
     ids.forEach((id, i) => {
-      const x = B.x + i * (size + B.gap);
-      const def = WYD.data.skills[id];
+      const x = (dock ? 3 : B.x) + i * (size + B.gap);
+      const def = id === "rune" ? {name:"ル",color:WYD.runeSkills.def("element",rune.element).color} : WYD.data.skills[id];
       ctx.fillStyle = B.back;
       ctx.fillRect(x, y, size, size);
-      const img = this.getImage(WYD.data.skillIcons[id]);
-      if (img) ctx.drawImage(img, x, y, size, size);
+      const runeIcon = id === "rune" && WYD.runeSkills.icon(ctx, rune, x, y, size);
+      const img = runeIcon ? null : this.getImage(id === "rune" ? WYD.data.vfx.textures[WYD.runeSkills.def("element",rune.element).texture] : WYD.data.skillIcons[id]);
+      if (runeIcon) { /* 属性×動きの専用絵を切り出し済み */ }
+      else if (img) ctx.drawImage(img, x, y, size, size);
       else {
         ctx.fillStyle = def.color || "#ccc";
         ctx.font = `bold ${Math.round(size * 0.5)}px sans-serif`;
@@ -600,6 +625,7 @@ WYD.render = {
     const AR = WYD.data.fx.auraRing;
     for (const id in p.dead ? {} : p.auras || {}) {
       const a = p.auras[id];
+      if (WYD.vfx.drawAuraMist(ctx, p, a, id)) continue;
       const pulse = 0.5 + 0.5 * Math.sin(this.clock * AR.pulseSpeed + a.radius);
       ctx.strokeStyle = a.color;
       ctx.lineWidth = 2;
@@ -609,7 +635,7 @@ WYD.render = {
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
-    if (p.buff) {
+    if (p.buff && !(WYD.vfx.buffStyle() && WYD.vfx.has(WYD.vfx.buffStyle().key))) {
       ctx.strokeStyle = p.buff.color;
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -655,7 +681,7 @@ WYD.render = {
     // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
     if (p.buff && !p.dead) {
       const size = P.radius * WYD.data.map.spriteScale * 1.3;
-      WYD.vfx.drawOn(ctx, "shield", p.x, p.y, size, 0.45 + 0.15 * Math.sin((this.clock || 0) * 5));
+      if (!WYD.vfx.drawBuff(ctx, p, this.clock || 0)) WYD.vfx.drawOn(ctx, "shield", p.x, p.y, size, 0.45 + 0.15 * Math.sin((this.clock || 0) * 5));
     }
     ctx.globalAlpha = 1;
     if (!img) {
@@ -915,6 +941,7 @@ WYD.render = {
   },
 
   drawEffect(ctx, ef) {
+    if (ef.type === "runeArt") { WYD.runeSkills.drawEffect(ctx, ef); return; }
     if (ef.type === "ring") {
       const t = ef.time / ef.duration;
       ctx.strokeStyle = ef.color;
@@ -926,6 +953,8 @@ WYD.render = {
       ctx.globalAlpha = 1;
     }
     if (ef.type === "sprite") WYD.vfx.draw(ctx, ef);
+    if (ef.type === "castMist") WYD.vfx.drawCastMist(ctx, ef);
+    if (ef.type === "trapShot") WYD.vfx.drawTrapShot(ctx, ef);
     if (ef.type === "shock") {
       // ボスの大技の衝撃：一気に広がる赤い円
       const t = ef.time / ef.duration;

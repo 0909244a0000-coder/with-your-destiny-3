@@ -7,6 +7,8 @@ WYD.builds = {
     const equipment = {};
     for (const slot in state.equipment) if (state.equipment[slot]) equipment[slot] = state.equipment[slot].id;
     state.builds[n] = {
+      runeSkill: state.runeSkills?.equipped || null,
+      trainingArt: WYD.training.current(state)?.id || null,
       name: name || `ビルド${n + 1}`,
       equipment,
       skillEnabled: Object.assign({}, state.player.skillEnabled),
@@ -45,6 +47,8 @@ WYD.builds = {
     for (const id in b.skillEnabled) if (id in state.player.skills) state.player.skillEnabled[id] = b.skillEnabled[id] && state.player.skills[id] > 0;
     state.player.runes = Object.assign({}, b.runes);
     state.cube.slots = Object.assign({}, state.cube.slots, b.cube);
+    if ("runeSkill" in b) state.runeSkills.equipped = state.runeSkills.skills.some(x=>x.id===b.runeSkill) ? b.runeSkill : null;
+    if ("trainingArt" in b) WYD.training.equip(state, WYD.training.ensure(state).owned[b.trainingArt] ? b.trainingArt : null);
     return { missing };
   },
 };

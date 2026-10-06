@@ -18,6 +18,8 @@ WYD.trial = {
     return {
       id: "trial", name: state.trialRun.uber ? WYD.data.uber.name : state.trialRun.map ? WYD.maps.name(state.trialRun.map) : state.trialRun.daily ? "日替わりの試練" : "終わりのない試練",
       bgColor: T.bgColor, grassColor: T.grassColor, stoneColor: T.stoneColor, groundImage: T.groundImage,
+      sceneImage: state.trialRun.uber ? WYD.data.uber.sceneImage : state.trialRun.map
+        ? WYD.data.maps.sceneImages[(state.trialRun.map.tier - 1) % WYD.data.maps.sceneImages.length] : T.sceneImage,
       powerMult: T.powerBase * Math.pow(T.powerGrowth, n - 1),
       itemLevelBonus: 0, enemies: T.enemies, floors: 1, killsPerFloor: T.kills, boss: state.trialRun.guardian,
     };
@@ -38,7 +40,7 @@ WYD.trial = {
     const killTarget = uber ? 0 : Math.round(T.kills * WYD.daily.mult(state, "killsMult"));
     w.trial = { timeLeft: timeLimit, timeLimit, killTarget, kills: 0, guardianOut: false, done: false };
     WYD.world.resetEnemies(w, state, false);
-    WYD.world.clearDrops(w);
+    WYD.world.clearDrops(w, state);
     const name = uber ? WYD.data.uber.name : map ? WYD.maps.name(map) : daily ? "日替わりの試練" : "終わりのない試練";
     w.banner = { text: `${name}　段階 ${level}`, time: 0 };
     WYD.ui.log(`${name} 段階${level} に挑む（${timeLimit}秒で${killTarget}体倒し、守護者を討て）`, daily ? WYD.data.daily.color : T.color);

@@ -22,6 +22,7 @@ const GROW = process.argv[7] || 'game'; // 雇う傭兵（spear・archer・mage�
   await pg.reload();
   const t0 = Date.now(); const res = await pg.evaluate(([MINUTES, TRIAL_MINUTES, SKILLS, MERC, GROW]) => {
     const s = WYD.state, w = WYD.currentWorld;
+      WYD.town.leave(w, s); // 拠点スタートから戦場へ出て測る
     s.settings.speed = 0; // stop the live loop from advancing
     const gameGrow = GROW === 'game' && !SKILLS;
     s.settings.autoSkill = gameGrow;   // ゲームの「スキルを自動で上げる」（レベルアップのたびに world.js が呼ぶ）

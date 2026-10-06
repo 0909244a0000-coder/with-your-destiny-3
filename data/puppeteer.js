@@ -1,0 +1,101 @@
+// 傀儡師：本体の命と防御を人形の攻防へ変える。調整値はこのファイルにまとめる。
+window.WYD = window.WYD || {};
+WYD.data.classes.puppeteer = {
+  name: "傀儡師", desc: "本体の最大HPはほかの職業の約半分。最大HPと防御力で人形の攻撃・耐久を強化し、HPを使って命令する。",
+  player: {
+    className: "傀儡師", weaponName: "操糸具", color: "#c75c69", image: "assets/player_puppeteer.png", imageFilter: null,
+    poses: { attack: "assets/player_puppeteer_attack.png" }, preloadImages: ["assets/ally_puppet.png", "assets/ally_puppet_attack.png"],
+    maxHpMult: 0.52,
+    base: { maxHp: 110, attack: 8, defense: 2, attackSpeed: 0.85, critChance: 5, hpRegen: 1.2, moveSpeed: 120 },
+    perLevel: { maxHp: 14, attack: 1.75, defense: 0.9 },
+    rangedAttack: { range: 240, keepDistance: 170, speed: 370, size: 4, color: "#c75c69" },
+  },
+  skills: {
+    pup_thread: { kind:"puppet", mode:"thread", name:"命の糸", desc:"本体のHPを使って人形を修復。人形がいなければ召喚する。", startLevel:1,maxLevel:10,cooldown:5,hpCost:4,repairBase:0.25,repairPerLevel:0.025,color:"#d47078" },
+    pup_pierce: { kind:"puppet", mode:"pierce", name:"鉄杭の突撃", desc:"人形を敵へ突進させ、周囲の敵も貫く。",startLevel:1,maxLevel:10,cooldown:4,hpCost:3,range:260,radius:36,damageBase:1.8,damagePerLevel:0.28,color:"#e0a8a0" },
+    pup_guard: { kind:"puppet", mode:"guard", name:"守りの傀儡",desc:"人形が近くの敵を引きつけ、しばらく防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:4,duration:5,range:180,defenseMult:1.7,color:"#d0b18b" },
+    pup_needles: { kind:"puppet",mode:"needles",name:"針の雨",desc:"人形の周囲にいる敵をまとめて刺す。",startLevel:0,maxLevel:10,cooldown:6,hpCost:5,radius:130,damageBase:1.35,damagePerLevel:0.2,color:"#bca0b9" },
+    pup_bind: { kind:"puppet",mode:"bind",name:"絡め糸",desc:"人形の周囲の敵を縛る。ボスへの拘束は短い。",startLevel:0,maxLevel:10,cooldown:10,hpCost:4,radius:120,bindBase:1.5,bindPerLevel:0.15,bossBindMult:0.3,damageBase:0.8,damagePerLevel:0.12,color:"#be6f7e" },
+    pup_swap: { kind:"puppet",mode:"swap",name:"身代わり縫い",desc:"本体のHPが減ると少し回復し、本体と人形の防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:2,triggerHpPercent:55,duration:4,defenseMult:0.6,puppetDefenseMult:1.5,healPercentBase:10,healPercentPerLevel:1,color:"#e1b791" },
+    pup_stitch: { kind:"puppet",mode:"stitch",name:"血の縫合",desc:"一定時間、人形の攻撃が当たると本体のHPを回復する。",startLevel:0,maxLevel:10,cooldown:13,hpCost:3,duration:6,healPercentBase:1.8,healPercentPerLevel:0.14,healInterval:0.8,color:"#d26771" },
+    pup_cut: { kind:"puppet",mode:"cut",name:"赤糸の裁断",desc:"本体のHPを大きく使い、人形で敵を強く切り裂く。",startLevel:0,maxLevel:10,cooldown:8,hpCost:9,range:260,damageBase:3.2,damagePerLevel:0.48,color:"#ff6680" },
+    pup_finale: { kind:"puppet",mode:"finale",name:"終幕",desc:"人形を壊し、周囲の敵へ大きなダメージを与える。",startLevel:0,maxLevel:10,cooldown:15,hpCost:7,radius:140,damageBase:2.8,damagePerLevel:0.44,color:"#f0ad8b" },
+  },
+  autoBuild: ["pup_thread","pup_pierce","pup_stitch"],
+  skillOrder: ["pup_thread","pup_swap","pup_guard","pup_stitch","pup_bind","pup_needles","pup_pierce","pup_cut","pup_finale"],
+  skillIcons: Object.fromEntries(["thread","pierce","guard","needles","bind","swap","stitch","cut","finale"].map(k => ["pup_" + k, "assets/skills/pup_" + k + ".png"])),
+};
+WYD.data.mastery.perLevel.puppet = { maxHp: 3, defense: 0.6 };
+WYD.data.puppeteer = {
+  puppet: { hpPerBodyHp: 2, hpPerDefense: 4, attackPerBodyAttack: 0.55, attackPerBodyHp: 0.16, attackPerDefense: 0.75,
+    defensePerBodyDefense: 1, moveSpeed: 145, attackSpeed: 0.9, range: 28, radius: 14, followDistance: 58, firstAttackDelay: 0.35,
+    color: "#9b8f86", visualScale:1.35, duration:3600, spawnSpread:38, hpRatio:1, defenseRatio:1, image: "assets/ally_puppet.png", poses: { attack: "assets/ally_puppet_attack.png" } },
+  respawnCooldown: 6, summonCost: 4, lowHpReserve: 0.15, stitchRange:220,
+  effects: {
+    thread:{key:"puppetThread",size:104}, guard:{key:"puppetThread",size:116}, swap:{key:"puppetThread",size:92}, stitch:{key:"puppetThread",size:88},
+    pierce:{key:"puppetSlash",size:100},cut:{key:"puppetSlash",size:126},needles:{key:"puppetBind",size:140},bind:{key:"puppetBind",size:130},finale:{key:"puppetBurst",size:170},
+  },
+};
+// 3つの型：命の節約、早い指示、強い指示。コストと間隔も変化する。
+for (const id of WYD.data.classes.puppeteer.skillOrder) {
+  WYD.data.runes.skills[id] = [
+    { id:"frugal", name:"節約の糸", desc:"HP消費0.7倍。再使用までの時間1.15倍。", mods:{hpCost:["mul",0.7],cooldown:["mul",1.15]} },
+    { id:"swift", name:"速糸", desc:"再使用までの時間0.7倍。HP消費1.25倍。", mods:{cooldown:["mul",0.7],hpCost:["mul",1.25]} },
+    { id:"deep", name:"深い契約", desc:"命令の効果1.3倍。HP消費1.35倍。", mods:{effectMult:["set",1.3],hpCost:["mul",1.35]} },
+  ];
+}
+
+// 職業固有の光。値はほかのエフェクトと同じくデータ側で調整する。
+Object.assign(WYD.data.vfx.textures, {
+  puppetThread:"assets/vfx/puppetThread.png", puppetSlash:"assets/vfx/puppetSlash.png",
+  puppetBind:"assets/vfx/puppetBind.png", puppetBurst:"assets/vfx/puppetBurst.png",
+});
+Object.assign(WYD.data.vfx.anim, {
+  puppetThread:{duration:0.45,size:104,scaleFrom:0.65,scaleTo:1.1,spin:0.8,additive:true},
+  puppetSlash:{duration:0.25,size:100,scaleFrom:0.75,scaleTo:1.2,spin:0,additive:true},
+  puppetBind:{duration:0.55,size:130,scaleFrom:0.65,scaleTo:1.15,spin:0.6,additive:true},
+  puppetBurst:{duration:0.55,size:170,scaleFrom:0.6,scaleTo:1.3,spin:0,additive:true},
+});
+WYD.data.vfx.castProfiles.puppet = { key:"puppetThread",size:85,duration:0.45,from:0.6,to:1.0,alpha:0.6,flatten:0.8,rise:8 };
+WYD.data.vfx.hitByClass.puppeteer = "puppetSlash";
+for (const id of ["pup_pierce","pup_cut"]) WYD.data.vfx.hitBySkill[id] = "puppetSlash";
+for (const id of ["pup_bind","pup_needles"]) WYD.data.vfx.hitBySkill[id] = "puppetBind";
+WYD.data.vfx.hitBySkill.pup_finale = "puppetBurst";
+
+// ---------- 傀儡師専用のユニーク・セット（すべて新規の固有能力） ----------
+// どれも「HPを払って人形を動かす」という職業の軸に、違う向きの答えを出す。
+//   無貌座の衣装（セット）… HPを削るほど人形が強い（攻め）
+//   幕引きの裁ち鋏      … 人形を壊しては呼び直す（終幕の回転）
+//   満ちる糸巻き        … 人形を満タンに保つほど命令が安い（節約）
+//   藁の心臓            … 人形を盾にして本体を守る（守り）
+// 数値の意味は src/puppeteer.js の power 名の処理を参照。
+WYD.data.uniques.list.push(
+  { id: "curtainShears", home: "smashana", name: "幕引きの裁ち鋏", base: "dual_blades", weight: 10, classOnly: "puppeteer",
+    stats: { attack: [4, 8], maxHp: [15, 30] }, power: "puppetCurtainCall",
+    desc: "人形が壊れるたび（終幕を含む）、本体のHPを最大HPの{healPercent}%回復し、人形を呼び直せるまでの時間が{respawnSeconds}秒になる",
+    params: { healPercent: 12, respawnSeconds: 2 } },
+  { id: "fullSpool", home: "cathedral", name: "満ちる糸巻き", base: "bracelet", weight: 10, classOnly: "puppeteer",
+    stats: { defense: [3, 6], maxHp: [15, 30] }, power: "puppetSpareThread",
+    desc: "人形のHPが{threshold}%以上のとき、命令で使う本体のHPが{costPercent}%に減る",
+    params: { threshold: 90, costPercent: 50 } },
+  { id: "strawHeart", home: "frost", name: "藁の心臓", base: "amulet", weight: 10, classOnly: "puppeteer",
+    stats: { maxHp: [20, 40], defense: [3, 6] }, power: "puppetScapegoat",
+    desc: "人形がいる間、本体が受けるダメージの{sharePercent}%を人形が代わりに受ける",
+    params: { sharePercent: 35 } },
+);
+WYD.data.sets.list.push({
+  // 傀儡師でだけ落ちる
+  id: "facelessTroupe", home: "patala", name: "無貌座の衣装", classOnly: "puppeteer",
+  pieces: [
+    { id: "troupe_rod", name: "無貌座の操り棒", base: "staff", stats: { attack: [4, 8], skillDamage: [8, 14] } },
+    { id: "troupe_mask", name: "無貌座の仮面", base: "crown", stats: { maxHp: [25, 45] } },
+    { id: "troupe_coat", name: "無貌座の燕尾服", base: "chainmail", stats: { defense: [5, 9] } },
+    { id: "troupe_ring", name: "無貌座の指輪", base: "ring", stats: { defense: [3, 6] } },
+  ],
+  bonuses: {
+    2: { stats: { maxHp: 60, defense: 10 } },
+    4: { power: "puppetDesperation", params: { perPercent: 1.5, maxPercent: 90 },
+         desc: "本体のHPが減っているほど人形の攻撃力が上がる（失ったHP1%ごとに+{perPercent}%、最大+{maxPercent}%）" },
+  },
+});
+WYD.data.results.labels["effect:puppetCurtainCall"] = { name: "幕引きの裁ち鋏", group: "装備効果", color: "#e8c46a" };

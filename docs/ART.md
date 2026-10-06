@@ -23,6 +23,13 @@
 - 絵の場所を `data/` に書く方法は `assets/README.md`
 
 ## 受け取り済み（ゲームに入っている）
+
+2026-10-06：画面HUD用の暗鉄と赤い宝石の紋章 `assets/ui/hud-crest.png`（透過PNG）。全画面UI刷新でタイトル横に表示。
+
+2026-10-05：6エリアの専用景色を追加（`assets/areas/scenes/forest.webp`・`smashana.webp`・`patala.webp`・`cathedral.webp`・`frost.webp`・`inferno.webp`）。一枚の横長背景、高い位置からの3/4見下ろし、中央は戦闘用の平らな低コントラスト地面、構造物は外周。元の512pxタイルとは別の描画形式。組み込み画像生成ツールで一枚ずつ生成してWebPへ縮小・圧縮。全指示文は `docs/reviews/2026-10-05-codex-backgrounds.md`。
+
+
+2026-10-04：煙と光のエフェクト4枚を追加（`assets/vfx/graveWisp.png`・`rageWisp.png`・`holyWisp.png`・`shadowWisp.png`）。黒背景、256px、加算合成。組み込み画像生成ツールで2×2シートを作り、`tools/prepare_sprite.py --grid 2x2 --size 256` で切り出し。指示文は `docs/reviews/2026-10-04-codex-redo.md`。
 羅刹王ラーヴァナ（`ravana`）、阿修羅王（`asuraKing`）、羅刹（`rakshasa`）、夜叉（`yaksha`）、餓鬼（`preta`）、ナーガ（`naga`）
 
 追加済み（このPR）：
@@ -91,7 +98,7 @@ Game visual effect texture for a dark fantasy action RPG seen from a top-down vi
 ポーズ違いは、顔や装備が少し変わってしまいやすいです。見本と並べて、同じキャラに見えないものは作り直してください。
 
 ### ソーサレス（2つ目の職業）のアイコン
-主人公の絵は、保管していた女性の術者の絵を使っています（`assets/player_sorceress.png`。持ち主の判断で、いったんこの絵）。
+主人公の通常・攻撃絵は2026-10-06に描き直し。元の黒髪・赤金の衣装・炎の杖を残し、他職業に合わせた立体的なダークファンタジーの質感へ。`assets/player_sorceress.png`・`player_sorceress_attack.png`。詳細と指示文は `docs/reviews/2026-10-06-codex-sorceress-art.md`。
 
 **スキル（3列×2行）** → `--grid 3x2 --names sorc_nova,sorc_shield,sorc_chain,sorc_meteor,sorc_haste,sorc_freeze`、置いたら `data/classes.js` の `sorceress.skillIcons` に書く
 ```
@@ -332,3 +339,22 @@ Dark fantasy action-RPG enemy sprite in the style of Tibetan thangka painting an
   python3 tools/prepare_sprite.py assets/sheets/skills.png assets/skills --grid 3x2 --names whirl,vajra,sudarshana,agni,hanuman,nagapasha
   ```
 - 新規PNG32枚の寸法・透明背景・ファイル破損を確認。画像参照36件すべての実ファイルを確認。既存のID・数値・セーブ形式を変更していません。新規セーブと、旧IDの装備を含む既存形式のセーブを読み込み、状態・能力値がmainと一致することも確認。
+
+## 2026-10-05 冥爆術師
+黒い礼装・白い仮面・羽根状の肩当て、紫と琥珀の爆炎で統一。`assets/player_bombmancer{,_attack}.png`、`assets/bomb_hunter.png`、`assets/skills/bomb_*.png`、`assets/vfx/bombOrb.png`・`bombBurst.png`・`bombSmoke.png`。画像15枚約2.05MB。キャラと使い魔は透明、FXは黒背景で加算。生成指示全文・整形方法は `docs/reviews/2026-10-05-codex-bombmancer.md`。
+
+
+## 2026-10-06：専用スキルアニメーション7枚
+assets/vfx/{steelWhirl,frostCrown,corpseBloom,holyJudgment,violetAmbush,stormColumn,voidDetonation}Atlas.webp。各768×768、2列2行の連続4コマ。斜め見下ろし、黒背景で加算、遮蔽・煙の陰影・立ち上がりで立体感を付ける。シート全体を描かず、src/vfx.jsのframeを通す。画像生成→prepare_sprite.pyでシート全体を768px→RGB WebP quality88 method6。セルごとの自動トリミングはせず、カメラと接地点を保存。旧絵の上書きなし。全指示/元画像ファイル名はdocs/reviews/2026-10-06-codex-skill-vfx.md。
+
+
+## 2026-10-06：防御/オーラの専用アニメーション5枚
+arcaneBarrierAtlas/boneCarapaceAtlas/oakBulwarkAtlas/sanctuaryBloomAtlas/warEmbersAtlas.webpをassets/vfxへ。768px/2×2、各コマ384px、黒背景加算。盾は空いた中心にキャラを残し、青い魔力/象牙の骨/木の質感で分ける。オーラは白い床全面の光にせず上向きの細い光にする。中間2コマは持続ループ用。同じ制作・整形条件を引き継ぎ、旧画像の上書きなし。指示全文はdocs/reviews/2026-10-06-codex-support-vfx.md。
+
+
+## 2026-10-06：ルーン6属性の専用画像
+assets/vfx/rune-{fire,ice,lightning,poison,shadow,holy}Atlas.webp。各1152×768/3列2行/セル384px。左上から追尾弾、周回刃、連鎖、設置、貫通波、着弾の独立した絵で、連続フレームではない。炎/氷晶/雷枝/毒滴/影煙/黄金の光の材質を描き分ける。黒背景加算、組み込み生成1536×1024→RGB WebP quality88/method6、セルの自動トリミングなし。全体シートをそのまま表示しない。追尾セルは描画時に左右反転。旧絵は保持。指示全文：docs/reviews/2026-10-06-codex-rune-vfx.md。
+
+
+## 2026-10-06：秘技修練の既存絵利用
+新画像は増やさず、属性別ルーンの連鎖/着弾/回復/引寄せセル、既存の周回鎚・竜巻・使い魔を組み合わせる。骨塚はboneStormを38px/濃度0.55で持続表示。秘技の説明カードは無地・金の選択枠で区別し、390px幅で48pxボタンを確保する。

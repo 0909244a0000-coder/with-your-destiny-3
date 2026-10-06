@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>DPS訓練エンジン</title></head><body>
+<script>
+// 外部の育成セーブには読み書きしない。移行用のStorageもこのフレーム内のメモリだけ。
+const dpsMemory = new Map();
+const dpsStorage = { getItem: k => dpsMemory.get(String(k)) ?? null, setItem: (k,v) => dpsMemory.set(String(k),String(v)), removeItem: k => dpsMemory.delete(String(k)), clear: () => dpsMemory.clear(), key: i => [...dpsMemory.keys()][i] || null, get length() { return dpsMemory.size; } };
+Object.defineProperty(window, 'localStorage', { value: dpsStorage, configurable: false });
+Object.defineProperty(window, 'sessionStorage', { value: dpsStorage, configurable: false });
+</script>
+<script src="data/player.js"></script>
+<script src="data/skills.js"></script>
+<script src="data/mastery.js"></script>
+<script src="data/enemies.js"></script>
+<script src="data/elites.js"></script>
+<script src="data/map.js"></script>
+<script src="data/areas.js"></script>
+<script src="data/items.js"></script>
+<script src="data/effects.js"></script>
+<script src="data/crafting.js"></script>
+<script src="data/uniques.js"></script>
+<script src="data/offline.js"></script>
+<script src="data/story.js"></script>
+<script src="data/fx.js"></script>
+<script src="data/anim.js"></script>
+<script src="data/sound.js"></script>
+<script src="data/classes.js"></script>
+<script src="data/vfx.js"></script>
+<script src="data/results.js"></script>
+<script src="data/runes.js"></script>
+<script src="data/sets.js"></script>
+<script src="data/trial.js"></script>
+<script src="data/records.js"></script>
+<script src="data/gems.js"></script>
+  <script src="data/runeSkills.js"></script>
+<script src="data/daily.js"></script>
+<script src="data/cube.js"></script>
+<script src="data/maps.js"></script>
+<script src="data/devotion.js"></script>
+<script src="data/seasons.js"></script>
+<script src="data/uber.js"></script>
+<script src="data/music.js"></script>
+<script src="data/mercenary.js"></script>
+<script src="data/legendaryGems.js"></script>
+<script src="data/shrines.js"></script>
+<script src="data/gamble.js"></script>
+<script src="data/breach.js"></script>
+<script src="data/bounties.js"></script>
+<script src="data/town.js"></script>
+<script src="data/bombmancer.js"></script>
+<script src="data/puppeteer.js"></script>
+<script src="data/classSpecialization.js"></script>
+<script src="data/training.js"></script>
+<script src="data/dps.js"></script>
+<script src="data/arena.js"></script>
+<script src="src/util.js"></script>
+<script src="src/save.js"></script>
+<script src="src/classes.js"></script>
+<script src="src/stats.js"></script>
+<script src="src/loot.js"></script>
+<script src="src/inventory.js"></script>
+<script src="src/world.js"></script>
+<script src="src/bombs.js"></script>
+<script src="src/fx.js"></script>
+<script src="src/vfx.js"></script>
+<script src="src/runes.js"></script>
+<script src="src/trial.js"></script>
+<script src="src/records.js"></script>
+<script src="src/gems.js"></script>
+  <script src="src/runeSkills.js"></script>
+<script src="src/daily.js"></script>
+<script src="src/allies.js"></script>
+<script src="src/puppeteer.js"></script>
+<script src="src/traps.js"></script>
+<script src="src/forms.js"></script>
+<script src="src/skillinfo.js"></script>
+<script src="src/cube.js"></script>
+<script src="src/maps.js"></script>
+<script src="src/devotion.js"></script>
+<script src="src/board.js"></script>
+<script src="src/seasons.js"></script>
+<script src="src/builds.js"></script>
+<script src="src/uber.js"></script>
+<script src="src/music.js"></script>
+<script src="src/mercenary.js"></script>
+<script src="src/legendaryGems.js"></script>
+<script src="src/shrines.js"></script>
+<script src="src/gamble.js"></script>
+<script src="src/breach.js"></script>
+<script src="src/bounties.js"></script>
+<script src="src/sound.js"></script>
+<script src="src/offline.js"></script>
+<script src="src/town.js"></script>
+<script src="src/render.js"></script>
+<script src="src/results.js"></script>
+<script src="src/classSpecialization.js"></script>
+<script src="src/training.js"></script>
+<script src="src/dpsEngine.js"></script>
+</body></html>

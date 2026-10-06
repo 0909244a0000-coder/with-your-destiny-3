@@ -1,0 +1,52 @@
+[
+  {
+    "id": "bag",
+    "path": "assets/ui/nav-bag.webp",
+    "prompt": "Use case: stylized-concept. One square production inventory/navigation icon for a Diablo-like Western dark fantasy RPG. Subject: a worn brown leather adventurer backpack, sturdy brass clasp. Painterly realistic worn materials, warm muted gold rim lighting, bold simple silhouette readable at 48 pixels, single centered subject filling 78% of square, high contrast, transparent exterior. No text, no letters, no frame, no background scenery, no extra objects."
+  },
+  {
+    "id": "home",
+    "path": "assets/ui/nav-home.webp",
+    "prompt": "Use case: stylized-concept. One square production inventory/navigation icon for a Diablo-like Western dark fantasy RPG. Subject: a compact warmly lit leather tent with a small campfire. Painterly realistic worn materials, warm muted gold rim lighting, bold simple silhouette readable at 48 pixels, single centered subject filling 78% of square, high contrast, transparent exterior. No text, no letters, no frame, no background scenery, no extra objects."
+  },
+  {
+    "id": "status",
+    "path": "assets/ui/nav-status.webp",
+    "prompt": "Use case: stylized-concept. One square production inventory/navigation icon for a Diablo-like Western dark fantasy RPG. Subject: a steel knight breastplate with shoulder armor, no person. Painterly realistic worn materials, warm muted gold rim lighting, bold simple silhouette readable at 48 pixels, single centered subject filling 78% of square, high contrast, transparent exterior. No text, no letters, no frame, no background scenery, no extra objects."
+  },
+  {
+    "id": "upgrade",
+    "path": "assets/ui/nav-upgrade.webp",
+    "prompt": "Use case: stylized-concept. One square production inventory/navigation icon for a Diablo-like Western dark fantasy RPG. Subject: a heavy smith hammer striking a dark iron anvil with three orange sparks. Painterly realistic worn materials, warm muted gold rim lighting, bold simple silhouette readable at 48 pixels, single centered subject filling 78% of square, high contrast, transparent exterior. No text, no letters, no frame, no background scenery, no extra objects."
+  },
+  {
+    "id": "bounty",
+    "path": "assets/ui/nav-bounty.webp",
+    "prompt": "Use case: stylized-concept. One square production inventory/navigation icon for a Diablo-like Western dark fantasy RPG. Subject: a rolled parchment bounty contract with a red wax seal, no writing. Painterly realistic worn materials, warm muted gold rim lighting, bold simple silhouette readable at 48 pixels, single centered subject filling 78% of square, high contrast, transparent exterior. No text, no letters, no frame, no background scenery, no extra objects."
+  },
+  {
+    "id": "merc",
+    "path": "assets/ui/nav-merc.webp",
+    "prompt": "Use case: stylized-concept. One square production inventory/navigation icon for a Diablo-like Western dark fantasy RPG. Subject: a hooded veteran mercenary portrait with a steel helmet. Painterly realistic worn materials, warm muted gold rim lighting, bold simple silhouette readable at 48 pixels, single centered subject filling 78% of square, high contrast, transparent exterior. No text, no letters, no frame, no background scenery, no extra objects."
+  },
+  {
+    "id": "lgem",
+    "path": "assets/ui/nav-lgem.webp",
+    "prompt": "Use case: stylized-concept. One square production inventory/navigation icon for a Diablo-like Western dark fantasy RPG. Subject: a single radiant violet faceted legendary gemstone. Painterly realistic worn materials, warm muted gold rim lighting, bold simple silhouette readable at 48 pixels, single centered subject filling 78% of square, high contrast, transparent exterior. No text, no letters, no frame, no background scenery, no extra objects."
+  },
+  {
+    "id": "devotion",
+    "path": "assets/ui/nav-devotion.webp",
+    "prompt": "Use case: stylized-concept. One square production inventory/navigation icon for a Diablo-like Western dark fantasy RPG. Subject: a gold constellation of five bright stars connected in a crescent. Painterly realistic worn materials, warm muted gold rim lighting, bold simple silhouette readable at 48 pixels, single centered subject filling 78% of square, high contrast, transparent exterior. No text, no letters, no frame, no background scenery, no extra objects."
+  },
+  {
+    "id": "codex",
+    "path": "assets/ui/nav-codex.webp",
+    "prompt": "Use case: stylized-concept. One square production inventory/navigation icon for a Diablo-like Western dark fantasy RPG. Subject: a thick ancient leather book with a brass clasp. Painterly realistic worn materials, warm muted gold rim lighting, bold simple silhouette readable at 48 pixels, single centered subject filling 78% of square, high contrast, transparent exterior. No text, no letters, no frame, no background scenery, no extra objects."
+  },
+  {
+    "id": "arena",
+    "path": "assets/ui/nav-arena.webp",
+    "prompt": "Use case: stylized-concept. One square production inventory/navigation icon for a Diablo-like Western dark fantasy RPG. Subject: two crossed steel swords over a small crimson round shield. Painterly realistic worn materials, warm muted gold rim lighting, bold simple silhouette readable at 48 pixels, single centered subject filling 78% of square, high contrast, transparent exterior. No text, no letters, no frame, no background scenery, no extra objects."
+  }
+]

@@ -46,7 +46,7 @@ WYD.shrines = {
             .sort((a, b) => WYD.util.dist(p, a) - WYD.util.dist(p, b)).slice(0, c.targets);
           for (const e of near) {
             w.effects.push({ type: "bolt", x: e.x, y: e.y, color: this.def(p.shrine.id).color, time: 0, duration: 0.2 });
-            WYD.world.playerHit(w, state, stats, e, stats.attack * c.mult);
+            WYD.world.playerHit(w, state, stats, e, stats.attack * c.mult, "shrine:conduit");
           }
         }
       }

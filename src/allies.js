@@ -37,7 +37,7 @@ WYD.allies = {
       timeLeft: s.duration, duration: s.duration,
       moveSpeed: s.moveSpeed, attackSpeed: s.attackSpeed, range: s.range, radius: s.radius,
       attackTimer: s.firstAttackDelay, followDistance: s.followDistance, hitFlash: 0, atkAnim: 0, face: 1,
-      color: s.color, image: s.image, imageFilter: s.imageFilter,
+      color: s.color, image: s.image, poses: s.poses, imageFilter: s.imageFilter, visualScale: s.visualScale || 1,
       ranged: s.rangedRange || 0, keepDistance: s.keepDistance || 0, shotColor: s.shotColor,   // 遠くから撃つ手下
     };
     w.allies.push(a);
@@ -62,6 +62,7 @@ WYD.allies = {
       a.timeLeft -= dt;
       a.hitFlash = Math.max(0, a.hitFlash - dt);
       a.atkAnim = Math.max(0, a.atkAnim - dt);
+      if (a.stunTimer > 0) { a.stunTimer = Math.max(0, a.stunTimer - dt); continue; }
       const target = WYD.world.nearestEnemy(w, a);
       if (!target) {
         // 敵がいなければ主人公の近くへ
@@ -76,10 +77,16 @@ WYD.allies = {
       if (d <= reach && a.attackTimer <= 0) {
         a.attackTimer = 1 / a.attackSpeed;
         a.atkAnim = WYD.data.anim.attack.time;
+        a.attackTarget = target;
         a.face = target.x >= a.x ? 1 : -1;
         if (a.ranged) w.effects.push({ type: "chain", points: [{ x: a.x, y: a.y - 8 }, { x: target.x, y: target.y }], color: a.shotColor || a.color, time: 0, duration: 0.2 });
         const hit = WYD.world.calcDamage(a.attack, target.defense, stats.critChance, stats.critMultiplier);
-        WYD.world.damageEnemy(w, state, target, hit.damage, hit.crit);
+        const hpBefore = target.hp;
+        WYD.world.damageEnemy(w, state, target, hit.damage, hit.crit, a.source === "merc" ? "merc:" + state.mercenary.type : a.source === "unique" ? "effect:summon" : "skill:" + a.source, true, a);
+        if (a.puppet) {
+          WYD.puppeteer.onHit(w, stats, a, hpBefore - target.hp);
+          WYD.vfx.spawn(w, "puppetSlash", target.x, target.y, {size:WYD.data.puppeteer.effects.pierce.size * 0.55});
+        }
       }
     }
     // 崩れた手下を消す
@@ -120,8 +127,8 @@ WYD.allies = {
       ctx.ellipse(a.x, a.y + a.radius * 0.6, a.radius * 1.2, a.radius * 0.45, 0, 0, Math.PI * 2);
       ctx.stroke();
       ctx.globalAlpha = 1;
-      R.drawCircleOrImage(ctx, a.x, a.y, a.radius, a.hitFlash > 0 ? "#ffffff" : a.color, a.image, a.hitFlash > 0,
-        R.pose(a, null, R.clock), a.imageFilter);
+      R.drawCircleOrImage(ctx, a.x, a.y, a.radius * (a.visualScale || 1), a.hitFlash > 0 ? "#ffffff" : a.color, R.poseImage(a, a), a.hitFlash > 0,
+        R.pose(a, a.puppet ? a.attackTarget : null, R.clock), a.imageFilter);
       // HPと残り時間
       const bw = a.radius * 2.2;
       ctx.fillStyle = "#222";

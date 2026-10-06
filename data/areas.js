@@ -9,6 +9,7 @@ WYD.data.areas = [
     bgColor: "#2b3a2a",
     grassColor: "#34482f",   // 飾り（草）の色
     stoneColor: "#4a4f47",   // 飾り（石）の色
+    sceneImage: "assets/areas/scenes/forest.webp",
     groundImage: "assets/areas/forest.png", // 地面の絵を敷きつめる
     powerMult: 1,            // 敵のHP・攻撃力・防御力・経験値の倍率
     itemLevelBonus: 0,       // 落ちる装備のアイテムレベルに足す数
@@ -28,6 +29,7 @@ WYD.data.areas = [
     bgColor: "#3a2c26",
     grassColor: "#5a3a2a",
     stoneColor: "#6b6258",
+    sceneImage: "assets/areas/scenes/smashana.webp",
     groundImage: "assets/areas/smashana.png",
     powerMult: 2.0,
     itemLevelBonus: 3,
@@ -47,6 +49,7 @@ WYD.data.areas = [
     bgColor: "#232a3a",
     grassColor: "#2f3f5a",
     stoneColor: "#55506b",
+    sceneImage: "assets/areas/scenes/patala.webp",
     groundImage: "assets/areas/patala.png",
     powerMult: 3.5,
     itemLevelBonus: 7,
@@ -67,6 +70,7 @@ WYD.data.areas = [
     bgColor: "#1f1a26",
     grassColor: "#2c2438",
     stoneColor: "#4a4458",
+    sceneImage: "assets/areas/scenes/cathedral.webp",
     groundImage: "assets/areas/cathedral.png",
     powerMult: 4.8,
     itemLevelBonus: 11,
@@ -87,6 +91,7 @@ WYD.data.areas = [
     bgColor: "#1a2430",
     grassColor: "#2a3a4a",
     stoneColor: "#5a6a7a",
+    sceneImage: "assets/areas/scenes/frost.webp",
     groundImage: "assets/areas/frost.png",
     powerMult: 6.6,
     itemLevelBonus: 15,
@@ -107,6 +112,7 @@ WYD.data.areas = [
     bgColor: "#2a1210",
     grassColor: "#4a1a10",
     stoneColor: "#6a3a2a",
+    sceneImage: "assets/areas/scenes/inferno.webp",
     groundImage: "assets/areas/inferno.png",
         powerMult: 8.0,
     itemLevelBonus: 19,

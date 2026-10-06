@@ -14,9 +14,7 @@ WYD.data.crafting = {
   //   upTo … このレア度まで分解する（null = しない）
   autoSalvageOptions: [
     { id: "none",   label: "しない",       upTo: null },
-    { id: "normal", label: "ノーマル",     upTo: "normal" },
     { id: "magic",  label: "マジック以下", upTo: "magic" },
-    { id: "rare",   label: "レア以下",     upTo: "rare" },
   ],
 
   // 戦利品フィルター（Path of Exile のしくみ）：部位ごとに「このレア度から拾う」を決める。拾わない装備はその場で素材になる
@@ -24,7 +22,6 @@ WYD.data.crafting = {
   filterLevels: [
     { id: "normal", label: "全部拾う" },
     { id: "magic", label: "マジック以上" },
-    { id: "rare", label: "レア以上" },
     { id: "legend", label: "レジェンド以上" },
     { id: "none", label: "拾わない" },
   ],

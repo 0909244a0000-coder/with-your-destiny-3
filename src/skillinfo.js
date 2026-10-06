@@ -16,6 +16,14 @@ WYD.skillInfo = {
     const mult = f("damageBase", "damagePerLevel");
     const x = (fn) => (lv) => `攻撃力×${this.r2(fn(lv))}`;
     switch (kind) {
+      case "bomb": {
+        const out = [["爆発の威力", x(mult)], ["爆発範囲", () => Math.round(s.radius)]];
+        if (s.mode === "brand") out.push(["仕込む数", lv => Math.floor(s.targetsBase + s.targetsPerLevel * (lv - 1))], ["起爆まで", () => `${s.fuse}秒`]);
+        if (s.mode === "hunter") out.push(["移動速度", () => s.speed], ["追尾時間", () => `${s.lifetime}秒`]);
+        if (s.mode === "mine") out.push(["同時設置", () => s.maxBombs], ["時限", () => `${s.fuse}秒`]);
+        if (s.mode === "finale") out.push(["誘爆の威力", () => `${s.chainBoost}倍`]);
+        return out;
+      }
       case "whirl": return [["威力", x(mult)], ["範囲", () => Math.round(s.radius)]];
       case "vajra": return [
         ["防御", (lv) => `+${this.r1(s.defenseBase + s.defensePerLevel * (lv - 1))}`],
@@ -70,6 +78,8 @@ WYD.skillInfo = {
     });
     if (!parts.length) return "";
     const head = lv > 0 ? "" : "<span class=\"muted\">覚えると：</span>";
-    return `<div class="skill-info">${head}${parts.join("　")}</div>`;
+    const rule = WYD.data.classSpecialization && WYD.data.classSpecialization.skills[id];
+    const remains = id === "nec_nova" && rule ? `　屍体 ${(WYD.currentWorld.necRemains || []).length}/${rule.maxCorpses}` : "";
+    return `<div class="skill-info">${head}${parts.join("　")}${rule ? `<br>${rule.note}${remains}` : ""}</div>`;
   },
 };
