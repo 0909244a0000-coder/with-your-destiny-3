@@ -22,7 +22,7 @@ WYD.data.classes.puppeteer = {
     pup_finale: { kind:"puppet",mode:"finale",name:"終幕",desc:"人形のHPが40%以下のとき、人形を壊して周囲の敵へ大きなダメージを与える。",startLevel:0,maxLevel:10,cooldown:15,hpCost:7,triggerPuppetHpPercent:40,radius:140,damageBase:2.8,damagePerLevel:0.44,color:"#f0ad8b" },
   },
   autoBuild: ["pup_thread","pup_pierce","pup_stitch"],
-  skillOrder: ["pup_thread","pup_swap","pup_guard","pup_stitch","pup_bind","pup_needles","pup_pierce","pup_cut","pup_finale"],
+  skillOrder: ["pup_finale","pup_thread","pup_swap","pup_guard","pup_stitch","pup_bind","pup_needles","pup_pierce","pup_cut"],
   skillIcons: Object.fromEntries(["thread","pierce","guard","needles","bind","swap","stitch","cut","finale"].map(k => ["pup_" + k, "assets/skills/pup_" + k + ".png"])),
 };
 WYD.data.mastery.perLevel.puppet = { maxHp: 3, defense: 0.6 };
