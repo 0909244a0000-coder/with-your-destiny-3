@@ -88,9 +88,20 @@ WYD.runeSkills = {
     const s = r.skills.find(x => x.id === p.id); if(accept) s[p.key] = p.next;
     r.pending = null; return true;
   },
+  canDiscard(state,skill) {
+    const r = state.runeSkills;
+    return !!skill && !skill.locked && r.equipped !== skill.id && r.pending?.id !== skill.id && !(state.builds || []).some(b => b?.runeSkill === skill.id);
+  },
+  discardable(state) {
+    return this.ensure(state).skills.filter(skill => this.canDiscard(state,skill));
+  },
+  discardAll(state) {
+    const ids = this.discardable(state).map(skill => skill.id);
+    return ids.reduce((count,id) => count + Number(this.discard(state,id)),0);
+  },
   discard(state,id) {
     const r = this.ensure(state), s = r.skills.find(x => x.id === id);
-    if (!s || s.locked || r.equipped === id || r.pending?.id === id || (state.builds || []).some(b => b?.runeSkill === id)) return false;
+    if (!this.canDiscard(state,s)) return false;
     r.skills = r.skills.filter(x => x.id !== id); r.essence += WYD.data.runeSkills.discardEssence; return true;
   },
   onUberWin(w,state) {
