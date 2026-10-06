@@ -57,8 +57,8 @@ WYD.data.skills = {
     radius: 80,           // 陣の大きさ
     duration: 4,          // 陣が残る秒数
     tick: 0.5,            // 何秒ごとにダメージを与えるか
-    damageBase: 0.5,      // 1回あたりの倍率（攻撃力×これ）
-    damagePerLevel: 0.1,
+    damageBase: 0.55,      // 1回あたりの倍率（攻撃力×これ）
+    damagePerLevel: 0.12,
     color: "#ff7a2a",
   },
   // 強化スキル：攻撃速度アップ
@@ -86,17 +86,58 @@ WYD.data.skills = {
     bindBase: 1.5,        // 縛る秒数
     bindPerLevel: 0.2,
     bossBindMult: 0.3,    // ボスを縛る時間の倍率
-    damageBase: 0.8,
-    damagePerLevel: 0.15,
+    damageBase: 1.6,
+    damagePerLevel: 0.3,
     color: "#5fd9a0",
+  },
+  // 呼び出しスキル：強い戦士の霊を呼ぶ（しくみは手下と同じ raise。src/allies.js）
+  bar_ancients: {
+    kind: "raise", name: "祖霊の召喚",
+    desc: "いにしえの戦士の霊を3体呼び出す。霊は敵を斬り、敵の攻撃も引きつける。",
+    startLevel: 0, maxLevel: 10, cooldown: 6,
+    countBase: 3, countPerLevel: 0,
+    hpRatio: 0.5, attackBase: 0.45, attackPerLevel: 0.06, defenseRatio: 0.8,
+    duration: 20, moveSpeed: 120, attackSpeed: 1.0, range: 28, radius: 13,
+    spawnSpread: 35, followDistance: 45, firstAttackDelay: 0.4,
+    color: "#d8e0ff",
+    image: "assets/player.png",
+    imageFilter: "grayscale(1) brightness(1.5) sepia(0.3) hue-rotate(180deg) opacity(0.75)",   // 霊らしく白く透けた色
+  },
+  // オーラ：ONのあいだずっと攻撃力アップ（しくみは aura。src/world.js）
+  bar_orders: {
+    kind: "aura", auraType: "might", name: "戦の雄叫び",
+    desc: "オーラ：雄叫びで闘志を高め、攻撃力が上がり続ける。",
+    startLevel: 0, maxLevel: 10, cooldown: 1,
+    radius: 110, mightBase: 12, mightPerLevel: 3.5, color: "#ff8a4a",
+  },
+  // オーラ：ONのあいだずっとHP回復
+  bar_cry: {
+    kind: "aura", auraType: "heal", name: "鼓舞の叫び",
+    desc: "オーラ：叫びで自分と仲間を奮い立たせ、HPが回復し続ける。最大HPの何%か。",
+    startLevel: 0, maxLevel: 10, cooldown: 1,
+    radius: 140, healPercentBase: 1.0, healPercentPerLevel: 0.22, color: "#9fffb0",
   },
 };
 
 // スキルのアイコンの絵（スキル名 → ファイル）。例: whirl: "assets/skills/whirl.png"
-WYD.data.skillIcons = {};
+WYD.data.skillIcons = {
+  whirl: "assets/skills/whirl.png",
+  vajra: "assets/skills/vajra.png",
+  sudarshana: "assets/skills/sudarshana.png",
+  agni: "assets/skills/agni.png",
+  hanuman: "assets/skills/hanuman.png",
+  nagapasha: "assets/skills/nagapasha.png",
+  bar_ancients: "assets/skills/bar_ancients.png",
+  bar_orders: "assets/skills/bar_orders.png",
+  bar_cry: "assets/skills/bar_cry.png",
+};
 
 // 同時にONにできるスキルの数（ここでビルドを選ぶ）
 WYD.data.skillSlots = 3;
 
+// 「おまかせ」（スキルを自動で上げる）で先に覚えてONにするスキル（おすすめの組み合わせ）。
+// 残りのポイントは、ONのスキルのレベルの低いものから上げる
+WYD.data.autoBuild = ["whirl", "vajra", "sudarshana"];
+
 // AIがスキルを試す順番
-WYD.data.skillOrder = ["vajra", "hanuman", "nagapasha", "whirl", "sudarshana", "agni"];
+WYD.data.skillOrder = ["vajra", "bar_orders", "bar_cry", "hanuman", "bar_ancients", "nagapasha", "whirl", "sudarshana", "agni"];
