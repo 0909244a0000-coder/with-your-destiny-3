@@ -8,9 +8,13 @@ WYD.data.arena = {
   visual: { particlesPerTeam: 90, effectsPerTeam: 80, labelPx: 12, barWidth: 50, barHeight: 5, labelGap: 28, fieldAlpha: 0.6, backgroundDim: 0.3 },
   modes: { duel: { name: "1対1", min: 2, max: 2 }, royale: { name: "バトルロワイヤル", min: 2, max: 7 } },
   combat: {
-    damageScale: 0.18, hitHpCap: 0.075, windowSeconds: 1, windowHpCap: 0.1,
+    damageScale: 0.08, hitHpCap: 0.10, windowSeconds: 1, windowHpCap: 0.12,
+    // 壊せない罠の継続射撃を抑え、近接戦士の追跡を補助する。
+    trapDamageScale: 0.35, chaseSpeed: { barbarian: 1.2 },
     summonDamageScale: 0.6, summonHitHpCap: 0.4, summonWindowHpCap: 1,
     reflectScale: 0.2, reflectRatioCap: 0.4, healScale: 0.5,
+    // 回復専門の技は維持し、攻撃職の防御兼回復だけ追加補正。
+    skillHealScale: { asn_cloak: 0.7 },
     bindScale: 0.5, bindMax: 1, bindImmunity: 0.75,
     pressureStart: 30, pressureRamp: 60, pressureDamageMax: 2.5, pressureHealMin: 0.05,
   },

@@ -40,7 +40,9 @@ WYD.arenaEngine = {
       const hit = E.hitContext;
       // 吸血は軽減後に実際に奪ったHPを基準にする（超過ダメージでも回復しない）。
       if (hit && (source === "effect:lifesteal" || (source === hit.source && hit.extraLifesteal))) amount *= hit.raw > 0 ? hit.actual / hit.raw : 0;
-      return heal.call(this, w, maxHp, amount * E.healFactor(), source);
+      const id = source && source.startsWith("skill:") ? source.slice(6) : null;
+      const scale = WYD.data.arena.combat.skillHealScale[id] ?? 1;
+      return heal.call(this, w, maxHp, amount * E.healFactor() * scale, source);
     };
     for (const key of Object.keys(W.skillHandlers)) {
       const handler = W.skillHandlers[key];
@@ -83,6 +85,8 @@ WYD.arenaEngine = {
       // 弾をはじく装備：通常遠隔弾・遠隔召喚・罠射撃に適用。範囲/反射には適用しない。
       if (!E.wardChecked && E.blocked(w, target, actor, source)) return;
       const raw = amount;
+      const skill = source.startsWith("skill:") && WYD.data.skills[source.slice(6)];
+      if (skill && skill.kind === "trap") amount *= WYD.data.arena.combat.trapDamageScale;
       const C = WYD.data.arena.combat;
       amount = receiver.limitDamage(target, amount * (target.arenaMain ? C.damageScale : C.summonDamageScale) * E.pressureDamage());
       const actual = Math.min(target.hp, amount);
@@ -163,6 +167,7 @@ WYD.arenaEngine = {
   },
   prepare() {
     this.stats = WYD.stats.compute(this.state);
+    this.stats.moveSpeed *= WYD.data.arena.combat.chaseSpeed[WYD.classes.id] || 1;
     const p = this.world.player;
     p.maxHp = this.stats.maxHp; p.hp = Math.min(p.hp, p.maxHp);
     p.defense = this.stats.defense + (p.buff ? p.buff.defense : 0);
