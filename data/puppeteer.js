@@ -120,6 +120,27 @@ const pupSetBonuses = {
                desc: "鉄杭の突撃・赤糸の裁断の着地点が{duration}秒燃え、{tick}秒ごとに人形の攻撃力×{mult}倍で焼く" } },
 };
 for (const set of WYD.data.sets.list) if (pupSetBonuses[set.id]) (set.classBonuses ||= {}).puppeteer = pupSetBonuses[set.id];
+// 共通ユニークも同じ理由で発動しないものがあるので、傀儡師のときの固有能力を差し替える（classPowers）。
+//   不壊の指輪・鎖の王冠は、身代わり縫い（本体の強化）・絡め糸（拘束）で元から発動するので、説明だけ直す。
+const pupUniquePowers = {
+  agniBangle: { power: "puppetEmberStrike", params: { chance: 25, radius: 70, mult: 0.6, color: "#ff7a2a" },
+                desc: "人形の通常攻撃が当たると{chance}%の確率で燃え上がり、周り{radius}に人形の攻撃力×{mult}倍のダメージ" },
+  vishnuDisc: { power: "puppetLongSpike", params: { rangePercent: 40, radiusPercent: 60, damagePercent: 30 },
+                desc: "鉄杭の突撃の届く距離 +{rangePercent}%、貫く範囲 +{radiusPercent}%、威力 +{damagePercent}%" },
+  hanumanFists: { power: "puppetCleave", params: { radius: 60, mult: 0.45 },
+                  desc: "人形の通常攻撃が、周り{radius}の敵にも人形の攻撃力×{mult}倍で当たる" },
+  indraRing: { desc: "身代わり縫いの発動中、受けたダメージの {percent}% を相手に返す" },
+  nagaCrown: { desc: "絡め糸で縛られた敵が倒れると爆発し、周り{radius}に攻撃力×{mult}倍のダメージ" },
+};
+for (const u of WYD.data.uniques.list) if (pupUniquePowers[u.id]) (u.classPowers ||= {}).puppeteer = pupUniquePowers[u.id];
+// 星座も同じ：巨獣は身代わり縫いで発動するので説明だけ、嵐の王は人形の雷（雷帝の装いの4点と同じ能力。重ねては効かない）
+for (const c of WYD.data.devotion.list) {
+  if (c.id === "behemoth") (c.bonus.classPowers ||= {}).puppeteer = { desc: "身代わり縫いの発動中、受けたダメージの {percent}% を相手に返す" };
+  if (c.id === "storm") (c.bonus.classPowers ||= {}).puppeteer = { power: "puppetStormThread", params: { extraTargets: 3, damagePercent: 50, range: 160, color: "#9fd8ff" },
+    desc: "人形の攻撃の命令が当たると、近くの別の敵{extraTargets}体へ雷が跳ね、命令の{damagePercent}%のダメージ" };
+}
+WYD.data.results.labels["effect:puppetEmberStrike"] = { name: "劫火の腕輪", group: "装備効果", color: "#ff7a2a" };
+WYD.data.results.labels["effect:puppetCleave"] = { name: "狂王の籠手", group: "装備効果", color: "#e8c46a" };
 WYD.data.results.labels["effect:puppetStormThread"] = { name: "雷帝の装い", group: "装備効果", color: "#9fd8ff" };
 WYD.data.results.labels["effect:puppetPyreTrail"] = { name: "業火の遺産", group: "装備効果", color: "#ff7a2a" };
 WYD.data.results.labels["effect:puppetCurtainCall"] = { name: "幕引きの裁ち鋏", group: "装備効果", color: "#e8c46a" };

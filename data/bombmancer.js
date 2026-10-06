@@ -79,3 +79,23 @@ WYD.data.sets.list.push({
   ],
   bonuses: { 2: { stats: { skillDamage: 20, maxHp: 40 } }, 4: { effects: { lifesteal: 2 }, power: "skillBoostMourningCourt", params: { kind: "bomb", mods: { damage: ["mul", 1.6], cooldown: ["mul", 0.85] } }, desc: "爆弾スキルの威力1.6倍、使える間隔0.85倍" } },
 });
+
+// 共通のセット・ユニークのうち、旋風斬・連鎖の投げ斧に結びついた効果は冥爆術師では発動しなかった。
+// 冥爆術師のときだけ、同じ方向性（炎・跳ねる刃）の爆弾向けの効果に差し替える（ほかの数値はそのまま）。
+//   bombEmbers   … 爆発の地点が燃える。maxFields：燃える地面の同時数の上限（爆弾は数が多いので）
+//   bombShrapnel … 爆発に巻き込まれなかった近くの敵へ破片が飛ぶ
+const bombEmbers = { power: "bombEmbers", params: { radius: 70, duration: 2.5, tick: 0.5, mult: 0.3, maxFields: 6, color: "#ff7a2a" },
+  desc: "爆弾の爆発した地点が{duration}秒燃え、{tick}秒ごとに攻撃力×{mult}倍で焼く（同時に{maxFields}か所まで）" };
+const bombShrapnel = { power: "bombShrapnel", params: { extraTargets: 3, damagePercent: 50, range: 160, color: "#dda2ff" },
+  desc: "爆弾が爆発すると、巻き込まれなかった近くの敵{extraTargets}体へ破片が飛び、爆発の{damagePercent}%のダメージ" };
+for (const u of WYD.data.uniques.list) {
+  if (u.id === "agniBangle") (u.classPowers ||= {}).bombmancer = bombEmbers;
+  if (u.id === "vishnuDisc") (u.classPowers ||= {}).bombmancer = bombShrapnel;
+}
+for (const set of WYD.data.sets.list) {
+  if (set.id === "pyre") (set.classBonuses ||= {}).bombmancer = { 4: { effects: { critDamage: 40 }, ...bombEmbers } };
+  if (set.id === "thunderlord") (set.classBonuses ||= {}).bombmancer = { 4: { stats: { skillDamage: 25 }, ...bombShrapnel } };
+}
+for (const c of WYD.data.devotion.list) if (c.id === "storm") (c.bonus.classPowers ||= {}).bombmancer = bombShrapnel;
+WYD.data.results.labels["effect:bombEmbers"] = { name: "爆弾の残り火", group: "装備効果", color: "#ff7a2a" };
+WYD.data.results.labels["effect:bombShrapnel"] = { name: "爆弾の破片", group: "装備効果", color: "#dda2ff" };

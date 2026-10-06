@@ -93,13 +93,24 @@ WYD.puppeteer = {
     if (!w.enemies.some(e => e.hp > 0) || w.time < (w.puppetRespawnAt || 0)) return;
     this.spawn(w, stats, this.config().summonCost);
   },
-  onHit(w, stats, a, damage) {
+  onHit(w, stats, a, damage, state, target) {
+    if (state && target && damage > 0) this.onStrike(w, state, stats, a, target);
     const stitch = a.stitch;
     if (!stitch || stitch.until <= w.time || damage <= 0 || (a.nextStitchHeal || 0) > w.time) return;
     a.nextStitchHeal = w.time + stitch.interval;
     WYD.world.healPlayer(w, stats.maxHp, stats.maxHp * stitch.healPercent / 100, 'skill:pup_stitch');
     const fx = this.config().effects.stitch;
     WYD.vfx.spawn(w, fx.key, w.player.x, w.player.y, {size:fx.size});
+  },
+  // 人形の通常攻撃が当たったとき：劫火の腕輪（燃え上がる）・狂王の籠手（周りにも当たる）
+  onStrike(w, state, stats, a, target) {
+    const P = this.powers(stats), ember = P.puppetEmberStrike, cleave = P.puppetCleave;
+    const around = (r) => w.enemies.filter(e => e !== target && e.hp > 0 && WYD.util.dist(target, e) <= r);
+    if (cleave) for (const e of around(cleave.radius)) WYD.world.playerHit(w, state, stats, e, a.attack * cleave.mult, 'effect:puppetCleave');
+    if (ember && Math.random() * 100 < ember.chance) {
+      for (const e of [target, ...around(ember.radius)]) if (e.hp > 0) WYD.world.playerHit(w, state, stats, e, a.attack * ember.mult, 'effect:puppetEmberStrike');
+      w.effects.push({ type: 'ring', x: target.x, y: target.y, radius: ember.radius, color: ember.color, time: 0, duration: 0.3 });
+    }
   },
   // 雷帝の装い（傀儡師の4点）：命令が当たった敵の近くの別の敵へ雷が跳ねる
   storm(w, state, stats, hit, damage) {
@@ -137,9 +148,11 @@ WYD.puppeteer = {
     const near = WYD.world.nearestEnemy(w, a);
     const nearby = radius => w.enemies.filter(e => e.hp > 0 && WYD.util.dist(a, e) <= radius + WYD.data.enemies[e.kind].radius);
     let targets = [];
+    const spike = s.mode === 'pierce' && this.powers(stats).puppetLongSpike; // 彷徨う刃（傀儡師）
     if (s.mode === 'pierce' || s.mode === 'cut') {
-      if (!near || WYD.util.dist(a, near) > s.range) return false;
-      targets = s.mode === 'pierce' ? w.enemies.filter(e => e.hp > 0 && WYD.util.dist(near, e) <= s.radius + WYD.data.enemies[e.kind].radius) : [near];
+      if (!near || WYD.util.dist(a, near) > s.range * (spike ? 1 + spike.rangePercent / 100 : 1)) return false;
+      const radius = s.radius * (spike ? 1 + spike.radiusPercent / 100 : 1);
+      targets = s.mode === 'pierce' ? w.enemies.filter(e => e.hp > 0 && WYD.util.dist(near, e) <= radius + WYD.data.enemies[e.kind].radius) : [near];
     } else if (['needles','bind','finale'].includes(s.mode)) {
       targets = nearby(s.radius);
       if (!targets.length) return false;
@@ -163,7 +176,7 @@ WYD.puppeteer = {
       a.guardUntil = w.time + s.duration * mult;
       a.guardMult = s.puppetDefenseMult * mult;
     } else {
-      const damage = a.attack * (s.damageBase + s.damagePerLevel * (lv - 1)) * mult;
+      const damage = a.attack * (s.damageBase + s.damagePerLevel * (lv - 1)) * mult * (spike ? 1 + spike.damagePercent / 100 : 1);
       for (const e of targets) {
         WYD.world.playerHit(w, state, stats, e, damage);
         if (s.mode === 'bind' && e.hp > 0)
