@@ -59,6 +59,7 @@ WYD.arenaEngine = {
           a.hp = before + (a.hp - before) * E.healFactor();
           if (E.bridge.teamBattle) E.recordSupport(source, "allyHealing", a.hp - before);
         }
+        const initiallyUsed = used;
         if (healing && E.bridge.teamBattle) {
           const [w, state, stats, skill, level] = args;
           const pct = (skill.healPercentBase + skill.healPercentPerLevel * (level - 1)) * (1 + stats.skillDamage / 100) / 100;
@@ -68,6 +69,11 @@ WYD.arenaEngine = {
             const amount = Math.max(0, Math.min(p.maxHp - p.hp, p.maxHp * pct * E.healFactor()));
             if (amount > 0) { p.hp += amount; E.recordSupport(source, "allyHealing", amount); used = true; }
           }
+        }
+        // 本人が満タンでも味方本人への祈りが成功したら、秘技の反撃を発動。
+        if (healing && used && !initiallyUsed) {
+          const [w,state,stats,skill,level]=args;
+          WYD.training.onCast(w,state,stats,skill,level,{id:W.castingId,extra:W.castExtra,x:w.player.x,y:w.player.y});
         }
         return used;
       };

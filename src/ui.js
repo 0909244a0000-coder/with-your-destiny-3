@@ -72,6 +72,14 @@ WYD.ui = {
     };
     this.$("board-close").onclick = () => { this.$("board").hidden = true; };
     this.$("board-body").onclick = (e) => {
+      const trainingButton = e.target.closest('[data-training-action]');
+      if (trainingButton) {
+        const T=WYD.training,action=trainingButton.dataset.trainingAction,id=trainingButton.dataset.trainingId;
+        if(action==='refund') { if(!confirm('習得した秘技をすべて解除して、使った修練ポイントを全額返しますか？ 能力の盤面は維持します。'))return;T.refund(s); }
+        else if(action==='learn') { if(!T.learn(s,id))return; }
+        else if(!T.equip(s,action==='off'?null:id))return;
+        this.$('board-body').innerHTML=this.boardHtml();this.changed();return;
+      }
       const cell = e.target.closest("[data-cell]");
       if (!cell) return;
       const [r, c] = cell.dataset.cell.split(",").map(Number);
@@ -1417,7 +1425,7 @@ WYD.ui = {
   paragonHtml() {
     const pg = this.state.player.paragon;
     return `<div class="build-title">修練ポイント：<b style="color:var(--accent)">${pg.points}</b>（レベル上限のあとの経験値でたまる）
-      <button id="board-open">パラゴンボード</button>　取ったマス ${Object.keys(pg.board).length}</div>`;
+      <button id="board-open">秘技修練・能力の盤面</button>　取ったマス ${Object.keys(pg.board).length} · 秘技 ${WYD.training.current(this.state)?.name || "未選択"}</div>`;
   },
 
   // パラゴンボードの画面
@@ -1434,7 +1442,7 @@ WYD.ui = {
     }).join("")).join("");
     const pb = WYD.stats.paragonBonus(s);
     const sum = Object.keys(pb).filter((k) => pb[k]).map((k) => WYD.data.items.stats[k] ? WYD.util.formatStat(k, pb[k]) : `${B.magicFindName} +${pb[k]}%`).join("、");
-    return `<div class="dev-head">修練ポイント：<b>${s.player.paragon.points}</b>　<small class="muted">光っているマス（取ったマスのとなり）をクリックで取る。マスにマウスを乗せると中身が出る</small></div>
+    return `<p class="training-wallet">修練ポイント：<b>${s.player.paragon.points}</b></p>${WYD.training.html(s)}<h3>能力の盤面（従来の修練）</h3><div class="dev-head">修練ポイント：<b>${s.player.paragon.points}</b>　<small class="muted">光っているマス（取ったマスのとなり）をクリックで取る。マスにマウスを乗せると中身が出る</small></div>
       <div class="board-grid" style="grid-template-columns: repeat(${B.layout[0].length}, 26px)">${rows}</div>
       <div class="board-legend">${Object.keys(B.colors).map((k) => `<span style="color:${B.colors[k]}">■</span>${{ normal: "ふつう", magic: "マジック", rare: "レア", legend: "伝説" }[k]}`).join("　")}</div>
       <p class="muted">今の合計：${sum || "なし"}</p>`;

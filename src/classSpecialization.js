@@ -136,7 +136,8 @@ WYD.classSpecialization = {
       t.delay -= dt;
       if (t.delay > 0) { this.queue(w, t); continue; }
       this.context(t.id, t.extra, () => {
-        if (t.mode === "whirl") t.base.call(WYD.world, w, state, stats, t.s, t.lv);
+        if (t.mode === "training") WYD.training.execute(w, state, stats, t);
+        else if (t.mode === "whirl") t.base.call(WYD.world, w, state, stats, t.s, t.lv);
         else if (t.mode === "strike") {
           const e = t.target.hp > 0 && w.enemies.includes(t.target) ? t.target : WYD.world.nearestEnemy(w, w.player);
           if (e && WYD.util.dist(w.player, e) <= t.radius + WYD.data.enemies[e.kind].radius) { WYD.world.playerHit(w, state, stats, e, t.attack); this.ring(w, e, t.radius, t.s.color); }
@@ -156,6 +157,10 @@ WYD.classSpecialization = {
       ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.globalCompositeOperation = "lighter";
       ctx.drawImage(img, -size / 2, -size / 2, size, size); ctx.restore();
     };
+    for (const c of w.necRemains || []) if (c.training) {
+      ctx.save();ctx.globalAlpha*=WYD.data.training.cacheAlpha*(WYD.state?.settings.quietFx?WYD.data.vfx.atlasQuietAlpha:1);
+      draw("boneStorm",c.x,c.y,WYD.data.training.cacheSize,0);ctx.restore();
+    }
     for (const t of w.classTasks || []) if (t.mode === "storm") {
       if (!WYD.vfx.drawLoop(ctx, WYD.data.vfx.stormTexture, t.x, t.y, t.radius * 2, w.time || 0)) draw("tornado", t.x, t.y, t.radius * 2, w.time || 0);
     }

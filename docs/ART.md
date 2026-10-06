@@ -352,3 +352,7 @@ arcaneBarrierAtlas/boneCarapaceAtlas/oakBulwarkAtlas/sanctuaryBloomAtlas/warEmbe
 
 ## 2026-10-06：ルーン6属性の専用画像
 assets/vfx/rune-{fire,ice,lightning,poison,shadow,holy}Atlas.webp。各1152×768/3列2行/セル384px。左上から追尾弾、周回刃、連鎖、設置、貫通波、着弾の独立した絵で、連続フレームではない。炎/氷晶/雷枝/毒滴/影煙/黄金の光の材質を描き分ける。黒背景加算、組み込み生成1536×1024→RGB WebP quality88/method6、セルの自動トリミングなし。全体シートをそのまま表示しない。追尾セルは描画時に左右反転。旧絵は保持。指示全文：docs/reviews/2026-10-06-codex-rune-vfx.md。
+
+
+## 2026-10-06：秘技修練の既存絵利用
+新画像は増やさず、属性別ルーンの連鎖/着弾/回復/引寄せセル、既存の周回鎚・竜巻・使い魔を組み合わせる。骨塚はboneStormを38px/濃度0.55で持続表示。秘技の説明カードは無地・金の選択枠で区別し、390px幅で48pxボタンを確保する。

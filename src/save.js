@@ -16,7 +16,7 @@ WYD.save = {
       version: 1,
       classId: WYD.classes.id,   // 職業
       player: { level: 1, exp: 0, skillPoints: 0, skills, skillEnabled: enabled,
-        paragon: { level: 0, exp: 0, points: 0, board: {} },   // 修練（レベル上限のあと）。board = 取ったマス（"行,列" → true）
+        paragon: { level: 0, exp: 0, points: 0, board: {}, training: { owned: {}, active: null } },   // 修練（レベル上限のあと）。board = 取ったマス（"行,列" → true）
         runes: {} },   // スキルの型（スキル名 → 型の名前）
       equipment: {},   // slot -> item
       pendingLoot: [], // 満杯で受け取れなかった重要装備（職業別に保存）
@@ -87,6 +87,7 @@ WYD.save = {
         delete pgs.alloc;
       }
       pgs.board = Object.assign({}, pgs.board);
+      WYD.training.ensure(state);
       state.player.runes = Object.assign({}, saved.player && saved.player.runes);
       state.player.skillEnabled = Object.assign(this.newState().player.skillEnabled, saved.player && saved.player.skillEnabled);
       state.settings = Object.assign(this.newState().settings, saved.settings);

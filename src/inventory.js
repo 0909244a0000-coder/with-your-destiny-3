@@ -311,9 +311,10 @@ WYD.inventory = {
     pl.skillPoints += skill;
     pl.runes = {};
     const pg = pl.paragon;
-    const paragon = Object.keys(pg.board).length;
+    const boardPoints = Object.keys(pg.board).length;
+    const paragon = boardPoints + WYD.training.refund(state);
     pg.board = {};
-    pg.points += paragon;
+    pg.points += boardPoints;
     return { skill, paragon };
   },
 

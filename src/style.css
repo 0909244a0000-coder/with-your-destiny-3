@@ -619,3 +619,16 @@ button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px
 .rune-card.selected { outline: 2px solid #e2c78d; outline-offset: -3px; }
 #rune-preview { width: 100%; max-width: 360px; height: auto; display: block; margin: auto; }
 @media (max-width: 600px) { .modal-box.rune-box { width: calc(100vw - 20px); padding: 12px; } .rune-heading { top: -12px; } .rune-heading h2 { font-size: 17px; } .rune-collection { grid-template-columns: 1fr; } }
+
+/* 秘技修練：説明を読んで選ぶ。スマホでも押せる幅と高さ。 */
+.training-card { border:1px solid var(--line); padding:12px; margin:10px 0; background:#17151c; }
+.training-card.active { border-color:var(--accent); }
+.training-card h4 { margin:0 0 6px; }
+.training-card p,.training-arts p { line-height:1.7; }
+.training-card small { display:block; margin-bottom:8px; }
+.training-card button,.training-actions button { min-height:48px; width:100%; white-space:normal; }
+.training-actions { display:grid; gap:8px; margin:12px 0; }
+.training-wallet { font-size:16px; color:var(--accent); }
+#board-open { min-height:44px; font-size:13px; padding:4px 10px; }
+
+.modal-box.board-box { max-height:90dvh; overflow-y:auto; overscroll-behavior:contain; }
