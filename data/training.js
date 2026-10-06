@@ -17,5 +17,7 @@ WYD.data.training={
   {id:'dru_pack',classId:'druid',skill:'dru_howl',name:'群れの返歌',mode:'healFriend',element:'holy',radius:180,healPercent:6,desc:'野生の咆哮の発動時、180以内で最も傷ついた味方1体へ最大HPの6%を回復。本人・召喚・3対3の味方が対象。通常の対人回復補正を適用。'},
   {id:'bomb_twins',classId:'bombmancer',skill:'bomb_hunter',name:'双葬の使い魔',mode:'twinHunter',element:'fire',mult:.65,offset:24,desc:'追葬の使い魔を左右に2体出す。各爆発は元の65%。同じ爆弾保持上限を使い、標的が倒れたらそれぞれ追い直す。'},
   {id:'bomb_reprise',classId:'bombmancer',skill:'bomb_finale',name:'終幕の余韻',mode:'targetArea',element:'shadow',radius:105,delay:1.1,mult:.8,desc:'終幕の指鳴らしで狙った地点に1.1秒後、攻撃力×0.8の残響爆発。移動した敵は避けられる。'},
+  {id:'pup_echo',classId:'puppeteer',skill:'pup_pierce',name:'杭打ちの残響',mode:'targetArea',element:'shadow',radius:95,delay:.6,mult:.6,desc:'鉄杭の突撃で狙った地点に0.6秒後、周囲95へ攻撃力×0.6の残響。人形が貫いた群れの後ろまで届く。'},
+  {id:'pup_web',classId:'puppeteer',skill:'pup_bind',name:'張り巡らす蜘蛛糸',mode:'chain',element:'poison',range:280,count:3,mult:.3,bind:.5,bossScale:.3,desc:'絡め糸の発動時、本体から280以内の近い敵3体へ糸を伸ばし、各攻撃力×0.3と0.5秒拘束（ボス30%）。人形から離れた敵も縛る。'},
  ]
 };
