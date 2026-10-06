@@ -24,6 +24,8 @@
 
 ## 受け取り済み（ゲームに入っている）
 
+2026-10-06：画面HUD用の暗鉄と赤い宝石の紋章 `assets/ui/hud-crest.png`（透過PNG）。全画面UI刷新でタイトル横に表示。
+
 2026-10-05：6エリアの専用景色を追加（`assets/areas/scenes/forest.webp`・`smashana.webp`・`patala.webp`・`cathedral.webp`・`frost.webp`・`inferno.webp`）。一枚の横長背景、高い位置からの3/4見下ろし、中央は戦闘用の平らな低コントラスト地面、構造物は外周。元の512pxタイルとは別の描画形式。組み込み画像生成ツールで一枚ずつ生成してWebPへ縮小・圧縮。全指示文は `docs/reviews/2026-10-05-codex-backgrounds.md`。
 
 

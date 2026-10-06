@@ -16,8 +16,8 @@
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-  <header>
-    <h1>With Your Destiny Ⅲ <small>最小版</small></h1>
+  <header class="hud-top">
+    <h1><span class="hud-crest" aria-hidden="true"></span>With Your Destiny Ⅲ <small>冒険者の記録</small></h1>
     <!-- まとめたメニュー（クリックで開く） -->
     <span class="menus">
     <details class="menu">
@@ -100,7 +100,7 @@
     </div>
   </header>
 
-  <main>
+  <main class="game-screen">
     <div class="left">
       <div class="stage">
         <canvas id="game" width="960" height="600"></canvas>
@@ -108,21 +108,24 @@
           <button id="mute-btn" title="効果音と音楽をまとめてON・OFF（M キー）">🔊</button>
           <button id="dps-open" title="拠点で現在の構成のDPSを計測">DPSテスト</button>
           <button id="town-btn" title="敵の出ない野営地と戦場を行き来する（H キー）">🏕 拠点へ</button>
+          <button id="character-open" aria-expanded="false" aria-controls="character-drawer" title="キャラクターの能力とスキル">人物</button>
           <button id="bag-open" class="bag-btn" title="装備・持ち物を開く（I キー）">🎒 装備・持ち物 <span id="bag-badge"></span></button>
         </div>
+        <div class="world-plaque"><span id="area-plaque"></span><b id="floor-plaque">冒険中</b></div>
       </div>
-      <section class="panel">
-        <h2>ログ</h2>
-        <div id="log"></div>
+      <details class="panel game-log" id="game-log-panel">
+        <summary>冒険ログ</summary><div id="log"></div>
+      </details>
+      <section class="live-vitals" aria-label="戦闘状況">
+        <div class="live-vitals-head"><span id="char-name">Lv 1</span><span id="dps" class="dps" title="直近10秒のDPS"></span></div>
+        <div class="bar"><div id="hp-bar" class="fill hp"></div><span id="hp-text"></span></div>
+        <div class="bar"><div id="exp-bar" class="fill exp"></div><span id="exp-text"></span></div>
       </section>
     </div>
 
-    <aside>
+    <aside id="character-drawer" aria-label="キャラクター情報">
+      <div class="drawer-head"><div><small>CHARACTER</small><h2>冒険者情報</h2></div><button id="character-close" aria-label="閉じる">✕</button></div>
       <section class="panel">
-        <h2 id="char-name">Lv 1</h2>
-        <div class="bar"><div id="hp-bar" class="fill hp"></div><span id="hp-text"></span></div>
-        <div class="bar"><div id="exp-bar" class="fill exp"></div><span id="exp-text"></span></div>
-        <div id="dps" class="dps" title="直近10秒に敵へ与えたダメージの平均（手下や燃える地面もふくむ）。ビルドの強さの目安"></div>
         <div id="stats" class="stats"></div>
         <div id="paragon" class="build" hidden></div>
         <div id="build" class="build"></div>
@@ -184,6 +187,7 @@
         <div class="bag-col">
           <section class="panel" id="equipment-panel">
             <h2>装備 <small>クリックで外す／長押しでほかの操作</small></h2>
+            <div class="equipment-showcase"><img id="equipment-portrait" alt="現在のキャラクター"><div><small>現在の装備</small><strong id="equipment-class-name"></strong><span>装備を選んで比較・交換</span></div><span class="equipment-sigil" aria-hidden="true"></span></div>
             <div id="equipment" class="grid"></div>
             <div id="builds" class="builds"></div>
           </section>

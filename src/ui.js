@@ -24,6 +24,15 @@ WYD.ui = {
     const s = state;
 
     this.$("help").onclick = () => this.showStory("help");
+    this.$("character-open").onclick = () => this.toggleCharacterDrawer();
+    this.$("character-close").onclick = () => this.toggleCharacterDrawer(false);
+    document.addEventListener("pointerdown", (e) => {
+      const drawer = this.$("character-drawer");
+      if (drawer.classList.contains("open") && !e.target.closest("#character-drawer,#character-open")) this.toggleCharacterDrawer(false);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.$("character-drawer").classList.contains("open")) this.toggleCharacterDrawer(false);
+    });
     // まとめメニュー：1つ開いたらほかは閉じる。メニューの外をクリックしたら閉じる
     const menus = [...document.querySelectorAll("details.menu")];
     for (const m of menus) m.addEventListener("toggle", () => { if (m.open) for (const o of menus) if (o !== m) o.open = false; });
@@ -1043,6 +1052,8 @@ WYD.ui = {
     const ai = opened.indexOf(area);
     const atCamp = !!this.world.town;
     this.$("area-name").textContent = atCamp ? WYD.data.town.name : area.name;
+    this.$("area-plaque").textContent = atCamp ? WYD.data.town.name : area.name;
+    this.$("floor-plaque").textContent = atCamp ? "野営地" : WYD.trial.active(s) ? `試練・段階${s.trialRun.level}` : WYD.world.floorName(s);
     this.$("area-down").disabled = ai <= 0;
     this.$("area-up").disabled = ai >= opened.length - 1;
     this.$("boss-progress").textContent = atCamp ? `（出発先：${area.name}・${WYD.world.floorName(s)}）` : WYD.trial.active(s) ? "" : WYD.world.isBossRoom(s)
@@ -1680,7 +1691,23 @@ WYD.ui = {
     const bag = this.$("bag");
     bag.hidden = show === undefined ? !bag.hidden : !show;
     if (bag.hidden) { this.hideTooltip(); this.hovered = null; }
+    else {
+      this.toggleCharacterDrawer(false);
+      const cls = WYD.data.classes[WYD.classes.id];
+      const portrait = this.$("equipment-portrait");
+      if (portrait && cls?.player?.image) portrait.src = cls.player.image;
+      this.$("equipment-class-name").textContent = cls?.name || "冒険者";
+    }
     this.markDirty();
+  },
+
+  toggleCharacterDrawer(show) {
+    const drawer = this.$("character-drawer");
+    const open = show === undefined ? !drawer.classList.contains("open") : !!show;
+    drawer.classList.toggle("open", open);
+    document.body.classList.toggle("drawer-open", open);
+    this.$("character-open").setAttribute("aria-expanded", String(open));
+    return open;
   },
 
   // マウスを乗せている装備を捨てる（Delete キー。右クリックが効かない環境でも捨てられるように）
