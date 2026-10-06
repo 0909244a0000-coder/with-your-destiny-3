@@ -6,7 +6,9 @@ WYD.data.arena = {
   background: "assets/areas/scenes/cathedral.webp",
   colors: ["#f2ba67", "#8bc7ff", "#bf96ff", "#9be39c", "#ff949b", "#80e5de", "#f5a2e3"],
   visual: { particlesPerTeam: 90, effectsPerTeam: 80, labelPx: 12, barWidth: 50, barHeight: 5, labelGap: 28, fieldAlpha: 0.6, backgroundDim: 0.3 },
-  modes: { duel: { name: "1対1", min: 2, max: 2 }, royale: { name: "バトルロワイヤル", min: 2, max: 7 } },
+  modes: { duel: { name: "1対1", min: 2, max: 2 }, royale: { name: "バトルロワイヤル", min: 2, max: 7 }, teams: { name: "3対3", min: 6, max: 6, teamSize: 3 } },
+  formations: { slots: 6, nameLength: 32 },
+  teamStart: { x: 0.25, rows: [0.25, 0.5, 0.75] },
   movement: { margin: 20 }, // 通常の移動と同じマップ境界。壁際では横へ逃げる。
   combat: {
     damageScale: 0.08, hitHpCap: 0.10, windowSeconds: 1, windowHpCap: 0.12,

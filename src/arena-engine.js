@@ -2,7 +2,8 @@
 window.WYD = window.WYD || {};
 WYD.arenaEngine = {
   init(classId, snapshot, team, color, bridge) {
-    this.team = team; this.bridge = bridge;
+    this.team = team; this.classId = classId; this.bridge = bridge;
+    this.support = { allyHealing: 0, auraSeconds: 0, bindSeconds: 0, rows: {} };
     this.incoming = new WeakMap();
     WYD.classes.activeId = () => classId;
     WYD.classes.apply();
@@ -21,7 +22,7 @@ WYD.arenaEngine = {
     WYD.render.getImage = bridge.getImage;
     WYD.data.player.color = color;
     const p = this.world.player;
-    Object.assign(p, { id: bridge.nextId(), kind: "arena:" + team + ":hero", arenaTeam: team, arenaMain: true, radius: WYD.data.player.radius, stunTimer: 0 });
+    Object.assign(p, { id: bridge.nextId(), kind: "arena:" + classId + ":hero", arenaOwner: classId, arenaTeam: team, arenaMain: true, radius: WYD.data.player.radius, stunTimer: 0 });
     this.bindControl(p);
     p.hp = WYD.stats.compute(this.state).maxHp;
     this.installCombat();
@@ -48,9 +49,26 @@ WYD.arenaEngine = {
       const handler = W.skillHandlers[key];
       W.skillHandlers[key] = function(...args) {
         if (E.world.player.dead) return false;
-        const allies = key === "aura" && args[3].auraType === "heal" ? E.world.allies.map(a => [a, a.hp]) : [];
-        const used = handler.apply(this, args);
-        for (const [a, before] of allies) if (a.hp > before) a.hp = before + (a.hp - before) * E.healFactor();
+        const healing = key === "aura" && args[3].auraType === "heal";
+        const allies = healing ? E.world.allies.map(a => [a, a.hp]) : [];
+        const source = "skill:" + W.castingId, previous = E.supportSource;
+        E.supportSource = source;
+        let used;
+        try { used = handler.apply(this, args); } finally { E.supportSource = previous; }
+        for (const [a, before] of allies) if (a.hp > before) {
+          a.hp = before + (a.hp - before) * E.healFactor();
+          if (E.bridge.teamBattle) E.recordSupport(source, "allyHealing", a.hp - before);
+        }
+        if (healing && E.bridge.teamBattle) {
+          const [w, state, stats, skill, level] = args;
+          const pct = (skill.healPercentBase + skill.healPercentPerLevel * (level - 1)) * (1 + stats.skillDamage / 100) / 100;
+          for (const friend of E.bridge.friends(E)) {
+            const p = friend.world.player;
+            if (friend === E || p.dead || p.hp <= 0 || WYD.util.dist(w.player, p) > skill.radius) continue;
+            const amount = Math.max(0, Math.min(p.maxHp - p.hp, p.maxHp * pct * E.healFactor()));
+            if (amount > 0) { p.hp += amount; E.recordSupport(source, "allyHealing", amount); used = true; }
+          }
+        }
         return used;
       };
     }
@@ -121,7 +139,7 @@ WYD.arenaEngine = {
     WYD.allies.spawn = function(...args) {
       const a = spawn.apply(this, args);
       a.id = E.bridge.nextId(); a.kind = "arena:" + E.team + ":ally:" + a.id;
-      a.arenaTeam = E.team; a.arenaMain = false; a.stunTimer = 0;
+      a.arenaOwner = E.classId; a.arenaTeam = E.team; a.arenaMain = false; a.stunTimer = 0;
       E.bindControl(a);
       return a;
     };
@@ -198,17 +216,50 @@ WYD.arenaEngine = {
         if (timer > 0 || E.bridge.time() < immuneUntil) return;
         timer = Math.min(value * C.bindScale, C.bindMax);
         immuneUntil = E.bridge.time() + timer + C.bindImmunity;
+        const actor = E.bridge.actor;
+        if (actor && actor.team !== E.team && timer > 0) actor.recordSupport(actor.supportSource || actor.hitContext?.source || "effect:bind", "bindSeconds", timer);
       },
     });
   },
   prepare() {
     this.stats = WYD.stats.compute(this.state);
+    if (this.bridge.teamBattle && !this.world.player.dead) {
+      const aura = this.bestMight();
+      this.stats.attack *= (1 + aura.percent / 100) / WYD.stats.mightMult(this.state);
+      this.mightSupport = aura.engine !== this ? aura : null;
+    }
     this.stats.moveSpeed *= WYD.data.arena.combat.chaseSpeed[WYD.classes.id] || 1;
     const p = this.world.player;
     p.maxHp = this.stats.maxHp; p.hp = Math.min(p.hp, p.maxHp);
     p.defense = this.stats.defense + (p.buff ? p.buff.defense : 0);
     p.attack = this.stats.attack; p.color = WYD.data.player.color;
     this.world.allies = this.world.allies.filter(a => a.hp > 0 && a.timeLeft > 0);
+  },
+  recordSupport(source, key, amount) {
+    this.support[key] += amount;
+    const row = this.support.rows[source] ||= { allyHealing: 0, auraSeconds: 0, bindSeconds: 0 };
+    row[key] += amount;
+  },
+  mightOffer(target) {
+    if (this.world.player.dead || this.world.player.hp <= 0) return { percent: 0, engine: this };
+    let best = { percent: 0, engine: this };
+    for (const [id, def] of Object.entries(WYD.data.skills)) {
+      const lv = this.state.player.skills[id] || 0;
+      if (def.kind !== "aura" || def.auraType !== "might" || !lv || !this.state.player.skillEnabled[id]) continue;
+      const skill = WYD.runes.effectiveDef(this.state, id);
+      if (target !== this.world.player && WYD.util.dist(this.world.player, target) > skill.radius) continue;
+      const percent = skill.mightBase + skill.mightPerLevel * (lv - 1);
+      if (percent > best.percent) best = { percent, engine: this, source: "skill:" + id };
+    }
+    return best;
+  },
+  bestMight() {
+    let best = this.mightOffer(this.world.player);
+    for (const friend of this.bridge.friends(this)) {
+      const offer = friend.mightOffer(this.world.player);
+      if (offer.percent > best.percent) best = offer;
+    }
+    return best;
   },
   units() { return [this.world.player, ...this.world.allies].filter(u => u.hp > 0 && !this.world.player.dead); },
   setEnemies(units) {
@@ -242,6 +293,7 @@ WYD.arenaEngine = {
     for (const id in p.auras || {}) if ((p.auras[id].timeLeft -= dt) <= 0) delete p.auras[id];
     for (const id in p.skillCooldowns) p.skillCooldowns[id] = Math.max(0, p.skillCooldowns[id] - dt);
     this.prepare();
+    if (this.bridge.teamBattle && this.mightSupport?.percent > 0) this.mightSupport.engine.recordSupport(this.mightSupport.source, "auraSeconds", dt);
     W.healPlayer(w, this.stats.maxHp, this.stats.hpRegen * dt, "regen");
     W.updateFields(w, s, this.stats, dt);
     // 拘束中も設置済みの技・手下は動く。本人の新規詠唱と移動は止まる。
@@ -263,8 +315,10 @@ WYD.arenaEngine = {
   },
   summary() {
     const r = WYD.results.snapshot(this.world), elapsed = r.elapsed;
-    return { damage: r.damage, taken: this.taken || 0, healing: r.healing, crit: WYD.results.crit(r), elapsed,
-      rows: Object.entries(r.rows).map(([id, row]) => ({ ...row, ...WYD.results.source(id), id, crit: WYD.results.crit(row) })).sort((a, b) => b.damage - a.damage) };
+    const rows = { ...r.rows };
+    for (const [id, support] of Object.entries(this.support.rows)) rows[id] = { ...WYD.results.emptyRow(), ...rows[id], ...support };
+    return { allyHealing: this.support.allyHealing, auraSeconds: this.support.auraSeconds, bindSeconds: this.support.bindSeconds, damage: r.damage, taken: this.taken || 0, healing: r.healing, crit: WYD.results.crit(r), elapsed,
+      rows: Object.entries(rows).map(([id, row]) => ({ ...row, ...WYD.results.source(id), id, crit: WYD.results.crit(row) })).sort((a, b) => b.damage - a.damage) };
   },
   drawGround(ctx) {
     for (const f of this.world.fields) WYD.vfx.drawGround(ctx, f, this.world.time || 0);

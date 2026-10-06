@@ -6,6 +6,7 @@ WYD.data.results = {
   refreshMs: 400,
   compactAfter: 256,
   labels: {
+    "effect:bind": { name: "拘束効果", group: "妨害", color: "#bda0f0" },
     attack: { name: "通常攻撃", group: "通常", color: "#d8b45c" },
     "effect:thunder": { name: "雷鳴", group: "装備効果", color: "#8fcaff" },
     "effect:thorns": { name: "反射（茨・不壊）", group: "装備効果", color: "#c5a1ed" },

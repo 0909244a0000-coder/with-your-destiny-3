@@ -1,0 +1,75 @@
+{
+  "preset": true,
+  "owners": true,
+  "summonOwners": true,
+  "friendly": true,
+  "allyHeal": true,
+  "range": true,
+  "might": true,
+  "auraExit": true,
+  "noStack": true,
+  "deadAura": true,
+  "control": true,
+  "continues": true,
+  "ownCleanup": true,
+  "victory": true,
+  "missingClosed": true,
+  "newest": true,
+  "unchanged": true,
+  "matches": [
+    {
+      "repeat": 0,
+      "configuration": 0,
+      "reason": "winner",
+      "seconds": 37.6
+    },
+    {
+      "repeat": 0,
+      "configuration": 1,
+      "reason": "winner",
+      "seconds": 34.40000000000018
+    },
+    {
+      "repeat": 0,
+      "configuration": 2,
+      "reason": "winner",
+      "seconds": 33.25000000000025
+    },
+    {
+      "repeat": 1,
+      "configuration": 0,
+      "reason": "winner",
+      "seconds": 37.30000000000002
+    },
+    {
+      "repeat": 1,
+      "configuration": 1,
+      "reason": "winner",
+      "seconds": 24.850000000000218
+    },
+    {
+      "repeat": 1,
+      "configuration": 2,
+      "reason": "winner",
+      "seconds": 34.75000000000016
+    },
+    {
+      "repeat": 2,
+      "configuration": 0,
+      "reason": "winner",
+      "seconds": 38.399999999999956
+    },
+    {
+      "repeat": 2,
+      "configuration": 1,
+      "reason": "winner",
+      "seconds": 43.79999999999965
+    },
+    {
+      "repeat": 2,
+      "configuration": 2,
+      "reason": "winner",
+      "seconds": 34.25000000000019
+    }
+  ]
+}
