@@ -1054,28 +1054,33 @@ WYD.ui = {
     WYD.results.render(this.world);
   },
 
-  // HPバーの横の召喚の状態（骸骨の数・人形のHP）。呼べるスキルを持つ職業だけ表示
-  updateSummonStatus(stats) {
-    const w = this.world, s = this.state, chips = [];
-    const chip = (label, text, ratio, title) => `<span class="summon-chip" title="${title}"><b>${label}</b><i><u style="width:${Math.round(Math.max(0, Math.min(1, ratio)) * 100)}%"></u></i>${text}</span>`;
+  // 冒険者情報の「召喚の能力」。今の装備・スキルで呼んだときの強さ（呼んでいなくても出す）
+  renderSummonStats(stats) {
+    const s = this.state, n = (v) => Math.round(v).toLocaleString(), cards = [];
+    const card = (title, sub, rows) => cards.push(`<div class="summon-card"><h4>${title}${sub ? ` <small>${sub}</small>` : ""}</h4><div class="stats">${rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("")}</div></div>`);
+    const boost = stats.powers.raiseBoost;
     for (const id in WYD.data.skills) {
-      const def = WYD.data.skills[id], lv = s.player.skills[id] || 0;
-      if (def.kind !== "raise" || !def.hudLabel || lv <= 0) continue;
-      const mine = w.allies.filter((a) => a.source === id && a.hp > 0);
-      if (!s.player.skillEnabled[id] && !mine.length) continue;
-      const max = WYD.allies.maxCount(WYD.runes.effectiveDef(s, id), lv, stats);
-      const hp = mine.reduce((n, a) => n + a.hp, 0), maxHp = mine.reduce((n, a) => n + a.maxHp, 0);
-      chips.push(chip(def.hudLabel, `${mine.length}/${max}`, maxHp ? hp / maxHp : 0, `${def.name}：${mine.length}体 / 最大${max}体`));
+      const lv = s.player.skills[id] || 0, base = WYD.data.skills[id];
+      if (base.kind !== "raise" || lv <= 0) continue;
+      const d = WYD.runes.effectiveDef(s, id), mult = (d.attackBase + d.attackPerLevel * (lv - 1)) * (1 + (boost ? boost.attackPercent : 0) / 100);
+      card(base.name, `Lv${lv}${s.player.skillEnabled[id] ? "" : "・OFF"}`, [
+        ["呼べる数", `${WYD.allies.maxCount(d, lv, stats)}体`], ["最大HP", n(stats.maxHp * d.hpRatio)],
+        ["攻撃力", n(stats.attack * mult * (1 + stats.skillDamage / 100))], ["防御力", n(stats.defense * d.defenseRatio)],
+        ["攻撃速度", `${d.attackSpeed}回/秒`], ["いられる時間", `${d.duration}秒`], ["攻撃", d.rangedRange ? `遠距離（${d.rangedRange}）` : "近接"]]);
     }
+    const ps = stats.powers.periodicSummon;
+    if (ps) card("装備で呼ぶ味方", `${ps.interval}秒ごとに${ps.count}体`, [["最大HP", n(stats.maxHp * ps.hpRatio)],
+      ["攻撃力", n(stats.attack * ps.attackMult * (1 + stats.skillDamage / 100))], ["防御力", n(stats.defense * ps.defenseRatio)], ["いられる時間", `${ps.duration}秒`]]);
     if (WYD.classes.id === "puppeteer" && WYD.puppeteer) {
-      const a = WYD.puppeteer.active(w), label = WYD.data.puppeteer.puppet.hudLabel;
-      const wait = Math.max(0, (w.puppetRespawnAt || 0) - w.time);
-      chips.push(a ? chip(label, `${Math.round(a.hp / a.maxHp * 100)}%`, a.hp / a.maxHp, `${label}のHP ${Math.round(a.hp)} / ${Math.round(a.maxHp)}`)
-        : chip(label, wait > 0 ? `${wait.toFixed(1)}秒` : "なし", 0, wait > 0 ? `${label}を呼び直せるまで ${wait.toFixed(1)}秒` : `${label}はいない`));
+      const P = WYD.data.puppeteer, Pp = WYD.puppeteer, desp = stats.powers.puppetDesperation;
+      const col = (m) => { const v = Pp.values(stats, m); return { hp: n(v.maxHp), atk: n(v.attack * (1 + stats.skillDamage / 100)), def: n(v.defense),
+        share: `${Math.max(m.guardSharePercent || 0, (stats.powers.puppetScapegoat || {}).sharePercent || 0)}%`, cost: `×${m.costMult}`, floor: `${Math.round(m.lowHpReserve * 100)}%`, wait: `${m.respawnCooldown}秒` }; };
+      const pve = col(P.modes.pve), pvp = col(P.modes.pvp), rows = [["最大HP", "hp"], ["攻撃力", "atk"], ["防御力", "def"], ["本体への攻撃の肩代わり", "share"], ["命令で払う本体HP", "cost"], ["命令で残す本体HP", "floor"], ["壊れてから呼び直すまで", "wait"]];
+      cards.push(`<div class="summon-card"><h4>人形 <small>攻撃速度 ${P.puppet.attackSpeed}回/秒</small></h4><table class="summon-table"><tr><th></th><th>冒険</th><th>アリーナ</th></tr>${rows.map(([k, key]) => `<tr><td>${k}</td><td>${pve[key]}</td><td>${pvp[key]}</td></tr>`).join("")}</table>${desp ? `<p class="summon-note">無貌座の衣装：本体のHPが減るほど攻撃力が上がる（最大+${desp.maxPercent}%）</p>` : ""}</div>`);
     }
-    const box = this.$("summon-status"), html = chips.join("");
-    if (box.hidden !== !html) box.hidden = !html;
-    if (this.summonHtml !== html) { box.innerHTML = html; this.summonHtml = html; }
+    const box = this.$("summon-stats"), html = cards.length ? `<h3>召喚の能力 <small>今の装備とスキルで呼んだときの強さ</small></h3>${cards.join("")}` : "";
+    box.hidden = !html;
+    if (this.summonStatsHtml !== html) { box.innerHTML = html; this.summonStatsHtml = html; }
   },
 
   updateBars() {
@@ -1086,7 +1091,6 @@ WYD.ui = {
     const hp = Math.max(0, Math.round(this.world.player.hp || 0));
     this.$("hp-bar").style.width = `${(hp / stats.maxHp) * 100}%`;
     this.$("hp-text").textContent = `HP ${hp} / ${stats.maxHp}`;
-    this.updateSummonStatus(stats);
     const need = WYD.stats.expToNext(s.player.level);
     const maxed = s.player.level >= WYD.data.player.maxLevel;
     if (maxed) {
@@ -1177,6 +1181,7 @@ WYD.ui = {
       ["会心ダメージ", `×${stats.critMultiplier.toFixed(2)}`],
     ];
     this.putHtml("stats", rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join(""));
+    this.renderSummonStats(stats);
     this.putHtml("build", this.buildHtml(stats));
 
     // スキル

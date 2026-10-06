@@ -44,8 +44,8 @@ WYD.puppeteer = {
     if (WYD.classes.id !== 'puppeteer') return amount;
     return this.shield(w, amount, this.sharePercent(w.puppetScapegoat));
   },
-  values(stats) {
-    const d = this.config().puppet, m = this.mode();
+  values(stats, m = this.mode()) {
+    const d = this.config().puppet;
     const iron = this.powers(stats).puppetIronSkin, tough = iron ? 1 + iron.percent / 100 : 1; // 不死者の鎧（傀儡師の4点）
     return {
       maxHp: Math.round((stats.maxHp * d.hpPerBodyHp + stats.defense * d.hpPerDefense) * m.hpMult * tough),
