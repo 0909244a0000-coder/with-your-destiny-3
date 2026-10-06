@@ -15,6 +15,7 @@ window.WYD = window.WYD || {};
   WYD.ui.init(state, world);
   WYD.results.init(world);
   WYD.arena.init();
+  WYD.dps.init();
   WYD.runeSkillsUI.init();
   WYD.sound.init();
   WYD.ui.log("ようこそ野営地へ。装備とスキルを整え、「戦場へ」から冒険に出よう。", "#ffd447");
@@ -34,7 +35,7 @@ window.WYD = window.WYD || {};
   // タブを裏にしている間は画面が止まるので、戻ってきたときに放置ぶんを渡す
   let hiddenAt = null;
   document.addEventListener("visibilitychange", () => {
-    if (WYD.arena && WYD.arena.opened) { hiddenAt = null; return; }
+    if (WYD.arena.opened || WYD.dps.opened) { hiddenAt = null; return; }
     if (document.hidden) {
       hiddenAt = Date.now();
       if (!WYD.resetting) WYD.save.write(state);

@@ -632,3 +632,32 @@ button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px
 #board-open { min-height:44px; font-size:13px; padding:4px 10px; }
 
 .modal-box.board-box { max-height:90dvh; overflow-y:auto; overscroll-behavior:contain; }
+
+/* 拠点DPS計測 */
+.modal-box.dps-box { width:min(900px,calc(100vw - 20px)); max-width:calc(100vw - 20px); max-height:90dvh; overflow-y:auto; overscroll-behavior:contain; }
+.dps-heading { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.dps-heading h2 { margin:0; }
+.dps-box p { line-height:1.7; }
+.dps-controls { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.dps-controls label,.dps-actions label { display:grid; gap:5px; }
+.dps-box button,.dps-box select,.dps-box input { min-height:48px; min-width:0; width:100%; }
+.dps-heading button { width:auto; }
+.dps-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:end; margin:12px 0; }
+.dps-actions button { flex:1; min-width:130px; }
+#dps-canvas { width:100%; height:auto; display:block; border:1px solid var(--line); background:#17140f; }
+#dps-summary { display:grid; gap:8px; padding:12px 0; }
+#dps-summary b { font-size:22px; color:var(--accent); }
+#dps-compare { color:var(--accent); }
+.dps-row { border-top:1px solid var(--line); padding:10px 0; display:grid; gap:5px; overflow-wrap:anywhere; }
+.dps-row small { color:var(--muted); }
+@media(max-width:600px) { .dps-controls { grid-template-columns:repeat(2,minmax(0,1fr)); } .dps-heading h2 { font-size:18px; } }
+
+#dps-summary,#dps-status,#dps-compare { overflow-wrap:anywhere; }
+.stage-btns { max-width:calc(100% - 16px); flex-wrap:wrap; justify-content:flex-end; }
+.stage-btns #dps-open { min-height:44px; }
+
+.dps-heading { position:sticky; top:-14px; z-index:2; background:var(--panel); padding:8px 0; }
+#dps-summary:empty,#dps-compare:empty { display:none; }
+
+.dps-box input { background:var(--panel); color:var(--text); border:1px solid var(--line); padding:8px 10px; border-radius:3px; }
+#dps-settings summary { min-height:44px; padding:10px 0; cursor:pointer; color:var(--accent); }

@@ -106,6 +106,7 @@
         <canvas id="game" width="960" height="600"></canvas>
         <div class="stage-btns">
           <button id="mute-btn" title="効果音と音楽をまとめてON・OFF（M キー）">🔊</button>
+          <button id="dps-open" title="拠点で現在の構成のDPSを計測">DPSテスト</button>
           <button id="town-btn" title="敵の出ない野営地と戦場を行き来する（H キー）">🏕 拠点へ</button>
           <button id="bag-open" class="bag-btn" title="装備・持ち物を開く（I キー）">🎒 装備・持ち物 <span id="bag-badge"></span></button>
         </div>
@@ -332,6 +333,26 @@
     <div class="modal-box rune-box"><div class="rune-heading"><h2 id="rune-title">ルーン工房 · 専用4枠目</h2><button id="rune-close">閉じる ×</button></div><div id="rune-body"></div></div>
   </div>
   <!-- 数値（data/） -->
+  <div id="dps-test" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="dps-title">
+    <div class="modal-box dps-box">
+      <div class="dps-heading"><h2 id="dps-title">拠点のDPSテスト</h2><button id="dps-close">閉じる ×</button></div>
+      <div id="dps-summary"></div><p id="dps-compare"></p>
+      <p>現在の装備・技・ルーン・秘技・傭兵をコピーして計測。標的は動かず、倒れず、攻撃しません。経験値・素材・ドロップは出ません。</p>
+      <details id="dps-settings" open><summary>計測条件（変更して再計測）</summary><div id="dps-controls" class="dps-controls">
+        <label>計測時間<select id="dps-duration"></select></label><label>標的数<select id="dps-count"></select></label>
+        <label>標的の防御力<input id="dps-defense" type="number" min="0" value="0" step="1" inputmode="numeric"></label>
+        <label>標的の扱い<select id="dps-kind"><option value="normal">通常敵</option><option value="boss">ボス</option></select></label>
+        <label>標的の残りHP<select id="dps-hp"></select></label><label>本人のHP（維持）<select id="dps-player-hp"></select></label>
+      </div></details>
+      <div class="dps-actions"><button id="dps-start">現在の構成で計測開始</button><button id="dps-pause" disabled>一時停止</button><button id="dps-stop" disabled>計測停止</button><label>表示速度<select id="dps-speed"></select></label></div>
+      <p id="dps-status" role="status">拠点で装備・スキルを整えてから計測を開始してください。</p>
+      <canvas id="dps-canvas" aria-label="訓練標的との自動戦闘"></canvas>
+      <div id="dps-rows"></div>
+      <p class="muted">DPSは計測中のゲーム内時間で計算（表示速度によらず同じ基準）。本編のリザルトと分離。HP割合は維持され、低HPで発動する技も試せます。撃破時・被弾時の効果は発動しません。静止標的での参考値で、実戦や対人のDPSとは異なります。比較は同じ条件で完走した前回のみ。毎回、技の待ち時間・召喚を初期化して開始。会心などの乱数で結果は変動します。結果はこのページを閉じると消えます。</p>
+      <div id="dps-frames" hidden></div>
+    </div>
+  </div>
+
   <script src="data/player.js"></script>
   <script src="data/skills.js"></script>
   <script src="data/mastery.js"></script>
@@ -374,6 +395,7 @@
   <script src="data/bombmancer.js"></script>
   <script src="data/classSpecialization.js"></script>
 <script src="data/training.js"></script>
+<script src="data/dps.js"></script>
   <script src="data/arena.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
@@ -420,6 +442,7 @@
   <script src="src/classSpecialization.js"></script>
 <script src="src/training.js"></script>
   <script src="src/arena.js"></script>
+<script src="src/dps.js"></script>
   <script src="src/main.js"></script>
 </body>
 </html>
