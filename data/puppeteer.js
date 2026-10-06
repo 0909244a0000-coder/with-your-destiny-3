@@ -4,7 +4,7 @@ WYD.data.classes.puppeteer = {
   name: "傀儡師", desc: "本体の最大HPはほかの職業の約半分。最大HPと防御力で人形の攻撃・耐久を強化し、HPを使って命令する。",
   player: {
     className: "傀儡師", weaponName: "操糸具", color: "#c75c69", image: "assets/player_puppeteer.png", imageFilter: null,
-    poses: { attack: "assets/player_puppeteer.png" }, preloadImages: ["assets/ally_puppet.png"],
+    poses: { attack: "assets/player_puppeteer_attack.png" }, preloadImages: ["assets/ally_puppet.png", "assets/ally_puppet_attack.png"],
     maxHpMult: 0.52,
     base: { maxHp: 110, attack: 8, defense: 2, attackSpeed: 0.85, critChance: 5, hpRegen: 1.2, moveSpeed: 120 },
     perLevel: { maxHp: 14, attack: 1.75, defense: 0.9 },
@@ -23,14 +23,18 @@ WYD.data.classes.puppeteer = {
   },
   autoBuild: ["pup_thread","pup_pierce","pup_stitch"],
   skillOrder: ["pup_thread","pup_swap","pup_guard","pup_stitch","pup_bind","pup_needles","pup_pierce","pup_cut","pup_finale"],
-  skillIcons: Object.fromEntries(["thread","pierce","guard","needles","bind","swap","stitch","cut","finale"].map(k => ["pup_" + k, "assets/skills/pup_" + k + ".svg"])),
+  skillIcons: Object.fromEntries(["thread","pierce","guard","needles","bind","swap","stitch","cut","finale"].map(k => ["pup_" + k, "assets/skills/pup_" + k + ".png"])),
 };
 WYD.data.mastery.perLevel.puppet = { maxHp: 3, defense: 0.6 };
 WYD.data.puppeteer = {
   puppet: { hpPerBodyHp: 2, hpPerDefense: 4, attackPerBodyAttack: 0.55, attackPerBodyHp: 0.16, attackPerDefense: 0.75,
     defensePerBodyDefense: 1, moveSpeed: 145, attackSpeed: 0.9, range: 28, radius: 14, followDistance: 58, firstAttackDelay: 0.35,
-    color: "#9b8f86", visualScale:1.35, duration:3600, spawnSpread:38, hpRatio:1, defenseRatio:1, image: "assets/ally_puppet.png" },
+    color: "#9b8f86", visualScale:1.35, duration:3600, spawnSpread:38, hpRatio:1, defenseRatio:1, image: "assets/ally_puppet.png", poses: { attack: "assets/ally_puppet_attack.png" } },
   respawnCooldown: 6, summonCost: 4, lowHpReserve: 0.15, stitchRange:220,
+  effects: {
+    thread:{key:"puppetThread",size:104}, guard:{key:"puppetThread",size:116}, swap:{key:"puppetThread",size:92}, stitch:{key:"puppetThread",size:88},
+    pierce:{key:"puppetSlash",size:100},cut:{key:"puppetSlash",size:126},needles:{key:"puppetBind",size:140},bind:{key:"puppetBind",size:130},finale:{key:"puppetBurst",size:170},
+  },
 };
 // 3つの型：命の節約、早い指示、強い指示。コストと間隔も変化する。
 for (const id of WYD.data.classes.puppeteer.skillOrder) {
@@ -40,3 +44,20 @@ for (const id of WYD.data.classes.puppeteer.skillOrder) {
     { id:"deep", name:"深い契約", desc:"命令の効果1.3倍。HP消費1.35倍。", mods:{effectMult:["set",1.3],hpCost:["mul",1.35]} },
   ];
 }
+
+// 職業固有の光。値はほかのエフェクトと同じくデータ側で調整する。
+Object.assign(WYD.data.vfx.textures, {
+  puppetThread:"assets/vfx/puppetThread.png", puppetSlash:"assets/vfx/puppetSlash.png",
+  puppetBind:"assets/vfx/puppetBind.png", puppetBurst:"assets/vfx/puppetBurst.png",
+});
+Object.assign(WYD.data.vfx.anim, {
+  puppetThread:{duration:0.45,size:104,scaleFrom:0.65,scaleTo:1.1,spin:0.8,additive:true},
+  puppetSlash:{duration:0.25,size:100,scaleFrom:0.75,scaleTo:1.2,spin:0,additive:true},
+  puppetBind:{duration:0.55,size:130,scaleFrom:0.65,scaleTo:1.15,spin:0.6,additive:true},
+  puppetBurst:{duration:0.55,size:170,scaleFrom:0.6,scaleTo:1.3,spin:0,additive:true},
+});
+WYD.data.vfx.castProfiles.puppet = { key:"puppetThread",size:85,duration:0.45,from:0.6,to:1.0,alpha:0.6,flatten:0.8,rise:8 };
+WYD.data.vfx.hitByClass.puppeteer = "puppetSlash";
+for (const id of ["pup_pierce","pup_cut"]) WYD.data.vfx.hitBySkill[id] = "puppetSlash";
+for (const id of ["pup_bind","pup_needles"]) WYD.data.vfx.hitBySkill[id] = "puppetBind";
+WYD.data.vfx.hitBySkill.pup_finale = "puppetBurst";

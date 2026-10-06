@@ -27,6 +27,8 @@ WYD.puppeteer = {
     Object.assign(a, this.values(stats));
     a.hp = a.maxHp;
     w.puppetWasAlive = true;
+    const fx = this.config().effects.thread;
+    WYD.vfx.spawn(w, fx.key, a.x, a.y, {size:fx.size});
     return true;
   },
   update(w, state, stats) {
@@ -53,6 +55,8 @@ WYD.puppeteer = {
     if (!stitch || stitch.until <= w.time || damage <= 0 || (a.nextStitchHeal || 0) > w.time) return;
     a.nextStitchHeal = w.time + stitch.interval;
     WYD.world.healPlayer(w, stats.maxHp, stats.maxHp * stitch.healPercent / 100, 'skill:pup_stitch');
+    const fx = this.config().effects.stitch;
+    WYD.vfx.spawn(w, fx.key, w.player.x, w.player.y, {size:fx.size});
   },
   cast(w, state, stats, s, lv) {
     if (WYD.classes.id !== 'puppeteer') return false;
@@ -62,6 +66,9 @@ WYD.puppeteer = {
       if (a.hp >= a.maxHp || !this.canPay(w, stats, s.hpCost)) return false;
       this.pay(w, stats, s.hpCost);
       a.hp = Math.min(a.maxHp, a.hp + a.maxHp * (s.repairBase + s.repairPerLevel * (lv - 1)) * mult);
+      const fx = this.config().effects.thread;
+      WYD.vfx.spawn(w, fx.key, a.x, a.y, {size:fx.size});
+      p.atkAnim = WYD.data.anim.attack.time;
       return true;
     }
     if (!a || !this.canPay(w, stats, s.hpCost)) return false;
@@ -78,6 +85,10 @@ WYD.puppeteer = {
     else if (s.mode === 'stitch' && !nearby(this.config().stitchRange).length) return false;
     else if (s.mode === 'swap' && p.hp / stats.maxHp * 100 > s.triggerHpPercent) return false;
     this.pay(w, stats, s.hpCost);
+    p.atkAnim = WYD.data.anim.attack.time;
+    p.swingTarget = a;
+    a.atkAnim = WYD.data.anim.attack.time;
+    a.attackTarget = near;
     if (s.mode === 'guard') {
       a.guardUntil = w.time + s.duration * mult;
       a.guardMult = s.defenseMult * mult;
@@ -102,6 +113,8 @@ WYD.puppeteer = {
         w.puppetRespawnAt = w.time + this.config().respawnCooldown;
       }
     }
+    const fx = this.config().effects[s.mode];
+    if (fx) WYD.vfx.spawn(w, fx.key, a.x, a.y, {size:fx.size});
     w.effects.push({ type:'ring', x:a.x, y:a.y, radius:s.radius || 55, color:s.color, time:0, duration:0.35 });
     return true;
   },
