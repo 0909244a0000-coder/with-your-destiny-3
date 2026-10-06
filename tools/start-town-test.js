@@ -24,7 +24,7 @@ const path = require('node:path');
     assert.equal(fresh.town, true); assert.equal(fresh.enemies, 0);
     assert.equal(fresh.hp, fresh.maxHp); assert.equal(fresh.elapsed, 0);
     assert.equal(fresh.area, 'forest'); assert.equal(fresh.floor, 1); assert.equal(fresh.title, '野営地');
-    await page.click('#town-btn');
+    await page.click('#home-depart'); // Homeボタンは野営地へ戻るだけ。出発はホーム内のボタン
     assert.equal(await page.evaluate(() => WYD.currentWorld.town), false);
     await page.evaluate(() => {
       const s = WYD.state; s.area = 'smashana'; s.floor = 3;
@@ -36,7 +36,7 @@ const path = require('node:path');
     assert.equal(resumed.area, 'smashana'); assert.equal(resumed.floor, 3);
     assert.equal(resumed.elapsed, 0);
     assert.equal(await page.evaluate(() => WYD.state.materials), 777);
-    await page.click('#town-btn');
+    await page.click('#home-depart');
     const left = await page.evaluate(() => {
       const w = WYD.currentWorld, s = WYD.state;
       for (let i = 0; i < 100; i++) WYD.world.update(w, s, .05);
