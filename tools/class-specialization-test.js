@@ -8,7 +8,8 @@ const path = require('node:path');
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     await page.goto('file://' + path.resolve(__dirname, '../index.html'));
-    for (const cls of await page.evaluate(() => Object.keys(WYD.data.classes))) {
+    // 主力技の独自化（PR108）の対象職だけ。傀儡師は職業そのものが独自の仕組みなので puppeteer-test.js で確認する。
+    for (const cls of await page.evaluate(() => Object.keys(WYD.data.classSpecialization.classes))) {
       await page.evaluate(cls => { localStorage.clear(); localStorage.setItem('wyd3-active-class', cls); WYD.resetting = true; }, cls);
       await page.reload(); await page.click('#modal-ok');
       const checks = await page.evaluate(() => {
