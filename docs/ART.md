@@ -96,7 +96,7 @@ Game visual effect texture for a dark fantasy action RPG seen from a top-down vi
 ポーズ違いは、顔や装備が少し変わってしまいやすいです。見本と並べて、同じキャラに見えないものは作り直してください。
 
 ### ソーサレス（2つ目の職業）のアイコン
-主人公の絵は、保管していた女性の術者の絵を使っています（`assets/player_sorceress.png`。持ち主の判断で、いったんこの絵）。
+主人公の通常・攻撃絵は2026-10-06に描き直し。元の黒髪・赤金の衣装・炎の杖を残し、他職業に合わせた立体的なダークファンタジーの質感へ。`assets/player_sorceress.png`・`player_sorceress_attack.png`。詳細と指示文は `docs/reviews/2026-10-06-codex-sorceress-art.md`。
 
 **スキル（3列×2行）** → `--grid 3x2 --names sorc_nova,sorc_shield,sorc_chain,sorc_meteor,sorc_haste,sorc_freeze`、置いたら `data/classes.js` の `sorceress.skillIcons` に書く
 ```
