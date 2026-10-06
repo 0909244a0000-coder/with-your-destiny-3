@@ -9,13 +9,14 @@ const path=require('node:path');
  await page.evaluate(()=>{WYD.state.player.level=50;WYD.ui.renderPanels();});
  await page.locator('#bag-open').click();assert(await page.locator('#inventory').isVisible());assert(!await page.locator('#equipment').isVisible());assert(!await page.locator('#stash-panel').isVisible());
  await page.locator('#bag-gamble-open').click();assert(await page.locator('#gamble').isVisible());await page.keyboard.press('Escape');await page.keyboard.press('Escape');
- await page.locator('#character-open').click();assert(await page.locator('#stats').isVisible());assert(await page.locator('#equipment').isVisible());assert(!await page.locator('#rune-open').isVisible());await page.keyboard.press('Escape');
+ await page.locator('#character-open').click();assert(await page.locator('#stats').isVisible());assert(await page.locator('#equipment').isVisible());assert(!await page.locator('#rune-open').isVisible());assert(!await page.locator('#skills').isVisible());await page.keyboard.press('Escape');
+ await page.locator('#skills-open').click();assert(await page.locator('#skills').isVisible());assert(!await page.locator('#equipment').isVisible());await page.keyboard.press('Escape');
  await page.locator('#upgrade-open').click();assert(await page.locator('#forge-mode').isVisible());assert(await page.locator('#enhance-mode').isVisible());await page.locator('#rune-open').click();assert(await page.locator('#rune-lab').isVisible());await page.keyboard.press('Escape');await page.keyboard.press('Escape');
  assert(await page.locator('#home-panel #dps-open').isVisible());await page.locator('#dps-open').click();assert(await page.locator('#dps-test').isVisible());await page.keyboard.press('Escape');
  await page.locator('#home-depart').click();await page.locator('#home-panel').waitFor({state:'hidden'});await page.locator('#town-btn').click();assert(await page.locator('#home-panel').isVisible());
  for(const [width,height] of [[1920,1080],[1366,768],[1024,768],[844,390],[768,1024],[390,844]]){
  await page.setViewportSize({width,height});await page.waitForTimeout(150);
- const r=await page.evaluate(()=>[...document.querySelectorAll('.nav-icon')].filter(e=>e.getClientRects().length).map(e=>{const r=e.getBoundingClientRect();return {id:e.id,ok:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight};}));assert(r.every(x=>x.ok),JSON.stringify({width,r}));
+ const r=await page.evaluate(()=>[...document.querySelectorAll('.nav-icon')].filter(e=>e.getClientRects().length).map(e=>{const r=e.getBoundingClientRect();return {id:e.id,ok:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&r.width===r.height&&getComputedStyle(e).borderRadius==='50%'&&!/[\u3040-\u30ff\u4e00-\u9fff]/.test(e.getAttribute('aria-label'))};}));assert(r.every(x=>x.ok),JSON.stringify({width,r}));
  if(width===1920)await page.screenshot({path:'/tmp/navigation-ui.png'});
  }
  // 旧倉庫30個を含む90個のアイテムが、60枠+未受取30個として損失なく移行する。

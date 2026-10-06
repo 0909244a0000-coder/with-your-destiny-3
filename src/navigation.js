@@ -3,9 +3,10 @@ window.WYD = window.WYD || {};
 WYD.navigation = {
   init() {
     const ui = WYD.ui, $ = id => document.getElementById(id);
-    const icons = { 'bag-open':['bag','かばん'], 'town-btn':['home','ホーム'], 'character-open':['status','ステータス'], 'upgrade-open':['upgrade','強化'], 'bounty-open':['bounty','賞金首'], 'merc-open':['merc','傭兵'], 'lgem-open':['lgem','伝説の宝石'], 'devotion-open':['devotion','星座'], 'codex-open':['codex','図鑑・記録'], 'arena-open':['arena','アリーナ'] };
+    const icons = { 'bag-open':['bag','Bag'], 'town-btn':['home','Home'], 'character-open':['status','Status'], 'upgrade-open':['upgrade','Upgrade'], 'skills-open':['skills','Skills'], 'bounty-open':['bounty','Bounties'], 'merc-open':['merc','Mercenary'], 'lgem-open':['lgem','Gems'], 'devotion-open':['devotion','Devotion'], 'codex-open':['codex','Codex'], 'arena-open':['arena','Arena'] };
     const nav = document.querySelector('.stage-btns');
     const upgrade = document.createElement('button'); upgrade.id='upgrade-open'; nav.append(upgrade);
+    const skillsButton = document.createElement('button'); skillsButton.id='skills-open'; nav.append(skillsButton);
     const home = document.createElement('section'); home.id='home-panel'; home.hidden=true;
     home.innerHTML='<strong>野営地</strong><p>装備と構成を整えてから冒険へ。</p><button id="home-depart">戦場へ出発</button>';
     document.querySelector('.stage').append(home); home.append($('dps-open'));
@@ -24,6 +25,8 @@ WYD.navigation = {
     const status = document.createElement('section'); status.id='status-content';
     [...$('character-drawer').children].filter(el=>el.classList.contains('panel')).forEach(el=>status.append(el));
     document.querySelector('.bag-cols').prepend(status);
+    const skillsPanel = $('skills').closest('section'); skillsPanel.id='skills-content';
+    document.querySelector('.bag-cols').prepend(skillsPanel);
     const workshop = document.createElement('section'); workshop.id='workshop-tools'; workshop.className='panel';
     workshop.innerHTML='<h2>強化工房</h2><p class="muted">加工方法を選んでから、装備またはかばんのアイテムを選択。</p>';
     ['forge-mode','enhance-mode','craft-mode','rune-open'].forEach(id=>workshop.append($(id)));
@@ -34,10 +37,10 @@ WYD.navigation = {
       button.innerHTML=`<img src="assets/ui/nav-${file}.webp" alt=""><span>${label}</span>`;
       if(badge)button.append(badge);
     }
-    nav.append($('bag-open'),$('town-btn'),$('character-open'),$('upgrade-open'));
+    nav.append($('bag-open'),$('town-btn'),$('character-open'),$('skills-open'),$('upgrade-open'));
     const originalToggle=ui.toggleBag.bind(ui);
     this.view='bag';
-    this.open = view => { this.view=view; $('bag').dataset.view=view; document.querySelector('.bag-head h2').textContent={bag:'かばん',status:'ステータス・装備',upgrade:'強化工房'}[view];
+    this.open = view => { this.view=view; $('bag').dataset.view=view; document.querySelector('.bag-head h2').textContent={bag:'Bag',status:'Status & Equipment',skills:'Skills',upgrade:'Upgrade'}[view];
       ui.craftMode=ui.enhanceMode=ui.forgeMode=ui.cubeMode=false;ui.gemSelected=null;
       originalToggle(true);document.querySelector('.bag-box').scrollTop=0;
     };
@@ -47,6 +50,7 @@ WYD.navigation = {
     $('character-open').removeAttribute('aria-expanded');
     $('character-open').onclick=()=>this.open('status');
     $('upgrade-open').onclick=()=>this.open('upgrade');
+    $('skills-open').onclick=()=>this.open('skills');
     ui.updateHudLayout();ui.markDirty();
   }
 };

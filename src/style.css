@@ -903,3 +903,27 @@ body.drawer-open .game-screen::after { opacity:1; pointer-events:auto; }
 #bag[data-view="status"] .bag-col { grid-column:2; grid-row:1; }
 #bag[data-view="status"] .bag-col:last-child { grid-column:1 / -1; grid-row:2; }
 .world-plaque > span { font-size:12px; }
+
+/* 円形の金属枠。ラベルは枠の外で統一し、絵の形を隠さない。 */
+.stage-btns { gap:14px; padding-bottom:22px; }
+.stage-btns .nav-icon,.endgame-icons .nav-icon { position:relative; flex:none; display:grid; place-items:center; width:64px; height:64px; min-height:64px; padding:0; border:0; border-radius:50%; background:radial-gradient(circle,#292219,#0b0c0e 70%); box-shadow:0 3px 9px #000b; overflow:visible; }
+.nav-icon::before { content:""; position:absolute; inset:-4px; background:url('../assets/ui/nav-ring.webp') center / contain no-repeat; pointer-events:none; }
+.nav-icon img { position:relative; z-index:1; width:42px; height:42px; object-fit:contain; }
+.nav-icon > span:not(#bag-badge) { position:absolute; top:calc(100% + 5px); left:50%; transform:translateX(-50%); width:86px; color:#d8c49a; font:10px Georgia,serif; letter-spacing:.035em; line-height:14px; text-align:center; text-shadow:0 2px 3px #000,0 0 5px #000; pointer-events:none; }
+.nav-icon #bag-badge { position:absolute; z-index:2; top:-5px; right:-9px; padding:2px 4px; border:1px solid #665336; border-radius:10px; background:#0b0c0e; color:#d8c49a; font-size:9px; }
+.nav-icon:hover::before,.nav-icon:focus-visible::before { filter:brightness(1.35); }
+.nav-icon:focus-visible { outline:2px solid #e0c17a; outline-offset:5px; }
+.nav-icon:disabled { opacity:.4; }
+.endgame-icons { grid-template-columns:repeat(3,64px); gap:30px 14px; padding-bottom:20px; }
+#skills-content { display:none; }
+#bag[data-view="skills"] .bag-cols { display:block; }
+#bag[data-view="skills"] #skills-content { display:block; }
+#bag[data-view="skills"] .bag-col { display:none; }
+@media (max-width:900px) {
+ .stage-btns { gap:10px; }
+ .stage-btns .nav-icon,.endgame-icons .nav-icon { width:48px; height:48px; min-height:48px; }
+ .nav-icon img { width:32px; height:32px; }
+ .nav-icon > span:not(#bag-badge) { font-size:9px; width:60px; }
+ .endgame-icons { grid-template-columns:repeat(3,48px); gap:28px 10px; }
+ .world-plaque { max-width:80px; }
+}

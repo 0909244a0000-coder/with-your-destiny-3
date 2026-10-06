@@ -1196,7 +1196,7 @@ WYD.ui = {
     this.$("pending-loot-note").textContent = `未受取 ${pending}個：再読み込み・職業切替後も保管されます。${pending >= WYD.data.items.pendingLootLimit ? "戦闘停止中。受け取ると再開します。" : ""}`;
     this.$("claim-pending").textContent = `未受取 ${pending}個を受け取る`;
     this.$("claim-pending").disabled = s.inventory.length >= size && s.stash.length >= WYD.data.items.stashSize;
-    this.$("bag-badge").textContent = `${s.inventory.length}/${size}${pending ? ` 待${pending}` : ""}`;
+    this.$("bag-badge").textContent = `${s.inventory.length}/${size}${pending ? ` +${pending}` : ""}`;
     const inTown = !!(this.world && this.world.town);
     const muted = !s.settings.sound && s.settings.music === false;
     this.$("mute-btn").textContent = muted ? "🔇" : "🔊";
