@@ -4,14 +4,18 @@ WYD.puppeteer = {
   config() { return WYD.data.puppeteer; },
   active(w) { return w.allies.find(a => a.puppet && a.hp > 0 && a.timeLeft > 0); },
   powers(stats) { return (stats && stats.powers) || {}; },
+  // 対人（アリーナ）なら PvP 用、それ以外（冒険・DPSテスト）は PvE 用の人形
+  mode() { const E = WYD.arenaEngine; return this.config().modes[E && E.bridge ? 'pvp' : 'pve']; },
   // 満ちる糸巻き：人形のHPが十分あるとき、命令の消費を減らす
   costPercent(w, stats, percent) {
     const spare = this.powers(stats).puppetSpareThread, a = this.active(w);
-    return spare && a && a.hp / a.maxHp * 100 >= spare.threshold ? percent * spare.costPercent / 100 : percent;
+    const base = percent * this.mode().costMult;
+    return spare && a && a.hp / a.maxHp * 100 >= spare.threshold ? base * spare.costPercent / 100 : base;
   },
-  canPay(w, stats, percent) {
+  // reserve：払ったあとに残す本体HPの割合。命令は lowHpReserve、呼び出しは summonHpReserve
+  canPay(w, stats, percent, reserve = this.mode().lowHpReserve) {
     const cost = this.costPercent(w, stats, percent);
-    return !w.player.dead && w.player.hp - stats.maxHp * cost / 100 >= Math.max(1, stats.maxHp * this.config().lowHpReserve);
+    return !w.player.dead && w.player.hp - stats.maxHp * cost / 100 >= Math.max(1, stats.maxHp * reserve);
   },
   pay(w, stats, percent) {
     const amount = stats.maxHp * this.costPercent(w, stats, percent) / 100;
@@ -25,26 +29,31 @@ WYD.puppeteer = {
     const lost = Math.max(0, 1 - w.player.hp / stats.maxHp) * 100;
     return 1 + Math.min(d.maxPercent, lost * d.perPercent) / 100;
   },
-  // 藁の心臓：本体が受けるダメージの一部を人形が受ける。本体に残るダメージを返す
-  absorb(w, amount) {
-    const share = w.puppetScapegoat;
-    if (!share || WYD.classes.id !== 'puppeteer' || !(amount > 0)) return amount;
+  // 本体が受けるダメージの percent% を人形が代わりに受ける。本体に残るダメージを返す
+  shield(w, amount, percent) {
     const a = this.active(w);
-    if (!a) return amount;
-    const taken = Math.min(a.hp, amount * share.sharePercent / 100);
+    if (!a || !(amount > 0) || !(percent > 0)) return amount;
+    const taken = Math.min(a.hp, amount * percent / 100);
     a.hp -= taken;
     return amount - taken;
   },
+  // 肩代わりの割合：人形の型（PvE/PvP）と藁の心臓の大きいほう
+  sharePercent(scapegoat) { return Math.max(this.mode().guardSharePercent || 0, (scapegoat && scapegoat.sharePercent) || 0); },
+  // 冒険の本体被ダメージ（world.receiveDamage から）
+  absorb(w, amount) {
+    if (WYD.classes.id !== 'puppeteer') return amount;
+    return this.shield(w, amount, this.sharePercent(w.puppetScapegoat));
+  },
   values(stats) {
-    const d = this.config().puppet;
+    const d = this.config().puppet, m = this.mode();
     return {
-      maxHp: Math.round(stats.maxHp * d.hpPerBodyHp + stats.defense * d.hpPerDefense),
-      attack: stats.attack * d.attackPerBodyAttack + stats.maxHp * d.attackPerBodyHp + stats.defense * d.attackPerDefense,
-      defense: stats.defense * d.defensePerBodyDefense,
+      maxHp: Math.round((stats.maxHp * d.hpPerBodyHp + stats.defense * d.hpPerDefense) * m.hpMult),
+      attack: (stats.attack * d.attackPerBodyAttack + stats.maxHp * d.attackPerBodyHp + stats.defense * d.attackPerDefense) * m.attackMult,
+      defense: stats.defense * d.defensePerBodyDefense * m.defenseMult,
     };
   },
   spawn(w, stats, percent) {
-    if (this.active(w) || !this.canPay(w, stats, percent)) return false;
+    if (this.active(w) || !this.canPay(w, stats, percent, this.mode().summonHpReserve)) return false;
     this.pay(w, stats, percent);
     const d = this.config().puppet;
     const a = WYD.allies.spawn(w, stats, d, 1, 'pup_thread');
@@ -71,7 +80,7 @@ WYD.puppeteer = {
     }
     if (w.puppetWasAlive) {
       w.puppetWasAlive = false;
-      w.puppetRespawnAt = w.time + this.config().respawnCooldown;
+      w.puppetRespawnAt = w.time + this.mode().respawnCooldown;
       // 幕引きの裁ち鋏：壊れたときに回復し、早く呼び直せる
       const curtain = this.powers(stats).puppetCurtainCall;
       if (curtain) {
@@ -105,6 +114,7 @@ WYD.puppeteer = {
       return true;
     }
     if (!a || !this.canPay(w, stats, s.hpCost)) return false;
+    if (s.mode === 'finale' && a.hp / a.maxHp * 100 > s.triggerPuppetHpPercent) return false; // まだ戦える人形は壊さない
     const near = WYD.world.nearestEnemy(w, a);
     const nearby = radius => w.enemies.filter(e => e.hp > 0 && WYD.util.dist(a, e) <= radius + WYD.data.enemies[e.kind].radius);
     let targets = [];
@@ -143,7 +153,7 @@ WYD.puppeteer = {
       if (s.mode === 'pierce') { a.x = near.x; a.y = near.y; }
       if (s.mode === 'finale') {
         a.hp = 0;
-        w.puppetRespawnAt = w.time + this.config().respawnCooldown;
+        w.puppetRespawnAt = w.time + this.mode().respawnCooldown;
       }
     }
     const fx = this.config().effects[s.mode];

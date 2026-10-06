@@ -16,7 +16,7 @@ for (const file of tests) {
   else {
     failed.push(file);
     const lines = (r.stdout + r.stderr).split('\n').filter(l => l.trim() && !/^\s+at /.test(l));
-    console.log(`失敗 ${file} (${secs}秒)\n     ${lines.slice(-6).join('\n     ')}`);
+    console.log(`失敗 ${file} (${secs}秒)\n     ${lines.slice(-6).map(l => l.slice(0, 300)).join('\n     ')}`);
   }
 }
 console.log(`\n${tests.length - failed.length} / ${tests.length} 成功` + (failed.length ? `\n失敗：${failed.join(', ')}` : ''));

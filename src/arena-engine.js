@@ -112,7 +112,10 @@ WYD.arenaEngine = {
       const skill = source.startsWith("skill:") && WYD.data.skills[source.slice(6)];
       if (skill && skill.kind === "trap") amount *= WYD.data.arena.combat.trapDamageScale;
       const C = WYD.data.arena.combat;
-      amount = receiver.limitDamage(target, amount * (target.arenaMain ? C.damageScale : C.summonDamageScale) * E.pressureDamage());
+      amount = receiver.limitDamage(target, amount * E.takenRule(target).scale * E.pressureDamage());
+      // 傀儡師の本体への攻撃は、PvP用の人形が一部を肩代わりする（data/puppeteer.js の modes.pvp）
+      if (target.arenaMain && receiver.classId === "puppeteer" && WYD.puppeteer)
+        amount = WYD.puppeteer.shield(receiver.world, amount, WYD.puppeteer.sharePercent(receiver.stats.powers.puppetScapegoat));
       const actual = Math.min(target.hp, amount);
       if (E.hitContext && E.hitContext.target === target) Object.assign(E.hitContext, { raw, actual });
       if (!(actual > 0)) return;
@@ -200,11 +203,17 @@ WYD.arenaEngine = {
     const C = WYD.data.arena.combat;
     return C.healScale * (1 - this.pressure() * (1 - C.pressureHealMin));
   },
+  // 受けるダメージの規則：本人／傀儡師の人形（PvP用、data/puppeteer.js）／ふつうの召喚
+  takenRule(target) {
+    const C = WYD.data.arena.combat, P = target.puppet && WYD.data.puppeteer && WYD.data.puppeteer.modes.pvp;
+    if (target.arenaMain) return { scale: C.damageScale, hitCap: C.hitHpCap, windowCap: C.windowHpCap };
+    if (P) return { scale: P.damageTakenScale, hitCap: P.hitHpCap, windowCap: P.windowHpCap };
+    return { scale: C.summonDamageScale, hitCap: C.summonHitHpCap, windowCap: C.summonWindowHpCap };
+  },
   limitDamage(target, amount) {
     const C = WYD.data.arena.combat, now = this.bridge.time();
     const log = (this.incoming.get(target) || []).filter(x => x.t > now - C.windowSeconds);
-    const perWindow = target.arenaMain ? C.windowHpCap : C.summonWindowHpCap;
-    const perHit = target.arenaMain ? C.hitHpCap : C.summonHitHpCap;
+    const rule = this.takenRule(target), perWindow = rule.windowCap, perHit = rule.hitCap;
     const room = Math.max(0, target.maxHp * perWindow * this.pressureDamage() - log.reduce((sum, x) => sum + x.d, 0));
     const actual = Math.max(0, Math.min(amount, target.hp, target.maxHp * perHit * this.pressureDamage(), room));
     if (actual > 0) log.push({ t: now, d: actual });

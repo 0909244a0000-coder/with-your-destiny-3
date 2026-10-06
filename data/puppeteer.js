@@ -1,11 +1,11 @@
 // 傀儡師：本体の命と防御を人形の攻防へ変える。調整値はこのファイルにまとめる。
 window.WYD = window.WYD || {};
 WYD.data.classes.puppeteer = {
-  name: "傀儡師", desc: "本体の最大HPはほかの職業の約半分。最大HPと防御力で人形の攻撃・耐久を強化し、HPを使って命令する。",
+  name: "傀儡師", desc: "本体の最大HPはほかの職業の約6割。最大HPと防御力で人形の攻撃・耐久を強化し、HPを使って命令する。",
   player: {
     className: "傀儡師", weaponName: "操糸具", color: "#c75c69", image: "assets/player_puppeteer.png", imageFilter: null,
     poses: { attack: "assets/player_puppeteer_attack.png" }, preloadImages: ["assets/ally_puppet.png", "assets/ally_puppet_attack.png"],
-    maxHpMult: 0.52,
+    maxHpMult: 0.6,
     base: { maxHp: 110, attack: 8, defense: 2, attackSpeed: 0.85, critChance: 5, hpRegen: 1.2, moveSpeed: 120 },
     perLevel: { maxHp: 14, attack: 1.75, defense: 0.9 },
     rangedAttack: { range: 240, keepDistance: 170, speed: 370, size: 4, color: "#c75c69" },
@@ -19,7 +19,7 @@ WYD.data.classes.puppeteer = {
     pup_swap: { kind:"puppet",mode:"swap",name:"身代わり縫い",desc:"本体のHPが減ると少し回復し、本体と人形の防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:2,triggerHpPercent:55,duration:4,defenseMult:0.6,puppetDefenseMult:1.5,healPercentBase:10,healPercentPerLevel:1,color:"#e1b791" },
     pup_stitch: { kind:"puppet",mode:"stitch",name:"血の縫合",desc:"一定時間、人形の攻撃が当たると本体のHPを回復する。",startLevel:0,maxLevel:10,cooldown:13,hpCost:3,duration:6,healPercentBase:1.8,healPercentPerLevel:0.14,healInterval:0.8,color:"#d26771" },
     pup_cut: { kind:"puppet",mode:"cut",name:"赤糸の裁断",desc:"本体のHPを大きく使い、人形で敵を強く切り裂く。",startLevel:0,maxLevel:10,cooldown:8,hpCost:9,range:260,damageBase:3.2,damagePerLevel:0.48,color:"#ff6680" },
-    pup_finale: { kind:"puppet",mode:"finale",name:"終幕",desc:"人形を壊し、周囲の敵へ大きなダメージを与える。",startLevel:0,maxLevel:10,cooldown:15,hpCost:7,radius:140,damageBase:2.8,damagePerLevel:0.44,color:"#f0ad8b" },
+    pup_finale: { kind:"puppet",mode:"finale",name:"終幕",desc:"人形のHPが40%以下のとき、人形を壊して周囲の敵へ大きなダメージを与える。",startLevel:0,maxLevel:10,cooldown:15,hpCost:7,triggerPuppetHpPercent:40,radius:140,damageBase:2.8,damagePerLevel:0.44,color:"#f0ad8b" },
   },
   autoBuild: ["pup_thread","pup_pierce","pup_stitch"],
   skillOrder: ["pup_thread","pup_swap","pup_guard","pup_stitch","pup_bind","pup_needles","pup_pierce","pup_cut","pup_finale"],
@@ -31,6 +31,17 @@ WYD.data.puppeteer = {
     defensePerBodyDefense: 1, moveSpeed: 145, attackSpeed: 0.9, range: 28, radius: 14, followDistance: 58, firstAttackDelay: 0.35,
     color: "#9b8f86", visualScale:1.35, duration:3600, spawnSpread:38, hpRatio:1, defenseRatio:1, image: "assets/ally_puppet.png", poses: { attack: "assets/ally_puppet_attack.png" } },
   respawnCooldown: 6, summonCost: 4, lowHpReserve: 0.15, stitchRange:220,
+  // 冒険（PvE）用と対人（アリーナ・PvP）用の人形。上の puppet を土台に、倍率と規則だけを変える。
+  //   hpMult/attackMult/defenseMult … 人形の能力の倍率　costMult … 命令で払う本体HPの倍率
+  //   lowHpReserve … 命令で本体HPをこれ未満にしない　summonHpReserve … 人形を呼ぶときはこれ未満にしない（人形なしで立ち往生しないよう低め）　respawnCooldown … 壊れてから呼び直せるまでの秒数
+  //   guardSharePercent … 本体が受けるダメージのうち人形が肩代わりする割合（藁の心臓と大きいほうを使う）
+  //   PvP だけ：damageTakenScale/hitHpCap/windowHpCap … 人形が受けるダメージの規則（data/arena.js の combat と同じ意味。
+  //   ふつうの召喚は summonDamageScale などで脆いが、傀儡師の人形は本体と同じ主戦力なので別にする）
+  modes: {
+    pve: { hpMult: 1, attackMult: 1.2, defenseMult: 1, costMult: 1, lowHpReserve: 0.2, summonHpReserve: 0.15, respawnCooldown: 6, guardSharePercent: 20 },
+    pvp: { hpMult: 1, attackMult: 1.3, defenseMult: 1, costMult: 0.75, lowHpReserve: 0.2, summonHpReserve: 0.15, respawnCooldown: 6, guardSharePercent: 45,
+           damageTakenScale: 0.25, hitHpCap: 0.2, windowHpCap: 0.3 },
+  },
   effects: {
     thread:{key:"puppetThread",size:104}, guard:{key:"puppetThread",size:116}, swap:{key:"puppetThread",size:92}, stitch:{key:"puppetThread",size:88},
     pierce:{key:"puppetSlash",size:100},cut:{key:"puppetSlash",size:126},needles:{key:"puppetBind",size:140},bind:{key:"puppetBind",size:130},finale:{key:"puppetBurst",size:170},
@@ -40,8 +51,8 @@ WYD.data.puppeteer = {
 for (const id of WYD.data.classes.puppeteer.skillOrder) {
   WYD.data.runes.skills[id] = [
     { id:"frugal", name:"節約の糸", desc:"HP消費0.7倍。再使用までの時間1.15倍。", mods:{hpCost:["mul",0.7],cooldown:["mul",1.15]} },
-    { id:"swift", name:"速糸", desc:"再使用までの時間0.7倍。HP消費1.25倍。", mods:{cooldown:["mul",0.7],hpCost:["mul",1.25]} },
-    { id:"deep", name:"深い契約", desc:"命令の効果1.3倍。HP消費1.35倍。", mods:{effectMult:["set",1.3],hpCost:["mul",1.35]} },
+    { id:"swift", name:"速糸", desc:"再使用までの時間0.7倍。HP消費1.1倍。", mods:{cooldown:["mul",0.7],hpCost:["mul",1.1]} },
+    { id:"deep", name:"深い契約", desc:"命令の効果1.3倍。HP消費1.15倍。", mods:{effectMult:["set",1.3],hpCost:["mul",1.15]} },
   ];
 }
 

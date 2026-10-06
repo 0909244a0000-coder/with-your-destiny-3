@@ -41,9 +41,10 @@ const check = () => {
     w.player.hp = st.maxHp * 0.5; WYD.puppeteer.active(w).hp = 0; WYD.puppeteer.update(w, state, st);
     ok(Math.abs(w.player.hp - st.maxHp * 0.62) < 1e-6 && w.puppetRespawnAt === 2, 'curtain heal/respawn');
     w.allies = []; w.time = 2.01; WYD.puppeteer.update(w, state, st); ok(WYD.puppeteer.active(w), 'respawned at 2s'); }
-  // 装備なしなら今までと同じ
+  // 装備なしなら、人形の型（PvE）の肩代わりだけ
   { const w = fresh(); WYD.puppeteer.spawn(w, base, 4); const a = WYD.puppeteer.active(w); WYD.puppeteer.update(w, state, base);
-    const hp = w.player.hp, ahp = a.hp; WYD.world.receiveDamage(w, 20); ok(hp - w.player.hp === 20 && a.hp === ahp, 'no item no change'); }
+    const share = WYD.data.puppeteer.modes.pve.guardSharePercent, hp = w.player.hp, ahp = a.hp; WYD.world.receiveDamage(w, 20);
+    ok(Math.abs(hp - w.player.hp - 20 * (1 - share / 100)) < 1e-6 && Math.abs(ahp - a.hp - 20 * share / 100) < 1e-6, 'no item: mode share only'); }
   // ほかの職業では落ちない
   ok(WYD.loot.uniqueDesc && mine.every(u => !!u.classOnly), 'classOnly');
   return r;

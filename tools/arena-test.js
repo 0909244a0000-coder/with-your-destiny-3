@@ -87,7 +87,9 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
           f.engine.setEnemies(A.fighters.flatMap(x=>x.engine.units()));
           f.frame.contentWindow.WYD.world.tryUseSkills(f.engine.world,f.engine.state,f.engine.stats);
         }
-        for (let i = 0; i < 600; i++) A.advance();
+        // 終幕は人形のHPが減ったときだけ使う技なので、終幕を確かめる回だけ人形を傷つけておく
+        const wear = f => { const D = f.frame.contentWindow.WYD, a = D.puppeteer && Object.keys(D.data.skills)[group] === 'pup_finale' && D.puppeteer.active(f.engine.world); if (a) a.hp = Math.min(a.hp, a.maxHp * 0.3); };
+        for (let i = 0; i < 600; i++) { A.advance(); A.fighters.forEach(wear); }
         for (const f of A.fighters) {
           const rows = f.engine.summary().rows;
           for (const id of Object.keys(f.frame.contentWindow.WYD.data.skills).slice(group, group + 1)) {
