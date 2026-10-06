@@ -7,6 +7,7 @@ WYD.data.arena = {
   colors: ["#f2ba67", "#8bc7ff", "#bf96ff", "#9be39c", "#ff949b", "#80e5de", "#f5a2e3"],
   visual: { particlesPerTeam: 90, effectsPerTeam: 80, labelPx: 12, barWidth: 50, barHeight: 5, labelGap: 28, fieldAlpha: 0.6, backgroundDim: 0.3 },
   modes: { duel: { name: "1対1", min: 2, max: 2 }, royale: { name: "バトルロワイヤル", min: 2, max: 7 } },
+  movement: { margin: 20 }, // 通常の移動と同じマップ境界。壁際では横へ逃げる。
   combat: {
     damageScale: 0.08, hitHpCap: 0.10, windowSeconds: 1, windowHpCap: 0.12,
     // 壊せない罠の継続射撃を抑え、近接戦士の追跡を補助する。

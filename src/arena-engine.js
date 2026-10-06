@@ -125,11 +125,47 @@ WYD.arenaEngine = {
       E.bindControl(a);
       return a;
     };
+    // 対人の遠距離本人だけ、壁に当たる後退を壁沿いの移動へ切り替える。
+    const away = W.moveAway;
+    W.moveAway = function(obj, target, step) {
+      if (obj !== E.world.player || !WYD.data.player.rangedAttack || !(step > 0))
+        return away.call(this, obj, target, step);
+      return E.retreat(target, step);
+    };
     // 遠隔弾と罠の判定を区別する（通常のスキル処理は変えない）。
     for (const [host, key] of [[W, "updateBolts"], [WYD.traps, "update"]]) {
       const original = host[key];
       host[key] = function(...args) { E.projectile = true; try { return original.apply(this, args); } finally { E.projectile = false; } };
     }
+  },
+  retreat(target, step) {
+    const p = this.world.player, M = WYD.data.map, edge = WYD.data.arena.movement.margin;
+    const inside = (x, y) => x >= edge && x <= M.width - edge && y >= edge && y <= M.height - edge;
+    const distance = Math.hypot(p.x - target.x, p.y - target.y);
+    const x = p.x + (p.x - target.x) / (distance || 1) * step;
+    const y = p.y + (p.y - target.y) / (distance || 1) * step;
+    if (distance > 0 && inside(x, y)) {
+      this.retreatDirection = null;
+      p.x = x; p.y = y;
+      return;
+    }
+    // 壁に沿う方向を保持。近い相手から毎フレーム反転して角に戻らない。
+    const current = this.retreatDirection;
+    if (current && inside(p.x + current.x * step, p.y + current.y * step)) {
+      p.x += current.x * step; p.y += current.y * step;
+      return;
+    }
+    let best = null, score = -Infinity;
+    for (const direction of [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }]) {
+      const nx = p.x + direction.x * step, ny = p.y + direction.y * step;
+      if (!inside(nx, ny)) continue;
+      // 囲まれているときは、最も近い敵への距離が大きい経路を選ぶ。
+      const enemies = this.world.enemies.filter(e => e.hp > 0);
+      const clearance = Math.min(...(enemies.length ? enemies : [target]).map(e => Math.hypot(nx - e.x, ny - e.y)));
+      if (clearance > score) { score = clearance; best = direction; }
+    }
+    this.retreatDirection = best;
+    if (best) { p.x += best.x * step; p.y += best.y * step; }
   },
   pressure() {
     const C = WYD.data.arena.combat;
