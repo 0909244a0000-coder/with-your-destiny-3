@@ -556,8 +556,10 @@ WYD.render = {
       const def = id === "rune" ? {name:"ル",color:WYD.runeSkills.def("element",rune.element).color} : WYD.data.skills[id];
       ctx.fillStyle = B.back;
       ctx.fillRect(x, y, size, size);
-      const img = this.getImage(id === "rune" ? WYD.data.vfx.textures[WYD.runeSkills.def("element",rune.element).texture] : WYD.data.skillIcons[id]);
-      if (img) ctx.drawImage(img, x, y, size, size);
+      const runeIcon = id === "rune" && WYD.runeSkills.icon(ctx, rune, x, y, size);
+      const img = runeIcon ? null : this.getImage(id === "rune" ? WYD.data.vfx.textures[WYD.runeSkills.def("element",rune.element).texture] : WYD.data.skillIcons[id]);
+      if (runeIcon) { /* 属性×動きの専用絵を切り出し済み */ }
+      else if (img) ctx.drawImage(img, x, y, size, size);
       else {
         ctx.fillStyle = def.color || "#ccc";
         ctx.font = `bold ${Math.round(size * 0.5)}px sans-serif`;
@@ -936,6 +938,7 @@ WYD.render = {
   },
 
   drawEffect(ctx, ef) {
+    if (ef.type === "runeArt") { WYD.runeSkills.drawEffect(ctx, ef); return; }
     if (ef.type === "ring") {
       const t = ef.time / ef.duration;
       ctx.strokeStyle = ef.color;

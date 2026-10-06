@@ -32,4 +32,20 @@ WYD.data.runeSkills = {
     { id:'bind', name:'拘束', desc:'命中した敵を短時間拘束' },
   ],
   keys: { element:'属性', shape:'動き', trait:'追加効果' },
+  // 描画だけの値。戦闘のradius/speed/duration等とは別。
+  visual: {
+    columns: 3, rows: 2,
+    cells: { seeker: 0, orbit: 1, chain: 2, field: 3, beam: 4, impact: 5 },
+    flipCells: ['seeker'],
+    textures: { fire:'runeFire', ice:'runeIce', lightning:'runeLightning', poison:'runePoison', shadow:'runeShadow', holy:'runeHoly' },
+    sizes: { seeker: 60, orbit: 54, beam: 112, beamHeight: 46, field: 170, dot: 38, impact: 66, trait: 54 },
+    alpha: { seeker: .85, orbit: .8, beam: .8, field: .65, dot: .4, impact: .85, trait: .6 },
+    orbitCount: 3, orbitSpeed: 4, orbitFlatten: .65,
+    pulseSpeed: 5, pulseAmount: .045, fadeSeconds: .3,
+    linkDuration: .32, linkWidth: 32, impactDuration: .38, traitDuration: .6,
+    trailLength: 42, trailAlpha: .3, trailScale: .8,
+    fieldAnchor: .65, iconSize: 44,
+  },
 };
+
+for (const [id,key] of Object.entries(WYD.data.runeSkills.visual.textures)) WYD.data.vfx.textures[key] = 'assets/vfx/rune-'+id+'Atlas.webp';

@@ -49,10 +49,18 @@ WYD.runeSkillsUI = {
     let html=`<p class="rune-wallet">${D.essenceName} <b>${r.essence}</b> · ${D.stoneName} <b>${r.stones}</b> · 保存 ${r.skills.length}/${D.capacity}</p><p class="muted">属性・動き・追加効果をまとめてランダム抽選。全150通り・各候補は等確率。クラス技3枠とは別の4枠目で自動発動。装備ソケットは宝石専用です。</p><div class="rune-actions"><button data-rune-action="draw" data-currency="essence" ${full||pending||(!r.free&&r.essence<D.drawEssence)?'disabled':''}>${r.free?'初回無料で抽選':`ルーン合成（欠片${D.drawEssence}）`}</button><button data-rune-action="draw" data-currency="stones" ${full||pending||r.stones<D.drawStones?'disabled':''}>奈落抽選（変質石${D.drawStones}）</button></div><p class="muted">欠片：通常の敵・精鋭・ボスから。変質石：奈落の双王の討伐成功時に${Math.round(D.uberStoneChance*100)}%で${D.uberStoneCount}個。分解で欠片${D.discardEssence}個。満杯では抽選できません。</p>`;
     if(pending){const skill=r.skills.find(s=>s.id===pending.id);html+=`<section class="rune-pending" role="status"><b>再抽選結果：#${pending.id} ${esc(R.label(skill))}</b><p>${D.keys[pending.key]}：${R.def(pending.key,pending.before).name} → <strong>${R.def(pending.key,pending.next).name}</strong></p><p>残り2箇所は維持。変質石は消費済みです。結果は再読み込み後も残ります。</p><div class="rune-actions"><button data-rune-action="accept">新しい効果を採用</button><button data-rune-action="keep">元の効果を維持</button></div></section>`;}
     if(selected){html+=`<section class="rune-inspect"><h3>#${selected.id} ${esc(R.label(selected))}</h3><canvas id="rune-preview" width="360" height="170" aria-label="選択スキルの動作イメージ"></canvas><p>${esc(R.describe(selected))}</p><small class="muted">動きのイメージ。実際の威力は本人の攻撃力・スキル威力・装備効果で変わります。</small><div class="rune-actions"><button data-rune-action="${r.equipped===selected.id?'unequip':'equip'}" data-id="${selected.id}">${r.equipped===selected.id?'4枠目から外す':'4枠目に装着'}</button><button data-rune-action="lock" data-id="${selected.id}">${selected.locked?'保護を解除':'保護する'}</button><button data-rune-action="discard" data-id="${selected.id}" ${selected.locked||r.equipped===selected.id||pending?.id===selected.id||(WYD.state.builds||[]).some(b=>b?.runeSkill===selected.id)?'disabled':''}>分解</button></div><p>変える箇所を選ぶと、その箇所だけランダム再抽選。同じ内容は出ません。</p><div class="rune-actions">${Object.entries(D.keys).map(([key,name])=>`<button data-rune-action="reroll" data-id="${selected.id}" data-key="${key}" ${pending||r.stones<D.rerollStones?'disabled':''}>${name}を再抽選（石${D.rerollStones}）</button>`).join('')}</div></section>`;}
-    html+=`<div class="rune-collection">${r.skills.map(s=>`<button data-rune-action="select" data-id="${s.id}" class="rune-card${s.id===this.selected?' selected':''}" aria-pressed="${s.id===this.selected}" style="--rune-color:${R.def('element',s.element).color}"><b>#${s.id} ${esc(R.label(s))}</b><small>${r.equipped===s.id?'装着中 · ':''}${s.locked?'保護中':'未保護'}</small></button>`).join('')||'<p>まだスキルがありません。上の初回無料抽選から始めよう。</p>'}</div>`;
-    this.$('rune-body').innerHTML=html;this.renderActive();
+    html+=`<div class="rune-collection">${r.skills.map(s=>`<button data-rune-action="select" data-id="${s.id}" class="rune-card${s.id===this.selected?' selected':''}" aria-pressed="${s.id===this.selected}" style="--rune-color:${R.def('element',s.element).color}"><canvas class="rune-art-icon" data-rune-icon="${s.id}" width="44" height="44" aria-hidden="true"></canvas><b>#${s.id} ${esc(R.label(s))}</b><small>${r.equipped===s.id?'装着中 · ':''}${s.locked?'保護中':'未保護'}</small></button>`).join('')||'<p>まだスキルがありません。上の初回無料抽選から始めよう。</p>'}</div>`;
+    this.$('rune-body').innerHTML=html;this.renderActive();this.paintIcons();
+  },
+  paintIcons() {
+    for(const canvas of this.$('rune-body').querySelectorAll('[data-rune-icon]')) {
+      if(canvas.dataset.painted)continue;
+      const skill=WYD.state.runeSkills.skills.find(s=>s.id===Number(canvas.dataset.runeIcon));
+      if(skill&&WYD.runeSkills.icon(canvas.getContext('2d'),skill,0,0,canvas.width))canvas.dataset.painted='yes';
+    }
   },
   preview(time) {
+    this.paintIcons();
     const canvas=this.$('rune-preview');if(!canvas)return;
     const R=WYD.runeSkills,s=WYD.state.runeSkills.skills.find(s=>s.id===this.selected);if(!s)return;
     const ctx=canvas.getContext('2d'),D=WYD.data.runeSkills,t=(time%D.previewSeconds)/D.previewSeconds,color=R.def('element',s.element).color;
@@ -62,8 +70,8 @@ WYD.runeSkillsUI = {
     ctx.fillStyle='#c9a96b';ctx.beginPath();ctx.arc(65,85,9,0,Math.PI*2);ctx.fill();
     let x=65+t*165,y=85;
     if(s.shape==='field'){x=230;y=85;}if(s.shape==='orbit'){x=130;y=85;}
-    if(s.shape==='chain'){ctx.strokeStyle=color;ctx.lineWidth=3;ctx.globalAlpha=1-t;ctx.beginPath();ctx.moveTo(65,85);for(const e of enemies){ctx.lineTo(e.x-8,e.y+6);ctx.lineTo(e.x,e.y);}ctx.stroke();ctx.globalAlpha=1;}
+    if(s.shape==='chain'){let at={x:65,y:85};for(const e of enemies){R.drawEffect(ctx,{skill:s,cell:'chain',fromX:at.x,fromY:at.y,x:e.x,y:e.y,time:t*D.visual.linkDuration,duration:D.visual.linkDuration});at=e;}}
     else R.draw(ctx,{runeEffects:[{skill:s,color,x,y,age:t*D.duration,left:D.duration,dx:1,dy:0}]});
-    if(t>.65){ctx.strokeStyle=color;ctx.globalAlpha=(1-t)/.35;ctx.beginPath();ctx.arc(230,85,8+(t-.65)*60,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;}
+    if(t>.65){const elapsed=(t-.65)/.35;R.drawEffect(ctx,{skill:s,cell:'impact',x:230,y:85,time:elapsed*D.visual.impactDuration,duration:D.visual.impactDuration});if(s.trait==='delay')R.draw(ctx,{runeEffects:[{skill:s,kind:'delay',color,x:230,y:85,age:elapsed*D.delayedTime,left:D.delayedTime}]});else if(s.trait==='split')for(const e of enemies.slice(1))R.drawEffect(ctx,{skill:s,cell:'chain',fromX:230,fromY:85,x:e.x,y:e.y,time:elapsed*D.visual.linkDuration,duration:D.visual.linkDuration});else R.drawEffect(ctx,{skill:s,cell:s.trait,x:230,y:85,time:elapsed*D.visual.traitDuration,duration:D.visual.traitDuration});}
   },
 };

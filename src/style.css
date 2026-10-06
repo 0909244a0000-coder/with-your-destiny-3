@@ -615,6 +615,7 @@ button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px
 .rune-collection { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
 .rune-card { text-align: left; border-color: var(--rune-color); overflow-wrap: anywhere; }
 .rune-card b { color: var(--rune-color); }
+.rune-art-icon { float: left; width: 44px; height: 44px; margin: 0 10px 6px 0; pointer-events: none; }
 .rune-card.selected { outline: 2px solid #e2c78d; outline-offset: -3px; }
 #rune-preview { width: 100%; max-width: 360px; height: auto; display: block; margin: auto; }
 @media (max-width: 600px) { .modal-box.rune-box { width: calc(100vw - 20px); padding: 12px; } .rune-heading { top: -12px; } .rune-heading h2 { font-size: 17px; } .rune-collection { grid-template-columns: 1fr; } }

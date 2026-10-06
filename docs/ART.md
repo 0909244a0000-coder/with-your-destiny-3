@@ -348,3 +348,7 @@ assets/vfx/{steelWhirl,frostCrown,corpseBloom,holyJudgment,violetAmbush,stormCol
 
 ## 2026-10-06：防御/オーラの専用アニメーション5枚
 arcaneBarrierAtlas/boneCarapaceAtlas/oakBulwarkAtlas/sanctuaryBloomAtlas/warEmbersAtlas.webpをassets/vfxへ。768px/2×2、各コマ384px、黒背景加算。盾は空いた中心にキャラを残し、青い魔力/象牙の骨/木の質感で分ける。オーラは白い床全面の光にせず上向きの細い光にする。中間2コマは持続ループ用。同じ制作・整形条件を引き継ぎ、旧画像の上書きなし。指示全文はdocs/reviews/2026-10-06-codex-support-vfx.md。
+
+
+## 2026-10-06：ルーン6属性の専用画像
+assets/vfx/rune-{fire,ice,lightning,poison,shadow,holy}Atlas.webp。各1152×768/3列2行/セル384px。左上から追尾弾、周回刃、連鎖、設置、貫通波、着弾の独立した絵で、連続フレームではない。炎/氷晶/雷枝/毒滴/影煙/黄金の光の材質を描き分ける。黒背景加算、組み込み生成1536×1024→RGB WebP quality88/method6、セルの自動トリミングなし。全体シートをそのまま表示しない。追尾セルは描画時に左右反転。旧絵は保持。指示全文：docs/reviews/2026-10-06-codex-rune-vfx.md。
