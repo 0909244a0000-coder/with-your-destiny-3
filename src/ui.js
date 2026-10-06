@@ -244,14 +244,14 @@ WYD.ui = {
       const warning = valuable ? `\nユニーク・セット・強化・鍛造・継承効果の装備を${valuable}個含みます。` : "";
       const builds = targets.filter((it) => WYD.inventory.keepReason(it, s) === "build").length;
       const bases = targets.filter((it) => WYD.inventory.keepRunewordBase(s, it)).length;
-      if (!confirm(`持ち物の装備${targets.length}個を全て捨てますか？${warning}${builds ? `\n保存ビルド用 ${builds}個も失われます。` : ""}${bases ? `\nルーンワードの土台 ${bases}個も対象です。` : ""}\n${C.materialName} +${gained}。はめた宝石・ルーンは戻ります。\nロックした装備・装備中・倉庫は残ります。元には戻せません。`)) return;
+      if (!confirm(`持ち物の装備${targets.length}個を全て捨てますか？${warning}${builds ? `\n保存ビルド用 ${builds}個も失われます。` : ""}${bases ? `\nルーンワードの土台 ${bases}個も対象です。` : ""}\n${C.materialName} +${gained}。はめた宝石・ルーンは戻ります。\nロックした装備・装備中は残ります。元には戻せません。`)) return;
       const r = WYD.inventory.discardAll(s, targets);
       this.log(`持ち物を${r.count}個捨てた（${C.materialName} +${r.gained}）`);
       this.changed();
     };
     this.$("claim-pending").onclick = () => {
       const count = WYD.inventory.claimPending(s);
-      this.log(count ? `未受取から${count}個を受け取りました` : "持ち物か倉庫に空きを作ると受け取れます", "#c9b48a");
+      this.log(count ? `未受取から${count}個を受け取りました` : "かばんに空きを作ると受け取れます", "#c9b48a");
       WYD.save.write(s);
       this.changed();
     };
@@ -436,7 +436,7 @@ WYD.ui = {
     };
 
     // スマホでは、持ち物の説明を「触る」操作に合わせる
-    if (this.isTouch()) this.$("inv-help").textContent = "装備を触ると：説明・今の装備との比べ・装備する／倉庫へ／ロック／捨てる";
+    if (this.isTouch()) this.$("inv-help").textContent = "装備を触ると：説明・今の装備との比べ・装備する／ロック／捨てる";
     // スマホの「どうするか」の窓
     this.$("sheet-body").onclick = (e) => {
       const b = e.target.closest("[data-sheet]");
@@ -459,9 +459,7 @@ WYD.ui = {
       else if (this.gemSelected) this.socketGem(s.inventory[index]);
       else if (this.enhanceMode) this.enhanceItem(s.inventory[index]);
       else if (this.craftMode) this.rerollItem(s.inventory[index]);
-      else if (e.shiftKey) {
-        if (!WYD.inventory.toStash(s, index)) this.log("倉庫がいっぱいで入れられない", "#ff6b6b");
-      } else WYD.inventory.equip(s, index);
+      else WYD.inventory.equip(s, index);
       this.changed();
     };
     this.bindRightDiscard(inv, "inv");
@@ -1203,7 +1201,7 @@ WYD.ui = {
     const muted = !s.settings.sound && s.settings.music === false;
     this.$("mute-btn").textContent = muted ? "🔇" : "🔊";
     this.$("mute-btn").classList.toggle("muted", muted);
-    this.$("town-btn").textContent = inTown ? "⚔ 戦場へ" : "🏕 拠点へ";
+    if (this.$("home-panel")) this.$("home-panel").hidden = !inTown;
     this.$("town-btn").classList.toggle("in-town", inTown);
     this.$("dps-open").disabled = !inTown;
     this.$("bag-open").classList.toggle("full", s.inventory.length >= size);
@@ -1221,7 +1219,7 @@ WYD.ui = {
       ? "強化モード：装備をクリックすると、素材を使って +1 強化する"
       : this.craftMode ? "つけ直しモード：装備をクリックすると、素材を使って特殊効果をつけ直す"
       : this.isTouch() ? "装備を触ると操作を選べます。「全て捨てる」は持ち物だけを確認後に分解（ロック除く）"
-      : "左クリック：装備／右クリック・Delete：捨てる／Shift＋クリック：倉庫／Ctrl＋クリック：ロック。「全て捨てる」は確認後に持ち物を分解（ロック除く）";
+      : "左クリック：装備／右クリック・Delete：捨てる／Ctrl＋クリック：ロック。「全て捨てる」は確認後に持ち物を分解（ロック除く）";
     if (!this.$("gamble").hidden) this.refreshGamble();
     this.putHtml("inventory", this.cellsHtml(s.inventory, size));
     this.putHtml("gems", this.gemsHtml());
@@ -1245,10 +1243,10 @@ WYD.ui = {
     this.$("cube-mode").textContent = `入れるモード：${this.cubeMode ? "ON" : "OFF"}`;
     this.$("forge-mode").textContent = `鍛造モード：${this.forgeMode ? "ON" : "OFF"}`;
     this.$("forge-mode").classList.toggle("active", this.forgeMode);
-    if (this.forgeMode) this.$("inv-help").textContent = "鍛造モード：持ち物・装備・倉庫の装備をクリックすると、鍛造の画面がひらく";
+    if (this.forgeMode) this.$("inv-help").textContent = "鍛造モード：持ち物・装備をクリックすると、鍛造の画面がひらく";
     this.$("cube-mode").classList.toggle("active", this.cubeMode);
     if (this.cubeMode) this.$("inv-help").textContent = "カナイの箱に入れるモード：ユニーク装備をクリックすると、分解してその力を覚える";
-    if (this.gemSelected) this.$("inv-help").textContent = `${WYD.gems.name(this.gemSelected)}を選んでいる：持ち物・装備・倉庫の装備をクリックすると、空いたソケットにはめる（もう一度宝石をクリックでやめる）`;
+    if (this.gemSelected) this.$("inv-help").textContent = `${WYD.gems.name(this.gemSelected)}を選んでいる：持ち物・装備をクリックすると、空いたソケットにはめる（もう一度宝石をクリックでやめる）`;
 
     // 倉庫
     const stashSize = WYD.data.items.stashSize;
@@ -1780,7 +1778,7 @@ WYD.ui = {
       html += this.compareHtml(item, cur);
     }
     const btn = (act, label, cls) => `<button data-sheet="${act}"${cls ? ` class="${cls}"` : ""}>${label}</button>`;
-    const acts = where === "inv" ? [btn("equip", "装備する"), btn("stash", "倉庫へ")]
+    const acts = where === "inv" ? [btn("equip", "装備する")]
       : where === "stash" ? [btn("back", "持ち物へ戻す")] : [btn("unequip", "外す")];
     acts.push(btn("lock", item.locked ? "ロックを外す" : "ロックする"));
     if (where !== "eq") acts.push(btn("discard", `捨てる（${mat} +${WYD.inventory.salvageValue(s, item)}）`, "danger"));
@@ -1828,7 +1826,7 @@ WYD.ui = {
         html += this.compareHtml(item, cur);
         html += this.enhanceMode ? this.enhanceHelp(item) : this.craftMode
           ? this.rerollHelp(item)
-          : `<div class="tip-help">${where === "inv" ? "左クリック：装備する／Shift＋クリック：倉庫へ／Ctrl＋クリック：ロック" : "クリック：持ち物へ戻す"}／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.inventory.salvageValue(this.state, item)}）</div>`;
+          : `<div class="tip-help">${where === "inv" ? "左クリック：装備するへ／Ctrl＋クリック：ロック" : "クリック：持ち物へ戻す"}／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.inventory.salvageValue(this.state, item)}）</div>`;
       }
     } else {
       const cell = e.target.closest("[data-slot]");

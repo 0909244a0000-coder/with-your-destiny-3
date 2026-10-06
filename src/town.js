@@ -143,6 +143,8 @@ WYD.town = {
     // 主人公
     R.clock = t;
     R.drawPlayer(ctx, w.player);
+    // メイン画面の現在地・案内はHTMLのホーム欄に表示する。
+    if (ctx.canvas.id === "game") return;
     // 文字
     const serif = getComputedStyle(document.documentElement).getPropertyValue("--serif") || "serif";
     const shown = ctx.canvas.clientWidth / map.width || 1;

@@ -134,6 +134,12 @@ WYD.save = {
         state.nextItemId = Math.max(state.nextItemId, it.id + 1);
         return true;
       });
+      // 倉庫廃止：旧アイテムは60枠のかばんへ、超過分は未受取に残す。
+      while (state.stash.length) {
+        const item = state.stash.shift();
+        if (state.inventory.length < WYD.data.items.inventorySize) state.inventory.push(item);
+        else state.pendingLoot.push(item);
+      }
       for (const item of state.inventory.concat(state.stash, state.pendingLoot, Object.values(state.equipment))) {
         if (!item) continue;
         // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく

@@ -5,7 +5,7 @@ WYD.data = WYD.data || {};
 WYD.data.items = {
   inventorySize: 60,   // 持ち物に入る数（6列なので6の倍数に）
   pendingLootLimit: 60, // 未受取がこの件数に達したら戦闘を停止し、受取で再開（重要品は消さない）
-  stashSize: 30,        // 倉庫に入る数
+  stashSize: 0,         // 倉庫廃止（旧保存はかばん／未受取へ移行）
   fullSalvage: ["normal", "magic"],   // 持ち物がいっぱいのとき、拾ったその場で素材にするレア度
   fullWarnInterval: 30,  // 「持ち物がいっぱい」の知らせを出す間隔（秒）
   longPressMs: 450,     // 装備の欄を長押し（ミリ秒）すると「どうするか」の窓（捨てる・倉庫へ など）が出る

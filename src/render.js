@@ -205,8 +205,10 @@ WYD.render = {
     ctx.lineWidth = 3;
     ctx.strokeStyle = "rgba(0,0,0,0.6)";
     const hudText = `${area.name}　${WYD.world.floorName(state)}${WYD.trial.active(state) ? "" : `　危険度 ${state.difficulty}`}`;
-    ctx.strokeText(hudText, hx, hy);
-    ctx.fillText(hudText, hx, hy);
+    if (ctx.canvas.id !== "game") {
+      ctx.strokeText(hudText, hx, hy);
+      ctx.fillText(hudText, hx, hy);
+    }
     this.drawBossBar(ctx, w);
     this.drawSkillBar(ctx, w, state);
     WYD.trial.draw(ctx, w, state);

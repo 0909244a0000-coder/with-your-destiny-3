@@ -1084,7 +1084,7 @@ WYD.world = {
         WYD.ui.markDirty();
       } else if (!drop.warned) {
         drop.warned = true;
-        if (D.protectDrops.includes(drop.item.rarity)) WYD.ui.notice(`持ち物も倉庫もいっぱい：${WYD.loot.label(drop.item)}は地面に残しておく（あけると拾う）`, "#ff8a6a");
+        if (D.protectDrops.includes(drop.item.rarity)) WYD.ui.notice(`かばんがいっぱい：${WYD.loot.label(drop.item)}は地面に残しておく（あけると拾う）`, "#ff8a6a");
         else this.fullWarning(w, "持ち物がいっぱいで拾えない！");
       }
     }
