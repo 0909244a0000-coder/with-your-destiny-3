@@ -80,7 +80,7 @@ WYD.arena = {
     const available = all.filter(x => this.rosterEntries.find(r => r.id === x.value).snapshot);
     available.sort((a, b) => Number(b.value === WYD.classes.id) - Number(a.value === WYD.classes.id));
     const mode = this.$("arena-mode").value;
-    for (const input of all) input.checked = available.includes(input) && (mode === "royale" || available.indexOf(input) < 2);
+    for (const input of all) input.checked = available.includes(input) && available.indexOf(input) < (mode === "royale" ? WYD.data.arena.modes.royale.max : 2);
     const size = WYD.data.arena.modes.teams.teamSize;
     for (const select of this.$("arena-roster").querySelectorAll(".arena-team-pick")) {
       const i = available.findIndex(x => x.value === select.dataset.class);

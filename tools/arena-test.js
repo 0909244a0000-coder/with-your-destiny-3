@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
 const scripts = file => [...fs.readFileSync(path.resolve(__dirname,'../' + file),'utf8').matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);
-assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>!['src/main.js','src/ui.js','src/runeSkillsUI.js','src/arena.js'].includes(s)).concat('src/arena-engine.js'),'戦闘フレームの依存ファイル漏れ');
+assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>!['src/main.js','src/ui.js','src/runeSkillsUI.js','src/arena.js','src/navigation.js','data/dps.js','src/dps.js'].includes(s)).concat('src/arena-engine.js'),'戦闘フレームの依存ファイル漏れ');
 (async () => {
   const browser = await chromium.launch();
   try {
@@ -65,17 +65,18 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
       }
       return out;
     }, ids);
-    assert.equal(pairs.length, 42); console.log('ok 全21組×2回', JSON.stringify(pairs));
+    assert.equal(pairs.length, ids.length * (ids.length - 1)); console.log('ok 全組×2回', JSON.stringify(pairs));
     const skills = await page.evaluate(async ids => {
-      const A = WYD.arena; let checked = 0;
-      for (let rune = 0; rune < 3; rune++) for (let group = 0; group < 9; group++) {
+      const A = WYD.arena; const checked = new Set(); // 重なる陣営は1回だけ数える
+      const max = WYD.data.arena.modes.royale.max, chunks = ids.length > max ? [ids.slice(0, max), ids.slice(-max)] : [ids];
+      for (let rune = 0; rune < 3; rune++) for (let group = 0; group < 9; group++) for (const chunk of chunks) {
         for (const entry of A.rosterEntries) {
           const s = entry.snapshot;
           const classSkills = WYD.data.classes[entry.id].skills || WYD.data.skills;
           Object.keys(classSkills).forEach((id, i) => { s.player.skillEnabled[id] = i === group; s.player.runes[id] = (WYD.data.runes.skills[id] || [])[rune]?.id || s.player.runes[id]; });
           const armor = s.equipment.body || (s.equipment.body = WYD.loot.create(s, 15, 1, {slot:'body',rarity:'normal'})); armor.stats.push({stat:'maxHp',value:1000000});
         }
-        await A.start(ids, 'royale', false);
+        await A.start(chunk, 'royale', false);
         // スキルの型の定義は各職業のフレームで取得する。
         for (const f of A.fighters) {
           const D = f.frame.contentWindow.WYD;
@@ -93,7 +94,7 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
             const def = f.frame.contentWindow.WYD.runes.effectiveDef(f.engine.state,id);
             const passive = def.kind === 'aura' && def.auraType === 'might' && f.frame.contentWindow.WYD.stats.mightMult(f.engine.state) > 1;
             if (!passive && !rows.some(r => r.id === 'skill:' + id && r.casts > 0)) throw Error('未発動 ' + f.entry.id + '/' + id + '/' + rune);
-            checked++;
+            checked.add(f.entry.id + '/' + id + '/' + rune);
           }
           if (f.engine.world.allies.some(a => a.arenaTeam !== f.team || !Number.isFinite(a.id))) throw Error('陣営不一致');
           const D = f.frame.contentWindow.WYD;
@@ -101,9 +102,9 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
         }
         A.draw();
       }
-      return checked;
+      return checked.size;
     }, ids);
-    assert.equal(skills, 189); console.log('ok 全63スキル×3型＝189条件（常時オーラを含む）');
+    assert.equal(skills, ids.length * 9 * 3); console.log('ok 全' + ids.length * 9 + 'スキル×3型＝' + skills + '条件（常時オーラを含む）');
     // コピーを破棄して、実際の保存から取り直す。
     await page.evaluate(() => WYD.arena.refresh());
     const mechanics = await page.evaluate(async () => {
@@ -144,7 +145,7 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
     await page.waitForTimeout(250);
     const after = await page.evaluate(() => ({ state: JSON.stringify(WYD.state), saves: Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)])), player: JSON.stringify(WYD.currentWorld.player) }));
     assert.deepEqual(after,before); console.log('ok 原キャラ・全職業の保存・冒険HP不変');
-    await page.evaluate(async()=>{const A=WYD.arena; A.refresh(); document.querySelector('#arena-mode').value='royale'; A.chooseDefaults(); for(const r of A.rosterEntries) r.snapshot.equipment.body.stats.push({stat:'maxHp',value:100000}); await A.start(Object.keys(WYD.data.classes),'royale',false);for(let i=0;i<100;i++)A.advance();A.draw();A.renderStatus(true);});
+    await page.evaluate(async()=>{const A=WYD.arena; A.refresh(); document.querySelector('#arena-mode').value='royale'; A.chooseDefaults(); for(const r of A.rosterEntries) r.snapshot.equipment.body.stats.push({stat:'maxHp',value:100000}); await A.start(Object.keys(WYD.data.classes).slice(0,WYD.data.arena.modes.royale.max),'royale',false);for(let i=0;i<100;i++)A.advance();A.draw();A.renderStatus(true);});
     await page.screenshot({path:path.resolve(__dirname,'../results/arena-desktop.png')});
     await page.setViewportSize({width:390,height:844});
     const mobile=await page.evaluate(()=>{const box=document.querySelector('.arena-box'), canvas=document.querySelector('#arena-canvas');box.scrollTop=0;WYD.arena.draw();return{overflow:box.scrollWidth>box.clientWidth,body:document.documentElement.scrollWidth>390,width:canvas.getBoundingClientRect().width,buttons:[...box.querySelectorAll('button')].filter(b=>b.getClientRects().length).every(b=>b.getBoundingClientRect().height>=48)}});
