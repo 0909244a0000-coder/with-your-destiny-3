@@ -630,7 +630,7 @@ WYD.render = {
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
-    if (p.buff) {
+    if (p.buff && !(WYD.vfx.buffStyle() && WYD.vfx.has(WYD.vfx.buffStyle().key))) {
       ctx.strokeStyle = p.buff.color;
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -676,7 +676,7 @@ WYD.render = {
     // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
     if (p.buff && !p.dead) {
       const size = P.radius * WYD.data.map.spriteScale * 1.3;
-      WYD.vfx.drawOn(ctx, "shield", p.x, p.y, size, 0.45 + 0.15 * Math.sin((this.clock || 0) * 5));
+      if (!WYD.vfx.drawBuff(ctx, p, this.clock || 0)) WYD.vfx.drawOn(ctx, "shield", p.x, p.y, size, 0.45 + 0.15 * Math.sin((this.clock || 0) * 5));
     }
     ctx.globalAlpha = 1;
     if (!img) {

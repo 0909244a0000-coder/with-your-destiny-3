@@ -34,11 +34,11 @@ WYD.vfx = {
     return this.spawn(w, key, x, y, { size: radius * 2 });
   },
 
-  drawLoop(ctx, key, x, y, size, time) {
+  drawLoop(ctx, key, x, y, size, time, alphaFactor = 1) {
     const image = this.img(key), a = WYD.data.vfx.atlases[key];
     if (!image || !a) return false;
     const s = Math.min(size, a.maxSize);
-    ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha *= a.alpha * (WYD.state?.settings.quietFx ? WYD.data.vfx.atlasQuietAlpha : 1);
+    ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha *= a.alpha * alphaFactor * (WYD.state?.settings.quietFx ? WYD.data.vfx.atlasQuietAlpha : 1);
     this.frame(ctx, key, image, x - s / 2, y - s * a.anchorY, s, s, time / WYD.data.vfx.anim[key].duration, true);
     ctx.restore(); return true;
   },
@@ -142,8 +142,9 @@ WYD.vfx = {
     ctx.translate(ef.x, ef.y - (ef.rise || 0) * ease);
     ctx.scale(1, ef.flatten);
     ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = ef.alpha * Math.sin(Math.PI * Math.sqrt(t));
-    ctx.drawImage(img, -size / 2, -size / 2, size, size);
+    const atlas = WYD.data.vfx.atlases[ef.key];
+    ctx.globalAlpha *= ef.alpha * Math.sin(Math.PI * Math.sqrt(t)) * (atlas && WYD.state?.settings.quietFx ? WYD.data.vfx.atlasQuietAlpha : 1);
+    this.frame(ctx, ef.key, img, -size / 2, -size * (atlas ? atlas.anchorY : 0.5), size, size, t);
     ctx.restore();
   },
 
@@ -175,6 +176,8 @@ WYD.vfx = {
 
   drawAuraMist(ctx, p, aura, skillId) {
     const V = WYD.data.vfx, M = V.auraMist;
+    const style = V.auraStyles[skillId];
+    if (style && this.drawLoop(ctx, style.key, p.x, p.y, style.size, WYD.render.clock || 0, style.alphaFactor)) return true;
     const key = (V.castOverrides[skillId] || V.castProfiles.aura).key;
     const img = this.img(key);
     if (!img) return false;
@@ -246,7 +249,8 @@ WYD.vfx = {
     const s = f.radius * 2 * pulse;
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = Math.min(1, f.timeLeft / (f.duration * 0.3)) * 0.9;
+    // アリーナのfieldAlphaを上書きしない。PvEの通常描画は従来の濃さ。
+    ctx.globalAlpha *= Math.min(1, f.timeLeft / (f.duration * 0.3)) * WYD.data.vfx.groundAlpha;
     ctx.translate(f.x, f.y);
     ctx.scale(1, 0.75);   // 地面に寝かせて見えるように少しつぶす
     ctx.drawImage(img, -s / 2, -s / 2, s, s);
@@ -264,5 +268,15 @@ WYD.vfx = {
     ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
     ctx.restore();
     return true;
+  },
+
+  buffStyle() { return WYD.data.vfx.buffStyles[WYD.classes.id]; },
+
+  drawBuff(ctx, p, time) {
+    if (!p.buff || p.dead) return false;
+    const style = this.buffStyle();
+    if (!style) return false;
+    const size = WYD.data.player.radius * WYD.data.map.spriteScale * style.sizeRatio * (p.form ? p.form.scale : 1);
+    return this.drawLoop(ctx, style.key, p.x, p.y, size, time, style.alphaFactor);
   },
 };

@@ -15,16 +15,27 @@ WYD.data.vfx = {
     aura: { key: "holyWisp", size: 118, duration: 0.7, from: 0.5, to: 1.15, alpha: 0.55, flatten: 0.65, rise: 12 },
   },
   castOverrides: {
-    sorc_shield: { key: "shield", alpha: 0.55 }, sorc_haste: { key: "shadowWisp", alpha: 0.65 },
-    nec_armor: { key: "graveWisp" }, asn_cloak: { key: "shadowWisp" }, asn_burst: { key: "shadowWisp" },
+    sorc_shield: { key: "arcaneBarrier", size: 116, duration: 0.6, alpha: 0.7, flatten: 1, rise: 0 }, sorc_haste: { key: "shadowWisp", alpha: 0.65 },
+    nec_armor: { key: "boneCarapace", size: 116, duration: 0.6, alpha: 0.7, flatten: 1, rise: 0 }, asn_cloak: { key: "shadowWisp" }, asn_burst: { key: "shadowWisp" },
     asn_shadow: { key: "shadowWisp" }, sorc_hydra: { key: "rageWisp" },
-    dru_wolves: { key: "graveWisp" }, dru_bark: { key: "graveWisp" },
+    dru_wolves: { key: "graveWisp" }, dru_bark: { key: "oakBulwark", size: 116, duration: 0.6, alpha: 0.75, flatten: 1, rise: 0 },
     pal_fire: { key: "rageWisp" }, nec_decay: { key: "graveWisp" }, sorc_static: { key: "shadowWisp" },
   },
   trapShot: { duration: 0.28, size: 42, alpha: 0.8, tailCount: 2, tailGap: 0.06, tailAlpha: 0.22 },
   trapStyles: { sorc_hydra: "fireball", asn_sentry: "lightning", asn_death: "shadowWisp" },
   fieldCast: { nec_plague: "plague", pal_judgment: "holyGround", dru_fissure: "fireBurst", asn_fire: "fireBurst" },
   auraMist: { alpha: 0.14, pulseAlpha: 0.05, spin: 0.12, radiusRatio: 0.9 },
+  // 範囲全体を白く塗らず、術者の姿と形で見分ける。性能/有効範囲には使わない。
+  buffStyles: {
+    sorceress: { key: "arcaneBarrier", sizeRatio: 1.4, alphaFactor: 0.55 },
+    necromancer: { key: "boneCarapace", sizeRatio: 1.4, alphaFactor: 0.7 },
+    druid: { key: "oakBulwark", sizeRatio: 1.5, alphaFactor: 0.8 },
+  },
+  auraStyles: {
+    pal_prayer: { key: "sanctuaryBloom", size: 110, alphaFactor: 0.7 },
+    pal_might: { key: "warEmbers", size: 100, alphaFactor: 0.7 },
+  },
+  groundAlpha: 0.9,
 
   // 絵のファイル（例: slash: "assets/vfx/slash.png"）
   textures: {
@@ -122,7 +133,7 @@ WYD.data.vfx = {
 
   // 専用4コマ。絵の範囲は命中判定ではなく演出サイズ。倍率や上限はここだけで管理。
   impactSkills: { whirl: "steelWhirl", sorc_nova: "frostCrown", nec_nova: "corpseBloom", asn_blade: "violetAmbush" },
-  placedSkills: ["dru_tornado", "pal_judgment"],
+  placedSkills: ["dru_tornado", "pal_judgment", "pal_prayer", "pal_might"],
   stormTexture: "stormColumn",
   bombTexture: "voidDetonation",
   atlasQuietAlpha: 0.65,
@@ -134,6 +145,11 @@ WYD.data.vfx = {
     violetAmbush: { columns: 2, rows: 2, frames: 4, alpha: 0.85, anchorY: 0.5, maxSize: 190 },
     stormColumn: { columns: 2, rows: 2, frames: 4, alpha: 0.75, anchorY: 0.8, maxSize: 210, loopFrames: [1, 2] },
     voidDetonation: { columns: 2, rows: 2, frames: 4, alpha: 0.75, anchorY: 0.5, maxSize: 230 },
+    arcaneBarrier: { columns: 2, rows: 2, frames: 4, alpha: 0.7, anchorY: 0.5, maxSize: 150, loopFrames: [1, 2] },
+    boneCarapace: { columns: 2, rows: 2, frames: 4, alpha: 0.8, anchorY: 0.5, maxSize: 150, loopFrames: [1, 2] },
+    oakBulwark: { columns: 2, rows: 2, frames: 4, alpha: 0.8, anchorY: 0.5, maxSize: 170, loopFrames: [1, 2] },
+    sanctuaryBloom: { columns: 2, rows: 2, frames: 4, alpha: 0.75, anchorY: 0.72, maxSize: 140, loopFrames: [1, 2] },
+    warEmbers: { columns: 2, rows: 2, frames: 4, alpha: 0.75, anchorY: 0.72, maxSize: 130, loopFrames: [1, 2] },
   },
 
   // スキルを使ったときの画面の揺れ（スキルのしくみ → 強さと秒数）
@@ -172,4 +188,5 @@ for (const key of Object.keys(WYD.data.vfx.atlases)) {
 WYD.data.vfx.anim.violetAmbush.duration = 0.32;
 WYD.data.vfx.anim.holyJudgment.duration = 0.75;
 WYD.data.vfx.anim.stormColumn.duration = 0.7;
+for (const style of [...Object.values(WYD.data.vfx.buffStyles), ...Object.values(WYD.data.vfx.auraStyles)]) WYD.data.vfx.anim[style.key].duration = 1.4;
 WYD.data.vfx.fieldCast.pal_judgment = "holyJudgment";

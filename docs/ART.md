@@ -344,3 +344,7 @@ Dark fantasy action-RPG enemy sprite in the style of Tibetan thangka painting an
 
 ## 2026-10-06：専用スキルアニメーション7枚
 assets/vfx/{steelWhirl,frostCrown,corpseBloom,holyJudgment,violetAmbush,stormColumn,voidDetonation}Atlas.webp。各768×768、2列2行の連続4コマ。斜め見下ろし、黒背景で加算、遮蔽・煙の陰影・立ち上がりで立体感を付ける。シート全体を描かず、src/vfx.jsのframeを通す。画像生成→prepare_sprite.pyでシート全体を768px→RGB WebP quality88 method6。セルごとの自動トリミングはせず、カメラと接地点を保存。旧絵の上書きなし。全指示/元画像ファイル名はdocs/reviews/2026-10-06-codex-skill-vfx.md。
+
+
+## 2026-10-06：防御/オーラの専用アニメーション5枚
+arcaneBarrierAtlas/boneCarapaceAtlas/oakBulwarkAtlas/sanctuaryBloomAtlas/warEmbersAtlas.webpをassets/vfxへ。768px/2×2、各コマ384px、黒背景加算。盾は空いた中心にキャラを残し、青い魔力/象牙の骨/木の質感で分ける。オーラは白い床全面の光にせず上向きの細い光にする。中間2コマは持続ループ用。同じ制作・整形条件を引き継ぎ、旧画像の上書きなし。指示全文はdocs/reviews/2026-10-06-codex-support-vfx.md。
