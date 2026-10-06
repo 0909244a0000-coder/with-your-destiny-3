@@ -17,7 +17,8 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
   const alpha=[];ctx.drawImage=(...a)=>{alpha.push(ctx.globalAlpha);native(...a)};WYD.state.settings.quietFx=false;V.drawLoop(ctx,'stormColumn',50,50,200,.2);const normal=Math.max(...alpha);alpha.length=0;WYD.state.settings.quietFx=true;V.drawLoop(ctx,'stormColumn',50,50,200,.2);const quiet=Math.max(...alpha)<normal;WYD.state.settings.quietFx=false;
   return{valid,maxDraws,delayed,finite,bounded,quiet};
  });assert(frames.valid&&frames.delayed&&frames.finite&&frames.bounded&&frames.quiet);assert(frames.maxDraws<=2);
- const ids=await page.evaluate(()=>Object.keys(WYD.data.classes)),fixtures={},casts=[];
+ // 主力技の専用絵（PR114）がある7職。傀儡師の演出は puppeteer-test.js で確認する。
+ const ids=['barbarian','sorceress','necromancer','paladin','assassin','druid','bombmancer'],fixtures={},casts=[];
  for(const id of ids){await page.evaluate(id=>{WYD.resetting=true;localStorage.setItem('wyd3-active-class',id)},id);await page.reload();await page.evaluate(()=>{WYD.resetting=true;WYD.state.settings.speed=0;for(const k of Object.keys(WYD.data.vfx.atlases))WYD.vfx.img(k)});await page.waitForFunction(()=>Object.keys(WYD.data.vfx.atlases).every(k=>WYD.vfx.has(k)));
   const result=await page.evaluate(()=>{
    const id=WYD.classes.id,skill={barbarian:'whirl',sorceress:'sorc_nova',necromancer:'nec_nova',paladin:'pal_judgment',assassin:'asn_blade',druid:'dru_tornado',bombmancer:'bomb_brand'}[id];

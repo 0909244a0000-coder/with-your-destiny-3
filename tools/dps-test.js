@@ -4,7 +4,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
  const p=await browser.newPage({viewport:{width:390,height:844}}),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('file://'+path.resolve(__dirname,'../index.html'));const ids=await p.evaluate(()=>Object.keys(WYD.data.classes)),report=[];
  for(const cls of ids){
   await p.evaluate(cls=>{WYD.resetting=true;localStorage.clear();localStorage.setItem('wyd3-active-class',cls)},cls);await p.reload();await p.click('#modal-ok');
-  await p.evaluate(()=>{WYD.resetting=true;WYD.state.settings.speed=0;const s=WYD.state;s.player.level=40;for(const id in WYD.data.skills){s.player.skills[id]=6;s.player.skillEnabled[id]=true;}s.player.paragon.points=100;const a=WYD.training.list(s)[0];WYD.training.learn(s,a.id);WYD.runeSkills.roll(s);WYD.save.write(s);WYD.ui.renderPanels();WYD.dps.open();});
+  await p.evaluate(()=>{WYD.resetting=true;WYD.state.settings.speed=0;const s=WYD.state;s.player.level=40;for(const id in WYD.data.skills){s.player.skills[id]=6;s.player.skillEnabled[id]=true;}s.player.paragon.points=100;const a=WYD.training.list(s)[0];if(a)WYD.training.learn(s,a.id);WYD.runeSkills.roll(s);WYD.save.write(s);WYD.ui.renderPanels();WYD.dps.open();});
   const out=await p.evaluate(async()=>{
    const A=WYD.dps,s=WYD.state,state=JSON.stringify(s),results=JSON.stringify(WYD.currentWorld.results),storage=JSON.stringify(Object.entries(localStorage));A.$('dps-player-hp').value='0.3';await A.start(false);const e=A.engine,initial=JSON.stringify(e.state);let n=0;while(A.running&&n++<1000)A.advance();const r=A.lastResult.stats;
    const sourceRows=Object.keys(r.rows),alive=e.world.enemies.every(x=>x.hp>0&&Number.isFinite(x.hp+x.x+x.y)),noLoot=e.world.drops.length===0;
