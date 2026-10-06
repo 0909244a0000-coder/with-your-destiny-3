@@ -37,7 +37,7 @@ WYD.allies = {
       timeLeft: s.duration, duration: s.duration,
       moveSpeed: s.moveSpeed, attackSpeed: s.attackSpeed, range: s.range, radius: s.radius,
       attackTimer: s.firstAttackDelay, followDistance: s.followDistance, hitFlash: 0, atkAnim: 0, face: 1,
-      color: s.color, image: s.image, imageFilter: s.imageFilter,
+      color: s.color, image: s.image, imageFilter: s.imageFilter, visualScale: s.visualScale || 1,
       ranged: s.rangedRange || 0, keepDistance: s.keepDistance || 0, shotColor: s.shotColor,   // 遠くから撃つ手下
     };
     w.allies.push(a);
@@ -123,7 +123,7 @@ WYD.allies = {
       ctx.ellipse(a.x, a.y + a.radius * 0.6, a.radius * 1.2, a.radius * 0.45, 0, 0, Math.PI * 2);
       ctx.stroke();
       ctx.globalAlpha = 1;
-      R.drawCircleOrImage(ctx, a.x, a.y, a.radius, a.hitFlash > 0 ? "#ffffff" : a.color, a.image, a.hitFlash > 0,
+      R.drawCircleOrImage(ctx, a.x, a.y, a.radius * (a.visualScale || 1), a.hitFlash > 0 ? "#ffffff" : a.color, a.image, a.hitFlash > 0,
         R.pose(a, null, R.clock), a.imageFilter);
       // HPと残り時間
       const bw = a.radius * 2.2;

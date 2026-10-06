@@ -10,6 +10,9 @@ const path = require('node:path');
   const result=await page.evaluate(()=>{
    const assert=(ok,msg)=>{if(!ok)throw Error(msg)};
    assert(WYD.classes.id==='puppeteer','class');
+   assert(WYD.data.classes.puppeteer.name==='傀儡師','localized class');
+   assert(Object.values(WYD.data.skills).every(x=>/[^\x00-\x7f]/.test(x.name)&&/[^\x00-\x7f]/.test(x.desc)),'localized skills');
+   assert(WYD.data.skillOrder.every(id=>WYD.data.runes.skills[id].every(x=>/[^\x00-\x7f]/.test(x.name)&&/[^\x00-\x7f]/.test(x.desc))),'localized runes');
    assert(WYD.save.KEY.endsWith('-puppeteer'),'save key');
    assert(Object.keys(WYD.data.skills).length===9,'skills');
    assert(WYD.data.skillOrder.every(id=>WYD.data.runes.skills[id].length===3),'runes');
@@ -20,6 +23,7 @@ const path = require('node:path');
    assert(WYD.puppeteer.spawn(w,stats,4),'summon');
    const a=WYD.puppeteer.active(w), base={hp:a.maxHp,atk:a.attack,def:a.defense};
    assert(w.allies.length===1 && w.player.hp<stats.maxHp,'one puppet and cost');
+   assert(a.visualScale===1.35 && a.radius===WYD.data.puppeteer.puppet.radius,'bigger visual only');
    const improved={...stats,maxHp:stats.maxHp+100,defense:stats.defense+30};
    const stronger=WYD.puppeteer.values(improved);
    assert(stronger.maxHp>base.hp && stronger.attack>base.atk && stronger.defense>base.def,'body HP and defense scaling');
