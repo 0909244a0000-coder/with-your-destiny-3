@@ -45,6 +45,24 @@ const check = () => {
   { const w = fresh(); WYD.puppeteer.spawn(w, base, 4); const a = WYD.puppeteer.active(w); WYD.puppeteer.update(w, state, base);
     const share = WYD.data.puppeteer.modes.pve.guardSharePercent, hp = w.player.hp, ahp = a.hp; WYD.world.receiveDamage(w, 20);
     ok(Math.abs(hp - w.player.hp - 20 * (1 - share / 100)) < 1e-6 && Math.abs(ahp - a.hp - 20 * share / 100) < 1e-6, 'no item: mode share only'); }
+  // 共通セットの4点：傀儡師では人形向けの効果に差し替わり、「発動しない」表示が残らない
+  { const shared = ['undying', 'thunderlord', 'pyre'].map(id => S.find(x => x.id === id));
+    for (const x of shared) { const b4 = WYD.loot.setBonuses(x)[4]; ok(b4.power.startsWith('puppet') && WYD.ui.bonusText(b4).indexOf('発動しない') < 0, 'set4 ' + x.id);
+      ok(WYD.loot.setBonuses(x, 'barbarian')[4].power === x.bonuses[4].power, 'others unchanged ' + x.id); }
+    const params = id => WYD.loot.setBonuses(S.find(x => x.id === id))[4].params;
+    // 不死者の鎧：人形の最大HPと防御 +50%
+    { const w = fresh(), plain = WYD.puppeteer.values(base), iron = WYD.puppeteer.values(withP('puppetIronSkin', params('undying')));
+      ok(Math.abs(iron.defense / plain.defense - 1.5) < 1e-9 && iron.maxHp > plain.maxHp * 1.45, 'iron skin'); }
+    // 雷帝の装い：命令が当たると近くの別の敵へ跳ねる
+    { const st = withP('puppetStormThread', params('thunderlord')), w = fresh();
+      w.enemies.push({ x: w.player.x + 90, y: w.player.y, kind: 'goblin', hp: 1e6, defense: 0 });
+      WYD.puppeteer.spawn(w, st, 4); WYD.puppeteer.update(w, state, st);
+      const far = w.enemies[1], before = far.hp; WYD.puppeteer.storm(w, state, st, [w.enemies[0]], 100);
+      r.storm = before - far.hp; ok(r.storm > 0, 'storm jumps'); }
+    // 業火の遺産：突撃の着地点が燃える
+    { const st = withP('puppetPyreTrail', params('pyre')), w = fresh(); WYD.puppeteer.spawn(w, st, 4); WYD.puppeteer.update(w, state, st);
+      const n = w.fields.length; WYD.puppeteer.cast(w, state, st, WYD.data.skills.pup_pierce, 1);
+      ok(w.fields.length === n + 1 && w.fields[n].source === 'effect:puppetPyreTrail', 'pyre field'); } }
   // ほかの職業では落ちない
   ok(WYD.loot.uniqueDesc && mine.every(u => !!u.classOnly), 'classOnly');
   return r;

@@ -32,8 +32,9 @@ WYD.stats = {
     const counts = this.setCounts(state);
     const out = [];
     for (const set of WYD.data.sets.list) {
-      for (const need in set.bonuses) {
-        if ((counts[set.id] || 0) >= Number(need)) out.push({ set, need: Number(need), bonus: set.bonuses[need] });
+      const bonuses = WYD.loot.setBonuses(set, state.classId || WYD.classes.id);
+      for (const need in bonuses) {
+        if ((counts[set.id] || 0) >= Number(need)) out.push({ set, need: Number(need), bonus: bonuses[need] });
       }
     }
     return out;

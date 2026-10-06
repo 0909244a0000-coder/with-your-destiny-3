@@ -1420,7 +1420,7 @@ WYD.ui = {
       const have = set.pieces.filter((p) => s.codex.setPieces[p.id]).length;
       const pieces = set.pieces.map((p) => s.codex.setPieces[p.id]
         ? `<span style="color:${SE.color}">${p.name}</span>` : `<span class="muted">？？？（${baseName(p.base)}）</span>`).join("、");
-      const bonuses = Object.keys(set.bonuses).map((n) => `<div><small>（${n}つ）${this.bonusText(set.bonuses[n])}</small></div>`).join("");
+      const list = WYD.loot.setBonuses(set), bonuses = Object.keys(list).map((n) => `<div><small>（${n}つ）${this.bonusText(list[n])}</small></div>`).join("");
       return `<div class="codex-item"><b style="color:${SE.color}">${set.name}</b> <small class="muted">${have}/${set.pieces.length}</small>${homeTag(set)}<br><small>${pieces}</small>${bonuses}</div>`;
     }).join("");
     return `<div class="codex-cols">
@@ -1450,8 +1450,9 @@ WYD.ui = {
     const have = WYD.stats.setCounts(this.state)[info.set.id] || 0;
     const owned = (p) => Object.values(this.state.equipment).some((it) => it && it.piece === p.id);
     const pieces = info.set.pieces.map((p) => `<span style="color:${owned(p) ? C : "#777"}">${p.name}</span>`).join("・");
-    const bon = Object.keys(info.set.bonuses).map((need) =>
-      `<div style="color:${have >= Number(need) ? C : "#777"}">（${need}つ）${this.bonusText(info.set.bonuses[need])}</div>`).join("");
+    const list = WYD.loot.setBonuses(info.set);
+    const bon = Object.keys(list).map((need) =>
+      `<div style="color:${have >= Number(need) ? C : "#777"}">（${need}つ）${this.bonusText(list[need])}</div>`).join("");
     return `<div class="unique-power"><span style="color:${C}">■ ${info.set.name}（装備中 ${have}/${info.set.pieces.length}）</span><br><small>${pieces}</small><small>${bon}</small></div>`;
   },
 

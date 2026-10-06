@@ -46,10 +46,11 @@ WYD.puppeteer = {
   },
   values(stats) {
     const d = this.config().puppet, m = this.mode();
+    const iron = this.powers(stats).puppetIronSkin, tough = iron ? 1 + iron.percent / 100 : 1; // 不死者の鎧（傀儡師の4点）
     return {
-      maxHp: Math.round((stats.maxHp * d.hpPerBodyHp + stats.defense * d.hpPerDefense) * m.hpMult),
+      maxHp: Math.round((stats.maxHp * d.hpPerBodyHp + stats.defense * d.hpPerDefense) * m.hpMult * tough),
       attack: (stats.attack * d.attackPerBodyAttack + stats.maxHp * d.attackPerBodyHp + stats.defense * d.attackPerDefense) * m.attackMult,
-      defense: stats.defense * d.defensePerBodyDefense * m.defenseMult,
+      defense: stats.defense * d.defensePerBodyDefense * m.defenseMult * tough,
     };
   },
   spawn(w, stats, percent) {
@@ -99,6 +100,24 @@ WYD.puppeteer = {
     WYD.world.healPlayer(w, stats.maxHp, stats.maxHp * stitch.healPercent / 100, 'skill:pup_stitch');
     const fx = this.config().effects.stitch;
     WYD.vfx.spawn(w, fx.key, w.player.x, w.player.y, {size:fx.size});
+  },
+  // 雷帝の装い（傀儡師の4点）：命令が当たった敵の近くの別の敵へ雷が跳ねる
+  storm(w, state, stats, hit, damage) {
+    const t = this.powers(stats).puppetStormThread, from = hit.find(e => e.hp > 0) || hit[0];
+    if (!t || !from) return;
+    const others = w.enemies.filter(e => e.hp > 0 && !hit.includes(e) && WYD.util.dist(from, e) <= t.range)
+      .sort((x, y) => WYD.util.dist(from, x) - WYD.util.dist(from, y)).slice(0, t.extraTargets);
+    for (const e of others) {
+      WYD.world.playerHit(w, state, stats, e, damage * t.damagePercent / 100, 'effect:puppetStormThread');
+      w.effects.push({ type: 'ring', x: e.x, y: e.y, radius: 22, color: t.color, time: 0, duration: 0.3 });
+    }
+  },
+  // 業火の遺産（傀儡師の4点）：突撃・裁断の着地点が燃える。ダメージは人形の攻撃力が基準
+  pyre(w, stats, a, at) {
+    const f = this.powers(stats).puppetPyreTrail;
+    if (!f || !at) return;
+    w.fields.push({ source: 'effect:puppetPyreTrail', x: at.x, y: at.y, radius: f.radius, timeLeft: f.duration, duration: f.duration,
+      tick: f.tick, tickTimer: f.tick, mult: f.mult * a.attack / Math.max(1, stats.attack), color: f.color });
   },
   cast(w, state, stats, s, lv) {
     if (WYD.classes.id !== 'puppeteer') return false;
@@ -150,6 +169,8 @@ WYD.puppeteer = {
         if (s.mode === 'bind' && e.hp > 0)
           e.stunTimer = Math.max(e.stunTimer || 0, (s.bindBase + s.bindPerLevel * (lv - 1)) * mult * (e.boss ? s.bossBindMult : 1));
       }
+      this.storm(w, state, stats, targets, damage);
+      if (s.mode === 'pierce' || s.mode === 'cut') this.pyre(w, stats, a, near);
       if (s.mode === 'pierce') { a.x = near.x; a.y = near.y; }
       if (s.mode === 'finale') {
         a.hp = 0;

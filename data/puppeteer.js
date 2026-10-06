@@ -109,4 +109,17 @@ WYD.data.sets.list.push({
          desc: "本体のHPが減っているほど人形の攻撃力が上がる（失ったHP1%ごとに+{perPercent}%、最大+{maxPercent}%）" },
   },
 });
+// 共通セットの4点ボーナスは他の職業の技（旋風斬・鉄の皮膚・連鎖の投げ斧）に結びついていて、傀儡師では発動しなかった。
+// 傀儡師のときだけ、同じ方向性（守り・雷・炎）の人形向けの効果に差し替える（2点ボーナスはそのまま）。
+const pupSetBonuses = {
+  undying: { 4: { effects: { killHeal: 5 }, power: "puppetIronSkin", params: { percent: 50 },
+                  desc: "人形の最大HPと防御力 +{percent}%" } },
+  thunderlord: { 4: { stats: { skillDamage: 25 }, power: "puppetStormThread", params: { extraTargets: 3, damagePercent: 50, range: 160, color: "#9fd8ff" },
+                      desc: "人形の攻撃の命令が当たると、近くの別の敵{extraTargets}体へ雷が跳ね、命令の{damagePercent}%のダメージ" } },
+  pyre: { 4: { effects: { critDamage: 40 }, power: "puppetPyreTrail", params: { radius: 90, duration: 3, tick: 0.5, mult: 0.35, color: "#ff7a2a" },
+               desc: "鉄杭の突撃・赤糸の裁断の着地点が{duration}秒燃え、{tick}秒ごとに人形の攻撃力×{mult}倍で焼く" } },
+};
+for (const set of WYD.data.sets.list) if (pupSetBonuses[set.id]) (set.classBonuses ||= {}).puppeteer = pupSetBonuses[set.id];
+WYD.data.results.labels["effect:puppetStormThread"] = { name: "雷帝の装い", group: "装備効果", color: "#9fd8ff" };
+WYD.data.results.labels["effect:puppetPyreTrail"] = { name: "業火の遺産", group: "装備効果", color: "#ff7a2a" };
 WYD.data.results.labels["effect:puppetCurtainCall"] = { name: "幕引きの裁ち鋏", group: "装備効果", color: "#e8c46a" };

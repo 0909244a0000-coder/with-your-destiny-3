@@ -124,6 +124,11 @@ WYD.loot = {
     return WYD.gems.rollSockets(item);
   },
 
+  // セットのボーナス。classBonuses に今の職業の分があれば、その数のボーナスを差し替える
+  setBonuses(set, classId = WYD.classes.id) {
+    return { ...set.bonuses, ...((set.classBonuses && set.classBonuses[classId]) || {}) };
+  },
+
   // 今の職業で出るものだけ（classOnly がほかの職業のものを除く。
   // スキルを強くする能力 skillBoost〜 は、そのしくみのスキルが今の職業にあるときだけ）
   forClass(list) {
