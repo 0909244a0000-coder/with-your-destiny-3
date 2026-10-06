@@ -32,7 +32,7 @@ const path = require('node:path');
       w.drops = [{ item: base, age: 0 }, { item: make('magic'), age: 0 }];
       WYD.world.clearDrops(w, s);
       const areaSafe = w.drops.length === 1 && w.drops[0].item === base;
-      s.stash = Array.from({ length: 30 }, () => make('rare'));
+      // 倉庫は廃止済み（stashSize: 0）。持ち物が満杯なら未受取へ入る。
       const drops = [WYD.loot.createUnique(s, 10), WYD.loot.createSetPiece(s, 10), make('normal')]; drops[2].sockets = [null, null]; drops[2].locked = true;
       w.drops = drops.map(item => ({ item, x: 200, y: 200, age: 1 }));
       WYD.world.updateDrops(w, s, 0);
