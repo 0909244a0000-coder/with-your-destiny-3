@@ -47,6 +47,7 @@ WYD.results = {
     return { ...out, elapsed: Math.min(r.elapsed, WYD.data.results.recentSeconds), recording: r.recording };
   },
   source(id) {
+    if(id.startsWith("runeskill:")) return WYD.runeSkills.sourceInfo(id);
     const label = WYD.data.results.labels[id];
     if (label) return label;
     if (id.startsWith("skill:")) {

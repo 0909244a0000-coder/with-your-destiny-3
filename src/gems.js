@@ -39,14 +39,7 @@ WYD.gems = {
   },
 
   // ノーマル装備のソケットのルーンが、ルーンワードとぴったり合えばその定義
-  runeword(item) {
-    const G = WYD.data.gems;
-    const so = item && item.sockets;
-    if (!so || !so.length || item.rarity !== "normal" || so.some((k) => !k || !String(k).startsWith("rune:"))) return null;
-    const seq = so.map((k) => k.slice(5)).join(",");
-    const group = G.slotGroup[item.slot];
-    return G.runewords.find((rw) => rw.group === group && rw.runes.join(",") === seq) || null;
-  },
+  runeword(item) { return item && item.legacyRuneBonus || null; },
 
   // 敵を倒したとき、ルーンを落とすことがある
   dropRune(w, state, e) {
@@ -54,10 +47,10 @@ WYD.gems = {
     const chance = (e.boss ? D.chanceBoss : e.elite ? D.chanceElite : D.chanceNormal) * WYD.season.mult(state, "gemMult");
     if (Math.random() >= chance) return;
     const r = WYD.util.pickWeighted(WYD.data.gems.runes, (x) => x.weight);
-    const key = `rune:${r.id}`;
-    this.add(state, key);
-    WYD.world.addText(w, e.x, e.y - 52, `ᚱ${r.name}`, r.color);
-    WYD.ui.log(`${this.name(key)}を手に入れた`, r.color);
+    const value = WYD.data.runeSkills.legacyRuneValues[WYD.data.gems.runes.indexOf(r)];
+    WYD.runeSkills.ensure(state).essence += value;
+    WYD.world.addText(w, e.x, e.y - 52, `ᚱ欠片 +${value}`, r.color);
+    WYD.ui.log(`${WYD.data.runeSkills.essenceName} +${value}`, r.color);
     WYD.ui.markDirty();
   },
 
@@ -69,7 +62,7 @@ WYD.gems = {
   // その部位にはめたときに上がる能力 { 能力: 数値 }
   statsFor(key, slot) {
     const i = this.info(key);
-    if (!i) return {};
+    if (!i || i.rune) return {};
     const group = WYD.data.gems.slotGroup[slot];
     const base = i.def[group] || {};
     const out = {};
@@ -130,6 +123,7 @@ WYD.gems = {
 
   // 宝石をはめる。できたら true
   socket(state, item, key) {
+    if (!this.info(key) || this.info(key).rune) return false;
     const i = this.freeSocket(item);
     if (i < 0 || !(state.gems[key] > 0)) return false;
     item.sockets[i] = key;
@@ -144,7 +138,7 @@ WYD.gems = {
 
   combineCost(key) {
     const i = this.info(key);
-    if (!i || !this.nextKey(key)) return null;
+    if (!i || i.rune || !this.nextKey(key)) return null;
     return i.rune ? WYD.data.gems.runeUpgradeCost * (i.index + 1) : WYD.data.gems.combineCost[i.tier];
   },
 

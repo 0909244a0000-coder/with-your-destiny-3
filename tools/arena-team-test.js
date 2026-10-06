@@ -3,7 +3,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
 (async()=>{const browser=await chromium.launch();try{
  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('file://'+path.resolve(__dirname,'../index.html'));
  const ids=await page.evaluate(()=>Object.keys(WYD.data.classes)),fixtures={};
- for(const id of ids){await page.evaluate(id=>{WYD.resetting=true;localStorage.setItem('wyd3-active-class',id)},id);await page.reload();fixtures[id]=await page.evaluate(()=>{WYD.resetting=true;const s=WYD.save.newState();s.player.level=40;s.seenHelp=true;for(const id in WYD.data.skills){s.player.skills[id]=6;s.player.skillEnabled[id]=true;}return s;});}
+ for(const id of ids){await page.evaluate(id=>{WYD.resetting=true;localStorage.setItem('wyd3-active-class',id)},id);await page.reload();fixtures[id]=await page.evaluate(()=>{WYD.resetting=true;const s=WYD.save.newState();s.player.level=40;s.seenHelp=true;WYD.runeSkills.roll(s);for(const id in WYD.data.skills){s.player.skills[id]=6;s.player.skillEnabled[id]=true;}return s;});}
  await page.evaluate(fixtures=>{WYD.resetting=true;for(const[id,s]of Object.entries(fixtures))localStorage.setItem(WYD.arena.key(id),JSON.stringify(s));localStorage.setItem('wyd3-active-class','barbarian')},fixtures);await page.reload();
  const out=await page.evaluate(async ids=>{
  WYD.resetting=true;const A=WYD.arena;A.open();A.$('arena-mode').value='teams';A.chooseDefaults();const picks=A.teamSelection(),selected=A.selected();

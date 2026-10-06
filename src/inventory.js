@@ -69,14 +69,14 @@ WYD.inventory = {
     if (item.plus > 0) return "plus";
     if ((item.sockets || []).some((x) => x)) return "gem";
     if (item.forged > 0) return "forged";
+    if (item.legacyRuneBonus) return "gem";
     if (this.keepRunewordBase(state, item)) return "base";
     return null;
   },
 
   // フィルターで土台保護をOFFにした場合は、空のノーマル土台を保護しない。
   keepRunewordBase(state, item) {
-    const f = state && state.settings.filter;
-    return item.rarity === "normal" && (item.sockets || []).length >= 2 && !(f && f.on && !f.keepSocketed);
+    return false;
   },
 
   protectDrop(state, item) {
@@ -217,7 +217,6 @@ WYD.inventory = {
   filterKeeps(state, item) {
     const f = state.settings.filter;
     if (this.keepReason(item, state)) return true;
-    if (f.keepSocketed && item.rarity === "normal" && (item.sockets || []).length >= 2) return true;
     if (f.keepUpgrades) {
       const cur = state.equipment[item.slot];
       if (!cur || this.itemScore(item) > this.itemScore(cur) * (1 + WYD.data.items.autoEquip.minGain)) return true;

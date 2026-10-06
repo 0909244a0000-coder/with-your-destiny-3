@@ -16,9 +16,9 @@ WYD.data.items = {
 
   // レア度。weight が大きいほど出やすい。affixes = 追加能力の数 [最小, 最大]
   rarities: [
-    { id: "normal", name: "ノーマル",   color: "#d8d8d8", weight: 60, affixes: [0, 0] },
+    { id: "normal", name: "ノーマル",   color: "#d8d8d8", weight: 0, affixes: [0, 0] },
     { id: "magic",  name: "マジック",   color: "#5b8cff", weight: 28, affixes: [1, 2] },
-    { id: "rare",   name: "レア",       color: "#ffd447", weight: 10, affixes: [3, 4] },
+    { id: "rare",   name: "レア",       color: "#ffd447", weight: 0, affixes: [3, 4] },
     { id: "legend", name: "レジェンド", color: "#ff8a2a", weight: 2,  affixes: [5, 6] },
     // ユニークはふつうには出ない（weight 0）。ボスと精鋭がまれに落とす。data/uniques.js
     { id: "unique", name: "ユニーク",   color: "#e8c46a", weight: 0,  affixes: [0, 0] },

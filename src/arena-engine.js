@@ -303,6 +303,7 @@ WYD.arenaEngine = {
     if (p.dead || p.hp <= 0) { this.die(); return; }
     W.updateBolts(w, s, this.stats, dt);
     WYD.bombs.update(w, s, this.stats, dt);
+    WYD.runeSkills.update(w, s, this.stats, dt);
     WYD.mercenary.update(w, s, this.stats, dt);
     WYD.allies.update(w, s, this.stats, dt);
     WYD.traps.update(w, s, this.stats, dt);
@@ -311,7 +312,7 @@ WYD.arenaEngine = {
     const w = this.world;
     w.player.dead = true; w.player.hp = 0;
     WYD.classSpecialization.clear(w);
-    w.allies = []; w.fields = []; w.traps = []; w.bolts = []; WYD.bombs.clear(w);
+    w.allies = []; w.fields = []; w.traps = []; w.bolts = []; WYD.bombs.clear(w); WYD.runeSkills.clear(w);
   },
   summary() {
     const r = WYD.results.snapshot(this.world), elapsed = r.elapsed;
@@ -337,6 +338,7 @@ WYD.arenaEngine = {
   },
   drawEffects(ctx, limits) {
     const w = this.world;
+    WYD.runeSkills.draw(ctx, w);
     for (const ef of w.effects.slice(-limits.effectsPerTeam)) WYD.render.drawEffect(ctx, ef);
     WYD.fx.draw(ctx, { ...w, particles: w.particles.slice(-limits.particlesPerTeam) });
   },

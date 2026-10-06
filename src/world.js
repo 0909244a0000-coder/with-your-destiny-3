@@ -98,6 +98,7 @@ WYD.world = {
     this.updatePlayer(w, state, stats, dt);
     this.updateBolts(w, state, stats, dt);
     WYD.bombs.update(w, state, stats, dt);
+    WYD.runeSkills.update(w, state, stats, dt);
     WYD.mercenary.update(w, state, stats, dt);
     WYD.allies.update(w, state, stats, dt);
     WYD.traps.update(w, state, stats, dt);
@@ -242,7 +243,7 @@ WYD.world = {
     const area = this.area(state);
     state.floor = WYD.util.clamp(state.floor + delta, 1, area.floors + 1);
     w.enemies = [];
-    WYD.bombs.clear(w);
+    WYD.bombs.clear(w); WYD.runeSkills.clear(w);
     w.projectiles = [];
     w.traps = [];
     w.fields = [];
@@ -424,6 +425,7 @@ WYD.world = {
     p.swing = Math.max(0, p.swing - dt);
 
     this.tryUseSkills(w, state, stats);
+    WYD.runeSkills.cast(w, state, stats);
 
     // 精鋭の「氷結」で遅くなっている
     const slow = p.chill > 0 ? this.eliteAffix("frozen").slowMult : 1;
@@ -1455,7 +1457,7 @@ WYD.world = {
     if (p.dead) return;
     WYD.results.add(w, null, { deaths: 1 });
     p.dead = true;
-    WYD.bombs.clear(w);
+    WYD.bombs.clear(w); WYD.runeSkills.clear(w);
     p.hp = 0;
     p.respawnTimer = WYD.data.player.respawnSeconds;
     const D = WYD.data.story.death;
@@ -1512,7 +1514,7 @@ WYD.world = {
     w.projectiles = [];
     w.bolts = [];
     w.enemies = [];
-    WYD.bombs.clear(w);
+    WYD.bombs.clear(w); WYD.runeSkills.clear(w);
     w.spawnTimer = 1;
   },
 
@@ -1521,7 +1523,7 @@ WYD.world = {
   resetEnemies(w, state, keepBoss) {
     if (keepBoss) this.keepBoss(w, state);
     w.enemies = [];
-    WYD.bombs.clear(w);
+    WYD.bombs.clear(w); WYD.runeSkills.clear(w);
     w.projectiles = [];
     w.spawnTimer = 0.5;
   },

@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
 const scripts = file => [...fs.readFileSync(path.resolve(__dirname,'../' + file),'utf8').matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);
-assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>!['src/main.js','src/ui.js','src/arena.js'].includes(s)).concat('src/arena-engine.js'),'戦闘フレームの依存ファイル漏れ');
+assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>!['src/main.js','src/ui.js','src/runeSkillsUI.js','src/arena.js'].includes(s)).concat('src/arena-engine.js'),'戦闘フレームの依存ファイル漏れ');
 (async () => {
   const browser = await chromium.launch();
   try {
@@ -36,6 +36,7 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
         outer: for (let r = 0; r < layout.length; r++) for (let col = 0; col < layout[r].length; col++) if (WYD.board.tile(r, col) && layout[r][col] !== 'S') { s.player.paragon.board[WYD.board.key(r, col)] = true; break outer; }
         const def = defs.find(d => !Object.values(s.equipment).some(it => it.unique === d.id));
         if (def) { s.cube.learned[def.id] = true; s.cube.slots[WYD.cube.slotOf(def)] = def.id; }
+        WYD.runeSkills.migrate(s);
         return s;
       }, 20261005 + ids.indexOf(id));
     }

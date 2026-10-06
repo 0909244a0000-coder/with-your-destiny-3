@@ -192,9 +192,9 @@ WYD.ui = {
     this.$("discard-all").onclick = () => {
       const targets = s.inventory.filter((it) => !it.locked);
       if (!targets.length) return;
-      const valuable = targets.filter((it) => it.rarity === "unique" || it.rarity === "set" || it.plus > 0 || it.forged > 0 || it.runeword).length;
+      const valuable = targets.filter((it) => it.rarity === "unique" || it.rarity === "set" || it.plus > 0 || it.forged > 0 || it.legacyRuneBonus).length;
       const gained = targets.reduce((n, it) => n + WYD.inventory.salvageValue(s, it), 0);
-      const warning = valuable ? `\nユニーク・セット・強化・鍛造・ルーンワードの装備を${valuable}個含みます。` : "";
+      const warning = valuable ? `\nユニーク・セット・強化・鍛造・継承効果の装備を${valuable}個含みます。` : "";
       const builds = targets.filter((it) => WYD.inventory.keepReason(it, s) === "build").length;
       const bases = targets.filter((it) => WYD.inventory.keepRunewordBase(s, it)).length;
       if (!confirm(`持ち物の装備${targets.length}個を全て捨てますか？${warning}${builds ? `\n保存ビルド用 ${builds}個も失われます。` : ""}${bases ? `\nルーンワードの土台 ${bases}個も対象です。` : ""}\n${C.materialName} +${gained}。はめた宝石・ルーンは戻ります。\nロックした装備・装備中・倉庫は残ります。元には戻せません。`)) return;
@@ -792,7 +792,7 @@ WYD.ui = {
     return `${flag("on", "<b>フィルターを使う</b>（ONの間は上の「自動分解」のかわりにこちらが使われる）")}
       <div class="filter-grid">${Object.keys(slots).map((k) => `<span>${slots[k]}</span><select data-filter-slot="${k}">${opts(f.slots[k] || "normal")}</select>`).join("")}</div>
       ${flag("keepUpgrades", "今の装備より強いものは、上の決まりに関係なく拾う")}
-      ${flag("keepSocketed", "ソケット2つ以上のノーマル（ルーンワードの土台）は拾う")}
+
       <p class="muted">ユニークとセットはいつも拾います。拾わない装備はその場で素材になります。</p>`;
   },
 
@@ -997,6 +997,7 @@ WYD.ui = {
       this.renderPanels();
     }
     this.updateBars();
+    WYD.runeSkillsUI.renderActive();
     WYD.results.render(this.world);
   },
 
@@ -1290,12 +1291,8 @@ WYD.ui = {
   runewordHtml(item) {
     const G = WYD.data.gems;
     const rw = WYD.gems.runeword(item);
-    if (rw) return `<div class="unique-power" style="color:${G.runewordColor}">ᚱ ルーンワード「${rw.name}」<br><small>${this.bonusText(rw.bonus)}</small></div>`;
-    if (item.rarity !== "normal" || !(item.sockets || []).length) return "";
-    const n = item.sockets.length, group = G.slotGroup[item.slot];
-    const fits = G.runewords.filter((x) => x.group === group && x.runes.length === n);
-    if (!fits.length) return "";
-    return `<div class="tip-sub">この装備で作れるルーンワード：${fits.map((x) => `「${x.name}」${x.runes.map((id) => G.runes.find((r) => r.id === id).name).join("＋")}`).join("／")}</div>`;
+    if (rw) return `<div class="unique-power" style="color:${G.runewordColor}">ᚱ 旧装備の継承効果「${rw.name}」<br><small>${this.bonusText(rw.bonus)}</small></div>`;
+    return "";
   },
 
   // 装備のソケットの表示
@@ -1318,11 +1315,6 @@ WYD.ui = {
     return best || list ? `${best}<div class="build-title" style="margin-top:4px">最近（新しい順）</div>${list}` : `<p class="muted">まだ記録がない（試練・日替わり・地図・奈落の双王に成功すると残る）</p>`;
   },
 
-  runewordListHtml() {
-    const G = WYD.data.gems;
-    return G.runewords.map((rw) => `<div class="codex-item"><b style="color:${G.runewordColor}">「${rw.name}」</b> <small class="muted">${G.groupName[rw.group]}・ソケット${rw.runes.length}つ</small><br>
-      <small>${rw.runes.map((id) => G.runes.find((r) => r.id === id).name).join(" → ")}：${this.bonusText(rw.bonus)}</small></div>`).join("");
-  },
 
   // 図鑑と記録の画面
   codexHtml() {
@@ -1379,7 +1371,7 @@ WYD.ui = {
       <div><h3>記録</h3>${counters}<h3>実績 <small>${done}/${R.achievements.length}</small></h3>${achievements}</div>
       <div><h3>ユニーク図鑑 <small>${uFound}/${uList.length}　📍 のエリアのボス・精鋭がよく落とす</small></h3>${uniques}<h3>セット図鑑</h3>${sets}
       <h3>挑戦の記録</h3>${this.runHistoryHtml()}
-      <h3>ルーンワード <small>ノーマル装備のソケットを、この順番でうめる</small></h3>${this.runewordListHtml()}</div>
+      <h3>ルーンスキル</h3><p>スキル欄の「ルーンスキル」で完成スキルを抽選。クラス技3枠とは別の専用4枠目。奈落の双王で変質石を集めて1箇所を再抽選できます。宝石だけが装備ソケットに対応します。</p></div>
     </div>`;
   },
 

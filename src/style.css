@@ -598,3 +598,23 @@ button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px
 .team-mode .arena-roster-card[data-team="B"] { border-color: #72b5ed; }
 #arena-formation-name { min-height: 48px; width: min(220px, 55vw); min-width: 0; }
 #arena-formations button { flex: 1; }
+
+/* 第4枠のルーン工房 */
+.rune-active { padding: 12px; border: 1px solid #8e7145; margin: 10px 0; background: #19151e; }
+.rune-active small, .rune-card small { display: block; margin-top: 6px; color: #b8aa98; }
+#rune-open { min-height: 48px; width: 100%; }
+.modal-box.rune-box { width: min(900px, 96vw); max-width: 900px; max-height: 90dvh; overflow-y: auto; padding: 16px; }
+.rune-heading { position: sticky; top: -16px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #221e18; padding: 12px 0; }
+.rune-heading h2 { margin: 0; }
+.rune-box button { min-height: 48px; padding: 10px 12px; }
+.rune-box p { line-height: 1.7; }
+.rune-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.rune-actions button { flex: 1 1 180px; }
+.rune-inspect, .rune-pending { padding: 12px; border: 1px solid #766045; background: #17131c; margin: 12px 0; }
+.rune-pending { border-color: #c697ff; }
+.rune-collection { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.rune-card { text-align: left; border-color: var(--rune-color); overflow-wrap: anywhere; }
+.rune-card b { color: var(--rune-color); }
+.rune-card.selected { outline: 2px solid #e2c78d; outline-offset: -3px; }
+#rune-preview { width: 100%; max-width: 360px; height: auto; display: block; margin: auto; }
+@media (max-width: 600px) { .modal-box.rune-box { width: calc(100vw - 20px); padding: 12px; } .rune-heading { top: -12px; } .rune-heading h2 { font-size: 17px; } .rune-collection { grid-template-columns: 1fr; } }

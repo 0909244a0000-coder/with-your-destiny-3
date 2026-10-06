@@ -9,7 +9,7 @@ WYD.data.gamble = {
   costPerLevel: 1,
   // 出るレア度と出やすさ（unique・set はその部位のものから選ぶ。その部位になければ legend）
   odds: [
-    { rarity: "rare", weight: 70 },
+    { rarity: "magic", weight: 70 },
     { rarity: "legend", weight: 18 },
     { rarity: "unique", weight: 6 },
     { rarity: "set", weight: 6 },

@@ -13,7 +13,7 @@ WYD.loot = {
 
   rollRarity(rarityBonus) {
     const D = WYD.data.items;
-    return WYD.util.pickWeighted(D.rarities, (r) =>
+    return WYD.util.pickWeighted(D.rarities.filter(r => !WYD.data.runeSkills.retiredRarities.includes(r.id)), (r) =>
       r.id === "normal" ? r.weight : r.weight * rarityBonus
     );
   },

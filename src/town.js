@@ -13,7 +13,7 @@ WYD.town = {
     }
     w.town = true;
     w.enemies = [];
-    WYD.bombs.clear(w);
+    WYD.bombs.clear(w); WYD.runeSkills.clear(w);
     w.projectiles = [];
     w.hazards = [];
     w.pools = [];

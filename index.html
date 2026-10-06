@@ -131,6 +131,8 @@
         <h2>スキル <small>残りポイント：<b id="skill-points">0</b>　使用中：<b id="skill-slots"></b></small> <button id="respec" title="使ったスキルポイントと修練ポイントを全部もどす（素材を使う）">振り直し</button></h2>
         <div id="skill-hint" class="skill-hint" hidden></div>
         <div id="skills"></div>
+        <div id="rune-active" class="rune-active"></div>
+        <button id="rune-open">ルーンスキル：抽選・装着</button>
       </section>
 
       <details class="panel combat-results" id="combat-results">
@@ -326,6 +328,9 @@
     </div>
   </div>
 
+  <div id="rune-lab" class="modal" role="dialog" aria-modal="true" aria-labelledby="rune-title" hidden>
+    <div class="modal-box rune-box"><div class="rune-heading"><h2 id="rune-title">ルーン工房 · 専用4枠目</h2><button id="rune-close">閉じる ×</button></div><div id="rune-body"></div></div>
+  </div>
   <!-- 数値（data/） -->
   <script src="data/player.js"></script>
   <script src="data/skills.js"></script>
@@ -351,6 +356,7 @@
   <script src="data/trial.js"></script>
   <script src="data/records.js"></script>
   <script src="data/gems.js"></script>
+  <script src="data/runeSkills.js"></script>
   <script src="data/daily.js"></script>
   <script src="data/cube.js"></script>
   <script src="data/maps.js"></script>
@@ -383,6 +389,7 @@
   <script src="src/trial.js"></script>
   <script src="src/records.js"></script>
   <script src="src/gems.js"></script>
+  <script src="src/runeSkills.js"></script>
   <script src="src/daily.js"></script>
   <script src="src/allies.js"></script>
   <script src="src/traps.js"></script>
@@ -407,6 +414,7 @@
   <script src="src/town.js"></script>
   <script src="src/render.js"></script>
   <script src="src/ui.js"></script>
+  <script src="src/runeSkillsUI.js"></script>
   <script src="src/results.js"></script>
   <script src="src/classSpecialization.js"></script>
   <script src="src/arena.js"></script>

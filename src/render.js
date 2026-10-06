@@ -143,6 +143,7 @@ WYD.render = {
     WYD.allies.draw(ctx, w);
     this.drawPlayer(ctx, w.player);
     this.drawPlayerBar(ctx, w.player, state);
+    WYD.runeSkills.draw(ctx, w);
     WYD.shrines.drawActive(ctx, w);
     for (const b of w.projectiles) this.drawProjectile(ctx, b);
     const R = WYD.data.player.rangedAttack;
@@ -544,16 +545,18 @@ WYD.render = {
     const B = WYD.data.map.skillBar;
     const p = w.player, pl = state.player;
     const ids = WYD.data.skillOrder.filter((id) => (pl.skills[id] || 0) > 0 && pl.skillEnabled[id]);
+    const rune = WYD.runeSkills.current(state);
+    if(rune) ids.push("rune");
     // スマホなどで画面が縮んで見えるときは、そのぶん大きく描く
     const shown = ctx.canvas.clientWidth / WYD.data.map.width || 1;
     const size = Math.max(B.size, Math.round(B.minShownPx / shown));
     const y = WYD.data.map.height - B.bottom - size;
     ids.forEach((id, i) => {
       const x = B.x + i * (size + B.gap);
-      const def = WYD.data.skills[id];
+      const def = id === "rune" ? {name:"ル",color:WYD.runeSkills.def("element",rune.element).color} : WYD.data.skills[id];
       ctx.fillStyle = B.back;
       ctx.fillRect(x, y, size, size);
-      const img = this.getImage(WYD.data.skillIcons[id]);
+      const img = this.getImage(id === "rune" ? WYD.data.vfx.textures[WYD.runeSkills.def("element",rune.element).texture] : WYD.data.skillIcons[id]);
       if (img) ctx.drawImage(img, x, y, size, size);
       else {
         ctx.fillStyle = def.color || "#ccc";

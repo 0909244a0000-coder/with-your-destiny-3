@@ -31,7 +31,7 @@ WYD.save = {
       floor: 1,                                 // 今いる階（ふつうの階の数+1 がボスの間）
       bossProgress: 0,                          // 次の階へ降りるまでに倒した数
       settings: { speed: 1, autoSalvage: "none", autoDifficulty: false, sound: true, autoEquip: true, fullReplace: true, season: "none", music: true, quietFx: false,
-        filter: { on: false, slots: {}, keepUpgrades: true, keepSocketed: true } },
+        filter: { on: false, slots: {}, keepUpgrades: true } },
       seenHelp: false, // 遊び方を見たか（最初の1回だけ自動で出す）
       cleared: false,  // 最後のボスを倒したか
       trial: { best: 0, level: 1, autoNext: true, runs: 0 },   // 終わりのない試練の記録
@@ -40,6 +40,7 @@ WYD.save = {
       records: {},     // 数えた記録（data/records.js の counters）
       codex: { uniques: {}, setPieces: {} },   // 図鑑（見つけたユニーク・セット装備の id）
       achievements: {},   // 達成した実績の id
+      runeSkills: WYD.runeSkills.initial(),
       gems: {},        // 持っている宝石（"種類:段階" → 数）
       maps: [],        // 持っている地図（src/maps.js）
       runHistory: [],  // 成功した挑戦の記録（新しい順）
@@ -60,7 +61,7 @@ WYD.save = {
   load() {
     try {
       let text = localStorage.getItem(this.KEY);
-      if (!text) return this.newState();
+      if (!text) { const fresh = this.newState(); WYD.runeSkills.migrate(fresh); return fresh; }
       let saved;
       try {
         saved = JSON.parse(text);
@@ -140,6 +141,12 @@ WYD.save = {
         if (!Array.isArray(item.sockets)) item.sockets = [];
         this.renameItem(item);
       }
+      if (!saved.runeSkills?.migrated) {
+        // 再設計前の原本は、通常バックアップの更新とは別に一度だけ残す。
+        try { const key = this.KEY + "-before-rune-skills-v1"; if (!localStorage.getItem(key)) localStorage.setItem(key, text); }
+        catch (e) { console.warn("移行前の控えを追加できませんでした。", e); }
+      }
+      WYD.runeSkills.migrate(state);
       WYD.records.backfill(state);
       return state;
     } catch (e) {

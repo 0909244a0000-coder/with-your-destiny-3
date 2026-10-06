@@ -15,6 +15,7 @@ window.WYD = window.WYD || {};
   WYD.ui.init(state, world);
   WYD.results.init(world);
   WYD.arena.init();
+  WYD.runeSkillsUI.init();
   WYD.sound.init();
   WYD.ui.log("ようこそ野営地へ。装備とスキルを整え、「戦場へ」から冒険に出よう。", "#ffd447");
   const cls = WYD.data.classes[WYD.classes.id];
@@ -73,4 +74,5 @@ window.WYD = window.WYD || {};
 
   WYD.state = state;
   WYD.currentWorld = world;
+  WYD.runeSkillsUI.renderActive();
 })();
