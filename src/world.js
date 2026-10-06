@@ -625,8 +625,10 @@ WYD.world = {
       for (const e of targets) {
         this.playerHit(w, state, stats, e, stats.attack * mult);
       }
-      w.effects.push({ type: "ring", x: p.x, y: p.y, radius: s.radius, color: s.color, time: 0, duration: 0.35 });
-      WYD.fx.burst(w, p.x, p.y, { ...WYD.data.fx.whirl, speed: s.radius * 2.2 }, s.color, { glow: true });
+      if (!WYD.vfx.skillImpact(w, this.castingId, p.x, p.y, s.radius)) {
+        w.effects.push({ type: "ring", x: p.x, y: p.y, radius: s.radius, color: s.color, time: 0, duration: 0.35 });
+        WYD.fx.burst(w, p.x, p.y, { ...WYD.data.fx.whirl, speed: s.radius * 2.2 }, s.color, { glow: true });
+      }
       WYD.sound.play("whirl");
       // 固有能力：劫火の腕輪（足元の地面が燃える）
       const fire = stats.powers.whirlFire;

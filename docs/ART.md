@@ -340,3 +340,7 @@ Dark fantasy action-RPG enemy sprite in the style of Tibetan thangka painting an
 
 ## 2026-10-05 冥爆術師
 黒い礼装・白い仮面・羽根状の肩当て、紫と琥珀の爆炎で統一。`assets/player_bombmancer{,_attack}.png`、`assets/bomb_hunter.png`、`assets/skills/bomb_*.png`、`assets/vfx/bombOrb.png`・`bombBurst.png`・`bombSmoke.png`。画像15枚約2.05MB。キャラと使い魔は透明、FXは黒背景で加算。生成指示全文・整形方法は `docs/reviews/2026-10-05-codex-bombmancer.md`。
+
+
+## 2026-10-06：専用スキルアニメーション7枚
+assets/vfx/{steelWhirl,frostCrown,corpseBloom,holyJudgment,violetAmbush,stormColumn,voidDetonation}Atlas.webp。各768×768、2列2行の連続4コマ。斜め見下ろし、黒背景で加算、遮蔽・煙の陰影・立ち上がりで立体感を付ける。シート全体を描かず、src/vfx.jsのframeを通す。画像生成→prepare_sprite.pyでシート全体を768px→RGB WebP quality88 method6。セルごとの自動トリミングはせず、カメラと接地点を保存。旧絵の上書きなし。全指示/元画像ファイル名はdocs/reviews/2026-10-06-codex-skill-vfx.md。

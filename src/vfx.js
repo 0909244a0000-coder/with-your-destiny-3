@@ -10,8 +10,42 @@ WYD.vfx = {
     return !!this.img(key);
   },
 
+  // 1セルだけを切り出す。隣の時点と補間して4コマの切替を滑らかにする。
+  frame(ctx, key, image, x, y, width, height, progress, loop = false) {
+    const a = WYD.data.vfx.atlases[key];
+    if (!a) { ctx.drawImage(image, x, y, width, height); return; }
+    const frames = loop ? a.loopFrames || Array.from({ length: a.frames }, (_, i) => i) : null;
+    const position = loop ? ((progress % 1 + 1) % 1) * frames.length : WYD.util.clamp(progress, 0, 1) * (a.frames - 1);
+    const index = Math.floor(position), mix = position - index;
+    const first = loop ? frames[index] : index, second = loop ? frames[(index + 1) % frames.length] : Math.min(index + 1, a.frames - 1);
+    const sw = image.width / a.columns, sh = image.height / a.rows, alpha = ctx.globalAlpha;
+    const draw = (cell, weight) => {
+      if (weight <= 0) return;
+      ctx.globalAlpha = alpha * weight;
+      ctx.drawImage(image, cell % a.columns * sw, Math.floor(cell / a.columns) * sh, sw, sh, x, y, width, height);
+    };
+    draw(first, 1 - mix); draw(second, mix); ctx.globalAlpha = alpha;
+  },
+
+  skillImpact(w, skillId, x, y, radius) {
+    const key = WYD.data.vfx.impactSkills[skillId];
+    if (!key) return false;
+    if (w.effects.length >= WYD.data.vfx.maxEffects) return true;
+    return this.spawn(w, key, x, y, { size: radius * 2 });
+  },
+
+  drawLoop(ctx, key, x, y, size, time) {
+    const image = this.img(key), a = WYD.data.vfx.atlases[key];
+    if (!image || !a) return false;
+    const s = Math.min(size, a.maxSize);
+    ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha *= a.alpha * (WYD.state?.settings.quietFx ? WYD.data.vfx.atlasQuietAlpha : 1);
+    this.frame(ctx, key, image, x - s / 2, y - s * a.anchorY, s, s, time / WYD.data.vfx.anim[key].duration, true);
+    ctx.restore(); return true;
+  },
+
   // 絵のエフェクトを出す。opts: size（px）、angle（向き）、color（なくてよい）
   spawn(w, key, x, y, opts) {
+    if (w.effects.length >= WYD.data.vfx.maxEffects) return false;
     if (!this.has(key)) return false;
     const a = WYD.data.vfx.anim[key] || {};
     const o = opts || {};
@@ -71,6 +105,8 @@ WYD.vfx = {
   // 発動時は絵を一枚だけ重ねる。白く潰れる紋章や放射線は使わない。
   cast(w, skillId, x, y, radius) {
     const V = WYD.data.vfx;
+    // 命中地点・移動中の竜巻で描く技は、術者の足元へ重ねて出さない。
+    if (V.impactSkills[skillId] || V.placedSkills.includes(skillId)) return false;
     if (w.effects.length >= V.maxEffects) return false;
     const kind = WYD.classes.kindOf(skillId);
     const base = V.castProfiles[kind];
@@ -175,20 +211,21 @@ WYD.vfx = {
       return;
     }
     const t0 = ef.travel || 0;
-    const t = (ef.time - t0) / (ef.duration - t0);
+    const t = Math.max(0, Math.min(1, (ef.time - t0) / Math.max(Number.EPSILON, ef.duration - t0)));
+    const atlas = V.atlases[ef.key];
     // 出た瞬間に少し大きくなってから戻る（ぽんっ）
     const pop = 1 + V.pop * Math.sin(Math.min(1, t * 4) * Math.PI);
     const scale = (ef.from + (ef.to - ef.from) * t) * pop;
     ctx.save();
     ctx.translate(ef.x, ef.y - ef.fall * (1 - t));
     ctx.rotate(ef.angle + ef.spin * ef.time);
-    ctx.globalAlpha = Math.min(1, (1 - t) * 1.6);
+    ctx.globalAlpha = Math.min(1, (1 - t) * 1.6) * (atlas ? ctx.globalAlpha * atlas.alpha * (WYD.state?.settings.quietFx ? V.atlasQuietAlpha : 1) : 1);
     if (ef.additive) ctx.globalCompositeOperation = "lighter";
     if (ef.stretch) {
       ctx.drawImage(img, -ef.size / 2, -ef.size * 0.15, ef.size, ef.size * 0.3);
     } else {
-      const s = ef.size * scale;
-      for (let i = 0; i < ef.boost; i++) ctx.drawImage(img, -s / 2, -s / 2, s, s);
+      const s = Math.min(ef.size * scale, atlas ? atlas.maxSize : Infinity);
+      for (let i = 0; i < ef.boost; i++) this.frame(ctx, ef.key, img, -s / 2, -s * (atlas ? atlas.anchorY : 0.5), s, s, t);
       // 2枚目：うすく大きく、逆向きに回す（厚みと勢い）
       if (ef.echo) {
         const E = V.echo;

@@ -62,8 +62,10 @@ WYD.classSpecialization = {
       for (const c of bodies) {
         if (p.dead) break;
         this.area(w, state, stats, c, s.radius * R.radiusScale, attack * R.damageScale);
-        WYD.vfx.spawn(w, "boneStorm", c.x, c.y, { size: s.radius * R.radiusScale * 2 });
-        this.ring(w, c, s.radius * R.radiusScale, s.color);
+        if (!WYD.vfx.skillImpact(w, id, c.x, c.y, s.radius * R.radiusScale)) {
+          WYD.vfx.spawn(w, "boneStorm", c.x, c.y, { size: s.radius * R.radiusScale * 2 });
+          this.ring(w, c, s.radius * R.radiusScale, s.color);
+        }
       }
       return true;
     }
@@ -154,7 +156,9 @@ WYD.classSpecialization = {
       ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.globalCompositeOperation = "lighter";
       ctx.drawImage(img, -size / 2, -size / 2, size, size); ctx.restore();
     };
-    for (const t of w.classTasks || []) if (t.mode === "storm") draw("tornado", t.x, t.y, t.radius * 2, w.time || 0);
+    for (const t of w.classTasks || []) if (t.mode === "storm") {
+      if (!WYD.vfx.drawLoop(ctx, WYD.data.vfx.stormTexture, t.x, t.y, t.radius * 2, w.time || 0)) draw("tornado", t.x, t.y, t.radius * 2, w.time || 0);
+    }
     for (const o of w.classOrbits || []) {
       const angle = o.angle + o.age * o.speed;
       draw("holyHammer", w.player.x + Math.cos(angle) * o.radius, w.player.y + Math.sin(angle) * o.radius, o.size, angle);

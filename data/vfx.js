@@ -120,6 +120,22 @@ WYD.data.vfx = {
   hitCritScale: 1.5,
   maxEffects: 140,
 
+  // 専用4コマ。絵の範囲は命中判定ではなく演出サイズ。倍率や上限はここだけで管理。
+  impactSkills: { whirl: "steelWhirl", sorc_nova: "frostCrown", nec_nova: "corpseBloom", asn_blade: "violetAmbush" },
+  placedSkills: ["dru_tornado", "pal_judgment"],
+  stormTexture: "stormColumn",
+  bombTexture: "voidDetonation",
+  atlasQuietAlpha: 0.65,
+  atlases: {
+    steelWhirl: { columns: 2, rows: 2, frames: 4, alpha: 0.8, anchorY: 0.5, maxSize: 240 },
+    frostCrown: { columns: 2, rows: 2, frames: 4, alpha: 0.78, anchorY: 0.5, maxSize: 240 },
+    corpseBloom: { columns: 2, rows: 2, frames: 4, alpha: 0.8, anchorY: 0.68, maxSize: 220 },
+    holyJudgment: { columns: 2, rows: 2, frames: 4, alpha: 0.8, anchorY: 0.8, maxSize: 240 },
+    violetAmbush: { columns: 2, rows: 2, frames: 4, alpha: 0.85, anchorY: 0.5, maxSize: 190 },
+    stormColumn: { columns: 2, rows: 2, frames: 4, alpha: 0.75, anchorY: 0.8, maxSize: 210, loopFrames: [1, 2] },
+    voidDetonation: { columns: 2, rows: 2, frames: 4, alpha: 0.75, anchorY: 0.5, maxSize: 230 },
+  },
+
   // スキルを使ったときの画面の揺れ（スキルのしくみ → 強さと秒数）
   castShake: { whirl: { strength: 2.5, time: 0.12 }, agni: { strength: 3.5, time: 0.16 }, nagapasha: { strength: 2, time: 0.1 }, shift: { strength: 3, time: 0.15 } },
 
@@ -147,3 +163,13 @@ WYD.data.vfx = {
   trapImageScale: 2.6,  // 罠の絵の大きさ（罠の半径の何倍の幅で描くか）
   groundPulse: 0.08,    // 燃える地面のゆらぎの大きさ
 };
+
+// 旧画像は残す。新規技へ流用するときは必ずコマ切り出し描画を通す。
+for (const key of Object.keys(WYD.data.vfx.atlases)) {
+  WYD.data.vfx.textures[key] = "assets/vfx/" + key + "Atlas.webp";
+  WYD.data.vfx.anim[key] = { duration: 0.6, scaleFrom: 0.9, scaleTo: 1.05, additive: true };
+}
+WYD.data.vfx.anim.violetAmbush.duration = 0.32;
+WYD.data.vfx.anim.holyJudgment.duration = 0.75;
+WYD.data.vfx.anim.stormColumn.duration = 0.7;
+WYD.data.vfx.fieldCast.pal_judgment = "holyJudgment";
