@@ -32,8 +32,9 @@ WYD.stats = {
     const counts = this.setCounts(state);
     const out = [];
     for (const set of WYD.data.sets.list) {
-      for (const need in set.bonuses) {
-        if ((counts[set.id] || 0) >= Number(need)) out.push({ set, need: Number(need), bonus: set.bonuses[need] });
+      const bonuses = WYD.loot.setBonuses(set, state.classId || WYD.classes.id);
+      for (const need in bonuses) {
+        if ((counts[set.id] || 0) >= Number(need)) out.push({ set, need: Number(need), bonus: bonuses[need] });
       }
     }
     return out;
@@ -90,7 +91,7 @@ WYD.stats = {
     // パラゴンボードの伝説のマス
     for (const t of WYD.board.ownedTiles(state)) if (t.power && !out[t.power]) out[t.power] = t.params;
     // 星座の固有能力
-    for (const c of WYD.devotion.owned(state)) if (c.bonus.power && !out[c.bonus.power]) out[c.bonus.power] = c.bonus.params;
+    for (const c of WYD.devotion.owned(state)) { const d = WYD.loot.forClassDef(c.bonus); if (d.power && !out[d.power]) out[d.power] = d.params; }
     // カナイの箱に入れた能力（装備と同じ能力なら装備のほうが効く）
     for (const def of WYD.cube.active(state)) if (!out[def.power]) out[def.power] = def.params;
     return out;

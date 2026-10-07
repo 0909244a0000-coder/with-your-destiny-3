@@ -14,7 +14,7 @@ const path = require('node:path');
       await page.reload(); await page.click('#modal-ok');
       const result = await page.evaluate(() => {
         WYD.state.settings.speed = 0;
-        const defs = [...WYD.data.uniques.list, ...WYD.data.sets.list.flatMap(s => Object.values(s.bonuses)), ...WYD.data.devotion.list.map(c => c.bonus)].filter(d => d.desc);
+        const defs = [...WYD.data.uniques.list, ...WYD.data.sets.list.flatMap(s => Object.values(WYD.loot.setBonuses(s))), ...WYD.data.devotion.list.map(c => c.bonus)].map(d => WYD.loot.forClassDef(d)).filter(d => d.desc); // 職業ごとの差し替え後の説明で確かめる
         const failures = [];
         let tokens = 0;
         for (const def of defs) {
@@ -34,7 +34,7 @@ const path = require('node:path');
         const panel = document.createElement('div'); panel.innerHTML = WYD.ui.itemHtml(item);
         const itemText = panel.textContent;
         const notes = WYD.classes.id === 'bombmancer' ? {
-          unsupported: itemText.includes('旋風斬（この職業では発動しない）'),
+          replaced: itemText.includes('爆弾の爆発した地点が') && !itemText.includes('発動しない'), // 旋風斬の効果は冥爆術師向けに差し替え
           supported: WYD.loot.uniqueDesc(WYD.data.uniques.list.find(u => u.id === 'indraRing')).includes('灰の外套の発動中'),
           own: WYD.loot.uniqueDesc(WYD.data.uniques.list.find(u => u.id === 'funeralWatch')).includes('爆弾スキル'),
         } : {};

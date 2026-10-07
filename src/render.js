@@ -333,9 +333,10 @@ WYD.render = {
     ctx.font = `bold 30px ${getComputedStyle(document.documentElement).getPropertyValue("--serif") || "serif"}`;
     ctx.lineWidth = 4;
     ctx.strokeStyle = "rgba(0,0,0,0.8)";
-    ctx.strokeText(b.text, map.width / 2, map.height * 0.3);
+    const cx = this.viewCenterX != null ? this.viewCenterX : map.width / 2; // スマホで寄っているときは見えている範囲の真ん中
+    ctx.strokeText(b.text, cx, map.height * 0.3);
     ctx.fillStyle = "#e0c070";
-    ctx.fillText(b.text, map.width / 2, map.height * 0.3);
+    ctx.fillText(b.text, cx, map.height * 0.3);
     ctx.globalAlpha = 1;
   },
 
@@ -508,6 +509,7 @@ WYD.render = {
 
   // 大事な知らせ（画面の真ん中・上寄り。だんだん消える）
   drawNotices(ctx, w) {
+    if (WYD.mobile && WYD.mobile.active) return; // スマホ縦は戦場の上に文字で出す（src/mobile.js）
     const N = WYD.data.map.notice;
     const map = WYD.data.map;
     (w.notices || []).forEach((n, i) => {

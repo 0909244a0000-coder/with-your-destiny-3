@@ -5,7 +5,7 @@ WYD.data.classes.bombmancer = {
   player: {
     className: "冥爆術師", weaponName: "触媒", color: "#d29cff", image: "assets/player_bombmancer.png", imageFilter: null,
     poses: { attack: "assets/player_bombmancer_attack.png" },
-    preloadImages: ["assets/player_bombmancer_attack.png", "assets/bomb_hunter.png", "assets/vfx/bombOrb.png", "assets/vfx/bombBurst.png", "assets/vfx/bombSmoke.png"],
+    preloadImages: ["assets/player_bombmancer_attack.png", "assets/bomb_hunter.png", "assets/vfx/bombOrb.png", "assets/vfx/bombBurst.png", "assets/vfx/bombSmoke.png", "assets/vfx/bombCloudBurst.webp", "assets/vfx/bombRingBurst.webp"],
     base: { maxHp: 105, attack: 10, defense: 1.5, attackSpeed: 1, critChance: 7, hpRegen: 1.1, moveSpeed: 125 },
     perLevel: { maxHp: 12, attack: 2.1, defense: 0.8 },
     rangedAttack: { range: 250, keepDistance: 155, speed: 430, size: 5, color: "#dda2ff", texture: "bombOrb" },
@@ -57,6 +57,11 @@ Object.assign(WYD.data.runes.skills, {
   bomb_cinders: WYD.data.runes.skills.agni.map(r => ({ ...r })),
   bomb_repose: WYD.data.runes.skills.sorc_warmth.map(r => ({ ...r })),
 });
+// 爆発の絵：ふつうの爆弾は紫と橙の爆炎、終幕の一斉起爆（終幕で起爆した爆弾も）と地雷は輪の爆発（data/vfx.js の bombTexture／bombTextureBySkill）
+Object.assign(WYD.data.vfx.textures, { bombCloudBurst: "assets/vfx/bombCloudBurst.webp", bombRingBurst: "assets/vfx/bombRingBurst.webp" });
+Object.assign(WYD.data.vfx.anim, { bombCloudBurst: { duration: 0.5, scaleFrom: 0.35, scaleTo: 1.15, spin: 0.3, additive: true }, bombRingBurst: { duration: 0.6, scaleFrom: 0.3, scaleTo: 1.2, spin: 0.5, additive: true } });
+WYD.data.vfx.bombTexture = "bombCloudBurst";
+WYD.data.vfx.bombTextureBySkill = { bomb_finale: "bombRingBurst", bomb_mine: "bombRingBurst" };
 Object.assign(WYD.data.vfx.textures, { bombOrb: "assets/vfx/bombOrb.png", bombBurst: "assets/vfx/bombBurst.png", bombSmoke: "assets/vfx/bombSmoke.png", bombHunter: "assets/bomb_hunter.png" });
 Object.assign(WYD.data.vfx.anim, { bombOrb: { duration: 0.34, size: 34, additive: true }, bombBurst: { duration: 0.48, scaleFrom: 0.35, scaleTo: 1.15, additive: true }, bombSmoke: { duration: 0.65, scaleFrom: 0.6, scaleTo: 1.1, additive: true } });
 Object.assign(WYD.data.vfx.castOverrides, { bomb_cloak: { key: "bombSmoke" }, bomb_haste: { key: "bombSmoke" }, bomb_smoke: { key: "bombSmoke" }, bomb_repose: { key: "bombSmoke" } });
@@ -79,3 +84,23 @@ WYD.data.sets.list.push({
   ],
   bonuses: { 2: { stats: { skillDamage: 20, maxHp: 40 } }, 4: { effects: { lifesteal: 2 }, power: "skillBoostMourningCourt", params: { kind: "bomb", mods: { damage: ["mul", 1.6], cooldown: ["mul", 0.85] } }, desc: "爆弾スキルの威力1.6倍、使える間隔0.85倍" } },
 });
+
+// 共通のセット・ユニークのうち、旋風斬・連鎖の投げ斧に結びついた効果は冥爆術師では発動しなかった。
+// 冥爆術師のときだけ、同じ方向性（炎・跳ねる刃）の爆弾向けの効果に差し替える（ほかの数値はそのまま）。
+//   bombEmbers   … 爆発の地点が燃える。maxFields：燃える地面の同時数の上限（爆弾は数が多いので）
+//   bombShrapnel … 爆発に巻き込まれなかった近くの敵へ破片が飛ぶ
+const bombEmbers = { power: "bombEmbers", params: { radius: 70, duration: 2.5, tick: 0.5, mult: 0.3, maxFields: 6, color: "#ff7a2a" },
+  desc: "爆弾の爆発した地点が{duration}秒燃え、{tick}秒ごとに攻撃力×{mult}倍で焼く（同時に{maxFields}か所まで）" };
+const bombShrapnel = { power: "bombShrapnel", params: { extraTargets: 3, damagePercent: 50, range: 160, color: "#dda2ff" },
+  desc: "爆弾が爆発すると、巻き込まれなかった近くの敵{extraTargets}体へ破片が飛び、爆発の{damagePercent}%のダメージ" };
+for (const u of WYD.data.uniques.list) {
+  if (u.id === "agniBangle") (u.classPowers ||= {}).bombmancer = bombEmbers;
+  if (u.id === "vishnuDisc") (u.classPowers ||= {}).bombmancer = bombShrapnel;
+}
+for (const set of WYD.data.sets.list) {
+  if (set.id === "pyre") (set.classBonuses ||= {}).bombmancer = { 4: { effects: { critDamage: 40 }, ...bombEmbers } };
+  if (set.id === "thunderlord") (set.classBonuses ||= {}).bombmancer = { 4: { stats: { skillDamage: 25 }, ...bombShrapnel } };
+}
+for (const c of WYD.data.devotion.list) if (c.id === "storm") (c.bonus.classPowers ||= {}).bombmancer = bombShrapnel;
+WYD.data.results.labels["effect:bombEmbers"] = { name: "爆弾の残り火", group: "装備効果", color: "#ff7a2a" };
+WYD.data.results.labels["effect:bombShrapnel"] = { name: "爆弾の破片", group: "装備効果", color: "#dda2ff" };

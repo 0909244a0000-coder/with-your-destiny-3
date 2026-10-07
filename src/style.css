@@ -927,3 +927,98 @@ body.drawer-open .game-screen::after { opacity:1; pointer-events:auto; }
  .endgame-icons { grid-template-columns:repeat(3,48px); gap:28px 10px; }
  .world-plaque { max-width:80px; }
 }
+
+/* 冒険者情報の「召喚の能力」 */
+.summon-stats { margin-top: 10px; }
+.summon-stats h3 { font-size: 14px; margin: 0 0 6px; }
+.summon-stats h3 small, .summon-card h4 small { color: var(--muted); font-weight: normal; font-size: 11px; }
+.summon-card { border: 1px solid #3d3427; border-radius: 4px; padding: 6px 8px; margin-bottom: 6px; background: rgba(10, 8, 6, 0.4); }
+.summon-card h4 { margin: 0 0 4px; font-size: 13px; }
+.summon-card .stats { margin-top: 0; }
+.summon-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.summon-table th { color: var(--muted); font-weight: normal; text-align: right; }
+.summon-table td { padding: 1px 0; }
+.summon-table td + td { text-align: right; padding-left: 8px; }
+.summon-table td:first-child { color: var(--muted); }
+.summon-note { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
+
+/* ===== スマホ縦持ちの画面（html.m-ui のときだけ。src/mobile.js が付ける） =====
+   上：操作バー（エリア・危険度）／真ん中：戦場（カメラが主人公を追う）／下：HPとスキル／いちばん下：タブ */
+#m-tabs, #m-more, #m-stage-tools, #m-notices { display: none; }
+html.m-ui { --m-tabs: calc(58px + env(safe-area-inset-bottom, 0px)); }
+html.m-ui body { overscroll-behavior: none; }
+/* 上の操作バー：エリアと危険度だけ（キャラ・季節・メニューは「その他」へ） */
+html.m-ui .hud-top { position: fixed; inset: 0 0 auto; z-index: 20; display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 8px calc(6px); margin: 0;
+  border-radius: 0; border-width: 0 0 1px; background: linear-gradient(#17161aef, #0d0e11ef); }
+html.m-ui .hud-top h1, html.m-ui .hud-top .menus, html.m-ui .hud-top .grp:has([data-speed]) { display: none; }
+html.m-ui .hud-top > .controls { order: 0; width: 100%; display: flex; flex-wrap: wrap; gap: 4px 10px; overflow: visible; }
+html.m-ui .hud-top .grp { display: flex; align-items: center; gap: 4px; min-height: 36px; }
+html.m-ui .hud-top .grp:has(#area-name) { flex: 1 1 auto; min-width: 0; }
+html.m-ui #area-name { flex: 1; min-width: 0; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+html.m-ui .hud-top .grp button { min-width: 36px; min-height: 36px; padding: 0 6px; }
+html.m-ui .hud-top .grp > span:first-child { display: none; }
+html.m-ui #trial-group:not([hidden]) { width: 100%; flex-wrap: wrap; }
+/* 戦場：上のバーと下のHUDの間をすべて使う */
+html.m-ui .game-screen { position: fixed; inset: 0; height: 100dvh; }
+html.m-ui .game-screen > .left { inset: 0; }
+html.m-ui .game-screen .stage { position: fixed; left: 0; right: 0; top: var(--m-top, 48px); bottom: calc(var(--m-tabs) + var(--m-hud, 96px)); width: auto; height: auto; overflow: hidden; }
+html.m-ui .game-screen #game { position: absolute; left: 0; top: 0; max-width: none; aspect-ratio: auto; object-fit: fill; transform-origin: 0 0; }
+html.m-ui .stage-btns, html.m-ui .endgame-icons, html.m-ui #character-drawer { display: none !important; }
+html.m-ui .world-plaque { top: 8px; left: 8px; transform: none; max-width: calc(100% - 150px); padding: 4px 10px; gap: 8px; }
+html.m-ui .world-plaque span { font-size: 12px; }
+/* 野営地：案内の枠と文字は出さず、ボタン2つだけ戦場の右下に小さく横並び（野営地の絵を隠さない） */
+html.m-ui #home-panel { top: auto; bottom: 10px; right: 10px; left: auto; transform: none; display: flex; flex-direction: row; gap: 6px; max-width: none; padding: 0; border: 0; background: none; box-shadow: none; }
+html.m-ui #home-panel[hidden] { display: none; }
+html.m-ui #home-panel strong, html.m-ui #home-panel p { display: none; }
+html.m-ui #home-panel button { min-height: 40px; margin: 0; padding: 0 12px; font-size: 13px; border-radius: 6px; background: #0d0e11d9; box-shadow: 0 2px 8px #000a; }
+html.m-ui #home-panel #home-depart { border-color: #c59d4d; color: #ffe1a0; }
+html.m-ui #m-stage-tools { display: flex; position: absolute; z-index: 4; top: 8px; right: 8px; gap: 6px; }
+html.m-ui #m-stage-tools button { min-width: 44px; min-height: 40px; padding: 0 8px; font-size: 13px; border: 1px solid #79623a; border-radius: 6px; background: #0d0e11d9; color: #f0d68f; }
+/* HPとスキル：タブのすぐ上に1枚 */
+html.m-ui .combat-dock { position: fixed; z-index: 6; left: 0; right: 0; bottom: var(--m-tabs); width: auto; transform: none; display: block; }
+html.m-ui .combat-dock .game-log { display: none; }
+html.m-ui .combat-panel { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 8px 10px; background: linear-gradient(#141519f2, #0b0c0ff2); border-top: 1px solid #75603a; }
+html.m-ui .combat-dock .live-vitals-head { display: flex; justify-content: space-between; font-size: 12px; }
+html.m-ui .combat-dock .live-vitals .bar { height: 16px; }
+html.m-ui .combat-dock .live-vitals .bar span { font-size: 11px; line-height: 16px; }
+html.m-ui .combat-skills > span { display: none; }
+html.m-ui .combat-panel { grid-template-columns: minmax(0, 1fr) 176px; }
+html.m-ui #hud-skills { width: 176px; height: auto; display: block; }
+/* いちばん下のタブ */
+html.m-ui #m-tabs { display: grid; grid-template-columns: repeat(6, 1fr); position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; height: var(--m-tabs);
+  padding-bottom: env(safe-area-inset-bottom, 0px); background: #0b0a09; border-top: 1px solid #5c4a2c; }
+html.m-ui #m-tabs button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 0; padding: 2px 0;
+  border: 0; border-radius: 0; background: none; color: #a99c80; font-size: 11px; }
+html.m-ui #m-tabs button img { width: 30px; height: 30px; object-fit: contain; opacity: .75; }
+html.m-ui #m-tabs button i { font-style: normal; font-size: 22px; line-height: 30px; }
+html.m-ui #m-tabs button.on { color: #ffe1a0; background: linear-gradient(#2a241a, #0b0a09); box-shadow: inset 0 2px #d2a85a; }
+html.m-ui #m-tabs button.on img { opacity: 1; }
+html.m-ui #m-bag-badge { position: absolute; top: 2px; right: 2px; font-style: normal; font-size: 9px; color: #f0d68f; }
+html.m-ui #m-bag-badge:empty { display: none; }
+/* メニューは画面全体（タブの上まで）に切り替える */
+html.m-ui .modal:not(#modal):not(#sheet) { position: fixed; inset: 0 0 var(--m-tabs) 0; z-index: 30; padding: 0; align-items: stretch; justify-content: stretch; }
+html.m-ui .modal:not(#modal):not(#sheet) > .modal-box { width: 100vw; max-width: 100vw; height: 100%; max-height: none; margin: 0; border-radius: 0; border-width: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+html.m-ui .bag-box { height: 100%; max-height: none; }
+html.m-ui #sheet, html.m-ui #modal { z-index: 50; }
+/* 「その他」の画面 */
+html.m-ui #m-more:not([hidden]) { display: block; position: fixed; inset: 0 0 var(--m-tabs) 0; z-index: 30; overflow: auto; padding: 12px 12px 24px; background: var(--panel, #121214); }
+html.m-ui #m-more h2 { margin: 4px 0 10px; font-size: 20px; }
+html.m-ui #m-more h3 { margin: 0 0 8px; font-size: 14px; color: #d2b874; }
+html.m-ui #m-more .m-section { margin-bottom: 14px; padding: 10px; border: 1px solid #3d3427; border-radius: 6px; background: #0d0c0b; }
+html.m-ui #m-more .m-row { display: flex; gap: 8px; }
+html.m-ui #m-more .m-row button { flex: 1; min-height: 48px; }
+html.m-ui #m-more .m-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+html.m-ui #m-more .m-tiles button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 84px; padding: 6px 2px; font-size: 12px; }
+html.m-ui #m-more .m-tiles img { width: 44px; height: 44px; object-fit: contain; }
+html.m-ui #m-more .m-tiles button[disabled], html.m-ui #m-more .m-tiles button.locked { opacity: .45; }
+html.m-ui #m-more .menu-body { position: static; display: flex; flex-direction: column; gap: 6px; padding: 0; border: 0; background: none; box-shadow: none; min-width: 0; max-height: none; backdrop-filter: none; }
+html.m-ui #m-more .menu-body button, html.m-ui #m-more .menu-body label { min-height: 44px; display: flex; align-items: center; gap: 8px; }
+html.m-ui #m-more #m-char .grp { display: flex; align-items: center; gap: 8px; min-height: 44px; margin-bottom: 6px; }
+html.m-ui #m-more #m-char select { min-height: 40px; flex: 1; }
+html.m-ui #m-more #m-log #log { max-height: 50vh; overflow: auto; }
+html.m-ui #m-notices { display: block; position: absolute; z-index: 3; left: 8px; right: 8px; top: 52px; pointer-events: none; text-align: center; }
+html.m-ui #m-notices p { margin: 0 0 4px; font-size: 13px; font-weight: bold; line-height: 1.35; text-shadow: 0 0 3px #000, 0 1px 2px #000, 0 0 6px #000; }
+
+/* 奈落の双王の段階の選択（試練の欄の中） */
+.uber-pick { display: inline-flex; align-items: center; gap: 4px; }
+.uber-pick b { min-width: 3.2em; text-align: center; color: #ff9ae6; }

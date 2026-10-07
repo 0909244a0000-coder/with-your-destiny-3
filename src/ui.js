@@ -143,6 +143,8 @@ WYD.ui = {
     };
     this.$("daily-start").onclick = () => WYD.daily.start(this.world, s);
     this.$("uber-start").onclick = () => WYD.uber.start(this.world, s);
+    this.$("uber-down").onclick = () => { WYD.uber.changeStage(s, -1); this.markDirty(); };
+    this.$("uber-up").onclick = () => { WYD.uber.changeStage(s, 1); this.markDirty(); };
     this.$("trial-auto").onchange = (e) => {
       s.trial.autoNext = e.target.checked;
       this.changed();
@@ -1054,6 +1056,35 @@ WYD.ui = {
     WYD.results.render(this.world);
   },
 
+  // 冒険者情報の「召喚の能力」。今の装備・スキルで呼んだときの強さ（呼んでいなくても出す）
+  renderSummonStats(stats) {
+    const s = this.state, n = (v) => Math.round(v).toLocaleString(), cards = [];
+    const card = (title, sub, rows) => cards.push(`<div class="summon-card"><h4>${title}${sub ? ` <small>${sub}</small>` : ""}</h4><div class="stats">${rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("")}</div></div>`);
+    const boost = stats.powers.raiseBoost;
+    for (const id in WYD.data.skills) {
+      const lv = s.player.skills[id] || 0, base = WYD.data.skills[id];
+      if (base.kind !== "raise" || lv <= 0) continue;
+      const d = WYD.runes.effectiveDef(s, id), mult = (d.attackBase + d.attackPerLevel * (lv - 1)) * (1 + (boost ? boost.attackPercent : 0) / 100);
+      card(base.name, `Lv${lv}${s.player.skillEnabled[id] ? "" : "・OFF"}`, [
+        ["呼べる数", `${WYD.allies.maxCount(d, lv, stats)}体`], ["最大HP", n(stats.maxHp * d.hpRatio)],
+        ["攻撃力", n(stats.attack * mult * (1 + stats.skillDamage / 100))], ["防御力", n(stats.defense * d.defenseRatio)],
+        ["攻撃速度", `${d.attackSpeed}回/秒`], ["いられる時間", `${d.duration}秒`], ["攻撃", d.rangedRange ? `遠距離（${d.rangedRange}）` : "近接"]]);
+    }
+    const ps = stats.powers.periodicSummon;
+    if (ps) card("装備で呼ぶ味方", `${ps.interval}秒ごとに${ps.count}体`, [["最大HP", n(stats.maxHp * ps.hpRatio)],
+      ["攻撃力", n(stats.attack * ps.attackMult * (1 + stats.skillDamage / 100))], ["防御力", n(stats.defense * ps.defenseRatio)], ["いられる時間", `${ps.duration}秒`]]);
+    if (WYD.classes.id === "puppeteer" && WYD.puppeteer) {
+      const P = WYD.data.puppeteer, Pp = WYD.puppeteer, desp = stats.powers.puppetDesperation;
+      const col = (m) => { const v = Pp.values(stats, m); return { hp: n(v.maxHp), atk: n(v.attack * (1 + stats.skillDamage / 100)), def: n(v.defense),
+        share: `${Math.max(m.guardSharePercent || 0, (stats.powers.puppetScapegoat || {}).sharePercent || 0)}%`, cost: `×${m.costMult}`, floor: `${Math.round(m.lowHpReserve * 100)}%`, wait: `${m.respawnCooldown}秒` }; };
+      const pve = col(P.modes.pve), pvp = col(P.modes.pvp), rows = [["最大HP", "hp"], ["攻撃力", "atk"], ["防御力", "def"], ["本体への攻撃の肩代わり", "share"], ["命令で払う本体HP", "cost"], ["命令で残す本体HP", "floor"], ["壊れてから呼び直すまで", "wait"]];
+      cards.push(`<div class="summon-card"><h4>人形 <small>攻撃速度 ${P.puppet.attackSpeed}回/秒</small></h4><table class="summon-table"><tr><th></th><th>冒険</th><th>アリーナ</th></tr>${rows.map(([k, key]) => `<tr><td>${k}</td><td>${pve[key]}</td><td>${pvp[key]}</td></tr>`).join("")}</table>${desp ? `<p class="summon-note">無貌座の衣装：本体のHPが減るほど攻撃力が上がる（最大+${desp.maxPercent}%）</p>` : ""}</div>`);
+    }
+    const box = this.$("summon-stats"), html = cards.length ? `<h3>召喚の能力 <small>今の装備とスキルで呼んだときの強さ</small></h3>${cards.join("")}` : "";
+    box.hidden = !html;
+    if (this.summonStatsHtml !== html) { box.innerHTML = html; this.summonStatsHtml = html; }
+  },
+
   updateBars() {
     const s = this.state;
     const dps = Math.round(WYD.world.dps(this.world));
@@ -1128,6 +1159,10 @@ WYD.ui = {
     const U = WYD.data.uber;
     this.$("uber-start").disabled = !WYD.uber.canStart(s);
     this.$("uber-start").textContent = `${U.name}（鍵 ${s.uber.keys}/${U.keysNeeded}）`;
+    const uberStage = WYD.uber.stage(s), uberBusy = WYD.trial.active(s);
+    this.$("uber-stage").textContent = `段階${uberStage}`;
+    this.$("uber-down").disabled = uberBusy || uberStage <= U.minStage;
+    this.$("uber-up").disabled = uberBusy || uberStage >= WYD.uber.maxStage(s);
     const dailyDone = WYD.daily.doneToday(s);
     this.$("daily-start").disabled = inTrial || dailyDone;
     this.$("daily-start").textContent = dailyDone ? `日替わり：済（連続${s.daily.streak}日）` : `日替わり（段階${WYD.daily.stage(s)}）`;
@@ -1152,6 +1187,7 @@ WYD.ui = {
       ["会心ダメージ", `×${stats.critMultiplier.toFixed(2)}`],
     ];
     this.putHtml("stats", rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join(""));
+    this.renderSummonStats(stats);
     this.putHtml("build", this.buildHtml(stats));
 
     // スキル
@@ -1420,7 +1456,7 @@ WYD.ui = {
       const have = set.pieces.filter((p) => s.codex.setPieces[p.id]).length;
       const pieces = set.pieces.map((p) => s.codex.setPieces[p.id]
         ? `<span style="color:${SE.color}">${p.name}</span>` : `<span class="muted">？？？（${baseName(p.base)}）</span>`).join("、");
-      const bonuses = Object.keys(set.bonuses).map((n) => `<div><small>（${n}つ）${this.bonusText(set.bonuses[n])}</small></div>`).join("");
+      const list = WYD.loot.setBonuses(set), bonuses = Object.keys(list).map((n) => `<div><small>（${n}つ）${this.bonusText(list[n])}</small></div>`).join("");
       return `<div class="codex-item"><b style="color:${SE.color}">${set.name}</b> <small class="muted">${have}/${set.pieces.length}</small>${homeTag(set)}<br><small>${pieces}</small>${bonuses}</div>`;
     }).join("");
     return `<div class="codex-cols">
@@ -1450,8 +1486,9 @@ WYD.ui = {
     const have = WYD.stats.setCounts(this.state)[info.set.id] || 0;
     const owned = (p) => Object.values(this.state.equipment).some((it) => it && it.piece === p.id);
     const pieces = info.set.pieces.map((p) => `<span style="color:${owned(p) ? C : "#777"}">${p.name}</span>`).join("・");
-    const bon = Object.keys(info.set.bonuses).map((need) =>
-      `<div style="color:${have >= Number(need) ? C : "#777"}">（${need}つ）${this.bonusText(info.set.bonuses[need])}</div>`).join("");
+    const list = WYD.loot.setBonuses(info.set);
+    const bon = Object.keys(list).map((need) =>
+      `<div style="color:${have >= Number(need) ? C : "#777"}">（${need}つ）${this.bonusText(list[need])}</div>`).join("");
     return `<div class="unique-power"><span style="color:${C}">■ ${info.set.name}（装備中 ${have}/${info.set.pieces.length}）</span><br><small>${pieces}</small><small>${bon}</small></div>`;
   },
 

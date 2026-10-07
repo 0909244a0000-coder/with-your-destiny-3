@@ -124,6 +124,11 @@ WYD.loot = {
     return WYD.gems.rollSockets(item);
   },
 
+  // セットのボーナス。classBonuses に今の職業の分があれば、その数のボーナスを差し替える
+  setBonuses(set, classId = WYD.classes.id) {
+    return { ...set.bonuses, ...((set.classBonuses && set.classBonuses[classId]) || {}) };
+  },
+
   // 今の職業で出るものだけ（classOnly がほかの職業のものを除く。
   // スキルを強くする能力 skillBoost〜 は、そのしくみのスキルが今の職業にあるときだけ）
   forClass(list) {
@@ -168,11 +173,18 @@ WYD.loot = {
   },
 
   uniqueInfo(item) {
-    return (item && item.unique && WYD.data.uniques.list.find((u) => u.id === item.unique)) || null;
+    return this.forClassDef((item && item.unique && WYD.data.uniques.list.find((u) => u.id === item.unique)) || null);
+  },
+
+  // ユニークの固有能力。classPowers に今の職業の分があれば、power・params・desc を差し替える
+  forClassDef(def, classId = WYD.classes.id) {
+    const own = def && def.classPowers && def.classPowers[classId];
+    return own ? { ...def, ...own } : def;
   },
 
   // 固有能力の説明文（{名前} を params の数値に置きかえる）
   uniqueDesc(def) {
+    def = this.forClassDef(def);
     return def.desc
       .replace(/\{skill:(\w+)\}/g, (all, kind) => WYD.classes.skillNameByKind(kind) + (WYD.classes.hasKind(kind) ? "" : "（この職業では発動しない）"))
       .replace(/\{(\w+)\}/g, (all, key) => (key in def.params ? String(def.params[key]) : all));

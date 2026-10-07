@@ -85,6 +85,7 @@
         <label title="成功したら次の段階、失敗したら1つ下の段階で自動で続ける"><input type="checkbox" id="trial-auto"> 連続</label>
         <span id="trial-best" class="muted"></span>
         <button id="daily-start">日替わり</button>
+        <span class="uber-pick"><button id="uber-down" title="奈落の段階を下げる（ごほうびの装備も弱くなる）">◀</button><b id="uber-stage" title="奈落の双王に挑む段階"></b><button id="uber-up" title="奈落の段階を上げる（試練の最高記録＋3まで）">▶</button></span>
         <button id="uber-start" title="奈落の鍵3つで、強くなったボス2体に同時に挑む">奈落</button>
       </span>
       <span class="grp">
@@ -132,6 +133,7 @@
       <div class="drawer-head"><div><small>CHARACTER</small><h2>冒険者情報</h2></div><button id="character-close" aria-label="閉じる">✕</button></div>
       <section class="panel">
         <div id="stats" class="stats"></div>
+        <div id="summon-stats" class="summon-stats" hidden></div>
         <div id="paragon" class="build" hidden></div>
         <div id="build" class="build"></div>
       </section>
@@ -304,7 +306,7 @@
   <div id="arena" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="arena-title">
     <div class="modal-box arena-box">
       <div class="arena-heading"><div><h2 id="arena-title">バトルアリーナ</h2><span class="muted">育てたキャラ同士で、自動対戦</span></div><button id="arena-close">閉じる ×</button></div>
-      <p class="arena-note">現在のキャラは今の構成、別キャラは最後に保存した構成を使用。レベル・装備・型・星座・箱・宝石・傭兵をそのままコピーし、全快で開戦します。冒険は一時停止。試合の報酬や消費はありません。</p>
+      <p class="arena-note">現在のキャラは今の構成、別キャラは最後に保存した構成を使用。レベル・装備・型・星座・箱・宝石をそのままコピーし、全快で開戦します。傭兵は出ません（装備・スキルの召喚は出ます）。冒険は一時停止。試合の報酬や消費はありません。</p>
       <p class="arena-note">対戦中は大ダメージ・連続攻撃・回復・反射・拘束を抑え、攻防が続く専用ルールを適用。本編の性能はそのままです。長期戦では徐々に火力が上がり、回復が弱まります。</p>
       <details><summary>対戦の補正を見る</summary><p id="arena-rule-summary" class="arena-help"></p></details>
       <div class="arena-controls">
@@ -325,7 +327,7 @@
       <canvas id="arena-canvas" aria-label="アリーナ戦闘画面"></canvas>
       <div id="arena-live" class="arena-live"></div>
       <div id="arena-results"></div>
-      <p class="muted arena-help">未育成のキャラは参加できません。上の「キャラ」で別職業を育てると追加されます。召喚・傭兵は同じ陣営。<span id="arena-time-limit"></span>秒で決着しなければ残った陣営は同順位です。3対3は相手チーム全員を倒すと勝利。時間切れはチーム同順位。</p>
+      <p class="muted arena-help">未育成のキャラは参加できません。上の「キャラ」で別職業を育てると追加されます。召喚は同じ陣営。<span id="arena-time-limit"></span>秒で決着しなければ残った陣営は同順位です。3対3は相手チーム全員を倒すと勝利。時間切れはチーム同順位。</p>
       <div id="arena-frames" hidden></div>
     </div>
   </div>
@@ -406,6 +408,7 @@
   <script src="data/classSpecialization.js"></script>
 <script src="data/training.js"></script>
 <script src="data/dps.js"></script>
+<script src="data/mobile.js"></script>
   <script src="data/arena.js"></script>
   <!-- しくみと画面（src/） -->
   <script src="src/util.js"></script>
@@ -455,6 +458,7 @@
   <script src="src/arena.js"></script>
 <script src="src/dps.js"></script>
   <script src="src/navigation.js"></script>
+  <script src="src/mobile.js"></script>
   <script src="src/main.js"></script>
 </body>
 </html>

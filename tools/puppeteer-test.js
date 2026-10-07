@@ -52,6 +52,7 @@ const path = require('node:path');
    assert(!WYD.puppeteer.cast(w,state,stats,WYD.data.skills.pup_cut,1),'reserve prevents cast');
    assert(w.player.hp>0,'no suicide');
    w.player.hp=stats.maxHp;const finale=WYD.data.skills.pup_finale;
+   assert(!WYD.puppeteer.cast(w,state,stats,finale,1),'finale keeps healthy puppet');a.hp=a.maxHp*finale.triggerPuppetHpPercent/100;
    assert(WYD.puppeteer.cast(w,state,stats,finale,1),'finale');
    assert(a.hp<=0 && !WYD.puppeteer.active(w),'finale destroys puppet');
    assert(w.effects.some(ef=>ef.key==='puppetBurst'),'finale effect');

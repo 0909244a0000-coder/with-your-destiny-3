@@ -26,6 +26,8 @@ const output=path.resolve(process.argv[3]||path.join(root,'results','arena-balan
       const defs=WYD.loot.forClass(WYD.data.uniques.list);
       for(const d of defs){const it=WYD.loot.createUnique(s,profile.item,d);if(!s.equipment[it.slot])s.equipment[it.slot]=it;}
       s.equipment.weapon=WYD.loot.create(s,profile.item,1,{slot:'weapon',rarity:'normal'});s.equipment.weapon.sockets=['rune:eth','rune:tir','rune:ral'];
+      // 職業に合うユニークがない部位は、レアで埋める（職業ごとに空きの数が違うと比較にならない）
+      for(const slot of Object.keys(WYD.data.items.slots))if(!s.equipment[slot])s.equipment[slot]=WYD.loot.create(s,profile.item,1,{slot,rarity:'rare'});
       const c=WYD.data.devotion.list[0];s.devotion[c.id]=true;
       const d=defs.find(d=>!Object.values(s.equipment).some(it=>it.unique===d.id));if(d){s.cube.learned[d.id]=true;s.cube.slots[WYD.cube.slotOf(d)]=d.id;}
       if(pi===2){const set=WYD.data.sets.list[0]; // 不死者4点で高反射のストレス条件
@@ -42,7 +44,7 @@ for(const piece of set.pieces){const it=WYD.loot.createSetPiece(s,profile.item,s
    const seeded=seed=>()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
    for(let pi=0;pi<profiles.length;pi++){
     for(const entry of A.rosterEntries)entry.snapshot=JSON.parse(JSON.stringify(fixtures[entry.id][pi]));
-    const groups=[];for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)groups.push([ids[i],ids[j]]);groups.push(ids);
+    const groups=[];for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)groups.push([ids[i],ids[j]]);groups.push(ids.slice(0,WYD.data.arena.modes.royale.max)); // バトルロワイヤルは上限人数まで
     for(const group of groups)for(let repeat=0;repeat<3;repeat++){
      const seed=20261005+pi*10000+repeat*100+groups.indexOf(group);
      Math.random=seeded(seed);await A.start(group,group.length===2?'duel':'royale',false);

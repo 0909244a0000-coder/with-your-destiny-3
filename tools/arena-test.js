@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
 const scripts = file => [...fs.readFileSync(path.resolve(__dirname,'../' + file),'utf8').matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);
-assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>!['src/main.js','src/ui.js','src/runeSkillsUI.js','src/arena.js','src/navigation.js','data/dps.js','src/dps.js'].includes(s)).concat('src/arena-engine.js'),'戦闘フレームの依存ファイル漏れ');
+assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>!['src/main.js','src/ui.js','src/runeSkillsUI.js','src/arena.js','src/navigation.js','data/dps.js','src/dps.js','data/mobile.js','src/mobile.js'].includes(s)).concat('src/arena-engine.js'),'戦闘フレームの依存ファイル漏れ');
 (async () => {
   const browser = await chromium.launch();
   try {
@@ -54,12 +54,14 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
         await A.start([ids[i], ids[j]], 'duel', false);
         for (const f of A.fighters) {
           const s = f.engine.state, original = A.rosterEntries.find(r => r.id === f.entry.id).snapshot;
-          for (const key of ['equipment', 'mercenary', 'lgems', 'devotion', 'cube']) if (JSON.stringify(s[key]) !== JSON.stringify(original[key])) throw Error('コピー不一致 ' + f.entry.id + '/' + key);
+          if (s.mercenary.type !== null || f.engine.world.allies.some(a => a.source === 'merc')) throw Error('アリーナに傭兵 ' + f.entry.id);
+          for (const key of ['equipment', 'lgems', 'devotion', 'cube']) if (JSON.stringify(s[key]) !== JSON.stringify(original[key])) throw Error('コピー不一致 ' + f.entry.id + '/' + key);
           for (const key of ['skills', 'skillEnabled', 'runes', 'paragon']) if (JSON.stringify(s.player[key]) !== JSON.stringify(original.player[key])) throw Error('技能不一致 ' + key);
           if (f.engine.world.player.hp !== f.engine.stats.maxHp) throw Error('全快ではない');
         }
         let ticks = 0; while (A.running && ticks++ < 3601) A.advance();
         const sums = A.fighters.map(f => f.engine.summary());
+        if (sums.some(r => r.rows.some(row => row.id.startsWith('merc:')))) throw Error('アリーナで傭兵が戦った');
         if (A.running || sums.some(r => !Number.isFinite(r.damage) || !Number.isFinite(r.taken)) || Math.abs(sums.reduce((a,r)=>a+r.damage-r.taken,0)) > .01) throw Error('対戦・集計異常');
         A.draw(); out.push({ pair: ids[i] + '/' + ids[j], repeat, time: +A.time.toFixed(2), reason: A.reason, winner: A.reason === 'winner' ? A.fighters.find(f=>f.eliminatedAt==null).entry.id : null, fighters: A.fighters.map(f=>{const r=f.engine.summary();return{id:f.entry.id,rank:f.rank,damage:r.damage,taken:r.taken,healing:r.healing,crit:r.crit};}) });
       }
@@ -87,7 +89,9 @@ assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>![
           f.engine.setEnemies(A.fighters.flatMap(x=>x.engine.units()));
           f.frame.contentWindow.WYD.world.tryUseSkills(f.engine.world,f.engine.state,f.engine.stats);
         }
-        for (let i = 0; i < 600; i++) A.advance();
+        // 終幕は人形のHPが減ったときだけ使う技なので、終幕を確かめる回だけ人形を傷つけておく
+        const wear = f => { const D = f.frame.contentWindow.WYD, a = D.puppeteer && Object.keys(D.data.skills)[group] === 'pup_finale' && D.puppeteer.active(f.engine.world); if (a) a.hp = Math.min(a.hp, a.maxHp * 0.3); };
+        for (let i = 0; i < 600; i++) { A.advance(); A.fighters.forEach(wear); }
         for (const f of A.fighters) {
           const rows = f.engine.summary().rows;
           for (const id of Object.keys(f.frame.contentWindow.WYD.data.skills).slice(group, group + 1)) {

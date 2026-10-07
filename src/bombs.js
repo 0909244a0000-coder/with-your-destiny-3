@@ -61,19 +61,39 @@ WYD.bombs = {
     w.bombs = list.filter(b => !b.done);
     for (const b of ready) this.explode(w, state, stats, b);
   },
+  // 装備の効果（冥爆術師の差し替え）：残り火（爆発の地点が燃える）・破片（近くの別の敵へ）
+  afterBlast(w, state, stats, b, hit) {
+    const P = stats.powers || {}, fire = P.bombEmbers, shard = P.bombShrapnel;
+    if (fire && w.fields.filter(f => f.source === "effect:bombEmbers").length < fire.maxFields)
+      w.fields.push({ source: "effect:bombEmbers", x: b.x, y: b.y, radius: fire.radius, timeLeft: fire.duration, duration: fire.duration,
+        tick: fire.tick, tickTimer: fire.tick, mult: fire.mult * (1 + stats.skillDamage / 100), color: fire.color });
+    if (shard) {
+      const others = w.enemies.filter(e => e.hp > 0 && !hit.includes(e) && WYD.util.dist(b, e) <= shard.range)
+        .sort((x, y) => WYD.util.dist(b, x) - WYD.util.dist(b, y)).slice(0, shard.extraTargets);
+      for (const e of others) {
+        WYD.world.playerHit(w, state, stats, e, b.attack * shard.damagePercent / 100, "effect:bombShrapnel");
+        w.effects.push({ type: "chain", points: [{ x: b.x, y: b.y }, { x: e.x, y: e.y }], color: shard.color, time: 0, duration: 0.2 });
+      }
+    }
+  },
   explode(w, state, stats, b) {
     const oldExtra = WYD.world.castExtra;
     const oldSpark = WYD.vfx.suppressHit;
     WYD.world.castExtra = b.extra;
     // 範囲攻撃の各命中に巨大な火花を足さず、爆発の絵一枚で見せる。
     WYD.vfx.suppressHit = true;
+    const hit = [];
     try {
-      for (const e of w.enemies.slice()) if (e.hp > 0 && WYD.util.dist(e, b) <= b.radius + WYD.data.enemies[e.kind].radius)
+      for (const e of w.enemies.slice()) if (e.hp > 0 && WYD.util.dist(e, b) <= b.radius + WYD.data.enemies[e.kind].radius) {
+        hit.push(e);
         WYD.world.playerHit(w, state, stats, e, b.attack, "skill:" + b.source);
+      }
+      this.afterBlast(w, state, stats, b, hit);
     } finally { WYD.world.castExtra = oldExtra; WYD.vfx.suppressHit = oldSpark; }
     const V = WYD.data.bombs.visuals;
     if (w.effects.length < WYD.data.vfx.maxEffects) {
-      if (!WYD.vfx.spawn(w, WYD.data.vfx.bombTexture, b.x, b.y, { size: b.radius * V.burstScale, duration: V.burstDuration }))
+      const tex = (WYD.data.vfx.bombTextureBySkill || {})[b.triggered ? "bomb_finale" : b.source] || WYD.data.vfx.bombTexture; // 終幕で起爆した爆弾は終幕の絵
+      if (!WYD.vfx.spawn(w, tex, b.x, b.y, { size: b.radius * V.burstScale, duration: V.burstDuration }))
         w.effects.push({ type: "ring", x: b.x, y: b.y, radius: b.radius, color: "#dda2ff", time: 0, duration: V.burstDuration });
     }
     const now = w.time || 0;

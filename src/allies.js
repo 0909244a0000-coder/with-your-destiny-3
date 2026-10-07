@@ -84,7 +84,7 @@ WYD.allies = {
         const hpBefore = target.hp;
         WYD.world.damageEnemy(w, state, target, hit.damage, hit.crit, a.source === "merc" ? "merc:" + state.mercenary.type : a.source === "unique" ? "effect:summon" : "skill:" + a.source, true, a);
         if (a.puppet) {
-          WYD.puppeteer.onHit(w, stats, a, hpBefore - target.hp);
+          WYD.puppeteer.onHit(w, stats, a, hpBefore - target.hp, state, target);
           WYD.vfx.spawn(w, "puppetSlash", target.x, target.y, {size:WYD.data.puppeteer.effects.pierce.size * 0.55});
         }
       }

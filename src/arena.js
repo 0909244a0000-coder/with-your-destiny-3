@@ -7,7 +7,7 @@ WYD.arena = {
     this.$ = $;
     $("arena-time-limit").textContent = WYD.data.arena.timeLimit;
     const C = WYD.data.arena.combat;
-    $("arena-rule-summary").textContent = `開戦時：本人へのダメージは本編の${C.damageScale * 100}%、一撃は最大HPの${C.hitHpCap * 100}%まで、${C.windowSeconds}秒の合計は${C.windowHpCap * 100}%まで。召喚・傭兵へのダメージは${C.summonDamageScale * 100}%。罠の攻撃はさらに${Math.round(C.trapDamageScale * 100)}%。バーバリアンの移動速度は${Math.round((C.chaseSpeed.barbarian - 1) * 100)}%増。回復は${C.healScale * 100}%。影の外套の回復はさらに${Math.round(C.skillHealScale.asn_cloak * 100)}%。吸血・反射は実際に奪ったHPから計算し、反射率は本編の${C.reflectScale * 100}%（最大${C.reflectRatioCap * 100}%）。拘束は最大${C.bindMax}秒、解除後${C.bindImmunity}秒は再拘束なし。${C.pressureStart}秒から消耗が進み、${C.pressureStart + C.pressureRamp}秒で火力補正・ダメージ上限が最大${C.pressureDamageMax}倍、回復は開戦時の${C.pressureHealMin * 100}%になります。`;
+    $("arena-rule-summary").textContent = `開戦時：本人へのダメージは本編の${C.damageScale * 100}%、一撃は最大HPの${C.hitHpCap * 100}%まで、${C.windowSeconds}秒の合計は${C.windowHpCap * 100}%まで。召喚へのダメージは${C.summonDamageScale * 100}%。罠の攻撃はさらに${Math.round(C.trapDamageScale * 100)}%。バーバリアンの移動速度は${Math.round((C.chaseSpeed.barbarian - 1) * 100)}%増。回復は${C.healScale * 100}%。影の外套の回復はさらに${Math.round(C.skillHealScale.asn_cloak * 100)}%。吸血・反射は実際に奪ったHPから計算し、反射率は本編の${C.reflectScale * 100}%（最大${C.reflectRatioCap * 100}%）。拘束は最大${C.bindMax}秒、解除後${C.bindImmunity}秒は再拘束なし。${C.pressureStart}秒から消耗が進み、${C.pressureStart + C.pressureRamp}秒で火力補正・ダメージ上限が最大${C.pressureDamageMax}倍、回復は開戦時の${C.pressureHealMin * 100}%になります。`;
     $("arena-speed").innerHTML = WYD.data.arena.speeds.map(speed => `<option value="${speed}">×${speed}</option>`).join("");
     $("arena-open").onclick = () => this.open();
     $("arena-close").onclick = () => this.close();
@@ -112,7 +112,7 @@ WYD.arena = {
       input.disabled = this.loading || this.running || !exists || (!input.checked && count >= mode.max);
     }
     this.$("arena-start").disabled = this.loading || this.running || !ok;
-    this.$("arena-selection").textContent = teams ? `チームA ${a}/3人 · チームB ${b}/3人 · 相手チーム全員を倒すと勝利` : `${count}陣営を選択 · ${mode.name}は${mode.min === mode.max ? mode.min : mode.min + "〜" + mode.max}陣営（召喚・傭兵込み）`;
+    this.$("arena-selection").textContent = teams ? `チームA ${a}/3人 · チームB ${b}/3人 · 相手チーム全員を倒すと勝利` : `${count}陣営を選択 · ${mode.name}は${mode.min === mode.max ? mode.min : mode.min + "〜" + mode.max}陣営（召喚込み）`;
     this.$("arena-mode").disabled = this.loading || this.running;
     this.$("arena-refresh").disabled = this.loading || this.running;
     this.$("arena-stop").disabled = !this.loading && !this.running;
@@ -280,7 +280,7 @@ WYD.arena = {
   },
   renderResults() {
     const esc = WYD.results.escape, n = WYD.results.number;
-    this.$("arena-results").innerHTML = '<h3>試合結果</h3><p class="muted">与・被ダメージは各キャラとその召喚・傭兵の合計。回復は本人の回復効果。味方回復は別集計。オーラ支援は味方への攻撃強化の累計人秒、拘束付与は耐性適用後に付与した秒数（実際に拘束した時間ではありません）。育成データへの報酬・消費・変更はありません。</p>' + this.fighters.slice().sort((a, b) => a.rank - b.rank).map(f => {
+    this.$("arena-results").innerHTML = '<h3>試合結果</h3><p class="muted">与・被ダメージは各キャラとその召喚の合計。回復は本人の回復効果。味方回復は別集計。オーラ支援は味方への攻撃強化の累計人秒、拘束付与は耐性適用後に付与した秒数（実際に拘束した時間ではありません）。育成データへの報酬・消費・変更はありません。</p>' + this.fighters.slice().sort((a, b) => a.rank - b.rank).map(f => {
       const r = f.engine.summary();
       return `<details class="arena-result" ${f.rank === 1 ? "open" : ""} style="--team:${f.color}"><summary>${f.rank}位 · ${this.mode === "teams" ? "チーム" + f.team + " · " : ""}${esc(f.entry.name)} · 与ダメ ${n(r.damage)}</summary><p>被ダメージ ${n(r.taken)} · 回復 ${n(r.healing)} · 味方回復 ${n(r.allyHealing)} · オーラ支援 ${r.auraSeconds.toFixed(1)}人秒 · 拘束付与 ${r.bindSeconds.toFixed(1)}秒 · 実測会心 ${esc(r.crit)} · ${f.eliminatedAt == null ? "最後まで生存" : f.eliminatedAt.toFixed(1) + "秒で脱落"}</p><div class="arena-breakdown">${r.rows.filter(row => row.damage || row.healing || row.casts || row.allyHealing || row.auraSeconds || row.bindSeconds).map(row => `<div><span>${row.icon ? `<img src="${esc(row.icon)}" alt="">` : ""}${esc(row.name)}</span><b>${n(row.damage)}</b><small>会心 ${esc(row.crit)} · 命中 ${row.hits} · 発動 ${row.casts}${row.healing ? " · 回復 " + n(row.healing) : ""}${row.allyHealing ? " · 味方回復 " + n(row.allyHealing) : ""}${row.auraSeconds ? " · オーラ支援 " + row.auraSeconds.toFixed(1) + "人秒" : ""}${row.bindSeconds ? " · 拘束付与 " + row.bindSeconds.toFixed(1) + "秒" : ""}</small></div>`).join("")}</div></details>`;
     }).join("");

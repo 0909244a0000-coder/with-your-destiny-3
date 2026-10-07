@@ -6,9 +6,22 @@ WYD.uber = {
     return state.uber.keys >= WYD.data.uber.keysNeeded && !WYD.trial.active(state);
   },
 
-  stage(state) {
+  // 挑める最高の段階（試練の最高記録＋stageOffset。最低でも minStage）
+  maxStage(state) {
     const U = WYD.data.uber;
     return Math.max(U.minStage, state.trial.best + U.stageOffset);
+  },
+
+  // 挑む段階：選んだ段階（minStage〜最高）。選んでいなければ最高
+  stage(state) {
+    const max = this.maxStage(state), picked = state.uber.stage;
+    return Number.isFinite(picked) ? Math.max(WYD.data.uber.minStage, Math.min(max, picked)) : max;
+  },
+
+  // 段階を1つ上げ下げする。最高まで上げたら「最高に合わせる」に戻す（試練の記録が伸びたら一緒に上がる）
+  changeStage(state, delta) {
+    const next = Math.max(WYD.data.uber.minStage, Math.min(this.maxStage(state), this.stage(state) + delta));
+    state.uber.stage = next >= this.maxStage(state) ? null : next;
   },
 
   start(w, state) {
