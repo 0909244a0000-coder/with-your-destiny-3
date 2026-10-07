@@ -13,7 +13,7 @@ const path = require('node:path');
       await page.goto('file://' + path.resolve(__dirname, '../index.html'));
       await page.click('#modal-ok').catch(() => {});
       await page.evaluate(() => { const s = WYD.state; s.settings.speed = 0; s.player.level = 30; for (const id in WYD.data.skills) s.player.skills[id] = 5; WYD.ui.renderPanels(); });
-      await page.click('#character-open');
+      await page.click(await page.evaluate(() => document.documentElement.classList.contains('m-ui') ? '[data-m-tab="status"]' : '#character-open')); // スマホ縦はタブから
       const r = await page.evaluate(() => {
         const s = WYD.state, U = WYD.ui, box = document.getElementById('summon-stats'), stats = WYD.stats.compute(s);
         const num = (label, scope = box) => { const row = [...scope.querySelectorAll('.stats div, tr')].find(x => x.firstElementChild && x.firstElementChild.textContent === label); return row && row.children[1].textContent.replace(/[^\d.]/g, ''); };
