@@ -5,7 +5,7 @@ WYD.data.classes.bombmancer = {
   player: {
     className: "冥爆術師", weaponName: "触媒", color: "#d29cff", image: "assets/player_bombmancer.png", imageFilter: null,
     poses: { attack: "assets/player_bombmancer_attack.png" },
-    preloadImages: ["assets/player_bombmancer_attack.png", "assets/bomb_hunter.png", "assets/vfx/bombOrb.png", "assets/vfx/bombBurst.png", "assets/vfx/bombSmoke.png"],
+    preloadImages: ["assets/player_bombmancer_attack.png", "assets/bomb_hunter.png", "assets/vfx/bombOrb.png", "assets/vfx/bombBurst.png", "assets/vfx/bombSmoke.png", "assets/vfx/bombCloudBurst.webp", "assets/vfx/bombRingBurst.webp"],
     base: { maxHp: 105, attack: 10, defense: 1.5, attackSpeed: 1, critChance: 7, hpRegen: 1.1, moveSpeed: 125 },
     perLevel: { maxHp: 12, attack: 2.1, defense: 0.8 },
     rangedAttack: { range: 250, keepDistance: 155, speed: 430, size: 5, color: "#dda2ff", texture: "bombOrb" },
@@ -57,6 +57,11 @@ Object.assign(WYD.data.runes.skills, {
   bomb_cinders: WYD.data.runes.skills.agni.map(r => ({ ...r })),
   bomb_repose: WYD.data.runes.skills.sorc_warmth.map(r => ({ ...r })),
 });
+// 爆発の絵：ふつうの爆弾は紫と橙の爆炎、終幕の一斉起爆（終幕で起爆した爆弾も）と地雷は輪の爆発（data/vfx.js の bombTexture／bombTextureBySkill）
+Object.assign(WYD.data.vfx.textures, { bombCloudBurst: "assets/vfx/bombCloudBurst.webp", bombRingBurst: "assets/vfx/bombRingBurst.webp" });
+Object.assign(WYD.data.vfx.anim, { bombCloudBurst: { duration: 0.5, scaleFrom: 0.35, scaleTo: 1.15, spin: 0.3, additive: true }, bombRingBurst: { duration: 0.6, scaleFrom: 0.3, scaleTo: 1.2, spin: 0.5, additive: true } });
+WYD.data.vfx.bombTexture = "bombCloudBurst";
+WYD.data.vfx.bombTextureBySkill = { bomb_finale: "bombRingBurst", bomb_mine: "bombRingBurst" };
 Object.assign(WYD.data.vfx.textures, { bombOrb: "assets/vfx/bombOrb.png", bombBurst: "assets/vfx/bombBurst.png", bombSmoke: "assets/vfx/bombSmoke.png", bombHunter: "assets/bomb_hunter.png" });
 Object.assign(WYD.data.vfx.anim, { bombOrb: { duration: 0.34, size: 34, additive: true }, bombBurst: { duration: 0.48, scaleFrom: 0.35, scaleTo: 1.15, additive: true }, bombSmoke: { duration: 0.65, scaleFrom: 0.6, scaleTo: 1.1, additive: true } });
 Object.assign(WYD.data.vfx.castOverrides, { bomb_cloak: { key: "bombSmoke" }, bomb_haste: { key: "bombSmoke" }, bomb_smoke: { key: "bombSmoke" }, bomb_repose: { key: "bombSmoke" } });

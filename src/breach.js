@@ -27,6 +27,7 @@ WYD.breach = {
         e.hp = e.maxHp;
         e.attack *= B.attackMult;
         e.imageFilter = [WYD.data.enemies[pick.kind].imageFilter, B.imageFilter].filter(Boolean).join(" ");
+        WYD.vfx.spawn(w, "breachBurst", e.x, e.y, { size: B.visual.spawnBurst, duration: 0.35 });
       }
       return;
     }
@@ -50,6 +51,7 @@ WYD.breach = {
       y: WYD.util.clamp(p.y + Math.sin(ang) * r, 60, map.height - 60),
       timeLeft: B.duration, spawnTimer: 0, kills: 0, area: state.area, floor: state.floor,
     };
+    WYD.vfx.spawn(w, "breachBurst", w.breach.x, w.breach.y, { size: B.visual.openBurst });
     WYD.ui.notice(`裂け目が開いた！ ${B.duration}秒間、異界の敵があふれ出す`, B.color);
     WYD.sound.play("bossAppear");
   },
@@ -95,6 +97,7 @@ WYD.breach = {
     const mats = b.kills * C.materialsPerKill;
     state.materials += mats;
     w.effects.push({ type: "ring", x: b.x, y: b.y, radius: B.radius, color: B.color, time: 0, duration: 0.6 });
+    WYD.vfx.spawn(w, "breachBurst", b.x, b.y, { size: B.visual.closeBurst, duration: 0.8 });
     WYD.fx.burst(w, b.x, b.y, WYD.data.fx.levelUp, B.color, { glow: true });
     WYD.ui.notice(`裂け目が閉じた！ ${b.kills}体倒した：装備${n}個・${WYD.data.crafting.materialName} +${mats}`, B.color);
     WYD.sound.play("uniqueDrop");
@@ -115,26 +118,43 @@ WYD.breach = {
     ctx.beginPath();
     ctx.arc(b.x, b.y, B.radius * grow, 0, Math.PI * 2);
     ctx.fill();
-    ctx.globalAlpha = 0.5 + 0.2 * Math.sin(t * 5);
-    ctx.strokeStyle = B.color;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8, 6]);
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, B.radius * grow, t * 0.5, t * 0.5 + Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    // 真ん中の裂け目と残り時間
+    const V = B.visual, ring = WYD.vfx.img("breachRing"), portal = WYD.vfx.img("breachPortal");
+    // 範囲のふち：紫の雷の輪がゆっくり回る（絵がなければ点線）
+    if (ring && ring.complete && ring.naturalWidth) {
+      const size = B.radius * grow * 2.2;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = V.ringAlpha * (0.85 + 0.15 * Math.sin(t * 4));
+      ctx.translate(b.x, b.y); ctx.rotate(t * V.ringSpin);
+      ctx.drawImage(ring, -size / 2, -size / 2, size, size);
+      ctx.restore();
+    } else {
+      ctx.globalAlpha = 0.5 + 0.2 * Math.sin(t * 5);
+      ctx.strokeStyle = B.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, B.radius * grow, t * 0.5, t * 0.5 + Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    // 真ん中の裂け目と残り時間（絵がなければ楕円）
     ctx.globalAlpha = 1;
-    ctx.fillStyle = "#1a0a2a";
-    ctx.strokeStyle = B.color;
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, 10, 26 + Math.sin(t * 6) * 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    if (portal && portal.complete && portal.naturalWidth) {
+      const h = V.portalHeight * grow * (1 + V.pulse * Math.sin(t * V.pulseSpeed)), wd = h * portal.naturalWidth / portal.naturalHeight;
+      ctx.drawImage(portal, b.x - wd / 2, b.y - h * 0.55, wd, h);
+    } else {
+      ctx.fillStyle = "#1a0a2a";
+      ctx.strokeStyle = B.color;
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y, 10, 26 + Math.sin(t * 6) * 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
     ctx.fillStyle = B.color;
     ctx.font = "12px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(`裂け目 ${Math.ceil(b.timeLeft)}秒・${b.kills}体`, b.x, b.y - 36);
+    ctx.fillText(`裂け目 ${Math.ceil(b.timeLeft)}秒・${b.kills}体`, b.x, b.y - B.visual.portalHeight * 0.6 - 6);
     ctx.restore();
   },
 };

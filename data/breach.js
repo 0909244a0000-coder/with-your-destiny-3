@@ -21,4 +21,10 @@ WYD.data.breach = {
   // 閉じたときの宝箱：装備 base + 倒した数 / perKills 個（max まで）、レアの出やすさ×rarityBonus、素材 倒した数×materialsPerKill
   chest: { base: 2, perKills: 15, max: 8, rarityBonus: 3, materialsPerKill: 2 },
   color: "#b07dff",
+  // 見た目（絵は assets/vfx/）。portal＝真ん中の裂け目（透明の絵）、ring＝範囲のふちで回る輪（光を重ねる）
+  //   portalHeight：裂け目の高さ　pulse：ゆらぎの大きさと速さ　ringAlpha・ringSpin：輪の濃さ・回る速さ
+  //   openBurst・closeBurst：開いた／閉じたときの光の大きさ　spawnBurst：異界の敵が出てくるときの光の大きさ
+  visual: { portalHeight: 120, pulse: 0.05, pulseSpeed: 3, ringAlpha: 0.75, ringSpin: 0.35, openBurst: 260, closeBurst: 420, spawnBurst: 70 },
 };
+Object.assign(WYD.data.vfx.textures, { breachPortal: "assets/vfx/breachPortal.webp", breachRing: "assets/vfx/breachRing.webp", breachBurst: "assets/vfx/breachBurst.webp" });
+Object.assign(WYD.data.vfx.anim, { breachBurst: { duration: 0.6, size: 260, scaleFrom: 0.4, scaleTo: 1.15, spin: 0.4, additive: true } });

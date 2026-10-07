@@ -92,7 +92,8 @@ WYD.bombs = {
     } finally { WYD.world.castExtra = oldExtra; WYD.vfx.suppressHit = oldSpark; }
     const V = WYD.data.bombs.visuals;
     if (w.effects.length < WYD.data.vfx.maxEffects) {
-      if (!WYD.vfx.spawn(w, WYD.data.vfx.bombTexture, b.x, b.y, { size: b.radius * V.burstScale, duration: V.burstDuration }))
+      const tex = (WYD.data.vfx.bombTextureBySkill || {})[b.triggered ? "bomb_finale" : b.source] || WYD.data.vfx.bombTexture; // 終幕で起爆した爆弾は終幕の絵
+      if (!WYD.vfx.spawn(w, tex, b.x, b.y, { size: b.radius * V.burstScale, duration: V.burstDuration }))
         w.effects.push({ type: "ring", x: b.x, y: b.y, radius: b.radius, color: "#dda2ff", time: 0, duration: V.burstDuration });
     }
     const now = w.time || 0;

@@ -23,6 +23,10 @@
 - 絵の場所を `data/` に書く方法は `assets/README.md`
 
 ## 受け取り済み（ゲームに入っている）
+- 2026-10-07 エフェクト7枚（持ち主の生成。512px の webp に縮めて `assets/vfx/` へ）
+  - 裂け目：`breachPortal`（真ん中の裂け目・透明背景）、`breachRing`（範囲のふちで回る雷の輪）、`breachBurst`（開く・閉じる・異界の敵が出るときの光）
+  - 傀儡師：`puppetNeedles`（針の雨）、`puppetCross`（赤糸の裁断と、その命中）
+  - 冥爆術師：`bombCloudBurst`（ふつうの爆弾の爆発）、`bombRingBurst`（終幕の一斉起爆・地雷の爆発）
 
 2026-10-06：画面HUD用の暗鉄と赤い宝石の紋章 `assets/ui/hud-crest.png`（透過PNG）。全画面UI刷新でタイトル横に表示。
 
