@@ -8,6 +8,8 @@ WYD.data.arena = {
   visual: { particlesPerTeam: 90, effectsPerTeam: 80, labelPx: 12, barWidth: 50, barHeight: 5, labelGap: 28, fieldAlpha: 0.6, backgroundDim: 0.3 },
   modes: { duel: { name: "1対1", min: 2, max: 2 }, royale: { name: "バトルロワイヤル", min: 2, max: 7 }, teams: { name: "3対3", min: 6, max: 6, teamSize: 3 } },
   formations: { slots: 6, nameLength: 32 },
+  // 傭兵は出さない（加護もなし）。装備・スキル由来の召喚はそのまま出る。
+  mercenary: false,
   teamStart: { x: 0.25, rows: [0.25, 0.5, 0.75] },
   movement: { margin: 20 }, // 通常の移動と同じマップ境界。壁際では横へ逃げる。
   combat: {

@@ -11,6 +11,8 @@ WYD.arenaEngine = {
     localStorage.setItem(WYD.save.KEY, JSON.stringify(snapshot));
     this.state = WYD.save.load();
     this.state.settings.autoSkill = false;
+    // 傭兵を出さない設定なら、コピーした状態だけ雇っていないことにする（加護も消える）。本編のセーブは変えない。
+    if (!WYD.data.arena.mercenary) this.state.mercenary = { type: null, rank: 1 };
     WYD.data.map.width = WYD.data.arena.width; WYD.data.map.height = WYD.data.arena.height;
     this.world = WYD.world.create();
     WYD.state = this.state; WYD.currentWorld = this.world;
