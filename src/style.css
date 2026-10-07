@@ -966,12 +966,12 @@ html.m-ui .game-screen #game { position: absolute; left: 0; top: 0; max-width: n
 html.m-ui .stage-btns, html.m-ui .endgame-icons, html.m-ui #character-drawer { display: none !important; }
 html.m-ui .world-plaque { top: 8px; left: 8px; transform: none; max-width: calc(100% - 150px); padding: 4px 10px; gap: 8px; }
 html.m-ui .world-plaque span { font-size: 12px; }
-/* 野営地の案内：戦場の左下に小さく（野営地の絵を隠さない） */
-html.m-ui #home-panel { top: auto; bottom: 10px; left: 10px; right: auto; transform: none; display: flex; flex-direction: column; gap: 6px; max-width: 150px; padding: 8px; text-align: left; background: #0b0d11cc; }
-html.m-ui #home-panel strong { font-size: 12px; color: #d2b874; }
-html.m-ui #home-panel p { display: none; }
-html.m-ui #home-panel button { min-height: 40px; margin: 0; padding: 0 10px; font-size: 13px; }
-html.m-ui #home-panel #home-depart { font-size: 14px; border-color: #c59d4d; color: #ffe1a0; }
+/* 野営地：案内の枠と文字は出さず、ボタン2つだけ戦場の右下に小さく横並び（野営地の絵を隠さない） */
+html.m-ui #home-panel { top: auto; bottom: 10px; right: 10px; left: auto; transform: none; display: flex; flex-direction: row; gap: 6px; max-width: none; padding: 0; border: 0; background: none; box-shadow: none; }
+html.m-ui #home-panel[hidden] { display: none; }
+html.m-ui #home-panel strong, html.m-ui #home-panel p { display: none; }
+html.m-ui #home-panel button { min-height: 40px; margin: 0; padding: 0 12px; font-size: 13px; border-radius: 6px; background: #0d0e11d9; box-shadow: 0 2px 8px #000a; }
+html.m-ui #home-panel #home-depart { border-color: #c59d4d; color: #ffe1a0; }
 html.m-ui #m-stage-tools { display: flex; position: absolute; z-index: 4; top: 8px; right: 8px; gap: 6px; }
 html.m-ui #m-stage-tools button { min-width: 44px; min-height: 40px; padding: 0 8px; font-size: 13px; border: 1px solid #79623a; border-radius: 6px; background: #0d0e11d9; color: #f0d68f; }
 /* HPとスキル：タブのすぐ上に1枚 */
