@@ -1018,3 +1018,7 @@ html.m-ui #m-more #m-char select { min-height: 40px; flex: 1; }
 html.m-ui #m-more #m-log #log { max-height: 50vh; overflow: auto; }
 html.m-ui #m-notices { display: block; position: absolute; z-index: 3; left: 8px; right: 8px; top: 52px; pointer-events: none; text-align: center; }
 html.m-ui #m-notices p { margin: 0 0 4px; font-size: 13px; font-weight: bold; line-height: 1.35; text-shadow: 0 0 3px #000, 0 1px 2px #000, 0 0 6px #000; }
+
+/* 奈落の双王の段階の選択（試練の欄の中） */
+.uber-pick { display: inline-flex; align-items: center; gap: 4px; }
+.uber-pick b { min-width: 3.2em; text-align: center; color: #ff9ae6; }

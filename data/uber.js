@@ -9,8 +9,8 @@ WYD.data.uber = {
   keyName: "奈落の鍵",
   keysNeeded: 3,
   bosses: ["ravana", "asuraKing"],   // いっしょに出るボス
-  stageOffset: 3,          // 試練の最高段階より、いくつ上の強さか（最低でも minStage）
-  minStage: 6,
+  stageOffset: 3,          // 挑める最高の段階＝試練の最高段階＋これ（最低でも minStage）
+  minStage: 6,             // 挑める最低の段階。この間から選べる（ごほうびの装備の強さも段階で決まる）
   timeLimit: 240,
   // 鍵の落ち方
   drop: {

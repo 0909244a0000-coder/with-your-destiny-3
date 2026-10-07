@@ -143,6 +143,8 @@ WYD.ui = {
     };
     this.$("daily-start").onclick = () => WYD.daily.start(this.world, s);
     this.$("uber-start").onclick = () => WYD.uber.start(this.world, s);
+    this.$("uber-down").onclick = () => { WYD.uber.changeStage(s, -1); this.markDirty(); };
+    this.$("uber-up").onclick = () => { WYD.uber.changeStage(s, 1); this.markDirty(); };
     this.$("trial-auto").onchange = (e) => {
       s.trial.autoNext = e.target.checked;
       this.changed();
@@ -1157,6 +1159,10 @@ WYD.ui = {
     const U = WYD.data.uber;
     this.$("uber-start").disabled = !WYD.uber.canStart(s);
     this.$("uber-start").textContent = `${U.name}（鍵 ${s.uber.keys}/${U.keysNeeded}）`;
+    const uberStage = WYD.uber.stage(s), uberBusy = WYD.trial.active(s);
+    this.$("uber-stage").textContent = `段階${uberStage}`;
+    this.$("uber-down").disabled = uberBusy || uberStage <= U.minStage;
+    this.$("uber-up").disabled = uberBusy || uberStage >= WYD.uber.maxStage(s);
     const dailyDone = WYD.daily.doneToday(s);
     this.$("daily-start").disabled = inTrial || dailyDone;
     this.$("daily-start").textContent = dailyDone ? `日替わり：済（連続${s.daily.streak}日）` : `日替わり（段階${WYD.daily.stage(s)}）`;

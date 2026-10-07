@@ -45,7 +45,7 @@ WYD.save = {
       maps: [],        // 持っている地図（src/maps.js）
       runHistory: [],  // 成功した挑戦の記録（新しい順）
       runBest: {},     // 種類ごとのいちばんの記録
-      uber: { keys: 0, kills: 0 },   // 奈落の鍵と、双王を倒した数
+      uber: { keys: 0, kills: 0, stage: null },   // 奈落の鍵と、双王を倒した数、選んだ段階（null＝挑める最高）
       builds: [],      // 保存したビルド（src/builds.js）
       devotion: {},    // 埋めた星座（星座の id → true）
       mercenary: { type: null, rank: 1 },
