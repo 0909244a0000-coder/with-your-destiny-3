@@ -425,6 +425,18 @@ WYD.ui = {
 
     // 宝石：クリックで選ぶ（もう一度で選ぶのをやめる）、「合成」で1つ上の段階に
     this.$("gems").onclick = (e) => {
+      // 宝石合成：あまった宝石をまとめて、ランダムな能力の混沌の宝石に
+      if (e.target.closest("[data-gem-fuse]")) {
+        const plan = WYD.gems.fusionPlan(s), F = WYD.data.gems.fusion;
+        if (!plan.ok) return this.log("合成できない（宝石の量か素材が足りない）", "#ff6b6b");
+        const list = Object.keys(plan.use).map((k) => `${WYD.gems.name(k)}×${plan.use[k]}`).join("、");
+        if (!confirm(`次の宝石を使って、${F.name}を1つ作りますか？（能力は完全ランダム）\n${list}`)) return;
+        const key = WYD.gems.fuse(s);
+        if (key) this.log(`${F.name}ができた：${WYD.gems.statsText(key)}`, F.color);
+        if (!(s.gems[this.gemSelected] > 0)) this.gemSelected = null;
+        this.changed();
+        return;
+      }
       const btn = e.target.closest("[data-gem-combine]");
       if (btn) {
         const key = btn.dataset.gemCombine;
@@ -1365,16 +1377,19 @@ WYD.ui = {
     const keys = Object.keys(s.gems).filter((k) => s.gems[k] > 0 && WYD.gems.info(k))
       .sort((a, b) => a.localeCompare(b));
     if (keys.length === 0) return `<p class="muted">まだ宝石がない（精鋭とボスがよく落とす）</p>`;
-    return keys.map((k) => {
+    const F = G.fusion, plan = WYD.gems.fusionPlan(s), top = G.tiers[G.tiers.length - 1].name;
+    const fusion = `<div class="gem-fusion"><button data-gem-fuse ${plan.ok ? "" : "disabled"} title="段階の低い宝石から使う。欠けた=1、1段ごとに${G.combineCount}倍（${top}=${Math.pow(G.combineCount, G.tiers.length - 1)}）">宝石合成 → <span style="color:${F.color}">${F.name}</span></button>` +
+      ` <small class="muted">種類も段階も混ぜて${top}${F.need / Math.pow(G.combineCount, G.tiers.length - 1)}個ぶん（今 ${Math.min(plan.total, F.need)} / ${F.need}${F.cost ? `・${WYD.data.crafting.materialName}${F.cost}個` : ""}）。能力の数も種類も数値もランダム</small></div>`;
+    return fusion + keys.map((k) => {
       const info = WYD.gems.info(k);
       const cost = WYD.gems.combineCost(k);
       const canCombine = cost != null && s.gems[k] >= G.combineCount;
-      const tip = Object.keys(G.groupName).map((g) => {
+      const tip = info.fused ? WYD.gems.statsText(k) : Object.keys(G.groupName).map((g) => {
         const st = info.def[g] || {};
         return `${G.groupName[g]}：` + Object.keys(st).map((x) => WYD.util.formatStat(x, st[x] * info.tierDef.mult)).join("、");
       }).join("\n");
       return `<span class="gem-chip${this.gemSelected === k ? " selected" : ""}" data-gem="${k}" title="${tip}" style="border-color:${info.def.color}">` +
-        `<b style="color:${info.def.color}">◆ ${WYD.gems.name(k)}</b> ×${s.gems[k]}` +
+        `<b style="color:${info.def.color}">◆ ${WYD.gems.name(k)}</b> ×${s.gems[k]}` + (info.fused ? ` <small>${WYD.gems.statsText(k)}</small>` : "") +
         (canCombine ? ` <button data-gem-combine="${k}" title="${G.combineCount}つと${WYD.data.crafting.materialName}${cost}個で1つ上の段階に">合成</button>` : "") +
         `</span>`;
     }).join("");

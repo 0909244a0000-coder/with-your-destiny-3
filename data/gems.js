@@ -81,6 +81,36 @@ WYD.data.gems = {
   ],
   runewordColor: "#c7a96b",
 
+  // ---- 宝石合成（混沌の宝石）----
+  // あまった宝石を、種類も段階も混ぜて入れ、ランダムな能力をもつ「混沌の宝石」を1つ作る。どの部位にはめても同じ能力。
+  //   need      … 必要な量（欠けた = 1、1段上がるごとに combineCount 倍。王者 = 81 → 810 で王者10個ぶん）
+  //   cost      … 素材（0 = いらない）
+  //   lineCount … 能力の数とその出やすさ（weight）
+  //   pool      … 出る能力。kind: "stat" = 基本の能力（data/items.js の stats）、"effect" = 特殊効果（data/effects.js。合計の上限 cap はそのまま）
+  //               range = 数値の幅 [最小, 最大]、weight = 出やすさ。既存の宝石にない能力（特殊効果）もふくむ
+  fusion: {
+    name: "混沌の宝石", color: "#ff7ad9",
+    need: 810, cost: 0,
+    lineCount: [{ n: 1, weight: 10 }, { n: 2, weight: 40 }, { n: 3, weight: 35 }, { n: 4, weight: 15 }],
+    pool: [
+      { kind: "stat", id: "attack", range: [10, 32], weight: 10 },
+      { kind: "stat", id: "defense", range: [6, 20], weight: 10 },
+      { kind: "stat", id: "maxHp", range: [50, 160], weight: 10 },
+      { kind: "stat", id: "hpRegen", range: [1.5, 5], weight: 8 },
+      { kind: "stat", id: "attackSpeed", range: [8, 28], weight: 8 },
+      { kind: "stat", id: "critChance", range: [5, 18], weight: 8 },
+      { kind: "stat", id: "moveSpeed", range: [6, 18], weight: 6 },
+      { kind: "stat", id: "skillDamage", range: [15, 50], weight: 10 },
+      { kind: "effect", id: "lifesteal", range: [1, 4], weight: 6 },
+      { kind: "effect", id: "cooldown", range: [3, 10], weight: 5 },
+      { kind: "effect", id: "killHeal", range: [1, 4], weight: 6 },
+      { kind: "effect", id: "critDamage", range: [10, 40], weight: 6 },
+      { kind: "effect", id: "thunder", range: [5, 12], weight: 5 },
+      { kind: "effect", id: "wrath", range: [10, 30], weight: 5 },
+      { kind: "effect", id: "thorns", range: [10, 35], weight: 5 },
+    ],
+  },
+
   slotGroup: { weapon: "weapon", head: "armor", body: "armor", hands: "armor", feet: "armor", ring: "jewelry",
     offhand: "armor", neck: "jewelry", waist: "armor" },
   groupName: { weapon: "武器", armor: "防具", jewelry: "装飾品" },

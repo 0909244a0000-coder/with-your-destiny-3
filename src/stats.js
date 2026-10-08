@@ -63,6 +63,14 @@ WYD.stats = {
       if (rw) for (const id in rw.bonus.effects || {}) if (id in totals) totals[id] += rw.bonus.effects[id];
     }
     for (const slot in state.equipment) {
+      // 混沌の宝石（ソケット）の特殊効果
+      for (const key of (state.equipment[slot] || {}).sockets || []) {
+        if (!key) continue;
+        const fx = WYD.gems.effectsFor(key);
+        for (const id in fx) if (id in totals) totals[id] += fx[id];
+      }
+    }
+    for (const slot in state.equipment) {
       const item = state.equipment[slot];
       if (!item || !Array.isArray(item.effects)) continue;
       for (const fx of item.effects) {

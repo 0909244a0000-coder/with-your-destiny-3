@@ -1,4 +1,5 @@
 // ソケットと宝石。宝石は「種類:段階」の名前で数だけ持つ（持ち物の枠は使わない）。
+// 混沌の宝石（合成で作る）は能力を名前に書きこむ："fused:attack=24,fx.lifesteal=3.5"（fx. = 特殊効果）
 window.WYD = window.WYD || {};
 
 WYD.gems = {
@@ -10,6 +11,10 @@ WYD.gems = {
   info(key) {
     const [id, t] = String(key).split(":");
     const G = WYD.data.gems;
+    if (id === "fused") {
+      const lines = this.parseFused(t);
+      return lines ? { def: { id, name: G.fusion.name, color: G.fusion.color }, tier: 0, tierDef: { name: "", mult: 1 }, fused: true, lines } : null;
+    }
     // ルーン（"rune:el"）は段階なし
     if (id === "rune") {
       const def = G.runes.find((r) => r.id === t);
@@ -19,6 +24,18 @@ WYD.gems = {
     const tier = Number(t);
     if (!def || !G.tiers[tier]) return null;
     return { def, tier, tierDef: G.tiers[tier] };
+  },
+
+  // 混沌の宝石の能力 [{ kind, id, value }]（読めなければ null）
+  parseFused(text) {
+    if (!text) return null;
+    const lines = String(text).split(",").map((part) => {
+      const [k, v] = part.split("="), value = Number(v);
+      const effect = k.startsWith("fx."), id = effect ? k.slice(3) : k;
+      const known = effect ? WYD.data.effects.list.some((d) => d.id === id) : !!WYD.data.items.stats[id];
+      return known && Number.isFinite(value) ? { kind: effect ? "effect" : "stat", id, value } : null;
+    });
+    return lines.length && lines.every(Boolean) ? lines : null;
   },
 
   name(key) {
@@ -31,6 +48,7 @@ WYD.gems = {
   nextKey(key) {
     const i = this.info(key);
     if (!i) return null;
+    if (i.fused) return null;
     if (i.rune) {
       const next = WYD.data.gems.runes[i.index + 1];
       return next ? `rune:${next.id}` : null;
@@ -63,6 +81,7 @@ WYD.gems = {
   statsFor(key, slot) {
     const i = this.info(key);
     if (!i || i.rune) return {};
+    if (i.fused) return Object.fromEntries(i.lines.filter((l) => l.kind === "stat").map((l) => [l.id, l.value]));
     const group = WYD.data.gems.slotGroup[slot];
     const base = i.def[group] || {};
     const out = {};
@@ -70,9 +89,61 @@ WYD.gems = {
     return out;
   },
 
+  // その宝石の特殊効果 { 効果: 数値 }（混沌の宝石だけ）
+  effectsFor(key) {
+    const i = this.info(key);
+    return i && i.fused ? Object.fromEntries(i.lines.filter((l) => l.kind === "effect").map((l) => [l.id, l.value])) : {};
+  },
+
   statsText(key, slot) {
-    const st = this.statsFor(key, slot);
-    return Object.keys(st).map((k) => WYD.util.formatStat(k, st[k])).join("、");
+    const st = this.statsFor(key, slot), fx = this.effectsFor(key);
+    return Object.keys(st).map((k) => WYD.util.formatStat(k, st[k]))
+      .concat(Object.keys(fx).map((k) => WYD.util.formatEffect(WYD.data.effects.list.find((d) => d.id === k), fx[k]))).join("、");
+  },
+
+  // ---- 宝石合成（数値は data/gems.js の fusion）----
+  // 宝石1つの量（欠けた = 1、1段ごとに combineCount 倍。ルーン・混沌の宝石は入れない）
+  fusionValue(key) {
+    const i = this.info(key);
+    return !i || i.rune || i.fused ? 0 : Math.pow(WYD.data.gems.combineCount, i.tier);
+  },
+
+  // 使う宝石を決める：段階の低いものから使う。{ use: { key: 数 }, total, need, ok }
+  fusionPlan(state) {
+    const F = WYD.data.gems.fusion, use = {};
+    const keys = Object.keys(state.gems).filter((k) => state.gems[k] > 0 && this.fusionValue(k) > 0)
+      .sort((a, b) => this.fusionValue(a) - this.fusionValue(b) || a.localeCompare(b));
+    let total = 0;
+    for (const k of keys) {
+      while (total < F.need && (use[k] || 0) < state.gems[k]) { use[k] = (use[k] || 0) + 1; total += this.fusionValue(k); }
+      if (total >= F.need) break;
+    }
+    return { use, total, need: F.need, ok: total >= F.need && state.materials >= F.cost };
+  },
+
+  // 能力をランダムに決めて、混沌の宝石の名前（key）を作る
+  rollFused() {
+    const F = WYD.data.gems.fusion, U = WYD.util;
+    const n = U.pickWeighted(F.lineCount, (x) => x.weight).n, pool = [...F.pool], lines = [];
+    while (lines.length < n && pool.length) {
+      const p = U.pickWeighted(pool, (x) => x.weight);
+      pool.splice(pool.indexOf(p), 1);
+      const decimals = p.kind === "effect" ? WYD.data.effects.list.find((d) => d.id === p.id).decimals : WYD.data.items.stats[p.id].decimals;
+      const value = Number((p.range[0] + Math.random() * (p.range[1] - p.range[0])).toFixed(decimals));
+      lines.push(`${p.kind === "effect" ? "fx." : ""}${p.id}=${value}`);
+    }
+    return `fused:${lines.join(",")}`;
+  },
+
+  // 合成する。できたら作った宝石の key、できなければ null
+  fuse(state) {
+    const plan = this.fusionPlan(state);
+    if (!plan.ok) return null;
+    state.materials -= WYD.data.gems.fusion.cost;
+    for (const k in plan.use) this.add(state, k, -plan.use[k]);
+    const key = this.rollFused();
+    this.add(state, key);
+    return key;
   },
 
   // 新しい装備にソケットをつける
