@@ -5,6 +5,8 @@
 .arena-heading h2 { margin: 0 0 4px; }
 .arena-note, .arena-help { font-size: 13px; line-height: 1.7; }
 .arena-controls, .arena-actions, .arena-sim { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0; }
+/* 見かた（観戦／高速シミュレーター）で、使わないほうの操作と表示を隠す */
+#arena [data-view="watch"] .arena-sim-only, #arena [data-view="sim"] .arena-watch-only { display: none; }
 .arena-sim-table { overflow-x: auto; }
 .arena-sim-table table { border-collapse: collapse; width: 100%; font-size: 13px; }
 .arena-sim-table th, .arena-sim-table td { padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,.12); text-align: right; white-space: nowrap; }
