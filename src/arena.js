@@ -94,6 +94,7 @@ WYD.arena = {
   selected() { return this.$("arena-mode").value === "teams" ? Object.keys(this.teamSelection()) : [...this.$("arena-roster").querySelectorAll("input:checked")].map(x => x.value); },
   selectionChanged() {
     if (!this.rosterEntries) return;
+    const busy = this.loading || this.running || this.simulating;   // simulating = 高速シミュレーター実行中（src/arena-sim.js）
     const mode = WYD.data.arena.modes[this.$("arena-mode").value], count = this.selected().length;
     const teams = this.$("arena-mode").value === "teams", picks = this.teamSelection();
     const a = Object.values(picks).filter(x => x === "A").length, b = Object.values(picks).filter(x => x === "B").length;
@@ -103,20 +104,21 @@ WYD.arena = {
     for (const select of this.$("arena-roster").querySelectorAll(".arena-team-pick")) {
       select.hidden = !teams;
       select.closest("label").dataset.team = teams ? select.value : "";
-      select.disabled = this.loading || this.running || !this.rosterEntries.find(r => r.id === select.dataset.class)?.snapshot;
+      select.disabled = busy || !this.rosterEntries.find(r => r.id === select.dataset.class)?.snapshot;
     }
-    for (const id of ["arena-formation-slot", "arena-formation-name", "arena-formation-save", "arena-formation-load"]) this.$(id).disabled = this.loading || this.running;
-    if (teams) this.$("arena-formation-save").disabled = this.loading || this.running || !ok;
+    for (const id of ["arena-formation-slot", "arena-formation-name", "arena-formation-save", "arena-formation-load"]) this.$(id).disabled = busy;
+    if (teams) this.$("arena-formation-save").disabled = busy || !ok;
     for (const input of this.$("arena-roster").querySelectorAll("input")) {
       const exists = !!this.rosterEntries.find(r => r.id === input.value).snapshot;
-      input.disabled = this.loading || this.running || !exists || (!input.checked && count >= mode.max);
+      input.disabled = busy || !exists || (!input.checked && count >= mode.max);
     }
-    this.$("arena-start").disabled = this.loading || this.running || !ok;
+    this.$("arena-start").disabled = busy || !ok;
     this.$("arena-selection").textContent = teams ? `チームA ${a}/3人 · チームB ${b}/3人 · 相手チーム全員を倒すと勝利` : `${count}陣営を選択 · ${mode.name}は${mode.min === mode.max ? mode.min : mode.min + "〜" + mode.max}陣営（召喚込み）`;
-    this.$("arena-mode").disabled = this.loading || this.running;
-    this.$("arena-refresh").disabled = this.loading || this.running;
-    this.$("arena-stop").disabled = !this.loading && !this.running;
+    this.$("arena-mode").disabled = busy;
+    this.$("arena-refresh").disabled = busy;
+    this.$("arena-stop").disabled = !busy;
     this.$("arena-pause").disabled = !this.running;
+    if (WYD.arenaSim && WYD.arenaSim.$) WYD.arenaSim.controls();
   },
   formations() {
     try {

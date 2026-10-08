@@ -8,6 +8,9 @@ WYD.data.arena = {
   visual: { particlesPerTeam: 90, effectsPerTeam: 80, labelPx: 12, barWidth: 50, barHeight: 5, labelGap: 28, fieldAlpha: 0.6, backgroundDim: 0.3 },
   modes: { duel: { name: "1対1", min: 2, max: 2 }, royale: { name: "バトルロワイヤル", min: 2, max: 8 }, teams: { name: "3対3", min: 6, max: 6, teamSize: 3 } },
   formations: { slots: 6, nameLength: 32 },
+  // 高速シミュレーター（src/arena-sim.js）：描画せずに同じ組み合わせを指定回数戦わせ、結果だけ集計する。
+  //   counts … 選べる回数　stepsPerSlice … 画面を止めないよう、この刻み数ごとに一息つく　refreshMs … 途中経過の表示間隔
+  sim: { counts: [10, 30, 100, 300, 1000], defaultCount: 30, stepsPerSlice: 800, refreshMs: 300 },
   // 傭兵は出さない（加護もなし）。装備・スキル由来の召喚はそのまま出る。
   mercenary: false,
   // 職業ごとの召喚の対人補正（傀儡師の人形は data/puppeteer.js の modes.pvp）。

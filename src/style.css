@@ -4,7 +4,11 @@
 .arena-heading { position: sticky; top: -20px; z-index: 2; background: #221e18; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #8e7145; }
 .arena-heading h2 { margin: 0 0 4px; }
 .arena-note, .arena-help { font-size: 13px; line-height: 1.7; }
-.arena-controls, .arena-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0; }
+.arena-controls, .arena-actions, .arena-sim { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0; }
+.arena-sim-table { overflow-x: auto; }
+.arena-sim-table table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.arena-sim-table th, .arena-sim-table td { padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,.12); text-align: right; white-space: nowrap; }
+.arena-sim-table th:first-child, .arena-sim-table td:first-child { text-align: left; }
 .arena-box button, .arena-box select { min-height: 48px; padding: 10px 14px; }
 .arena-controls label { display: flex; align-items: center; gap: 8px; }
 .arena-roster { display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 8px; }
