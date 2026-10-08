@@ -116,7 +116,7 @@ WYD.arenaEngine = {
       const C = WYD.data.arena.combat;
       amount = receiver.limitDamage(target, amount * E.takenRule(target).scale * E.pressureDamage());
       // 傀儡師の本体への攻撃は、PvP用の人形が一部を肩代わりする（data/puppeteer.js の modes.pvp）
-      if (target.arenaMain && receiver.classId === "puppeteer" && WYD.puppeteer)
+      if (target.arenaMain && receiver.actsPuppeteer() && WYD.puppeteer)
         amount = WYD.puppeteer.shield(receiver.world, amount, WYD.puppeteer.sharePercent(receiver.stats.powers.puppetScapegoat));
       const actual = Math.min(target.hp, amount);
       if (E.hitContext && E.hitContext.target === target) Object.assign(E.hitContext, { raw, actual });
@@ -151,6 +151,9 @@ WYD.arenaEngine = {
       const a = spawn.apply(this, args);
       a.id = E.bridge.nextId(); a.kind = "arena:" + E.team + ":ally:" + a.id;
       a.arenaOwner = E.classId; a.arenaTeam = E.team; a.arenaMain = false; a.stunTimer = 0;
+      // 職業ごとの召喚の対人補正（data/arena.js の classSummons）
+      const boost = E.summonBoost();
+      if (boost) { a.hp = a.maxHp = Math.round(a.maxHp * (boost.hpMult || 1)); a.attack *= boost.attackMult || 1; a.classSummon = true; }
       E.bindControl(a);
       return a;
     };
@@ -205,12 +208,15 @@ WYD.arenaEngine = {
     const C = WYD.data.arena.combat;
     return C.healScale * (1 - this.pressure() * (1 - C.pressureHealMin));
   },
-  // 受けるダメージの規則：本人／傀儡師の人形（PvP用、data/puppeteer.js）／ふつうの召喚
+  actsPuppeteer() { return WYD.classes.acts("puppeteer", this.state); },   // 傀儡師、または人形の技を使う蒐集者
+  summonBoost() { return (WYD.data.arena.classSummons || {})[this.classId] || null; },
+  // 受けるダメージの規則：本人／傀儡師の人形（PvP用、data/puppeteer.js）／職業別の召喚（classSummons）／ふつうの召喚
   takenRule(target) {
     const C = WYD.data.arena.combat, P = target.puppet && WYD.data.puppeteer && WYD.data.puppeteer.modes.pvp;
     if (target.arenaMain) return { scale: C.damageScale, hitCap: C.hitHpCap, windowCap: C.windowHpCap };
     if (P) return { scale: P.damageTakenScale, hitCap: P.hitHpCap, windowCap: P.windowHpCap };
-    return { scale: C.summonDamageScale, hitCap: C.summonHitHpCap, windowCap: C.summonWindowHpCap };
+    const B = target.classSummon && (WYD.data.arena.classSummons || {})[target.arenaOwner];
+    return { scale: B?.damageTakenScale ?? C.summonDamageScale, hitCap: B?.hitHpCap ?? C.summonHitHpCap, windowCap: B?.windowHpCap ?? C.summonWindowHpCap };
   },
   limitDamage(target, amount) {
     const C = WYD.data.arena.combat, now = this.bridge.time();

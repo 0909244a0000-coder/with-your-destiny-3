@@ -26,8 +26,12 @@ const {chromium}=require('playwright'), assert=require('node:assert/strict'),pat
   A.time=0;q.stunTimer=10;const bind=q.stunTimer===C.bindMax;q.stunTimer=q.stunTimer-.1;const remaining=q.stunTimer;q.stunTimer=10;const noExtend=q.stunTimer===remaining;
   q.stunTimer=0;A.time=C.bindMax+C.bindImmunity-.01;q.stunTimer=10;const immune=q.stunTimer===0;A.time+=.02;q.stunTimer=10;const recovery=q.stunTimer===C.bindMax;
   reset();const def=D.data.mercenary.types[0];const ally=D.allies.spawn(E.world,E.stats,{...def,hpRatio:.5,spawnSpread:0,firstAttackDelay:0,duration:20},.5,'merc');F.setEnemies(E.units());const hp=ally.hp;b.frame.contentWindow.WYD.world.damageEnemy(F.world,F.state,ally,1e9,false);const summon=near(hp-ally.hp,ally.maxHp*C.summonHitHpCap);
+  // 職業別の召喚補正（data/arena.js の classSummons）：HP・攻撃力の倍率と、受けるダメージの規則
+  const ne=D.data.arena.classSummons.necromancer;D.data.arena.classSummons.barbarian=ne;reset();const plain=D.allies.spawn(E.world,E.stats,{...def,hpRatio:.5,spawnSpread:0,firstAttackDelay:0,duration:20},.5,'unique');F.setEnemies(E.units());
+  const boosted=near(plain.maxHp,Math.round(Math.round(E.stats.maxHp*.5)*ne.hpMult))&&plain.classSummon===true;const bh=plain.hp;b.frame.contentWindow.WYD.world.damageEnemy(F.world,F.state,plain,1e9,false);
+  const classSummon=boosted&&near(bh-plain.hp,plain.maxHp*ne.hitHpCap);delete D.data.arena.classSummons.barbarian;
   const unchanged=JSON.stringify(WYD.state)===original;A.close();
   const chase=near(E.stats.moveSpeed,D.stats.compute(E.state).moveSpeed*C.chaseSpeed.barbarian);
-  return{cloakHeal,chase,trapScale,single,sharedWindow,sliding,expires,reflection,lifesteal,healing,pressureHeal,pressureDamage,bind,noExtend,immune,recovery,summon,unchanged};
+  return{cloakHeal,chase,trapScale,single,sharedWindow,sliding,expires,reflection,lifesteal,healing,pressureHeal,pressureDamage,bind,noExtend,immune,recovery,summon,classSummon,unchanged};
  });for(const[k,v]of Object.entries(checks)){assert.equal(v,true,k);console.log('ok',k);}assert.deepEqual(errors,[]);console.log('errors 0');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

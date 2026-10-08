@@ -38,8 +38,8 @@ WYD.data.puppeteer = {
   //   PvP だけ：damageTakenScale/hitHpCap/windowHpCap … 人形が受けるダメージの規則（data/arena.js の combat と同じ意味。
   //   ふつうの召喚は summonDamageScale などで脆いが、傀儡師の人形は本体と同じ主戦力なので別にする）
   modes: {
-    pve: { hpMult: 1, attackMult: 1.2, defenseMult: 1, costMult: 1, lowHpReserve: 0.2, summonHpReserve: 0.15, respawnCooldown: 6, guardSharePercent: 20 },
-    pvp: { hpMult: 1, attackMult: 1.3, defenseMult: 1, costMult: 0.75, lowHpReserve: 0.2, summonHpReserve: 0.15, respawnCooldown: 6, guardSharePercent: 45,
+    pve: { hpMult: 1.2, attackMult: 1.65, defenseMult: 1, costMult: 1, lowHpReserve: 0.2, summonHpReserve: 0.15, respawnCooldown: 6, guardSharePercent: 20 },
+    pvp: { hpMult: 1.3, attackMult: 1.6, defenseMult: 1, costMult: 0.75, lowHpReserve: 0.2, summonHpReserve: 0.15, respawnCooldown: 6, guardSharePercent: 45,
            damageTakenScale: 0.25, hitHpCap: 0.2, windowHpCap: 0.3 },
   },
   effects: {

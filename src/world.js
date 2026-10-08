@@ -480,7 +480,10 @@ WYD.world = {
     const ranged = WYD.data.player.rangedAttack;
     const reach = ranged ? ranged.range : WYD.data.player.attackRange + WYD.data.enemies[target.kind].radius;
     const d = WYD.util.dist(p, target);
-    if (ranged) {
+    const close = WYD.collector.closeReach(state);   // 蒐集者が近くで使う技をONにしているときは、その間合いまで寄る
+    if (ranged && close) {
+      if (d > close * 0.8) this.moveToward(p, target, stats.moveSpeed * dt, close * 0.6);
+    } else if (ranged) {
       // 遠くから撃つ職業：近づきすぎたら下がり、遠すぎたら近づく
       if (d > ranged.range * 0.9) this.moveToward(p, target, stats.moveSpeed * dt, ranged.range * 0.8);
       else if (d < ranged.keepDistance) this.moveAway(p, target, stats.moveSpeed * 0.8 * dt);
@@ -489,7 +492,7 @@ WYD.world = {
     }
 
     p.attackTimer -= dt;
-    if (d <= reach && p.attackTimer <= 0) {
+    if (d <= reach && p.attackTimer <= 0 && !WYD.collector.blocksAttack(state)) {   // 蒐集者の検証モードでは通常攻撃を止められる
       p.attackTimer = 1 / (stats.attackSpeed * (1 + (p.haste ? p.haste.percent : 0) / 100) * WYD.lgems.attackSpeedMult(w, state));
       p.atkAnim = WYD.data.anim.attack.time;
       p.face = target.x >= p.x ? 1 : -1;
@@ -541,7 +544,7 @@ WYD.world = {
 
   tryUseSkills(w, state, stats) {
     const p = w.player;
-    for (const id of WYD.data.skillOrder) {
+    for (const id of WYD.collector.order(state)) {   // 蒐集者は魔導書で決めた順
       const lv = state.player.skills[id] || 0;
       if (lv <= 0 || !state.player.skillEnabled[id]) continue;
       if ((p.skillCooldowns[id] || 0) > 0) continue;
@@ -554,6 +557,7 @@ WYD.world = {
       this.hitSkill = null;
       const extra = this.castExtra;
       this.castExtra = null;
+      if (!used) WYD.collector.misfire(w, state, stats, id, def);   // 検証モード：不発の理由を数える
       if (used) {
         WYD.results.add(w, "skill:" + id, { casts: 1 });
         WYD.vfx.cast(w, id, p.x, p.y, def.radius);
@@ -645,7 +649,7 @@ WYD.world = {
       const healPct = (s.healPercentBase + s.healPercentPerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
       const heal = Math.round(stats.maxHp * healPct / 100);
       this.healPlayer(w, stats.maxHp, heal, "skill:" + this.castingId);
-      p.buff = { defense: s.defenseBase + s.defensePerLevel * (lv - 1), timeLeft: s.duration, color: s.color };
+      p.buff = { defense: s.defenseBase + s.defensePerLevel * (lv - 1), timeLeft: s.duration, color: s.color, source: this.castingId };
       this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
       return true;
     },
@@ -714,7 +718,7 @@ WYD.world = {
       const p = w.player;
       const near = w.enemies.some((e) => WYD.util.dist(p, e) <= s.triggerRange);
       if (!near) return false;
-      p.haste = { percent: s.hasteBase + s.hastePerLevel * (lv - 1), timeLeft: s.duration, color: s.color };
+      p.haste = { percent: s.hasteBase + s.hastePerLevel * (lv - 1), timeLeft: s.duration, color: s.color, source: this.castingId };
       this.addText(w, p.x, p.y - 24, "剛力！", s.color);
       return true;
     },

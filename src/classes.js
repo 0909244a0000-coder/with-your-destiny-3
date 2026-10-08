@@ -27,6 +27,7 @@ WYD.classes = {
       const v = c.player[k];
       P[k] = v && typeof v === "object" && !Array.isArray(v) ? Object.assign({}, P[k], v) : v;
     }
+    if (c.collect) this.collect(c);
     if (c.skills) WYD.data.skills = c.skills;
     if (c.skillOrder) WYD.data.skillOrder = c.skillOrder;
     if (c.autoBuild) WYD.data.autoBuild = c.autoBuild;
@@ -34,6 +35,36 @@ WYD.classes = {
     // 最初の職業は今までと同じセーブの場所、ほかの職業は別の場所
     const first = Object.keys(WYD.data.classes)[0];
     WYD.save.KEY = this.id === first ? WYD.save.BASE_KEY : `${WYD.save.BASE_KEY}-${this.id}`;
+  },
+
+  // 蒐集者：全職業のスキルを、元のデータのまま（同じオブジェクトを指す）ひとつにまとめる。
+  // 元の職業の数値や処理を直すと、蒐集者にもそのまま反映される。owner = スキル → 元の職業
+  collect(c) {
+    const skills = {}, order = [], icons = {}, owner = {};
+    for (const id of WYD.data.collector.groups) {
+      const src = WYD.data.classes[id];
+      const list = src.skills || this.baseSkills;
+      const ids = src.skillOrder || Object.keys(list);
+      for (const sid of [...ids, ...Object.keys(list).filter((x) => !ids.includes(x))]) {
+        if (!list[sid] || skills[sid]) continue;
+        skills[sid] = list[sid]; order.push(sid); owner[sid] = id;
+      }
+      Object.assign(icons, WYD.data.skillIcons || {}, src.skillIcons || {});
+    }
+    c.skills = skills; c.skillOrder = order; c.skillIcons = icons;
+    WYD.data.collector.owner = owner;
+    // 召喚・変身などで使う他職業の絵も先に読む
+    const pre = new Set(c.player.preloadImages || []);
+    for (const id of WYD.data.collector.groups) for (const path of (WYD.data.classes[id].player || {}).preloadImages || []) pre.add(path);
+    c.player.preloadImages = [...pre];
+  },
+
+  // その職業の処理を動かすか：その職業そのもの、または蒐集者がその職業の技を使っているとき
+  acts(classId, state = WYD.state) {
+    if (this.id === classId) return true;
+    if (this.id !== "collector" || !state || !WYD.data.collector.owner) return false;
+    const pl = state.player, owner = WYD.data.collector.owner;
+    return Object.keys(owner).some((id) => owner[id] === classId && (pl.skills[id] || 0) > 0 && pl.skillEnabled[id]);
   },
 
   // 職業を切り替える（今のセーブを書いてから読み直す）
