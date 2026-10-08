@@ -30,8 +30,11 @@ const {chromium}=require('playwright'), assert=require('node:assert/strict'),pat
   const ne=D.data.arena.classSummons.necromancer;D.data.arena.classSummons.barbarian=ne;reset();const plain=D.allies.spawn(E.world,E.stats,{...def,hpRatio:.5,spawnSpread:0,firstAttackDelay:0,duration:20},.5,'unique');F.setEnemies(E.units());
   const boosted=near(plain.maxHp,Math.round(Math.round(E.stats.maxHp*.5)*ne.hpMult))&&plain.classSummon===true;const bh=plain.hp;b.frame.contentWindow.WYD.world.damageEnemy(F.world,F.state,plain,1e9,false);
   const classSummon=boosted&&near(bh-plain.hp,plain.maxHp*ne.hitHpCap);delete D.data.arena.classSummons.barbarian;
+  // 対人だけ：不動の大盾の数値を差しかえる（data/arena.js の combat.powerMods）
+  const aegisDef=D.data.uniques.list.find(u=>u.power==='skillBoostVajraAlways');E.state.equipment.offhand=null;const shield=D.loot.createUnique(E.state,20,aegisDef);E.state.equipment[shield.slot]=shield;
+  const pvpMods=D.stats.powers(E.state).skillBoostVajraAlways?.mods,aegisPvp=JSON.stringify(pvpMods)===JSON.stringify(C.powerMods.skillBoostVajraAlways)&&JSON.stringify(WYD.stats.powers({...E.state,classId:'barbarian'}).skillBoostVajraAlways?.mods)===JSON.stringify(aegisDef.params.mods);
   const unchanged=JSON.stringify(WYD.state)===original;A.close();
   const chase=near(E.stats.moveSpeed,D.stats.compute(E.state).moveSpeed*C.chaseSpeed.barbarian);
-  return{cloakHeal,chase,trapScale,single,sharedWindow,sliding,expires,reflection,lifesteal,healing,pressureHeal,pressureDamage,bind,noExtend,immune,recovery,summon,classSummon,unchanged};
+  return{cloakHeal,chase,trapScale,single,sharedWindow,sliding,expires,reflection,lifesteal,healing,pressureHeal,pressureDamage,bind,noExtend,immune,recovery,summon,classSummon,aegisPvp,unchanged};
  });for(const[k,v]of Object.entries(checks)){assert.equal(v,true,k);console.log('ok',k);}assert.deepEqual(errors,[]);console.log('errors 0');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});
