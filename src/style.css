@@ -1022,3 +1022,37 @@ html.m-ui #m-notices p { margin: 0 0 4px; font-size: 13px; font-weight: bold; li
 /* 奈落の双王の段階の選択（試練の欄の中） */
 .uber-pick { display: inline-flex; align-items: center; gap: 4px; }
 .uber-pick b { min-width: 3.2em; text-align: center; color: #ff9ae6; }
+
+/* 蒐集者の魔導書（src/grimoire.js） */
+#grimoire-open { font-size: 11px; padding: 0 6px; margin-left: 6px; }
+.grimoire-box { width: min(1100px, 96vw); max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; }
+.grimoire-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.grimoire-head h2 { margin: 0 auto 0 0; }
+.grimoire-help { font-size: 12px; margin: 6px 0; }
+.grimoire-cols { display: grid; grid-template-columns: 1.1fr 1.2fr 1.2fr; gap: 12px; }
+.grimoire-cols section { min-width: 0; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; padding: 8px; background: rgba(0,0,0,.18); }
+.grimoire-list { max-height: 64dvh; overflow-y: auto; }
+.grimoire-group h4 { display: flex; gap: 6px; align-items: center; margin: 8px 0 4px; font-size: 13px; }
+.grimoire-group h4 span { margin-right: auto; }
+.grimoire-group h4 button { font-size: 11px; padding: 0 6px; }
+.grimoire-skill { display: flex; width: 100%; gap: 6px; align-items: center; text-align: left; padding: 3px 6px; margin: 1px 0; font-size: 13px; }
+.grimoire-skill img { width: 22px; height: 22px; }
+.grimoire-skill.on { border-color: #4fb3a9; box-shadow: inset 3px 0 0 #4fb3a9; }
+.grimoire-skill.selected { background: rgba(79,179,169,.18); }
+.grimoire-skill small { margin-left: auto; opacity: .75; }
+.grimoire-detail dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; margin: 8px 0; }
+.grimoire-detail dt { opacity: .7; }
+.grimoire-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
+.grimoire-row input[type=number] { width: 80px; }
+#grimoire-active { padding-left: 20px; margin: 4px 0; font-size: 13px; }
+#grimoire-active li { display: flex; gap: 4px; align-items: center; margin: 2px 0; }
+#grimoire-active li span { margin-right: auto; }
+#grimoire-active button { font-size: 11px; padding: 0 5px; }
+.grimoire-table { overflow-x: auto; }
+.grimoire-table table { border-collapse: collapse; width: 100%; font-size: 12px; }
+.grimoire-table th, .grimoire-table td { padding: 3px 6px; border-bottom: 1px solid rgba(255,255,255,.1); text-align: right; white-space: nowrap; }
+.grimoire-table th:first-child, .grimoire-table td:first-child { text-align: left; }
+@media (max-width: 860px) { .grimoire-cols { grid-template-columns: 1fr; } .grimoire-list { max-height: 40dvh; } }
+.grimoire-detail h3 img, #grimoire-active img, .grimoire-skill img { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-right: 4px; flex: none; }
+.grimoire-detail h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; }
+.grimoire-detail select { max-width: 100%; }

@@ -962,11 +962,12 @@ WYD.ui = {
 
   toggleSkill(id) {
     const pl = this.state.player;
-    if (!pl.skillEnabled[id] && this.activeSkillCount() >= WYD.data.skillSlots) {
-      this.log(`スキルは同時に${WYD.data.skillSlots}つまで。先にどれかをOFFにしてください`, "#ff6b6b");
+    if (!pl.skillEnabled[id] && this.activeSkillCount() >= WYD.collector.slots(this.state)) {
+      this.log(`スキルは同時に${WYD.collector.slots(this.state)}つまで。先にどれかをOFFにしてください`, "#ff6b6b");
       return;
     }
     pl.skillEnabled[id] = !pl.skillEnabled[id];
+    if (!pl.skillEnabled[id] && WYD.collector.is()) WYD.collector.cleanup(this.world, this.state, id);   // 蒐集者：外した技の召喚などを残さない
   },
 
   // スキルポイントを自動で振る（設定「スキルを自動で上げる」）
@@ -982,7 +983,7 @@ WYD.ui = {
       const lv = (id) => pl.skills[id] || 0;
       const open = (id) => lv(id) < S[id].maxLevel;
       let pick = null;
-      if (this.activeSkillCount() < WYD.data.skillSlots) pick = order.find((id) => lv(id) === 0);
+      if (this.activeSkillCount() < WYD.collector.slots(this.state)) pick = order.find((id) => lv(id) === 0);
       if (!pick) pick = order.filter((id) => lv(id) > 0 && pl.skillEnabled[id] && open(id)).sort((a, b) => lv(a) - lv(b))[0];
       if (!pick) pick = order.filter((id) => lv(id) > 0 && open(id)).sort((a, b) => lv(a) - lv(b))[0];
       if (!pick) pick = order.find((id) => open(id));
@@ -1017,7 +1018,7 @@ WYD.ui = {
     const def = WYD.data.skills[id];
     if (pl.skillPoints <= 0 || pl.skills[id] >= def.maxLevel) return;
     // 新しく覚えたスキルは、枠が空いていればON、いっぱいならOFFにする
-    if ((pl.skills[id] || 0) === 0) pl.skillEnabled[id] = this.activeSkillCount() < WYD.data.skillSlots;
+    if ((pl.skills[id] || 0) === 0) pl.skillEnabled[id] = this.activeSkillCount() < WYD.collector.slots(this.state);
     pl.skills[id] = (pl.skills[id] || 0) + 1;
     pl.skillPoints--;
     this.log(`${def.name}が Lv${pl.skills[id]} になった`, def.color);
@@ -1073,7 +1074,7 @@ WYD.ui = {
     const ps = stats.powers.periodicSummon;
     if (ps) card("装備で呼ぶ味方", `${ps.interval}秒ごとに${ps.count}体`, [["最大HP", n(stats.maxHp * ps.hpRatio)],
       ["攻撃力", n(stats.attack * ps.attackMult * (1 + stats.skillDamage / 100))], ["防御力", n(stats.defense * ps.defenseRatio)], ["いられる時間", `${ps.duration}秒`]]);
-    if (WYD.classes.id === "puppeteer" && WYD.puppeteer) {
+    if (WYD.classes.acts("puppeteer", this.state) && WYD.puppeteer) {
       const P = WYD.data.puppeteer, Pp = WYD.puppeteer, desp = stats.powers.puppetDesperation;
       const col = (m) => { const v = Pp.values(stats, m); return { hp: n(v.maxHp), atk: n(v.attack * (1 + stats.skillDamage / 100)), def: n(v.defense),
         share: `${Math.max(m.guardSharePercent || 0, (stats.powers.puppetScapegoat || {}).sharePercent || 0)}%`, cost: `×${m.costMult}`, floor: `${Math.round(m.lowHpReserve * 100)}%`, wait: `${m.respawnCooldown}秒` }; };
@@ -1193,7 +1194,7 @@ WYD.ui = {
     // スキル
     this.$("skill-points").textContent = s.player.skillPoints;
     this.renderSkillHint();
-    this.$("skill-slots").textContent = `${this.activeSkillCount()} / ${WYD.data.skillSlots}`;
+    this.$("skill-slots").textContent = `${this.activeSkillCount()} / ${WYD.collector.slots(this.state)}`;
     const skillsHtml = Object.keys(WYD.data.skills).map((id) => {
       const def = WYD.data.skills[id];
       const lv = s.player.skills[id] || 0;

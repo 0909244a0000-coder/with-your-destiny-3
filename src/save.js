@@ -5,11 +5,25 @@ WYD.save = {
   BASE_KEY: "wyd3-save-v1",
   KEY: "wyd3-save-v1",   // 職業ごとに変わる（src/classes.js）
 
+  // 同時にONにできるスキルは WYD.data.skillSlots まで。超えていたら、おまかせの順（autoBuild → skillOrder）で先のものを残す。
+  // 前の版や構成の読み込みで4つ以上ONになったセーブも、ここでルールどおりにもどる。
+  limitSkills(state) {
+    const pl = state.player, S = WYD.data.skills;
+    const order = [...new Set([...(WYD.data.autoBuild || []), ...(WYD.data.skillOrder || []), ...Object.keys(S)])].filter((id) => S[id]);
+    let on = 0;
+    for (const id of order) {
+      if (!pl.skillEnabled[id] || !((pl.skills[id] || 0) > 0)) continue;
+      if (on < (WYD.collector ? WYD.collector.slots(state) : WYD.data.skillSlots)) on++;   // 蒐集者の検証モードは制限なし
+      else pl.skillEnabled[id] = false;
+    }
+  },
+
   newState() {
     const skills = {};
     const enabled = {};
     for (const id in WYD.data.skills) {
       skills[id] = WYD.data.skills[id].startLevel;
+      if (WYD.data.classes[WYD.classes.id] && WYD.data.classes[WYD.classes.id].collect) skills[id] = Math.max(1, skills[id]);   // 蒐集者：全部の技をはじめから選べる
       enabled[id] = true;
     }
     return {
@@ -61,7 +75,7 @@ WYD.save = {
   load() {
     try {
       let text = localStorage.getItem(this.KEY);
-      if (!text) { const fresh = this.newState(); WYD.runeSkills.migrate(fresh); return fresh; }
+      if (!text) { const fresh = this.newState(); this.limitSkills(fresh); WYD.runeSkills.migrate(fresh); return fresh; }
       let saved;
       try {
         saved = JSON.parse(text);
@@ -90,6 +104,7 @@ WYD.save = {
       WYD.training.ensure(state);
       state.player.runes = Object.assign({}, saved.player && saved.player.runes);
       state.player.skillEnabled = Object.assign(this.newState().player.skillEnabled, saved.player && saved.player.skillEnabled);
+      this.limitSkills(state);
       state.settings = Object.assign(this.newState().settings, saved.settings);
       state.settings.filter = Object.assign(this.newState().settings.filter, saved.settings && saved.settings.filter);
       // エリアがなかった頃のセーブや、消えたエリアにいた場合は最初のエリアにする

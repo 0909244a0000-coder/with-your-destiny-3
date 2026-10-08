@@ -116,7 +116,7 @@ WYD.arenaEngine = {
       const C = WYD.data.arena.combat;
       amount = receiver.limitDamage(target, amount * E.takenRule(target).scale * E.pressureDamage());
       // 傀儡師の本体への攻撃は、PvP用の人形が一部を肩代わりする（data/puppeteer.js の modes.pvp）
-      if (target.arenaMain && receiver.classId === "puppeteer" && WYD.puppeteer)
+      if (target.arenaMain && receiver.actsPuppeteer() && WYD.puppeteer)
         amount = WYD.puppeteer.shield(receiver.world, amount, WYD.puppeteer.sharePercent(receiver.stats.powers.puppetScapegoat));
       const actual = Math.min(target.hp, amount);
       if (E.hitContext && E.hitContext.target === target) Object.assign(E.hitContext, { raw, actual });
@@ -205,6 +205,7 @@ WYD.arenaEngine = {
     const C = WYD.data.arena.combat;
     return C.healScale * (1 - this.pressure() * (1 - C.pressureHealMin));
   },
+  actsPuppeteer() { return WYD.classes.acts("puppeteer", this.state); },   // 傀儡師、または人形の技を使う蒐集者
   // 受けるダメージの規則：本人／傀儡師の人形（PvP用、data/puppeteer.js）／ふつうの召喚
   takenRule(target) {
     const C = WYD.data.arena.combat, P = target.puppet && WYD.data.puppeteer && WYD.data.puppeteer.modes.pvp;
