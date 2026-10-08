@@ -507,6 +507,7 @@ WYD.world = {
       WYD.vfx.spawn(w, slashKey, target.x, target.y, { angle: Math.atan2(target.y - p.y, target.x - p.x) });
       this.playerHit(w, state, stats, target, stats.attack);
       this.tryThunder(w, state, stats, target);
+      this.tryGod(w, state, stats, target);
       // 固有能力：狂王の籠手（狂戦士の怒りの間、周りにも当たる）
       const cleave = stats.powers.hasteCleave;
       if (cleave && p.haste) {
@@ -531,6 +532,7 @@ WYD.world = {
         if (e && e.hp > 0) {
           this.playerHit(w, state, stats, e, stats.attack);
           this.tryThunder(w, state, stats, e);
+          this.tryGod(w, state, stats, e);
         }
         WYD.fx.burst(w, b.tx, b.ty, { ...WYD.data.fx.hit, count: 8 }, R.color, { glow: true });
         continue;
@@ -1184,8 +1186,29 @@ WYD.world = {
     this.damageEnemy(w, state, e, hit.damage, false, "effect:thunder", false);
   },
 
+  // 神の能力（混沌の宝石。通常攻撃のときに発動。数値は data/gems.js の fusion）
+  tryGod(w, state, stats, e) {
+    const g = stats.god;
+    if (!g || e.hp <= 0) return;
+    const roll = Math.random() * 100, color = WYD.data.gems.godColor;
+    if (g.id === "stun" && roll < g.chance) {
+      e.stunTimer = Math.max(e.stunTimer || 0, e.boss ? g.sec * WYD.data.runes.bossBindMult : g.sec);
+      this.addText(w, e.x, e.y - 30, "スタン", color);
+    } else if (g.id === "echo" && roll < g.chance) {
+      this.playerHit(w, state, stats, e, stats.attack, "effect:godEcho");
+    } else if (g.id === "execute" && !e.boss && !e.arenaOwner && e.hp / e.maxHp * 100 <= g.hp && roll < g.chance) {
+      this.addText(w, e.x, e.y - 30, "断罪", color);
+      this.damageEnemy(w, state, e, e.hp, false, "effect:godExecute", false);
+    } else if (g.id === "nova" && roll < g.chance) {
+      this.explode(w, state, stats, e.x, e.y, g.radius, g.mult, g.color, "effect:godNova");
+    } else if (g.id === "mark") {
+      e.markUntil = (w.time || 0) + g.sec; e.markPercent = g.v;
+    }
+  },
+
   damageEnemy(w, state, e, damage, crit, source = "attack", canCrit = true) {
     if (e.hp <= 0) return;
+    if (e.markUntil > (w.time || 0)) damage = Math.round(damage * (1 + e.markPercent / 100));   // 神の能力：烙印
     // 精鋭の「守護」：盾の間はダメージを受けない
     if (e.shielded) {
       if (!e.blockTextCd || w.time - e.blockTextCd > 0.4) {
