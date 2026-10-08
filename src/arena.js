@@ -70,7 +70,7 @@ WYD.arena = {
     this.stop(); this.rosterEntries = this.roster();
     this.$("arena-picks").open = true;
     const esc = WYD.results.escape;
-    this.$("arena-roster").innerHTML = this.rosterEntries.map(r => `<label class="arena-roster-card${r.snapshot ? "" : " unavailable"}"><input type="checkbox" value="${r.id}" ${r.snapshot ? "" : "disabled"}><img src="${esc(r.image)}" alt=""><span><b>${esc(r.name)}</b><small>${r.snapshot ? "Lv" + r.level + (r.current ? " · 現在の構成" : " · 最後の保存") : esc(r.unavailable)}</small></span><select class="arena-team-pick" data-class="${r.id}" aria-label="${esc(r.name)}のチーム"><option value="">参加しない</option><option value="A">チームA</option><option value="B">チームB</option></select></label>`).join("");
+    this.$("arena-roster").innerHTML = this.rosterEntries.filter(r => WYD.classes.visible(r.id)).map(r => `<label class="arena-roster-card${r.snapshot ? "" : " unavailable"}"><input type="checkbox" value="${r.id}" ${r.snapshot ? "" : "disabled"}><img src="${esc(r.image)}" alt=""><span><b>${esc(r.name)}</b><small>${r.snapshot ? "Lv" + r.level + (r.current ? " · 現在の構成" : " · 最後の保存") : esc(r.unavailable)}</small></span><select class="arena-team-pick" data-class="${r.id}" aria-label="${esc(r.name)}のチーム"><option value="">参加しない</option><option value="A">チームA</option><option value="B">チームB</option></select></label>`).join("");
     this.chooseDefaults();
     this.$("arena-status").textContent = "参加キャラを選んで開戦。元の装備・ポイント・戦利品は変わりません。";
     this.$("arena-results").innerHTML = ""; this.draw();

@@ -85,7 +85,7 @@ WYD.ui = {
       e.target.value = "";
     };
     // 職業の切り替え
-    this.$("class-select").innerHTML = Object.keys(WYD.data.classes)
+    this.$("class-select").innerHTML = Object.keys(WYD.data.classes).filter((id) => WYD.classes.visible(id))   // 隠した職業（蒐集者など）は出さない
       .map((id) => `<option value="${id}" title="${WYD.data.classes[id].desc || ""}">${WYD.data.classes[id].name}</option>`).join("");
     this.$("class-select").value = WYD.classes.id;
     this.$("class-select").title = `${WYD.data.classes[WYD.classes.id].desc || ""}（職業を切り替える。キャラごとにセーブは別々）`;

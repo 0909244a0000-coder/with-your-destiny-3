@@ -59,6 +59,19 @@ WYD.classes = {
     c.player.preloadImages = [...pre];
   },
 
+  // キャラ選択・アリーナに出すか。hidden の職業は、URL に ?<職業ID>=1 をつけて開いたブラウザだけ出す（?<職業ID>=0 で元に戻す）。今その職業なら出す
+  visible(id) {
+    const c = WYD.data.classes[id];
+    if (!c || !c.hidden || id === this.id) return !!c;
+    const key = "wyd3-show-" + id;
+    try {
+      const q = new URLSearchParams(location.search).get(id);
+      if (q === "1") localStorage.setItem(key, "1");
+      if (q === "0") localStorage.removeItem(key);
+      return localStorage.getItem(key) === "1";
+    } catch (e) { return false; }
+  },
+
   // その職業の処理を動かすか：その職業そのもの、または蒐集者がその職業の技を使っているとき
   acts(classId, state = WYD.state) {
     if (this.id === classId) return true;
