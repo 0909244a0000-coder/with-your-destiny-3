@@ -62,13 +62,9 @@ WYD.stats = {
       const rw = WYD.gems.runeword(state.equipment[slot]);
       if (rw) for (const id in rw.bonus.effects || {}) if (id in totals) totals[id] += rw.bonus.effects[id];
     }
-    for (const slot in state.equipment) {
-      // 混沌の宝石（ソケット）の特殊効果
-      for (const key of (state.equipment[slot] || {}).sockets || []) {
-        if (!key) continue;
-        const fx = WYD.gems.effectsFor(key);
-        for (const id in fx) if (id in totals) totals[id] += fx[id];
-      }
+    for (const key of this.socketKeys(state)) {   // 混沌の宝石（ソケット）の特殊効果
+      const fx = WYD.gems.effectsFor(key);
+      for (const id in fx) if (id in totals) totals[id] += fx[id];
     }
     for (const slot in state.equipment) {
       const item = state.equipment[slot];
@@ -102,7 +98,35 @@ WYD.stats = {
     for (const c of WYD.devotion.owned(state)) { const d = WYD.loot.forClassDef(c.bonus); if (d.power && !out[d.power]) out[d.power] = d.params; }
     // カナイの箱に入れた能力（装備と同じ能力なら装備のほうが効く）
     for (const def of WYD.cube.active(state)) if (!out[def.power]) out[def.power] = def.params;
+    // 混沌の宝石の固有能力（同じ固有能力がほかにあれば、そちらが効く）
+    for (const key of this.socketKeys(state)) {
+      const pw = WYD.gems.powersFor(key);
+      for (const id in pw) if (!out[id]) out[id] = pw[id];
+    }
     return out;
+  },
+
+  // 身につけている装備のソケットの宝石（部位の順）
+  socketKeys(state) {
+    const out = [];
+    for (const slot in state.equipment) for (const key of (state.equipment[slot] || {}).sockets || []) if (key) out.push(key);
+    return out;
+  },
+
+  // 混沌の宝石の割合 { attack, defense, maxHp }（all は3つに足す）
+  socketPct(state) {
+    const out = { attack: 0, defense: 0, maxHp: 0 };
+    for (const key of this.socketKeys(state)) {
+      const p = WYD.gems.pctFor(key);
+      for (const k in out) out[k] += (p[k] || 0) + (p.all || 0);
+    }
+    return out;
+  },
+
+  // 神の能力（身につけて効くのは最初の1つだけ）
+  godPower(state) {
+    for (const key of this.socketKeys(state)) { const g = WYD.gems.godFor(key); if (g) return g; }
+    return null;
   },
 
   compute(state) {
@@ -145,6 +169,12 @@ WYD.stats = {
       critMultiplier: P.critMultiplier + fx.critDamage / 100,
       effects: fx,
     };
+    // 混沌の宝石：割合で上がる能力・神の能力
+    const pct = this.socketPct(state);
+    out.attack *= 1 + pct.attack / 100;
+    out.defense *= 1 + pct.defense / 100;
+    out.maxHp = Math.round(out.maxHp * (1 + pct.maxHp / 100));
+    out.god = this.godPower(state);
     if (P.maxHpMult != null) out.maxHp = Math.max(1, Math.round(out.maxHp * P.maxHpMult));
     WYD.forms.apply(out);   // 変身（src/forms.js）
     return WYD.shrines.apply(out);   // 祠の効果（src/shrines.js）

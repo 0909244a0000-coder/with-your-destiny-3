@@ -1,5 +1,6 @@
 // ソケットと宝石。宝石は「種類:段階」の名前で数だけ持つ（持ち物の枠は使わない）。
-// 混沌の宝石（合成で作る）は能力を名前に書きこむ："fused:attack=24,fx.lifesteal=3.5"（fx. = 特殊効果）
+// 混沌の宝石（合成で作る）は能力を名前に書きこむ："fused:attack=24,fx.lifesteal=3.5,pct.all=2,god.stun=chance~3|sec~0.5"
+//   （なし = 基本の能力、fx. = 特殊効果、pct. = 割合、pw. = 固有能力、god. = 神の能力。数値は data/gems.js の fusion）
 window.WYD = window.WYD || {};
 
 WYD.gems = {
@@ -12,8 +13,10 @@ WYD.gems = {
     const [id, t] = String(key).split(":");
     const G = WYD.data.gems;
     if (id === "fused") {
-      const lines = this.parseFused(t);
-      return lines ? { def: { id, name: G.fusion.name, color: G.fusion.color }, tier: 0, tierDef: { name: "", mult: 1 }, fused: true, lines } : null;
+      const lines = this.parseFused(String(key).slice(6));
+      if (!lines) return null;
+      const god = lines.some((l) => l.kind === "god");
+      return { def: { id, name: god ? G.fusion.godName : G.fusion.name, color: god ? G.godColor : G.fusion.color }, tier: 0, tierDef: { name: "", mult: 1 }, fused: true, god, lines };
     }
     // ルーン（"rune:el"）は段階なし
     if (id === "rune") {
@@ -26,16 +29,40 @@ WYD.gems = {
     return { def, tier, tierDef: G.tiers[tier] };
   },
 
-  // 混沌の宝石の能力 [{ kind, id, value }]（読めなければ null）
+  // 混沌の宝石の能力 [{ kind, id, value } / { kind, id, params }]（読めなければ null）
+  PREFIX: { "fx.": "effect", "pct.": "pct", "pw.": "power", "god.": "god" },
+  poolDef(kind, id) { return WYD.data.gems.fusion.pool.find((p) => p.kind === kind && p.id === id) || null; },
   parseFused(text) {
     if (!text) return null;
     const lines = String(text).split(",").map((part) => {
-      const [k, v] = part.split("="), value = Number(v);
-      const effect = k.startsWith("fx."), id = effect ? k.slice(3) : k;
-      const known = effect ? WYD.data.effects.list.some((d) => d.id === id) : !!WYD.data.items.stats[id];
-      return known && Number.isFinite(value) ? { kind: effect ? "effect" : "stat", id, value } : null;
+      const at = part.indexOf("="), k = part.slice(0, at), v = part.slice(at + 1);
+      if (at < 0) return null;
+      const pre = Object.keys(this.PREFIX).find((x) => k.startsWith(x));
+      const kind = pre ? this.PREFIX[pre] : "stat", id = pre ? k.slice(pre.length) : k;
+      if (kind === "power" || kind === "god") {
+        const def = this.poolDef(kind, id);
+        const params = Object.fromEntries(v.split("|").map((x) => x.split("~")).map(([n, x]) => [n, Number(x)]));
+        const ok = def && Object.keys(def.params).every((n) => Number.isFinite(params[n]));
+        return ok ? { kind, id, params } : null;
+      }
+      const value = Number(v);
+      const known = kind === "effect" ? WYD.data.effects.list.some((d) => d.id === id)
+        : kind === "pct" ? !!WYD.data.gems.fusion.pctNames[id] : !!WYD.data.items.stats[id];
+      return known && Number.isFinite(value) ? { kind, id, value } : null;
     });
-    return lines.length && lines.every(Boolean) ? lines : null;
+    if (!lines.length || !lines.every(Boolean) || lines.filter((l) => l.kind === "god").length > 1) return null;
+    return lines;
+  },
+
+  // 能力1行の説明
+  lineText(l) {
+    const F = WYD.data.gems.fusion;
+    if (l.kind === "stat") return WYD.util.formatStat(l.id, l.value);
+    if (l.kind === "effect") return WYD.util.formatEffect(WYD.data.effects.list.find((d) => d.id === l.id), l.value);
+    if (l.kind === "pct") return `${F.pctNames[l.id]} +${l.value}%`;
+    const def = this.poolDef(l.kind, l.id), v = { ...def.fixed, ...l.params };
+    const text = def.desc.replace(/\{(\w+)\}/g, (all, k) => (k in v ? String(v[k]) : all));
+    return l.kind === "god" ? `【神・${def.name}】${text}` : `【固有】${text}`;
   },
 
   name(key) {
@@ -89,16 +116,33 @@ WYD.gems = {
     return out;
   },
 
-  // その宝石の特殊効果 { 効果: 数値 }（混沌の宝石だけ）
-  effectsFor(key) {
+  // 混沌の宝石の能力を種類ごとに（ほかの宝石は空）
+  linesOf(key, kind) {
     const i = this.info(key);
-    return i && i.fused ? Object.fromEntries(i.lines.filter((l) => l.kind === "effect").map((l) => [l.id, l.value])) : {};
+    return i && i.fused ? i.lines.filter((l) => l.kind === kind) : [];
+  },
+  // 特殊効果 { 効果: 数値 }
+  effectsFor(key) { return Object.fromEntries(this.linesOf(key, "effect").map((l) => [l.id, l.value])); },
+  // 割合 { attack / defense / maxHp / all: % }
+  pctFor(key) { return Object.fromEntries(this.linesOf(key, "pct").map((l) => [l.id, l.value])); },
+  // 固有能力 { power: params }
+  powersFor(key) { return Object.fromEntries(this.linesOf(key, "power").map((l) => [l.id, { ...this.poolDef("power", l.id).fixed, ...l.params }])); },
+  // 神の能力 { id, ...params }（なければ null）
+  godFor(key) {
+    const l = this.linesOf(key, "god")[0];
+    return l ? { id: l.id, ...this.poolDef("god", l.id).fixed, ...l.params } : null;
+  },
+  isGod(key) { return !!this.godFor(key); },
+  // 身につけている装備に、神の混沌石がはまっているか（except の装備は数えない）
+  godEquipped(state, except) {
+    return Object.values(state.equipment).some((it) => it && it !== except && (it.sockets || []).some((k) => k && this.isGod(k)));
   },
 
   statsText(key, slot) {
-    const st = this.statsFor(key, slot), fx = this.effectsFor(key);
-    return Object.keys(st).map((k) => WYD.util.formatStat(k, st[k]))
-      .concat(Object.keys(fx).map((k) => WYD.util.formatEffect(WYD.data.effects.list.find((d) => d.id === k), fx[k]))).join("、");
+    const i = this.info(key);
+    if (i && i.fused) return i.lines.map((l) => this.lineText(l)).join("、");
+    const st = this.statsFor(key, slot);
+    return Object.keys(st).map((k) => WYD.util.formatStat(k, st[k])).join("、");
   },
 
   // ---- 宝石合成（数値は data/gems.js の fusion）----
@@ -121,16 +165,21 @@ WYD.gems = {
     return { use, total, need: F.need, ok: total >= F.need && state.materials >= F.cost };
   },
 
-  // 能力をランダムに決めて、混沌の宝石の名前（key）を作る
+  // 能力をランダムに決めて、混沌の宝石の名前（key）を作る（同じ能力は重ならない・神は1つまで）
   rollFused() {
-    const F = WYD.data.gems.fusion, U = WYD.util;
-    const n = U.pickWeighted(F.lineCount, (x) => x.weight).n, pool = [...F.pool], lines = [];
+    const F = WYD.data.gems.fusion, U = WYD.util, round = (x, d) => Number(x.toFixed(d));
+    const n = U.pickWeighted(F.lineCount, (x) => x.weight).n, lines = [];
+    let pool = [...F.pool];
     while (lines.length < n && pool.length) {
       const p = U.pickWeighted(pool, (x) => x.weight);
-      pool.splice(pool.indexOf(p), 1);
-      const decimals = p.kind === "effect" ? WYD.data.effects.list.find((d) => d.id === p.id).decimals : WYD.data.items.stats[p.id].decimals;
-      const value = Number((p.range[0] + Math.random() * (p.range[1] - p.range[0])).toFixed(decimals));
-      lines.push(`${p.kind === "effect" ? "fx." : ""}${p.id}=${value}`);
+      pool = pool.filter((x) => x !== p && !(p.kind === "god" && x.kind === "god"));
+      const pre = Object.keys(this.PREFIX).find((x) => this.PREFIX[x] === p.kind) || "";
+      if (p.params) {
+        lines.push(`${pre}${p.id}=` + Object.entries(p.params).map(([k, [lo, hi, d]]) => `${k}~${round(lo + Math.random() * (hi - lo), d)}`).join("|"));
+      } else {
+        const d = p.kind === "effect" ? WYD.data.effects.list.find((x) => x.id === p.id).decimals : p.kind === "pct" ? 1 : WYD.data.items.stats[p.id].decimals;
+        lines.push(`${pre}${p.id}=${round(p.range[0] + Math.random() * (p.range[1] - p.range[0]), d)}`);
+      }
     }
     return `fused:${lines.join(",")}`;
   },
@@ -195,6 +244,7 @@ WYD.gems = {
   // 宝石をはめる。できたら true
   socket(state, item, key) {
     if (!this.info(key) || this.info(key).rune) return false;
+    if (this.isGod(key) && this.godEquipped(state, null) && Object.values(state.equipment).includes(item)) return false;   // 身につけて効く神は1つだけ
     const i = this.freeSocket(item);
     if (i < 0 || !(state.gems[key] > 0)) return false;
     item.sockets[i] = key;

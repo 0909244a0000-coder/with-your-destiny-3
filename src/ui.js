@@ -1353,6 +1353,8 @@ WYD.ui = {
     if (WYD.gems.socket(this.state, item, key)) {
       this.log(`${item.name}に${WYD.gems.name(key)}をはめた（${WYD.gems.statsText(key, item.slot)}）`, WYD.gems.color(key));
       if (!(this.state.gems[key] > 0)) this.gemSelected = null;
+    } else if (WYD.gems.isGod(key) && WYD.gems.godEquipped(this.state, null) && Object.values(this.state.equipment).includes(item)) {
+      this.log("神の混沌石は、身につけている装備に1つまで（先に外してから）", "#ff6b6b");
     } else {
       this.log(`${item.name}には空いたソケットがない`, "#ff6b6b");
     }
@@ -1379,7 +1381,7 @@ WYD.ui = {
     if (keys.length === 0) return `<p class="muted">まだ宝石がない（精鋭とボスがよく落とす）</p>`;
     const F = G.fusion, plan = WYD.gems.fusionPlan(s), top = G.tiers[G.tiers.length - 1].name;
     const fusion = `<div class="gem-fusion"><button data-gem-fuse ${plan.ok ? "" : "disabled"} title="段階の低い宝石から使う。欠けた=1、1段ごとに${G.combineCount}倍（${top}=${Math.pow(G.combineCount, G.tiers.length - 1)}）">宝石合成 → <span style="color:${F.color}">${F.name}</span></button>` +
-      ` <small class="muted">種類も段階も混ぜて${top}${F.need / Math.pow(G.combineCount, G.tiers.length - 1)}個ぶん（今 ${Math.min(plan.total, F.need)} / ${F.need}${F.cost ? `・${WYD.data.crafting.materialName}${F.cost}個` : ""}）。能力の数も種類も数値もランダム</small></div>`;
+      ` <small class="muted">種類も段階も混ぜて${top}${F.need / Math.pow(G.combineCount, G.tiers.length - 1)}個ぶん（今 ${Math.min(plan.total, F.need)} / ${F.need}${F.cost ? `・${WYD.data.crafting.materialName}${F.cost}個` : ""}）。能力の数・種類・数値はランダム（割合・固有能力・神の能力も。神は身につけて1つだけ効く）</small></div>`;
     return fusion + keys.map((k) => {
       const info = WYD.gems.info(k);
       const cost = WYD.gems.combineCost(k);
