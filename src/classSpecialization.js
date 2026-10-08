@@ -190,7 +190,7 @@ for (const kind of Object.keys(WYD.world.skillHandlers)) {
   W.damageEnemy = function(w, state, e, ...args) {
     const before = e.hp, epoch = w.classEpoch || 0;
     const result = damage.call(this, w, state, e, ...args);
-    if (WYD.classes.id === "necromancer" && before > 0 && e.hp <= 0 && epoch === (w.classEpoch || 0) && !w.player.dead) {
+    if (WYD.classes.acts("necromancer", state) && before > 0 && e.hp <= 0 && epoch === (w.classEpoch || 0) && !w.player.dead) {
       const R = WYD.data.classSpecialization.skills.nec_nova;
       const corpses = w.necRemains || (w.necRemains = []);
       corpses.push({ x: e.x, y: e.y, life: R.corpseLife });

@@ -45,6 +45,7 @@ WYD.builds = {
     }
     // スキルは、覚えているものだけ ON にもどす
     for (const id in b.skillEnabled) if (id in state.player.skills) state.player.skillEnabled[id] = b.skillEnabled[id] && state.player.skills[id] > 0;
+    WYD.save.limitSkills(state);
     state.player.runes = Object.assign({}, b.runes);
     state.cube.slots = Object.assign({}, state.cube.slots, b.cube);
     if ("runeSkill" in b) state.runeSkills.equipped = state.runeSkills.skills.some(x=>x.id===b.runeSkill) ? b.runeSkill : null;

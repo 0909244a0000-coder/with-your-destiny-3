@@ -15,6 +15,7 @@ window.WYD = window.WYD || {};
   WYD.ui.init(state, world);
   WYD.results.init(world);
   WYD.arena.init();
+  WYD.grimoire.init();
   WYD.dps.init();
   WYD.runeSkillsUI.init();
   WYD.navigation.init();
