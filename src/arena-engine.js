@@ -37,6 +37,15 @@ WYD.arenaEngine = {
     const E = this, W = WYD.world;
     const damage = W.damageEnemy;
     E.nativeDamage = damage;
+    // 対人だけ、装備の固有能力（skillBoost〜）の数値を差しかえる（data/arena.js の combat.powerMods）
+    const powers = WYD.stats.powers;
+    WYD.stats.powers = function(...args) {
+      const out = powers.apply(this, args), mods = WYD.data.arena.combat.powerMods || {};
+      if (!Object.keys(mods).some(k => out[k])) return out;
+      const copy = { ...out };
+      for (const k in mods) if (copy[k]) copy[k] = { ...copy[k], mods: mods[k] };
+      return copy;
+    };
     const heal = W.healPlayer;
     W.healPlayer = function(w, maxHp, amount, source) {
       if (w.player.dead) return;
