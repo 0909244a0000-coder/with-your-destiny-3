@@ -27,7 +27,9 @@ WYD.data.arena = {
     summonDamageScale: 0.6, summonHitHpCap: 0.4, summonWindowHpCap: 1,
     reflectScale: 0.2, reflectRatioCap: 0.4, healScale: 0.5,
     // 回復専門の技は維持し、攻撃職の防御兼回復だけ追加補正。
-    skillHealScale: { asn_cloak: 0.7 },
+    skillHealScale: { asn_cloak: 0.7, sorc_warmth: 0.25 },   // 温もり（回復オーラ）は対人で1/4（2026-10-08。スキル威力で回復量がふえ、半分では対人の勝率がほぼ変わらなかった）
+    // 対人だけ、装備の固有能力の数値を差しかえる（src/arena-engine.js）。不動の大盾：HPが減っていなくても守りの技を使う→対人ではHP70%以下から・間隔0.85倍・時間1.2倍
+    powerMods: { skillBoostVajraAlways: { triggerHpPercent: ["set", 70], cooldown: ["mul", 0.85], duration: ["mul", 1.2] } },
     bindScale: 0.5, bindMax: 1, bindImmunity: 0.75,
     pressureStart: 30, pressureRamp: 60, pressureDamageMax: 2.5, pressureHealMin: 0.05,
   },
