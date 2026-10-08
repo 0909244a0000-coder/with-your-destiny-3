@@ -5,6 +5,7 @@ WYD.data.classes.collector = {
   name: "蒐集者",
   desc: "魔導書に全職業の技を集めた術者。好きな技を3つと、ルーンスキルを装着して戦う。検証モードでは枠の制限を外して、どの技が強さや不具合の原因かを調べられる",
   collect: true,   // 全職業のスキルを集める（src/classes.js）
+  hidden: true,    // ふだんはキャラ選択・アリーナに出さない（検証のときだけ。URLの最後に ?collector=1 で表示、?collector=0 で隠す。src/classes.js の visible）
   player: {
     className: "蒐集者", weaponName: "魔導書", color: "#4fb3a9",
     image: "assets/player_collector.png", imageFilter: null,

@@ -72,5 +72,11 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
  await page.evaluate(()=>{WYD.resetting=true;localStorage.setItem('wyd3-active-class','necromancer');});await page.reload();
  const other=await page.evaluate(()=>({open:document.getElementById('grimoire-open').hidden,slots:WYD.collector.slots(WYD.state),order:WYD.collector.order(WYD.state)===WYD.data.skillOrder,skills:Object.keys(WYD.data.skills).length}));
  assert.deepEqual(other,{open:true,slots:3,order:true,skills:9});
+ // ふだんは見えない（キャラ選択・アリーナ）。?collector=1 で開いたブラウザだけ出る、?collector=0 で戻る
+ const opts=()=>page.evaluate(()=>({select:[...document.querySelectorAll('#class-select option')].map(o=>o.value).includes('collector'),arena:(WYD.arena.open(),!!document.querySelector('#arena-roster input[value="collector"]'))}));
+ assert.deepEqual(await opts(),{select:false,arena:false},'ふだんは隠す');
+ await page.goto(url+'?collector=1');assert.deepEqual(await opts(),{select:true,arena:true},'?collector=1 で出る');
+ await page.goto(url);assert.deepEqual(await opts(),{select:true,arena:true},'そのブラウザでは出たまま');
+ await page.goto(url+'?collector=0');assert.deepEqual(await opts(),{select:false,arena:false},'?collector=0 で戻る');
  assert.deepEqual(errors,[]);console.log(JSON.stringify({core:{...core,rows:core.rows.length},ui,fx:{ring:fx.ring,hit:fx.hit}}));
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});
