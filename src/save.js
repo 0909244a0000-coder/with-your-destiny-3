@@ -5,6 +5,19 @@ WYD.save = {
   BASE_KEY: "wyd3-save-v1",
   KEY: "wyd3-save-v1",   // 職業ごとに変わる（src/classes.js）
 
+  // 同時にONにできるスキルは WYD.data.skillSlots まで。超えていたら、おまかせの順（autoBuild → skillOrder）で先のものを残す。
+  // 前の版や構成の読み込みで4つ以上ONになったセーブも、ここでルールどおりにもどる。
+  limitSkills(state) {
+    const pl = state.player, S = WYD.data.skills;
+    const order = [...new Set([...(WYD.data.autoBuild || []), ...(WYD.data.skillOrder || []), ...Object.keys(S)])].filter((id) => S[id]);
+    let on = 0;
+    for (const id of order) {
+      if (!pl.skillEnabled[id] || !((pl.skills[id] || 0) > 0)) continue;
+      if (on < WYD.data.skillSlots) on++;
+      else pl.skillEnabled[id] = false;
+    }
+  },
+
   newState() {
     const skills = {};
     const enabled = {};
@@ -90,6 +103,7 @@ WYD.save = {
       WYD.training.ensure(state);
       state.player.runes = Object.assign({}, saved.player && saved.player.runes);
       state.player.skillEnabled = Object.assign(this.newState().player.skillEnabled, saved.player && saved.player.skillEnabled);
+      this.limitSkills(state);
       state.settings = Object.assign(this.newState().settings, saved.settings);
       state.settings.filter = Object.assign(this.newState().settings.filter, saved.settings && saved.settings.filter);
       // エリアがなかった頃のセーブや、消えたエリアにいた場合は最初のエリアにする
