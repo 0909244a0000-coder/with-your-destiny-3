@@ -323,6 +323,9 @@
       </div>
       <p id="arena-selection" class="muted"></p>
       <div class="arena-actions"><button id="arena-start">開戦</button><button id="arena-pause" disabled>試合を停止</button><button id="arena-stop" disabled>中止</button></div>
+      <div class="arena-sim"><label>高速シミュレーター <select id="arena-sim-count" aria-label="回数"></select></label><button id="arena-sim-start">描画なしで回す</button><button id="arena-sim-stop" disabled>止める</button></div>
+      <p id="arena-sim-status" class="muted" role="status" aria-live="polite"></p>
+      <div id="arena-sim-results"></div>
       <p id="arena-status" role="status" aria-live="polite"></p>
       <canvas id="arena-canvas" aria-label="アリーナ戦闘画面"></canvas>
       <div id="arena-live" class="arena-live"></div>
@@ -456,6 +459,7 @@
   <script src="src/classSpecialization.js"></script>
 <script src="src/training.js"></script>
   <script src="src/arena.js"></script>
+  <script src="src/arena-sim.js"></script>
 <script src="src/dps.js"></script>
   <script src="src/navigation.js"></script>
   <script src="src/mobile.js"></script>
