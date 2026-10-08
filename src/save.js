@@ -13,7 +13,7 @@ WYD.save = {
     let on = 0;
     for (const id of order) {
       if (!pl.skillEnabled[id] || !((pl.skills[id] || 0) > 0)) continue;
-      if (on < WYD.data.skillSlots) on++;
+      if (on < (WYD.collector ? WYD.collector.slots(state) : WYD.data.skillSlots)) on++;   // 蒐集者の検証モードは制限なし
       else pl.skillEnabled[id] = false;
     }
   },
@@ -23,6 +23,7 @@ WYD.save = {
     const enabled = {};
     for (const id in WYD.data.skills) {
       skills[id] = WYD.data.skills[id].startLevel;
+      if (WYD.data.classes[WYD.classes.id] && WYD.data.classes[WYD.classes.id].collect) skills[id] = Math.max(1, skills[id]);   // 蒐集者：全部の技をはじめから選べる
       enabled[id] = true;
     }
     return {
@@ -74,7 +75,7 @@ WYD.save = {
   load() {
     try {
       let text = localStorage.getItem(this.KEY);
-      if (!text) { const fresh = this.newState(); WYD.runeSkills.migrate(fresh); return fresh; }
+      if (!text) { const fresh = this.newState(); this.limitSkills(fresh); WYD.runeSkills.migrate(fresh); return fresh; }
       let saved;
       try {
         saved = JSON.parse(text);

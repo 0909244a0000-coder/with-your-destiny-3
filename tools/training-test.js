@@ -17,9 +17,9 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
    pg.board={'9,5':true};T.learn(s,arts[0].id);s.materials=1e8;const respec=WYD.inventory.respec(s),fullRefund=respec.paragon===21&&pg.points===101&&!Object.keys(pg.board).length&&!T.current(s);
    const checks=[];
    for(const a of arts){
-    T.learn(s,a.id);T.equip(s,a.id);s.player.skills[a.skill]=6;s.player.skillEnabled[a.skill]=true;
+    pg.points=Math.max(pg.points,WYD.data.training.cost);/* 蒐集者は全職業の秘技（数が多い）を順に試すので、足りないぶんを足す */T.learn(s,a.id);T.equip(s,a.id);s.player.skills[a.skill]=6;s.player.skillEnabled[a.skill]=true;
     const w=W.create(),stats=WYD.stats.compute(s);w.town=false;w.time=0;w.player.x=400;w.player.y=300;w.player.maxHp=stats.maxHp;w.player.hp=stats.maxHp*.3;
-    const kind=Object.keys(WYD.data.enemies)[0];w.enemies=[0,1,2,3].map(i=>({id:100+i,kind,x:460+i*20,y:300,hp:1e8,maxHp:1e8,radius:10,defense:0,stunTimer:0}));w.allies=[{id:11,hp:1,maxHp:100,x:400,y:300,source:'test'}];if(WYD.puppeteer&&WYD.classes.id==='puppeteer')WYD.puppeteer.spawn(w,stats,0);
+    const kind=Object.keys(WYD.data.enemies)[0];w.enemies=[0,1,2,3].map(i=>({id:100+i,kind,x:460+i*20,y:300,hp:1e8,maxHp:1e8,radius:10,defense:0,stunTimer:0}));w.allies=[{id:11,hp:1,maxHp:100,x:400,y:300,source:'test'}];if(WYD.puppeteer&&WYD.classes.acts('puppeteer',s))WYD.puppeteer.spawn(w,stats,0);/* 蒐集者も人形の技をONにしていれば人形を出す */
     W.castingId=a.skill;W.hitSkill=a.skill;W.castExtra=null;const before=w.enemies[0].x;
     const used=W.skillHandlers[WYD.classes.kindOf(a.skill)].call(W,w,s,stats,WYD.runes.effectiveDef(s,a.skill),6);
     W.castingId=W.hitSkill=null;
@@ -40,15 +40,15 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
    }
    // OFF/習得0の技は自動発動しない。
    const a=arts[0];T.equip(s,a.id);for(const id in s.player.skillEnabled)s.player.skillEnabled[id]=false;const idle=W.create();W.tryUseSkills(idle,s,WYD.stats.compute(s));const off=!(idle.classTasks?.length||idle.effects.length||idle.bombs?.length||idle.necRemains?.length);
-   return{classId:s.classId,legacySafe,poor,learned,switched,build,persist,refunded,missingSafe,fullRefund,off,checks};
-  });for(const[k,v]of Object.entries(result))if(typeof v==='boolean')assert(v,result.classId+' '+k);for(const c of result.checks)for(const[k,v]of Object.entries(c))if(typeof v==='boolean')assert(v,c.id+' '+k);assert.equal(result.checks.length,2);report.push(result);
+   return{collector:WYD.data.classes[WYD.classes.id].collect?1:0,arts:WYD.data.training.arts.length,classId:s.classId,legacySafe,poor,learned,switched,build,persist,refunded,missingSafe,fullRefund,off,checks};
+  });for(const[k,v]of Object.entries(result))if(typeof v==='boolean')assert(v,result.classId+' '+k);for(const c of result.checks)for(const[k,v]of Object.entries(c))if(typeof v==='boolean')assert(v,c.id+' '+k);assert.equal(result.checks.length,result.collector?result.arts:2);/* 蒐集者は全職業の秘技 */report.push(result);
  }
  // 最後の職業のUI：不足/習得/切替/取り消し/全額返却。
  await page.evaluate(()=>{WYD.state.player.paragon.points=40;WYD.training.refund(WYD.state);WYD.ui.$('board-body').innerHTML=WYD.ui.boardHtml();WYD.ui.$('board').hidden=false});
  const learn=page.locator('[data-training-action="learn"]');await learn.first().click();assert.equal(await page.locator('.training-card.active').count(),1);await learn.first().click();assert.equal(await page.locator('.training-card.active').count(),1);
  require('node:fs').mkdirSync(path.resolve(__dirname,'../results'),{recursive:true});await page.screenshot({path:path.resolve(__dirname,'../results/training-390.png')});const before=await page.evaluate(()=>JSON.stringify(WYD.state));page.once('dialog',d=>d.dismiss());await page.locator('[data-training-action="refund"]').click();assert.equal(await page.evaluate(()=>JSON.stringify(WYD.state)),before);page.once('dialog',d=>d.accept());await page.locator('[data-training-action="refund"]').click();assert.equal(await page.locator('.training-card.active').count(),0);
  const ui=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>390,height:[...document.querySelectorAll('[data-training-action]')].every(b=>b.getBoundingClientRect().height>=48)}));assert(!ui.overflow&&ui.height);await page.setViewportSize({width:1920,height:1080});const desktop=await page.evaluate(()=>{const box=document.querySelector('.board-box'),rect=box.getBoundingClientRect();box.scrollTop=box.scrollHeight;const close=document.getElementById('board-close').getBoundingClientRect();return{bounded:rect.top>=0&&rect.bottom<=1080,closeReachable:close.bottom<=rect.bottom&&close.top>=rect.top}});assert(desktop.bounded&&desktop.closeReachable);await page.setViewportSize({width:390,height:844});const arena=await page.evaluate(async()=>{
- const A=WYD.arena,ids=Object.keys(WYD.data.classes),original=JSON.stringify(WYD.state),matches=[];
+ const A=WYD.arena,ids=Object.keys(WYD.data.classes).filter(id=>!WYD.data.classes[id].collect)/* 蒐集者は職業専用の秘技がない */,original=JSON.stringify(WYD.state),matches=[];
  for(let round=0;round<2;round++){
   const snapshots={};for(const id of ids){const copy=JSON.parse(original),a=WYD.data.training.arts.filter(x=>x.classId===id)[round];copy.classId=id;copy.player.paragon.training={owned:{[a.id]:20},active:a.id};const skills=WYD.data.classes[id].skills||WYD.classes.baseSkills;copy.player.skills=Object.fromEntries(Object.keys(skills).map(k=>[k,6]));const on=[a.skill,...WYD.data.classes[id].autoBuild||WYD.data.autoBuild].slice(0,3);copy.player.skillEnabled=Object.fromEntries(Object.keys(skills).map(k=>[k,on.includes(k)]));snapshots[id]=copy;localStorage.setItem(A.key(id),JSON.stringify(copy));}
   // 現在の職業は本人の状態から読まれるので、テスト用構成を適用してから開始。

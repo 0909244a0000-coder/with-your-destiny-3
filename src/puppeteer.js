@@ -41,7 +41,7 @@ WYD.puppeteer = {
   sharePercent(scapegoat) { return Math.max(this.mode().guardSharePercent || 0, (scapegoat && scapegoat.sharePercent) || 0); },
   // 冒険の本体被ダメージ（world.receiveDamage から）
   absorb(w, amount) {
-    if (WYD.classes.id !== 'puppeteer') return amount;
+    if (!WYD.classes.acts('puppeteer')) return amount;
     return this.shield(w, amount, this.sharePercent(w.puppetScapegoat));
   },
   values(stats, m = this.mode()) {
@@ -67,7 +67,7 @@ WYD.puppeteer = {
     return true;
   },
   update(w, state, stats) {
-    if (WYD.classes.id !== 'puppeteer' || w.player.dead) return;
+    if (!WYD.classes.acts('puppeteer', state) || w.player.dead) return;   // 蒐集者も人形の技をONにしていれば動く
     w.puppetScapegoat = this.powers(stats).puppetScapegoat || null;
     const a = this.active(w);
     if (a) {
@@ -131,7 +131,7 @@ WYD.puppeteer = {
       tick: f.tick, tickTimer: f.tick, mult: f.mult * a.attack / Math.max(1, stats.attack), color: f.color });
   },
   cast(w, state, stats, s, lv) {
-    if (WYD.classes.id !== 'puppeteer') return false;
+    if (!WYD.classes.acts('puppeteer', state)) return false;
     const p = w.player, a = this.active(w), mult = s.effectMult || 1;
     if (s.mode === 'thread') {
       if (!a) return this.spawn(w, stats, s.hpCost);

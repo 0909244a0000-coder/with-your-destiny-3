@@ -1,7 +1,7 @@
 // 習得と装着は保存。追加攻撃は既存の有限classTasksに入り、階移動/死亡で破棄。
 window.WYD=window.WYD||{};
 WYD.training={
- list(state){return WYD.data.training.arts.filter(a=>a.classId===(state.classId||WYD.classes.id));},
+ list(state){const id=state.classId||WYD.classes.id;return WYD.data.training.arts.filter(a=>a.classId===id||WYD.data.classes[id]?.collect);},   // 蒐集者は全職業の秘技から選べる
  ensure(state){
   const pg=state.player.paragon,old=pg.training||{},owned={};
   for(const a of this.list(state))if(Number.isSafeInteger(old.owned?.[a.id])&&old.owned[a.id]>0)owned[a.id]=old.owned[a.id];
