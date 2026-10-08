@@ -10,6 +10,11 @@ WYD.data.arena = {
   formations: { slots: 6, nameLength: 32 },
   // 傭兵は出さない（加護もなし）。装備・スキル由来の召喚はそのまま出る。
   mercenary: false,
+  // 職業ごとの召喚の対人補正（傀儡師の人形は data/puppeteer.js の modes.pvp）。
+  //   hpMult/attackMult … 呼んだ時の HP・攻撃力の倍率　damageTakenScale/hitHpCap/windowHpCap … 受けるダメージの規則（combat の summon〜 の代わり）
+  classSummons: {
+    necromancer: { hpMult: 1.6, attackMult: 1.5, damageTakenScale: 0.4, hitHpCap: 0.25, windowHpCap: 0.6 },
+  },
   teamStart: { x: 0.25, rows: [0.25, 0.5, 0.75] },
   movement: { margin: 20 }, // 通常の移動と同じマップ境界。壁際では横へ逃げる。
   combat: {
