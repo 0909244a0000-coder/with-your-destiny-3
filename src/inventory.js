@@ -294,7 +294,7 @@ WYD.inventory = {
     return C.respecBase + C.respecPerLevel * state.player.level;
   },
 
-  // スキルと修練の振り直し。もどしたポイントの数 { skill, paragon } か、素材が足りなければ null
+  // スキルの振り直し（スキルの型も外れる）。修練（秘技・能力の盤面）はそのまま。もどしたポイントの数 { skill } か、素材が足りなければ null
   respec(state) {
     const cost = this.respecCost(state);
     if (state.materials < cost) return null;
@@ -310,12 +310,7 @@ WYD.inventory = {
     }
     pl.skillPoints += skill;
     pl.runes = {};
-    const pg = pl.paragon;
-    const boardPoints = Object.keys(pg.board).length;
-    const paragon = boardPoints + WYD.training.refund(state);
-    pg.board = {};
-    pg.points += boardPoints;
-    return { skill, paragon };
+    return { skill };
   },
 
   // 次の強化に必要な素材（もう上げられなければ null）

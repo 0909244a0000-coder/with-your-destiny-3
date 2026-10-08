@@ -139,7 +139,7 @@
       </section>
 
       <section class="panel">
-        <h2>スキル <small>残りポイント：<b id="skill-points">0</b>　使用中：<b id="skill-slots"></b></small> <button id="respec" title="使ったスキルポイントと修練ポイントを全部もどす（素材を使う）">振り直し</button> <button id="grimoire-open" hidden title="全職業の技を選ぶ・調べる（蒐集者）">魔導書</button></h2>
+        <h2>スキル <small>残りポイント：<b id="skill-points">0</b>　使用中：<b id="skill-slots"></b></small> <button id="respec" title="使ったスキルポイントを全部もどす（素材を使う。秘技と能力の盤面はそのまま）">振り直し</button> <button id="grimoire-open" hidden title="全職業の技を選ぶ・調べる（蒐集者）">魔導書</button></h2>
         <div id="skill-hint" class="skill-hint" hidden></div>
         <div id="skills"></div>
         <div id="rune-active" class="rune-active"></div>
@@ -332,14 +332,15 @@
   </div>
 
   <div id="arena" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="arena-title">
-    <div class="modal-box arena-box">
+    <div class="modal-box arena-box" data-view="watch">
       <div class="arena-heading"><div><h2 id="arena-title">バトルアリーナ</h2><span class="muted">育てたキャラ同士で、自動対戦</span></div><button id="arena-close">閉じる ×</button></div>
       <p class="arena-note">現在のキャラは今の構成、別キャラは最後に保存した構成を使用。レベル・装備・型・星座・箱・宝石をそのままコピーし、全快で開戦します。傭兵は出ません（装備・スキルの召喚は出ます）。冒険は一時停止。試合の報酬や消費はありません。</p>
       <p class="arena-note">対戦中は大ダメージ・連続攻撃・回復・反射・拘束を抑え、攻防が続く専用ルールを適用。本編の性能はそのままです。長期戦では徐々に火力が上がり、回復が弱まります。</p>
       <details><summary>対戦の補正を見る</summary><p id="arena-rule-summary" class="arena-help"></p></details>
       <div class="arena-controls">
         <label>モード <select id="arena-mode"><option value="duel">1対1</option><option value="royale">バトルロワイヤル</option><option value="teams">3対3</option></select></label>
-        <label>観戦速度 <select id="arena-speed"><option value="1">×1</option><option value="2">×2</option><option value="4">×4</option></select></label>
+        <label>見かた <select id="arena-view"><option value="watch">観戦</option><option value="sim">高速シミュレーター</option></select></label>
+        <label class="arena-watch-only">観戦速度 <select id="arena-speed"><option value="1">×1</option><option value="2">×2</option><option value="4">×4</option></select></label>
         <button id="arena-refresh">参加キャラを再読込</button>
       </div>
       <details id="arena-picks" open><summary>参加キャラを選ぶ</summary><div id="arena-roster" class="arena-roster"></div></details>
@@ -350,14 +351,14 @@
         <p class="arena-help">各チーム3人・同じキャラの重複なし。保存はメンバーのみ。開戦時は最新の育成状態を使用。回復オーラは味方キャラにも届き、攻撃オーラも範囲内で共有。攻撃オーラは最も強い1つが有効です。</p>
       </div>
       <p id="arena-selection" class="muted"></p>
-      <div class="arena-actions"><button id="arena-start">開戦</button><button id="arena-pause" disabled>試合を停止</button><button id="arena-stop" disabled>中止</button></div>
-      <div class="arena-sim"><label>高速シミュレーター <select id="arena-sim-count" aria-label="回数"></select></label><button id="arena-sim-start">描画なしで回す</button><button id="arena-sim-stop" disabled>止める</button></div>
-      <p id="arena-sim-status" class="muted" role="status" aria-live="polite"></p>
-      <div id="arena-sim-results"></div>
-      <p id="arena-status" role="status" aria-live="polite"></p>
-      <canvas id="arena-canvas" aria-label="アリーナ戦闘画面"></canvas>
-      <div id="arena-live" class="arena-live"></div>
-      <div id="arena-results"></div>
+      <div class="arena-actions arena-watch-only"><button id="arena-start">開戦</button><button id="arena-pause" disabled>試合を停止</button><button id="arena-stop" disabled>中止</button></div>
+      <div class="arena-sim arena-sim-only"><label>高速シミュレーター <select id="arena-sim-count" aria-label="回数"></select></label><button id="arena-sim-start">描画なしで回す</button><button id="arena-sim-stop" disabled>止める</button></div>
+      <p id="arena-sim-status" class="muted arena-sim-only" role="status" aria-live="polite"></p>
+      <div id="arena-sim-results" class="arena-sim-only"></div>
+      <p id="arena-status" class="arena-watch-only" role="status" aria-live="polite"></p>
+      <canvas id="arena-canvas" class="arena-watch-only" aria-label="アリーナ戦闘画面"></canvas>
+      <div id="arena-live" class="arena-live arena-watch-only"></div>
+      <div id="arena-results" class="arena-watch-only"></div>
       <p class="muted arena-help">未育成のキャラは参加できません。上の「キャラ」で別職業を育てると追加されます。召喚は同じ陣営。<span id="arena-time-limit"></span>秒で決着しなければ残った陣営は同順位です。3対3は相手チーム全員を倒すと勝利。時間切れはチーム同順位。</p>
       <div id="arena-frames" hidden></div>
     </div>

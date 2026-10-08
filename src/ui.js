@@ -154,9 +154,9 @@ WYD.ui = {
       const cost = WYD.inventory.respecCost(s);
       const C = WYD.data.crafting;
       if (s.materials < cost) return this.log(`振り直しには${C.materialName}が${cost}個いる（持っている数 ${s.materials}）`, "#ff6b6b");
-      if (!confirm(`${C.materialName}を${cost}個使って、スキルと修練のポイントを全部もどしますか？（スキルの型も外れます）`)) return;
+      if (!confirm(`${C.materialName}を${cost}個使って、スキルポイントを全部もどしますか？（スキルの型も外れます。秘技と能力の盤面はそのままです）`)) return;
       const r = WYD.inventory.respec(s);
-      this.log(`振り直した：スキルポイント +${r.skill}、修練ポイント +${r.paragon}（${C.materialName} -${cost}）`, "#7dff8a");
+      this.log(`振り直した：スキルポイント +${r.skill}（${C.materialName} -${cost}）`, "#7dff8a");
       // 自動で振る設定のままだと、次に敵を倒した瞬間に全部振られてしまうので、いったんOFFにして選び直してもらう
       if (s.settings.autoSkill) {
         s.settings.autoSkill = false;

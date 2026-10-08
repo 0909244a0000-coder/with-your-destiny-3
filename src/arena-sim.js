@@ -10,6 +10,14 @@ WYD.arenaSim = {
     $("arena-sim-count").innerHTML = S.counts.map(n => `<option value="${n}" ${n === S.defaultCount ? "selected" : ""}>${n}回</option>`).join("");
     $("arena-sim-start").onclick = () => this.run(Number($("arena-sim-count").value)).catch(e => { $("arena-sim-status").textContent = "回せませんでした：" + e.message; });
     $("arena-sim-stop").onclick = () => { this.cancel = true; };
+    $("arena-view").onchange = () => this.view($("arena-view").value);
+  },
+
+  // 見かたの切りかえ：watch = 観戦（今までの1試合を見る）　sim = 高速シミュレーター
+  view(name) {
+    this.$("arena-view").value = name;
+    this.$("arena").querySelector(".arena-box").dataset.view = name;
+    if (name === "watch") WYD.arena.draw();   // 隠れていた戦場を描きなおす
   },
 
   controls() {
@@ -17,6 +25,7 @@ WYD.arenaSim = {
     this.$("arena-sim-start").disabled = this.running || A.loading || A.running;
     this.$("arena-sim-count").disabled = this.running;
     this.$("arena-sim-stop").disabled = !this.running;
+    this.$("arena-view").disabled = this.running || A.loading || A.running;   // 試合中・シミュレーター中は切りかえない
   },
 
   // count 回戦わせる。終わったら集計を返す（途中で止めたときは、そこまでの集計）

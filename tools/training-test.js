@@ -1,4 +1,4 @@
-// node tools/training-test.js：全職業の秘技の実発動/振り直し/旧保存/ビルド/390px。
+// node tools/training-test.js：全職業の秘技の実発動/振り直し（秘技だけ・スキルの振り直しでは残る）/旧保存/ビルド/390px。
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),path=require('node:path');
 (async()=>{const browser=await chromium.launch();try{
  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('file://'+path.resolve(__dirname,'../index.html'));
@@ -14,7 +14,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
    WYD.builds.save(s,0,'秘技');T.equip(s,arts[1].id);WYD.builds.load(s,0);const build=T.current(s).id===arts[0].id;
    WYD.save.write(s);const loaded=WYD.save.load(),persist=T.current(loaded).id===arts[0].id&&loaded.player.paragon.points===60;
    const refunded=T.refund(s)===40&&pg.points===100&&T.refund(s)===0&&!T.equip(s,arts[0].id);WYD.builds.load(s,0);const missingSafe=T.current(s)===null;
-   pg.board={'9,5':true};T.learn(s,arts[0].id);s.materials=1e8;const respec=WYD.inventory.respec(s),fullRefund=respec.paragon===21&&pg.points===101&&!Object.keys(pg.board).length&&!T.current(s);
+   pg.board={'9,5':true};T.learn(s,arts[0].id);s.materials=1e8;const pointsBefore=pg.points,respec=WYD.inventory.respec(s),keepParagon=respec.paragon===undefined&&pg.points===pointsBefore&&!!pg.board['9,5']&&T.current(s)?.id===arts[0].id;/* スキルの振り直しは秘技・能力の盤面をもどさない */
    const checks=[];
    for(const a of arts){
     pg.points=Math.max(pg.points,WYD.data.training.cost);/* 蒐集者は全職業の秘技（数が多い）を順に試すので、足りないぶんを足す */T.learn(s,a.id);T.equip(s,a.id);s.player.skills[a.skill]=6;s.player.skillEnabled[a.skill]=true;
@@ -40,7 +40,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
    }
    // OFF/習得0の技は自動発動しない。
    const a=arts[0];T.equip(s,a.id);for(const id in s.player.skillEnabled)s.player.skillEnabled[id]=false;const idle=W.create();W.tryUseSkills(idle,s,WYD.stats.compute(s));const off=!(idle.classTasks?.length||idle.effects.length||idle.bombs?.length||idle.necRemains?.length);
-   return{collector:WYD.data.classes[WYD.classes.id].collect?1:0,arts:WYD.data.training.arts.length,classId:s.classId,legacySafe,poor,learned,switched,build,persist,refunded,missingSafe,fullRefund,off,checks};
+   return{collector:WYD.data.classes[WYD.classes.id].collect?1:0,arts:WYD.data.training.arts.length,classId:s.classId,legacySafe,poor,learned,switched,build,persist,refunded,missingSafe,keepParagon,off,checks};
   });for(const[k,v]of Object.entries(result))if(typeof v==='boolean')assert(v,result.classId+' '+k);for(const c of result.checks)for(const[k,v]of Object.entries(c))if(typeof v==='boolean')assert(v,c.id+' '+k);assert.equal(result.checks.length,result.collector?result.arts:2);/* 蒐集者は全職業の秘技 */report.push(result);
  }
  // 最後の職業のUI：不足/習得/切替/取り消し/全額返却。

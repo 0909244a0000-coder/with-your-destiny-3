@@ -42,7 +42,7 @@ WYD.data.crafting = {
     color: "#ff9a5a",
   },
 
-  // スキルと修練の振り直し：使ったポイントを全部もどす。素材 = respecBase + respecPerLevel × レベル
+  // スキルの振り直し：使ったスキルポイントを全部もどす（修練の秘技・能力の盤面はそのまま）。素材 = respecBase + respecPerLevel × レベル
   respecBase: 20,
   respecPerLevel: 2,
 
