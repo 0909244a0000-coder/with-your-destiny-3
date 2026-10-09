@@ -1,5 +1,5 @@
 // 装備画面（試作・リネレボ風）：左右に装備の枠、真ん中にキャラと戦闘力、右に持ち物（絞り込みのタブ）、下に能力と操作。
-// 枠・マスを選ぶと、いつもの装備の窓（src/ui.js の touchSheet）が出る。並びと数値は data/equipscreen.js。
+// 枠・マスを選ぶと、いつもの装備の窓（src/ui.js の touchSheet）が出る。マウスを乗せると性能、右クリックで捨てる、Ctrl＋クリックでロック。並びと数値は data/equipscreen.js。
 window.WYD = window.WYD || {};
 WYD.equipScreen = {
   opened: false,
@@ -10,7 +10,15 @@ WYD.equipScreen = {
     this.$ = $;
     $("equipscreen-close").onclick = () => this.close();
     $("equipscreen-open").onclick = () => { WYD.ui.toggleBag(false); this.open(); };
-    $("equipscreen-body").onclick = (e) => this.click(e);
+    const body = $("equipscreen-body");
+    body.onclick = (e) => this.click(e);
+    // マウスを乗せると性能（持ち物は今の装備との比べも）。説明は かばんと同じ（src/ui.js の showTooltipFor）
+    body.onmouseover = (e) => {
+      const el = e.target.closest('[data-es="item"],[data-es="slot"]');
+      if (el) WYD.ui.showTooltipFor(e, el.dataset.es === "item" ? "inv" : "eq"); else WYD.ui.hideTooltip();
+    };
+    body.onmouseleave = () => WYD.ui.hideTooltip();
+    WYD.ui.bindRightDiscard(body, "inv");   // 持ち物を右クリックで捨てる（かばんと同じ。ロックは捨てない）
   },
 
   open() {
@@ -45,7 +53,10 @@ WYD.equipScreen = {
     const s = WYD.state, ui = WYD.ui, el = e.target.closest("[data-es]");
     if (!el) return;
     const d = el.dataset;
-    if (d.es === "slot") { if (s.equipment[d.slot]) ui.touchSheet("eq", d.slot); return; }
+    // Ctrl＋クリックでロック（かばんと同じ）、ふつうのクリックで装備の窓
+    const item = d.es === "slot" ? s.equipment[d.slot] : d.es === "item" ? s.inventory[Number(d.index)] : null;
+    if (item && (e.ctrlKey || e.metaKey)) { ui.toggleLock(item); ui.changed(); this.render(); return; }
+    if (d.es === "slot") { if (item) ui.touchSheet("eq", d.slot); return; }
     if (d.es === "item") { ui.touchSheet("inv", Number(d.index)); return; }
     if (d.es === "tab") this.tab = d.tab;
     else if (d.es === "sort") WYD.inventory.sort(s.inventory);
@@ -63,7 +74,7 @@ WYD.equipScreen = {
     const D = WYD.data.equipScreen, ui = WYD.ui, esc = WYD.results.escape;
     if (!item) return `<button class="es-cell empty" ${attrs}><span class="es-empty">${esc(label || "")}</span></button>`;
     const color = ui.color(item), gems = (item.sockets || []).filter(Boolean).length;
-    return `<button class="es-cell" ${attrs} style="--c:${color};--g:${ui.glow(item)}" title="${esc(WYD.loot.label(item))}">` +
+    return `<button class="es-cell" ${attrs} style="--c:${color};--g:${ui.glow(item)}" aria-label="${esc(WYD.loot.label(item))}">` +
       `<b class="es-rarity">${D.rarityMark[item.rarity] || ""}</b>${item.plus ? `<b class="es-plus">+${item.plus}</b>` : ""}` +
       `${ui.iconImg(item) || `<span class="es-name">${esc(item.name)}</span>`}` +
       `<small class="es-lv">Lv.${item.level}</small>${item.locked ? `<i class="es-lock">🔒</i>` : ""}${gems ? `<i class="es-gem">◆${gems}</i>` : ""}${attrs.includes('"item"') ? ui.upgradeMark(item).replace("up-mark", "up-mark es-up") : ""}</button>`;

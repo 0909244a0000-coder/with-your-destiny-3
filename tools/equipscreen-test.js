@@ -1,4 +1,4 @@
-// 装備画面（試作・リネレボ風）：左右の装備の枠・キャラ・戦闘力・持ち物のタブ・下の能力・自動装備・並べ替え。マスを選ぶと装備の窓。
+// 装備画面（試作・リネレボ風）：左右の装備の枠・キャラ・戦闘力・持ち物のタブ・下の能力・自動装備・並べ替え。マスを選ぶと装備の窓、乗せると性能、Ctrl＋クリックでロック。
 // node tools/equipscreen-test.js
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
@@ -18,7 +18,8 @@ const path = require('node:path');
         s.settings.speed = 0; s.equipment = {};
         const weak = WYD.loot.create(s, 5, 0, { slot: 'weapon', rarity: 'magic' }); s.equipment.weapon = weak;
         const strong = WYD.loot.create(s, 40, 0, { slot: 'weapon', rarity: 'legend' }), ring = WYD.loot.create(s, 20, 0, { slot: 'ring', rarity: 'rare' });
-        s.inventory = [ring, strong, WYD.loot.createUnique(s, 20)];
+        const bodyUnique = WYD.data.uniques.list.find((u) => !u.uberOnly && WYD.data.items.bases.find((b) => b.id === u.base).slot === 'body');   /* タブの数を決めるため、胴のユニーク */
+        s.inventory = [ring, strong, WYD.loot.createUnique(s, 20, bodyUnique)];
         WYD.ui.changed(); WYD.navigation.open('bag');
         document.getElementById('equipscreen-open').click();
         const E = WYD.equipScreen, q = (sel) => document.querySelectorAll('#equipscreen ' + sel);
@@ -41,6 +42,19 @@ const path = require('node:path');
       assert.equal(r.tabs.all, 3); assert.equal(r.tabs.weapon, 1); assert.equal(r.tabs.jewelry, 1); assert.equal(r.tabs.special, 1); assert.equal(r.weaponTab, 1);
       assert(r.power0 > 0); assert(r.equipped, '自動装備'); assert(r.weakBack); assert(r.power1 > r.power0, '強い装備で戦闘力が上がる');
       assert(r.sheet, '枠を選ぶと装備の窓'); assert(r.closed, 'Escで閉じる'); assert(!r.overflow, '横にはみ出さない');
+      if (viewport.width > 500) {
+        // マウスを乗せると性能（持ち物は今の装備との比べも）、離すと消える。Ctrl＋クリックでロック
+        await page.evaluate(() => { WYD.state.inventory = [WYD.loot.create(WYD.state, 10, 0, { slot: 'head', rarity: 'rare' })]; WYD.ui.changed(); WYD.equipScreen.open(); });
+        await page.hover('#equipscreen [data-es="item"]');
+        const tip = await page.evaluate(() => { const t = document.getElementById('tooltip'); return { shown: getComputedStyle(t).display !== 'none', text: t.textContent }; });
+        assert(tip.shown, '性能が出ない'); assert.match(tip.text, /レア・頭/); assert.match(tip.text, /この部位は何も装備していない|いま装備中/);
+        await page.hover('#equipscreen [data-es="slot"][data-slot="weapon"]');
+        assert.match(await page.evaluate(() => document.getElementById('tooltip').textContent), /武器/);
+        await page.mouse.move(2, 2); await page.hover('#equipscreen .es-head');
+        assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('tooltip')).display), 'none', '離すと消える');
+        await page.click('#equipscreen [data-es="item"]', { modifiers: ['Control'] });
+        assert.equal(await page.evaluate(() => WYD.state.inventory[0].locked), true, 'Ctrl＋クリックでロック');
+      }
       assert.deepEqual(errors, []);
       console.log(viewport.width, JSON.stringify(r));
       await page.close();
