@@ -8,7 +8,7 @@ WYD.inventory = {
 
   add(state, item) {
     if (this.isFull(state)) return false;
-    item.isNew = true;   // 新しく手に入れた印（マウスを乗せる・装備の窓を開く・「NEWを消す」で消える）
+    item.isNew = true;   // 新しく手に入れた印（マウスを乗せる・装備の窓を開くと消える）
     state.inventory.push(item);
     return true;
   },

@@ -1,4 +1,4 @@
-// 新しく手に入れた装備・宝石の NEW の印：つく（拾う・ごほうび・合成）／つかない（外して戻す）、見ると消える、まとめて消す、保存される。
+// 新しく手に入れた装備・宝石の NEW の印：つく（拾う・ごほうび・合成）／つかない（外して戻す）、見ると消える、保存される（まとめて消すボタンはなくした）。
 // node tools/new-mark-test.js
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
@@ -18,15 +18,14 @@ const path = require('node:path');
       const a = WYD.loot.create(s, 10, 0, { slot: 'ring' }), b = WYD.loot.create(s, 10, 0, { slot: 'head' }), c = WYD.loot.create(s, 10, 0, { slot: 'feet' });
       for (const it of [a, b, c]) WYD.inventory.add(s, it);
       WYD.ui.changed(); WYD.equipScreen.open();
-      return { flags: [a.isNew, b.isNew, c.isNew], badges: document.querySelectorAll('#equipscreen .es-new').length, button: !!document.querySelector('[data-es="seenAll"]') };
+      return { flags: [a.isNew, b.isNew, c.isNew], badges: document.querySelectorAll('#equipscreen .es-new').length, button: !!document.querySelector('[data-es="seenAll"]') };   /* 「NEWを消す」はなくした */
     });
-    assert.deepEqual(items, { flags: [true, true, true], badges: 3, button: true });
+    assert.deepEqual(items, { flags: [true, true, true], badges: 3, button: false });
     await page.hover('#equipscreen [data-es="item"][data-index="0"]');
     assert.equal(await page.evaluate(() => WYD.state.inventory[0].isNew), undefined, '乗せると消える');
     await page.evaluate(() => { WYD.ui.touchSheet('inv', 1); WYD.ui.sheetAction('close'); });
     assert.equal(await page.evaluate(() => WYD.state.inventory[1].isNew), undefined, '装備の窓を開くと消える');
-    await page.evaluate(() => { WYD.equipScreen.render(); document.querySelector('[data-es="seenAll"]').click(); });
-    assert.deepEqual(await page.evaluate(() => ({ any: WYD.state.inventory.some(it => it.isNew), button: !!document.querySelector('[data-es="seenAll"]') })), { any: false, button: false });
+    assert.equal(await page.evaluate(() => WYD.state.inventory[2].isNew), true, '見ていないものは残る');
     // 宝石：手に入れると NEW、外して戻したものはつかない。宝石の画面に印、乗せると消える。まとめて消せる。保存される
     const gems = await page.evaluate(() => {
       const s = WYD.state, G = WYD.gems; WYD.equipScreen.close(); s.gems = {}; s.gemNew = {};
@@ -39,8 +38,7 @@ const path = require('node:path');
     assert.deepEqual(gems, { ruby: true, emerald: false, saved: { 'ruby:1': true, 'topaz:2': true }, badges: 2 });
     await page.hover('#gemvault [data-gv-key="ruby:1"]');
     assert.equal(await page.evaluate(() => WYD.gems.isNew(WYD.state, 'ruby:1')), false, '乗せると消える');
-    await page.evaluate(() => document.querySelector('[data-gv-act="seenAll"]').click());
-    assert.equal(await page.evaluate(() => Object.keys(WYD.state.gems).some(k => WYD.gems.isNew(WYD.state, k))), false, 'まとめて消す');
+    assert.deepEqual(await page.evaluate(() => ({ topaz: WYD.gems.isNew(WYD.state, 'topaz:2'), button: !!document.querySelector('[data-gv-act="seenAll"]') })), { topaz: true, button: false }, '見ていないものは残る・まとめて消すボタンはない');
     // 合成でできた宝石にも NEW
     const fused = await page.evaluate(() => { const s = WYD.state; s.gems = { 'ruby:4': 10 }; const k = WYD.gems.fuse(s); return WYD.gems.isNew(s, k); });
     assert(fused);
