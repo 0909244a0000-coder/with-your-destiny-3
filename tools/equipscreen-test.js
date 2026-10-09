@@ -23,10 +23,10 @@ const path = require('node:path');
         WYD.ui.changed(); WYD.navigation.open('bag');
         document.getElementById('character-open').click();   /* Status のアイコンで装備画面 */
         const E = WYD.equipScreen, q = (sel) => document.querySelectorAll('#equipscreen ' + sel);
-        const slots = q('[data-es="slot"]').length, items = q('[data-es="item"]').length;
+        const slots = q('[data-es="slot"]').length, items = q('.es-grid [data-es="item"]').length;   /* 並べ替えページの見本のマスは数えない */
         const tabs = Object.fromEntries([...q('[data-es="tab"]')].map((b) => [b.dataset.tab, Number(b.querySelector('b').textContent)]));
         const power0 = Number(document.querySelector('.es-power b').textContent.replace(/,/g, ''));
-        document.querySelector('[data-es="tab"][data-tab="weapon"]').click(); const weaponTab = q('[data-es="item"]').length;
+        document.querySelector('[data-es="tab"][data-tab="weapon"]').click(); const weaponTab = q('.es-grid [data-es="item"]').length;
         document.querySelector('[data-es="tab"][data-tab="all"]').click();
         WYD.inventory.autoEquipAll(s);   /* 自動装備のまとめ実行（右下のボタンは宝石合成に変えた） */
         const fuseOff = document.querySelector('[data-es="fuse"]').disabled; WYD.equipScreen.render();
@@ -56,13 +56,14 @@ const path = require('node:path');
         await page.click('#equipscreen [data-es="item"]', { modifiers: ['Control'] });
         assert.equal(await page.evaluate(() => WYD.state.inventory[0].locked), true, 'Ctrl＋クリックでロック');
         // 宝石のタブ：種類ごとに1マス（数・NEW・段階の印）。乗せると性能、押すと宝石の画面ではめ先を選ぶ
+        await page.mouse.move(2, 2);   /* 前の手順のマウスが宝石のマスに重なると NEW が消えるので離す */
         await page.evaluate(() => { const s = WYD.state; s.gems = {}; WYD.gems.gain(s, 'ruby:4', 2); s.gems['topaz:0'] = 3; WYD.ui.changed(); WYD.equipScreen.render(); document.querySelector('[data-es="tab"][data-tab="gems"]').click(); });
-        const gt = await page.evaluate(() => ({ count: Number(document.querySelector('[data-es="tab"][data-tab="gems"] b').textContent), cells: [...document.querySelectorAll('#equipscreen [data-es="gem"]')].map(c => c.dataset.key), news: document.querySelectorAll('#equipscreen .es-gemcell .new-badge').length }));
+        const gt = await page.evaluate(() => ({ count: Number(document.querySelector('[data-es="tab"][data-tab="gems"] b').textContent), cells: [...document.querySelectorAll('#equipscreen .es-grid [data-es="gem"]')].map(c => c.dataset.key), news: document.querySelectorAll('#equipscreen .es-grid .es-gemcell .new-badge').length }));
         assert.deepEqual(gt, { count: 2, cells: ['ruby:4', 'topaz:0'], news: 1 });
-        await page.hover('#equipscreen [data-es="gem"][data-key="ruby:4"]');
+        await page.hover('#equipscreen .es-grid [data-es="gem"][data-key="ruby:4"]');
         assert.match(await page.evaluate(() => document.getElementById('tooltip').textContent), /王者の ルビー ×2/);
         assert.equal(await page.evaluate(() => WYD.gems.isNew(WYD.state, 'ruby:4')), false, '乗せると NEW が消える');
-        await page.click('#equipscreen [data-es="gem"][data-key="topaz:0"]');
+        await page.click('#equipscreen .es-grid [data-es="gem"][data-key="topaz:0"]');
         assert.deepEqual(await page.evaluate(() => ({ vault: !document.getElementById('gemvault').hidden, picking: WYD.gemVault.picking })), { vault: true, picking: 'topaz:0' });
         await page.evaluate(() => WYD.gemVault.close());
         // 右下の宝石合成：量がたまると押せて、確認してから混沌の宝石を作る
@@ -129,48 +130,41 @@ const path = require('node:path');
       assert.equal(sort.shownGem, 'topaz:1'); assert.equal(sort.mode, 'count'); assert.equal(sort.page, 'equip');
       assert(sort.inventoryUnchanged, '表示順の変更で実際の持ち物順は変えない'); assert(!sort.overflow);
       // OP指定：特殊効果と能力値の数値で並べ、OPなしを最後に。クリック先は元の添字。
+      // OP指定（複数）：選んだOPを全部持つものだけ、高い順。ほかは隠す。持ち物の上に「絞り込み中」と解除
       const op = await page.evaluate(() => {
-        const S = WYD.state, E = WYD.equipScreen;
-        S.inventory = [
-          WYD.loot.create(S, 10, 0, { slot: 'head', rarity: 'magic' }),
-          WYD.loot.create(S, 10, 0, { slot: 'head', rarity: 'magic' }),
-          WYD.loot.create(S, 10, 0, { slot: 'head', rarity: 'magic' }),
-        ];
-        S.inventory[0].effects = [{ id: 'cooldown', value: 5 }];
-        S.inventory[1].effects = [];
-        S.inventory[2].effects = [{ id: 'cooldown', value: 12 }];
-        E.open('sort');
-        document.querySelector('[data-es="gear-sort"][data-mode="op"]').click();
-        const effectOrder = E.shown('all').map((entry) => entry.index);
-        const labels = [...document.querySelectorAll('.es-sort-card:first-child .es-sort-op-item small')].map((x) => x.textContent);
-        document.querySelector('[data-es-op]').value = 'stat:attack';
-        document.querySelector('[data-es-op]').dispatchEvent(new Event('change', { bubbles: true }));
-        S.inventory[0].stats = [{ stat: 'attack', value: 9, main: true }];
-        S.inventory[1].stats = [{ stat: 'attack', value: 15, main: true }];
-        S.inventory[2].stats = [{ stat: 'defense', value: 50, main: true }];
-        E.render();
-        const statOrder = E.shown('all').map((entry) => entry.index);
+        const S = WYD.state, E = WYD.equipScreen, ids = () => E.shown('all').map((e) => e.index);
+        S.inventory = [0, 1, 2].map(() => WYD.loot.create(S, 10, 0, { slot: 'head', rarity: 'magic' }));
+        S.inventory[0].effects = [{ id: 'cooldown', value: 5 }]; S.inventory[0].stats = [{ stat: 'attack', value: 9, main: true }];
+        S.inventory[1].effects = []; S.inventory[1].stats = [{ stat: 'attack', value: 15, main: true }];
+        S.inventory[2].effects = [{ id: 'cooldown', value: 12 }]; S.inventory[2].stats = [{ stat: 'defense', value: 50, main: true }];
+        E.opKeys = []; E.gearSort = 'default'; E.open('sort');
+        const toggle = (k) => document.querySelector(`[data-es="op-toggle"][data-op="${k}"]`).click();
+        toggle('effect:cooldown');
+        const one = ids(), labels = [...document.querySelectorAll('.es-sort-card:first-child .es-sort-op-item > small')].map((x) => x.textContent);
+        toggle('stat:attack'); const both = ids();
+        toggle('effect:cooldown'); const attack = ids();
+        const on = [...document.querySelectorAll('[data-es="op-toggle"].on')].map((b) => b.dataset.op);
         document.querySelector('[data-es="sort-jump"][data-tab="all"]').click();
-        const first = document.querySelector('.es-grid [data-es="item"]').dataset.index;
-        return { effectOrder, labels, statOrder, first, selected: E.opKey, mode: E.gearSort };
+        const note = document.querySelector('.es-op-note') && document.querySelector('.es-op-note').textContent, grid = [...document.querySelectorAll('.es-grid [data-es="item"]')].map((c) => c.dataset.index);
+        document.querySelector('.es-op-note [data-es="op-clear"]').click();
+        return { one, labels, both, attack, on, note, grid, cleared: ids(), noteGone: !document.querySelector('.es-op-note'), mode: E.gearSort };
       });
-      assert.deepEqual(op.effectOrder, [2, 0, 1]);
-      assert.deepEqual(op.labels, ['12%', '5%', 'なし']);
-      assert.deepEqual(op.statOrder, [1, 0, 2]);
-      assert.equal(op.first, '1'); assert.equal(op.selected, 'stat:attack'); assert.equal(op.mode, 'op');
+      assert.deepEqual(op.one, [2, 0], '持っていない装備は隠す・高い順'); assert.deepEqual(op.labels, ['12%', '5%']);
+      assert.deepEqual(op.both, [0], '複数は全部持つものだけ'); assert.deepEqual(op.attack, [1, 0]); assert.deepEqual(op.on, ['stat:attack']);
+      assert.match(op.note, /絞り込み中：攻撃力/); assert.deepEqual(op.grid, ['1', '0']);
+      assert.deepEqual(op.cleared, [0, 1, 2], '解除で全部もどる'); assert(op.noteGone);
       const gemOp = await page.evaluate(() => {
         const S = WYD.state, E = WYD.equipScreen;
-        S.gems = { 'ruby:1': 2, 'fused:fx.cooldown=3': 1, 'fused:fx.cooldown=7': 1 };
-        E.gemSort = 'tier'; E.gemOpKey = 'effect:cooldown'; E.open('sort');
-        document.querySelector('[data-es="gem-sort"][data-mode="op"]').click();
-        const effectOrder = E.gemKeys();
-        document.querySelector('[data-es-gem-op]').value = 'stat:attack';
-        document.querySelector('[data-es-gem-op]').dispatchEvent(new Event('change', { bubbles: true }));
-        return { effectOrder, statOrder: E.gemKeys(), mode: E.gemSort, selected: E.gemOpKey };
+        S.gems = { 'ruby:1': 2, 'fused:fx.cooldown=3': 1, 'fused:fx.cooldown=7': 1, 'fused:attack=20,fx.cooldown=5': 1 };
+        E.gemSort = 'tier'; E.gemOpKeys = []; E.open('sort');
+        const toggle = (k) => document.querySelector(`[data-es="gem-op-toggle"][data-op="${k}"]`).click();
+        toggle('effect:cooldown'); const cooldown = E.gemKeys();
+        toggle('stat:attack'); const both = E.gemKeys();
+        return { cooldown, both, mode: E.gemSort, selected: [...E.gemOpKeys] };
       });
-      assert.deepEqual(gemOp.effectOrder, ['fused:fx.cooldown=7', 'fused:fx.cooldown=3', 'ruby:1']);
-      assert.deepEqual(gemOp.statOrder, ['ruby:1', 'fused:fx.cooldown=7', 'fused:fx.cooldown=3']);
-      assert.equal(gemOp.mode, 'op'); assert.equal(gemOp.selected, 'stat:attack');
+      assert.deepEqual(gemOp.cooldown, ['fused:fx.cooldown=7', 'fused:attack=20,fx.cooldown=5', 'fused:fx.cooldown=3']);
+      assert.deepEqual(gemOp.both, ['fused:attack=20,fx.cooldown=5']);
+      assert.equal(gemOp.mode, 'op'); assert.deepEqual(gemOp.selected, ['effect:cooldown', 'stat:attack']);
       assert.deepEqual(errors, []);
       console.log(viewport.width, JSON.stringify(r));
       await page.close();
