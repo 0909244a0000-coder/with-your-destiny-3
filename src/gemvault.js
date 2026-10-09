@@ -42,6 +42,17 @@ WYD.gemVault = {
 
   seen(key) { WYD.gems.seen(WYD.state, key); },
 
+  // 宝石合成（使う宝石を見せて確認してから）。作ったら true。装備画面の「宝石合成」からも使う
+  fuseNow() {
+    const s = WYD.state, ui = WYD.ui, F = WYD.data.gems.fusion, plan = WYD.gems.fusionPlan(s);
+    if (!plan.ok) { ui.log("合成できない（宝石の量か素材が足りない）", "#ff6b6b"); return false; }
+    const list = Object.keys(plan.use).map((k) => `${WYD.gems.name(k)}×${plan.use[k]}`).join("、");
+    if (!confirm(`次の宝石を使って、${F.name}を1つ作りますか？（能力は完全ランダム）\n${list}`)) return false;
+    const key = WYD.gems.fuse(s);
+    if (key) ui.log(`${WYD.gems.name(key)}ができた：${WYD.gems.statsText(key)}`, WYD.gems.color(key));
+    return !!key;
+  },
+
   // 画面の外で宝石が増減したとき（src/ui.js の描きなおしから呼ぶ）
   refresh() { if (this.opened) this.render(); },
 
@@ -131,12 +142,7 @@ WYD.gemVault = {
     if (!b) return;
     const d = b.dataset;
     if (d.gvAct === "fuse") {
-      const plan = WYD.gems.fusionPlan(s), F = G.fusion;
-      if (!plan.ok) return ui.log("合成できない（宝石の量か素材が足りない）", "#ff6b6b");
-      const list = Object.keys(plan.use).map((k) => `${WYD.gems.name(k)}×${plan.use[k]}`).join("、");
-      if (!confirm(`次の宝石を使って、${F.name}を1つ作りますか？（能力は完全ランダム）\n${list}`)) return;
-      const key = WYD.gems.fuse(s);
-      if (key) ui.log(`${WYD.gems.name(key)}ができた：${WYD.gems.statsText(key)}`, WYD.gems.color(key));
+      if (!this.fuseNow()) return;
     } else if (d.gvAct === "combine") {
       const i = WYD.gems.info(d.key), next = i && WYD.gems.key(i.def.id, i.tier + 1);
       if (WYD.gems.combine(s, d.key)) ui.log(`${WYD.gems.name(d.key)}を合成して、${WYD.gems.name(next)}にした`, WYD.gems.color(d.key));

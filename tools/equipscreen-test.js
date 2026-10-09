@@ -28,7 +28,8 @@ const path = require('node:path');
         const power0 = Number(document.querySelector('.es-power b').textContent.replace(/,/g, ''));
         document.querySelector('[data-es="tab"][data-tab="weapon"]').click(); const weaponTab = q('[data-es="item"]').length;
         document.querySelector('[data-es="tab"][data-tab="all"]').click();
-        document.querySelector('[data-es="auto"]').click();
+        WYD.inventory.autoEquipAll(s);   /* 自動装備のまとめ実行（右下のボタンは宝石合成に変えた） */
+        const fuseOff = document.querySelector('[data-es="fuse"]').disabled; WYD.equipScreen.render();
         const equipped = s.equipment.weapon === strong && s.equipment.ring === ring, weakBack = s.inventory.includes(weak);
         const power1 = Number(document.querySelector('.es-power b').textContent.replace(/,/g, ''));
         document.querySelector('[data-es="slot"][data-slot="weapon"]').click();
@@ -36,11 +37,11 @@ const path = require('node:path');
         WYD.ui.sheetAction('close');
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); const closed = document.getElementById('equipscreen').hidden;
         const overflow = document.documentElement.scrollWidth > innerWidth;
-        return { slots, items, tabs, power0, weaponTab, equipped, weakBack, power1, sheet, closed, overflow, statCount: D.stats.length };
+        return { fuseOff, slots, items, tabs, power0, weaponTab, equipped, weakBack, power1, sheet, closed, overflow, statCount: D.stats.length };
       });
       assert.equal(r.slots, 9, '装備の枠'); assert.equal(r.items, 3);
       assert.equal(r.tabs.all, 3); assert.equal(r.tabs.weapon, 1); assert.equal(r.tabs.jewelry, 1); assert.equal(r.tabs.special, 1); assert.equal(r.weaponTab, 1);
-      assert(r.power0 > 0); assert(r.equipped, '自動装備'); assert(r.weakBack); assert(r.power1 > r.power0, '強い装備で戦闘力が上がる');
+      assert(r.fuseOff, '宝石が足りないと宝石合成は押せない'); assert(r.power0 > 0); assert(r.equipped, '自動装備'); assert(r.weakBack); assert(r.power1 > r.power0, '強い装備で戦闘力が上がる');
       assert(r.sheet, '枠を選ぶと装備の窓'); assert(r.closed, 'Escで閉じる'); assert(!r.overflow, '横にはみ出さない');
       if (viewport.width > 500) {
         // マウスを乗せると性能（持ち物は今の装備との比べも）、離すと消える。Ctrl＋クリックでロック
@@ -64,6 +65,12 @@ const path = require('node:path');
         await page.click('#equipscreen [data-es="gem"][data-key="topaz:0"]');
         assert.deepEqual(await page.evaluate(() => ({ vault: !document.getElementById('gemvault').hidden, picking: WYD.gemVault.picking })), { vault: true, picking: 'topaz:0' });
         await page.evaluate(() => WYD.gemVault.close());
+        // 右下の宝石合成：量がたまると押せて、確認してから混沌の宝石を作る
+        await page.evaluate(() => { const s = WYD.state; s.gems = { 'ruby:4': 10 }; WYD.ui.changed(); WYD.equipScreen.render(); });
+        assert.match(await page.evaluate(() => document.querySelector('[data-es="fuse"]').textContent), /810 \/ 810/);
+        page.once('dialog', d => d.accept());
+        await page.click('#equipscreen [data-es="fuse"]');
+        assert.deepEqual(await page.evaluate(() => Object.keys(WYD.state.gems).map(k => k.split(':')[0])), ['fused']);
       }
       assert.deepEqual(errors, []);
       console.log(viewport.width, JSON.stringify(r));
