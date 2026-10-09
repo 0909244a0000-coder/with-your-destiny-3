@@ -1630,7 +1630,8 @@ WYD.ui = {
       this.toggleCharacterDrawer(false);
       const cls = WYD.data.classes[WYD.classes.id];
       const portrait = this.$("equipment-portrait");
-      if (portrait && cls?.player?.image) portrait.src = cls.player.image;
+      // 初期職は差分が空なので、適用済みの共通プレイヤー画像を使う。
+      if (portrait) portrait.src = WYD.data.player.image || "assets/player.png";
       this.$("equipment-class-name").textContent = cls?.name || "冒険者";
       this.updateHudLayout();
       this.$('bag-close').focus();
