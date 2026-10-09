@@ -141,9 +141,8 @@
       <section class="panel">
         <h2>スキル <small>残りポイント：<b id="skill-points">0</b>　使用中：<b id="skill-slots"></b></small> <button id="respec" title="使ったスキルポイントを全部もどす（素材を使う。秘技と能力の盤面はそのまま）">振り直し</button> <button id="grimoire-open" hidden title="全職業の技を選ぶ・調べる（蒐集者）">魔導書</button></h2>
         <div id="skill-hint" class="skill-hint" hidden></div>
+        <div class="rune-feature"><div class="rune-feature-label">SLOT IV <span>ルーンスキル</span></div><div id="rune-active" class="rune-active"></div><button id="rune-open">抽選・装着する →</button></div>
         <div id="skills"></div>
-        <div id="rune-active" class="rune-active"></div>
-        <button id="rune-open">ルーンスキル：抽選・装着</button>
       </section>
 
       <details class="panel combat-results" id="combat-results">
@@ -222,7 +221,7 @@
         <div class="bag-col">
           <section class="panel" id="equipment-panel">
             <h2>装備 <small>クリックで外す／長押しでほかの操作</small></h2>
-            <div class="equipment-showcase"><img id="equipment-portrait" alt="現在のキャラクター"><div><small>現在の装備</small><strong id="equipment-class-name"></strong><span>装備を選んで比較・交換</span></div><span class="equipment-sigil" aria-hidden="true"></span></div>
+            <div class="equipment-showcase"><img id="equipment-portrait" alt="現在のキャラクター"><div><small>現在の装備</small><strong id="equipment-class-name"></strong><span id="equipment-class-desc"></span></div><span class="equipment-sigil" aria-hidden="true"></span></div>
             <div id="equipment" class="grid"></div>
             <div id="builds" class="builds"></div>
           </section>
@@ -240,9 +239,10 @@
             </div>
             <div class="inv-buttons">
               <button id="sort-inv" title="レア度の高い順、同じなら部位・強さの順に並べる">並べ替え</button>
-              <button id="discard-all" title="持ち物を全て素材にする。ロックした装備・装備中は対象外。実行前に確認します">全て捨てる</button>
               <button id="bag-gamble-open">キャダラの賭け</button>
+              <button id="discard-all" title="持ち物を全て素材にする。ロックした装備・装備中は対象外。実行前に確認します">全て捨てる</button>
             </div>
+            <div id="inventory-empty" class="inventory-empty" hidden><img src="assets/ui/nav-bag.webp" alt=""><div><strong>冒険の始まり</strong><p>まだ装備を持っていません。戦場で拾った装備はここに並びます。装備を選ぶと、比較・強化・宝石などの操作ができます。</p></div></div>
             <div id="inventory" class="grid"></div>
             <p class="muted" id="inv-help">装備を触ると操作を選べます。「全て捨てる」は確認後に持ち物を分解します（ロック除く）</p>
           </section>
@@ -271,7 +271,7 @@
   <!-- 宝石の画面（src/gemvault.js）：手元の宝石・はめている宝石、絞り込み・検索・並べ替え、はめる・外す・合成 -->
   <div id="gemvault" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="gemvault-title">
     <div class="modal-box gemvault-box">
-      <div class="gv-head"><h2 id="gemvault-title">宝石</h2><button id="gemvault-close">閉じる ×</button></div>
+      <div class="gv-head"><div class="gv-heading"><img src="assets/ui/nav-gems.webp" alt=""><div><span class="gv-eyebrow">THE GEM VAULT</span><h2 id="gemvault-title">宝石</h2><p>選ぶ・はめる・磨く。力の組み合わせを見つけよう。</p></div></div><button id="gemvault-close" aria-label="宝石の画面を閉じる">閉じる ×</button></div>
       <div class="gv-controls">
         <label>種類 <select id="gemvault-filter"><option value="all">すべて</option><option value="normal">ふつうの宝石</option><option value="fused">混沌の宝石</option><option value="god">神の混沌石</option></select></label>
         <label>並べ替え <select id="gemvault-sort"><option value="tier">段階・種類</option><option value="new">新しい順</option><option value="lines">能力の数</option><option value="value">検索した能力の強さ</option></select></label>
