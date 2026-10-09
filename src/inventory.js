@@ -209,6 +209,29 @@ WYD.inventory = {
     return { count, gained };
   },
 
+  // 「全て捨てる」で捨てるもの（ロック以外で、捨てる設定の決まりに当たらないもの）
+  discardTargets(state) {
+    return state.inventory.filter((it) => !it.locked && this.discardMatches(state, it));
+  },
+
+  discardMatches(state, item) {
+    const d = state.settings.discard || {};
+    if (d.rarities && d.rarities[item.rarity] === false) return false;
+    if (d.slots && d.slots[item.slot] === false) return false;
+    const sockets = item.sockets || [];
+    if (d.keepSockets > 0 && sockets.length >= d.keepSockets) return false;
+    if (d.keepEffects > 0 && (item.effects || []).length >= d.keepEffects) return false;
+    if (d.keepAncient && item.ancient > 0) return false;
+    if (d.keepWorked && (item.plus > 0 || item.forged > 0)) return false;
+    if (d.keepGems && (sockets.some((x) => x) || item.legacyRuneBonus)) return false;
+    if (d.keepBuild && this.keepReason(item, state) === "build") return false;
+    if (d.keepUpgrades) {
+      const cur = state.equipment[item.slot];
+      if (!cur || this.itemScore(item) > this.itemScore(cur) * (1 + WYD.data.items.autoEquip.minGain)) return false;
+    }
+    return true;
+  },
+
   // 自動分解の対象か（設定で選んだレア度以下。レジェンドとユニークは対象外）
   shouldAutoSalvage(state, item) {
     if (this.keepReason(item, state)) return false;
