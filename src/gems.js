@@ -205,6 +205,24 @@ WYD.gems = {
     return n;
   },
 
+  // 再合成（data/gems.js の fusion.refuse）：手元の混沌の宝石 keys（同じ key は数だけ並べる）をちょうど count 個使って、新しい混沌の宝石1個。
+  // できたら作った宝石の key、できなければ null
+  refuse(state, keys) {
+    const R = WYD.data.gems.fusion.refuse, need = {};
+    if (!Array.isArray(keys) || keys.length !== R.count || state.materials < R.cost) return null;
+    for (const k of keys) {
+      const i = this.info(k);
+      if (!i || !i.fused) return null;
+      need[k] = (need[k] || 0) + 1;
+    }
+    if (Object.keys(need).some((k) => (state.gems[k] || 0) < need[k])) return null;
+    state.materials -= R.cost;
+    for (const k in need) this.add(state, k, -need[k]);
+    const key = this.rollFused();
+    this.add(state, key);
+    return key;
+  },
+
   // 合成する。できたら作った宝石の key、できなければ null
   fuse(state) {
     const plan = this.fusionPlan(state);

@@ -1,5 +1,5 @@
 // 宝石の画面（持ち物とは別の窓）。手元の宝石・はめている宝石の一覧、絞り込み・検索・並べ替え、
-// はめる（はめ先を選ぶ）・外す・段階の合成・宝石合成（混沌の宝石）。宝石のしくみは src/gems.js、数値は data/gems.js。
+// はめる（はめ先を選ぶ）・外す・段階の合成・宝石合成（混沌の宝石）・再合成（混沌の宝石を選んで作り直す）。宝石のしくみは src/gems.js、数値は data/gems.js。
 window.WYD = window.WYD || {};
 WYD.gemVault = {
   opened: false,
@@ -7,6 +7,7 @@ WYD.gemVault = {
   query: "",       // 能力・名前で検索（空白区切りはすべてを含むもの）
   sort: "tier",    // tier = 段階・種類 / new = 新しい順 / lines = 能力の数 / value = 検索した能力の数値
   picking: null,   // はめ先を選んでいる宝石の key
+  chosen: {},      // 再合成に入れる混沌の宝石 { key: 数 }（合計は data/gems.js の fusion.refuse.count まで）
 
   init() {
     const $ = (id) => document.getElementById(id);
@@ -26,7 +27,7 @@ WYD.gemVault = {
   },
 
   close() {
-    this.opened = false; this.picking = null;
+    this.opened = false; this.picking = null; this.chosen = {};
     this.$("gemvault").hidden = true;
   },
 
@@ -98,6 +99,19 @@ WYD.gemVault = {
     return out;
   },
 
+  // 再合成に選んだ数（手元にない分は外す）
+  chosenTotal() {
+    const s = WYD.state;
+    for (const k in this.chosen) { this.chosen[k] = Math.min(this.chosen[k], s.gems[k] || 0); if (!this.chosen[k]) delete this.chosen[k]; }
+    return Object.values(this.chosen).reduce((n, v) => n + v, 0);
+  },
+  // 選ぶ・外す（同じ宝石は持っている数まで、合計は必要数まで）
+  choose(key) {
+    if (this.chosen[key]) { delete this.chosen[key]; return; }
+    const room = WYD.data.gems.fusion.refuse.count - this.chosenTotal(), n = Math.min(room, WYD.state.gems[key] || 0);
+    if (n > 0) this.chosen[key] = n;
+  },
+
   itemAt(where, k) { return where === "eq" ? WYD.state.equipment[k] : WYD.state.inventory[Number(k)]; },
   itemLabel(where, item) { return `${where === "eq" ? "装備中" : "持ち物"}・${WYD.data.items.slots[item.slot]}「${WYD.loot.label(item)}」`; },
 
@@ -116,6 +130,20 @@ WYD.gemVault = {
       const i = WYD.gems.info(d.key), next = i && WYD.gems.key(i.def.id, i.tier + 1);
       if (WYD.gems.combine(s, d.key)) ui.log(`${WYD.gems.name(d.key)}を合成して、${WYD.gems.name(next)}にした`, WYD.gems.color(d.key));
       else ui.log("合成できない（宝石の数か素材が足りない）", "#ff6b6b");
+    } else if (d.gvAct === "choose") {
+      this.choose(d.key);
+    } else if (d.gvAct === "chooseShown") {
+      for (const k of this.sorted(Object.keys(s.gems).filter((k) => s.gems[k] > 0 && this.matches(k) && WYD.gems.info(k).fused))) if (!this.chosen[k]) this.choose(k);
+    } else if (d.gvAct === "chooseClear") {
+      this.chosen = {};
+    } else if (d.gvAct === "refuse") {
+      const RF = G.fusion.refuse, keys = Object.entries(this.chosen).flatMap(([k, n]) => Array(n).fill(k));
+      if (keys.length !== RF.count) return ui.log(`再合成は混沌の宝石を${RF.count}個選ぶ`, "#ff6b6b");
+      if (!confirm(`選んだ混沌の宝石${RF.count}個をなくして、新しい混沌の宝石を1つ作りますか？（能力は完全ランダム）\n${keys.map((k) => WYD.gems.statsText(k)).join("\n")}`)) return;
+      const key = WYD.gems.refuse(s, keys);
+      this.chosen = {};
+      if (key) ui.log(`再合成で${WYD.gems.name(key)}ができた：${WYD.gems.statsText(key)}`, WYD.gems.color(key));
+      else ui.log("再合成できない（宝石か素材が足りない）", "#ff6b6b");
     } else if (d.gvAct === "pick") {
       this.picking = this.picking === d.key ? null : d.key;
     } else if (d.gvAct === "place") {
@@ -137,6 +165,10 @@ WYD.gemVault = {
     const top = G.tiers[G.tiers.length - 1].name, unit = Math.pow(G.combineCount, G.tiers.length - 1), plan = WYD.gems.fusionPlan(s);
     const fusion = `<div class="gv-fusion"><button data-gv-act="fuse" ${plan.ok ? "" : "disabled"} title="段階の低い宝石から使う。欠けた=1、1段ごとに${G.combineCount}倍（${top}=${unit}）">宝石合成 → <span style="color:${F.color}">${F.name}</span></button>` +
       ` <small class="muted">種類も段階も混ぜて${top}${F.need / unit}個ぶん（今 ${Math.min(plan.total, F.need)} / ${F.need}${F.cost ? `・${WYD.data.crafting.materialName}${F.cost}個` : ""}）。能力の数・種類・数値はランダム（割合・固有能力・神の能力も。神は身につけて1つだけ効く）</small></div>`;
+    const RF = F.refuse, picked = this.chosenTotal();
+    const refuse = `<div class="gv-fusion"><button data-gv-act="refuse" ${picked === RF.count && s.materials >= RF.cost ? "" : "disabled"}>再合成（${picked} / ${RF.count}）</button>` +
+      ` <button data-gv-act="chooseShown" title="今の絞り込み・検索・並べ替えで見えている混沌の宝石を、上から${RF.count}個まで選ぶ">見えている混沌の宝石を選ぶ</button> <button data-gv-act="chooseClear" ${picked ? "" : "disabled"}>選択を外す</button>` +
+      ` <small class="muted">手元の混沌の宝石（神もふくむ）を${RF.count}個選んで、新しい混沌の宝石1個に作り直す${RF.cost ? `（${WYD.data.crafting.materialName}${RF.cost}個）` : ""}。割は悪いので、使わない宝石の整理に</small></div>`;
     const card = (key, inner, extra = "") => {
       const i = WYD.gems.info(key);
       return `<div class="gv-card${extra}" style="border-color:${i.def.color}"><div><b style="color:${i.def.color}">◆ ${esc(WYD.gems.name(key))}</b>${inner.head || ""}<br><small>${esc(this.text(key))}</small></div><div class="gv-btns">${inner.btns || ""}</div>${inner.after || ""}</div>`;
@@ -147,7 +179,8 @@ WYD.gemVault = {
       const pick = this.picking === k, targets = pick ? this.targets(k) : [];
       const after = pick ? `<div class="gv-targets">${targets.length ? targets.map((t) => `<button data-gv-act="place" data-where="${t.where}" data-slot="${t.key}">${esc(this.itemLabel(t.where, t.item))}（空き${t.item.sockets.filter((x) => !x).length}）</button>`).join("") : `<span class="muted">空いたソケットのある装備がない</span>`}</div>` : "";
       return card(k, { head: ` ×${s.gems[k]}`, after,
-        btns: `<button data-gv-act="pick" data-key="${esc(k)}" class="${pick ? "active" : ""}">${pick ? "やめる" : "はめる"}</button>` +
+        btns: (i.fused ? `<button data-gv-act="choose" data-key="${esc(k)}" class="${this.chosen[k] ? "active" : ""}" title="再合成に入れる">${this.chosen[k] ? `選択中${this.chosen[k] > 1 ? "×" + this.chosen[k] : ""}` : "再合成に選ぶ"}</button>` : "") +
+          `<button data-gv-act="pick" data-key="${esc(k)}" class="${pick ? "active" : ""}">${pick ? "やめる" : "はめる"}</button>` +
           (canCombine ? `<button data-gv-act="combine" data-key="${esc(k)}" title="${G.combineCount}つと${WYD.data.crafting.materialName}${cost}個で1つ上の段階に">合成</button>` : "") }, pick ? " picking" : "");
     }).join("");
     const used = this.socketed().filter((x) => this.matches(x.key));
@@ -155,7 +188,7 @@ WYD.gemVault = {
     const usedHtml = usedSorted.map((x) => card(x.key, { head: ` <small class="muted">${esc(this.itemLabel(x.where, x.item))}</small>`,
       btns: `<button data-gv-act="remove" data-where="${x.where}" data-slot="${x.slotKey}" data-index="${x.index}">外す</button>` })).join("");
     const total = Object.values(s.gems).reduce((n, v) => n + v, 0);
-    this.$("gemvault-body").innerHTML = fusion +
+    this.$("gemvault-body").innerHTML = fusion + refuse +
       `<h3>手元の宝石 <small class="muted">${owned.length}種類（全部で${total}個）</small></h3><div class="gv-list">${ownedHtml || `<p class="muted">${total ? "条件に合う宝石がない" : "手元に宝石がない（精鋭とボスがよく落とす）"}</p>`}</div>` +
       `<h3>はめている宝石 <small class="muted">${usedSorted.length}個</small></h3><div class="gv-list">${usedHtml || `<p class="muted">${this.query || this.filter !== "all" ? "条件に合う宝石がない" : "はめている宝石がない"}</p>`}</div>`;
   },

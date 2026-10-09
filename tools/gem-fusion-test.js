@@ -1,4 +1,4 @@
-// 宝石合成（混沌の宝石）：種類も段階も混ぜて王者10個ぶん → ランダムな能力の宝石。基本の能力・特殊効果・割合・固有能力・神（身につけて1つ）。一度だけの巻き戻し。宝石の画面（絞り込み・検索・並べ替え・はめる・外す）。保存・表示。
+// 宝石合成（混沌の宝石）：種類も段階も混ぜて王者10個ぶん → ランダムな能力の宝石。基本の能力・特殊効果・割合・固有能力・神（身につけて1つ）。一度だけの巻き戻し。宝石の画面（絞り込み・検索・並べ替え・はめる・外す・再合成）。保存・表示。
 // node tools/gem-fusion-test.js
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
@@ -139,6 +139,33 @@ const path = require('node:path');
     assert.equal(gv.placed, 'fused:god.stun=chance~3|sec~0.5'); assert.equal(gv.used, 1); assert.equal(gv.godTargets, 0, '神は1つまで');
     assert(gv.removed); assert(gv.unlocked); assert.equal(gv.bagPanel, false, 'かばんの宝石の欄はなくなった'); assert(gv.closed);
     assert.deepEqual(gv.un.sockets, [null, null, 'rune:el']); assert.deepEqual(gv.un.gems, { 'fused:attack=3': 1, 'ruby:2': 1 }); assert.equal(gv.un.none, 0);
+    // 再合成：手元の混沌の宝石5個（神もふくむ）→ 新しい混沌の宝石1個。数ちがい・持っていない・ふつうの宝石は不可
+    const rf = await page.evaluate(() => {
+      const s = WYD.state, G = WYD.gems;
+      s.gems = { 'fused:attack=1': 3, 'fused:defense=1': 1, 'fused:god.echo=chance~9': 1, 'ruby:0': 5 };
+      const four = G.refuse(s, ['fused:attack=1', 'fused:attack=1', 'fused:attack=1', 'fused:defense=1']);
+      const notOwned = G.refuse(s, ['fused:attack=1', 'fused:attack=1', 'fused:attack=1', 'fused:attack=1', 'fused:defense=1']);
+      const normal = G.refuse(s, ['ruby:0', 'ruby:0', 'ruby:0', 'ruby:0', 'ruby:0']);
+      const key = G.refuse(s, ['fused:attack=1', 'fused:attack=1', 'fused:attack=1', 'fused:defense=1', 'fused:god.echo=chance~9']);
+      const after = { ...s.gems };
+      // 画面：見えている混沌の宝石を選ぶ → 再合成
+      s.gems = { 'fused:attack=2': 2, 'fused:defense=2': 2, 'fused:critChance=2': 2, 'ruby:0': 1 };
+      WYD.gemVault.open();
+      document.querySelector('[data-gv-act="chooseShown"]').click();
+      const picked = WYD.gemVault.chosenTotal(), btnOn = !document.querySelector('[data-gv-act="refuse"]').disabled;
+      document.querySelector('[data-gv-act="chooseClear"]').click(); const cleared = WYD.gemVault.chosenTotal();
+      document.querySelector('[data-gv-act="choose"][data-key="fused:attack=2"]').click(); const one = WYD.gemVault.chosen['fused:attack=2'];
+      const btnOff = document.querySelector('[data-gv-act="refuse"]').disabled;
+      document.querySelector('[data-gv-act="chooseShown"]').click();
+      return { four, notOwned, normal, made: !!key && key.startsWith('fused:'), after, picked, btnOn, cleared, one, btnOff, total: WYD.gemVault.chosenTotal() };
+    });
+    assert.equal(rf.four, null); assert.equal(rf.notOwned, null); assert.equal(rf.normal, null); assert(rf.made);
+    assert.deepEqual(Object.keys(rf.after).filter(k => k !== 'ruby:0').length, 1, '5個が1個に'); assert.equal(rf.after['ruby:0'], 5);
+    assert.equal(rf.picked, 5); assert(rf.btnOn); assert.equal(rf.cleared, 0); assert.equal(rf.one, 2); assert(rf.btnOff); assert.equal(rf.total, 5);
+    page.once('dialog', d => d.accept());
+    await page.evaluate(() => document.querySelector('[data-gv-act="refuse"]').click());
+    const rfUi = await page.evaluate(() => Object.entries(WYD.state.gems));
+    assert.equal(rfUi.reduce((n, [k, v]) => n + (k.startsWith('fused:') ? v : 0), 0), 2, '6個のうち5個を使って1個できる');
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ plan: out.plan, name: out.name, text: out.text, ui }));
   } finally { await browser.close(); }
