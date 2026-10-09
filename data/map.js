@@ -4,6 +4,9 @@ WYD.data = WYD.data || {};
 
 WYD.data.map = {
   notice: { duration: 3, fade: 0.6, max: 3, font: "bold 20px serif", lineHeight: 30, top: 110 },   // 画面の真ん中に出す大事な知らせ
+  camera: { defaultZoom: 1.2, levels: [1, 1.2, 1.4], edgePadding: 32, arrowSize: 7, maxArrows: 6 },
+  readability: { formationRadius: 48, statusOffset: 30, badgeHeight: 16, badgeFont: 11,
+    colors: { puppet: "#ec8797", skeleton: "#c4baff", wolf: "#a8d783", merc: "#edc779", other: "#89d6d0" } },
   width: 960,
   height: 600,
   maxEnemies: 6,        // 同時に出る敵の最大数

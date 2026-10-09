@@ -23,6 +23,7 @@
 - 絵の場所を `data/` に書く方法は `assets/README.md`
 
 ## 受け取り済み（ゲームに入っている）
+- 2026-10-09 宝石画面用の専用アイコン `assets/ui/nav-gems.webp`。赤・青・緑の宝石を古い青銅の台座にまとめた透過256px。従来の伝説の宝石アイコンと区別して、上部のGems入口と宝石画面の見出しに使用。
 - 2026-10-08 蒐集者4枚（持ち主の生成・透過）：立ち絵 `player_collector.png`・詠唱 `player_collector_attack.png`（2枚を同じ縮尺・同じ足元で256pxに）、技の発動・召喚の目印 `vfx/collectorRing.webp`（ページの輪）、命中の目印 `vfx/collectorHit.webp`（墨とページの閃光）。墨黒を残すため加算しないで重ねる
 - 2026-10-07 エフェクト7枚（持ち主の生成。512px の webp に縮めて `assets/vfx/` へ）
   - 裂け目：`breachPortal`（真ん中の裂け目・透明背景）、`breachRing`（範囲のふちで回る雷の輪）、`breachBurst`（開く・閉じる・異界の敵が出るときの光）

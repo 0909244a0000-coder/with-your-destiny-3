@@ -66,7 +66,10 @@ WYD.allies = {
       const target = WYD.world.nearestEnemy(w, a);
       if (!target) {
         // 敵がいなければ主人公の近くへ
-        WYD.world.moveToward(a, w.player, a.moveSpeed * dt, a.followDistance);
+        const index = w.allies.indexOf(a), angle = index * Math.PI * 2 / Math.max(1, w.allies.length);
+        const r = WYD.data.map.readability.formationRadius;
+        const home = { x: WYD.util.clamp(w.player.x + Math.cos(angle) * r, a.radius, WYD.data.map.width - a.radius), y: WYD.util.clamp(w.player.y + Math.sin(angle) * r, a.radius, WYD.data.map.height - a.radius) };
+        WYD.world.moveToward(a, home, a.moveSpeed * dt, a.radius);
         continue;
       }
       const reach = a.ranged || a.range + WYD.data.enemies[target.kind].radius;
@@ -118,9 +121,12 @@ WYD.allies = {
 
   draw(ctx, w) {
     const R = WYD.render;
-    for (const a of w.allies) {
-      // 手下の足元の緑の輪（味方だとわかるように）
-      ctx.strokeStyle = WYD.data.player.color;
+    for (const a of w.allies.slice().sort((a, b) => a.y - b.y)) {
+      // 種類ごとの輪。本体の足元と見分ける。
+      const C = WYD.data.map.readability.colors;
+      const allyColor = a.puppet ? C.puppet : a.source?.startsWith("nec_") ? C.skeleton : a.source === "dru_wolves" ? C.wolf : a.merc ? C.merc : C.other;
+      // 味方の種類を輪とHPバーの色でそろえる
+      ctx.strokeStyle = allyColor;
       ctx.lineWidth = 2;
       ctx.globalAlpha = 0.6;
       ctx.beginPath();
@@ -133,7 +139,7 @@ WYD.allies = {
       const bw = a.radius * 2.2;
       ctx.fillStyle = "#222";
       ctx.fillRect(a.x - bw / 2, a.y - a.radius - 12, bw, 3);
-      ctx.fillStyle = WYD.data.player.color;
+      ctx.fillStyle = allyColor;
       ctx.fillRect(a.x - bw / 2, a.y - a.radius - 12, bw * Math.max(0, a.hp / a.maxHp), 3);
       if (a.merc) {
         // 傭兵：時間で崩れないので、時間のかわりに名前

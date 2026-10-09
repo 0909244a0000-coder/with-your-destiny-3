@@ -3,7 +3,7 @@ window.WYD = window.WYD || {};
 WYD.navigation = {
   init() {
     const ui = WYD.ui, $ = id => document.getElementById(id);
-    const icons = { 'bag-open':['bag','Bag'], 'town-btn':['home','Home'], 'character-open':['status','Status'], 'skills-open':['skills','Skills'], 'bounty-open':['bounty','Bounties'], 'merc-open':['merc','Mercenary'], 'gems-open':['lgem','Gems'], 'lgem-open':['lgem','Legendary'], 'devotion-open':['devotion','Devotion'], 'codex-open':['codex','Codex'], 'arena-open':['arena','Arena'] };
+    const icons = { 'bag-open':['bag','Bag'], 'town-btn':['home','Home'], 'character-open':['status','Status'], 'skills-open':['skills','Skills'], 'bounty-open':['bounty','Bounties'], 'merc-open':['merc','Mercenary'], 'gems-open':['gems','Gems'], 'lgem-open':['lgem','Legendary'], 'devotion-open':['devotion','Devotion'], 'codex-open':['codex','Codex'], 'arena-open':['arena','Arena'] };
     const nav = document.querySelector('.stage-btns');
     const skillsButton = document.createElement('button'); skillsButton.id='skills-open'; nav.append(skillsButton);
     const gemsButton = document.createElement('button'); gemsButton.id='gems-open'; gemsButton.hidden=true; nav.append(gemsButton);   // 宝石の画面（src/gemvault.js）
@@ -37,10 +37,16 @@ WYD.navigation = {
     nav.append($('bag-open'),$('town-btn'),$('character-open'),$('skills-open'),$('gems-open'));
     const originalToggle=ui.toggleBag.bind(ui);
     this.view='bag';
-    this.open = view => { this.view=view; $('bag').dataset.view=view; document.querySelector('.bag-head h2').textContent={bag:'Bag',status:'Status & Equipment',skills:'Skills'}[view];
+    const setActive = view => {
+      for (const [id,target] of [['bag-open','bag'],['character-open','status'],['skills-open','skills']]) {
+        $(id).classList.toggle('active',view===target);
+        $(id).setAttribute('aria-pressed',String(view===target));
+      }
+    };
+    this.open = view => { this.view=view; setActive(view); $('bag').dataset.view=view; document.querySelector('.bag-head h2').textContent={bag:'Bag',status:'Status & Equipment',skills:'Skills'}[view];
       originalToggle(true);document.querySelector('.bag-box').scrollTop=0;
     };
-    ui.toggleBag=show=>{ if(show===false || (show===undefined&&!$('bag').hidden)) originalToggle(false); else this.open('bag'); };
+    ui.toggleBag=show=>{ if(show===false || (show===undefined&&!$('bag').hidden)) { originalToggle(false); setActive(null); } else this.open('bag'); };
     $('bag-open').onclick=()=>this.open('bag');
     $('character-open').setAttribute('aria-controls','bag');
     $('character-open').removeAttribute('aria-expanded');

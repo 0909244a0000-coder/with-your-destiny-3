@@ -52,17 +52,25 @@ window.WYD = window.WYD || {};
   });
 
   let last = performance.now();
+  // 1コマの中でエラーが出ても、次のコマは必ず予約する（画面の一部の不具合でゲーム全体が止まらないように）。
+  // 同じエラーは1回だけ記録する
+  const loopErrors = new Set();
   function loop(now) {
-    // タブを切り替えたあと等に一気に進みすぎないよう、1回の経過時間に上限をつける
-    const dt = Math.min(0.05, (now - last) / 1000);
-    last = now;
-    const steps = WYD.ui.paused || WYD.arena.opened ? 0 : state.settings.speed;   // 観戦中は冒険を止める
-    const slow = steps ? WYD.world.timeScale(world, dt) : 1;   // ボスを倒した直後はゆっくり
-    for (let i = 0; i < steps; i++) WYD.world.update(world, state, dt * slow);
-    if (!WYD.arena.opened) WYD.render.draw(ctx, world, state);
-    WYD.music.update(state, world);
-    WYD.ui.frame();
     requestAnimationFrame(loop);
+    try {
+      // タブを切り替えたあと等に一気に進みすぎないよう、1回の経過時間に上限をつける
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const steps = WYD.ui.paused || WYD.arena.opened ? 0 : state.settings.speed;   // 観戦中は冒険を止める
+      const slow = steps ? WYD.world.timeScale(world, dt) : 1;   // ボスを倒した直後はゆっくり
+      for (let i = 0; i < steps; i++) WYD.world.update(world, state, dt * slow);
+      if (!WYD.arena.opened) WYD.render.draw(ctx, world, state);
+      WYD.music.update(state, world);
+      WYD.ui.frame();
+    } catch (e) {
+      const key = String(e && e.stack || e);
+      if (!loopErrors.has(key)) { loopErrors.add(key); console.error(e); }
+    }
   }
   requestAnimationFrame(loop);
 

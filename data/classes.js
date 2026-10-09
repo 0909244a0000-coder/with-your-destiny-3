@@ -91,7 +91,7 @@ WYD.data.classes = {
         kind: "aura", auraType: "damage", name: "静電気の場",
         desc: "オーラ：まわりに静電気をまとい、近くの敵を雷で削り続ける。攻撃力×倍率のダメージ。",
         startLevel: 0, maxLevel: 10, cooldown: 1,
-        radius: 140, damageBase: 0.3, damagePerLevel: 0.06, color: "#cfe8ff",
+        radius: 95, damageBase: 0.3, damagePerLevel: 0.06, color: "#cfe8ff",
       },
       sorc_warmth: {
         kind: "aura", auraType: "heal", name: "温もり",

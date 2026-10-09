@@ -202,6 +202,11 @@ WYD.ui = {
       const button = e.target.closest("[data-bag-target]");
       if (button) this.$(button.dataset.bagTarget).scrollIntoView({ block: "start" });
     };
+    this.$("camera-zoom").onchange = (e) => {
+      const zoom = Number(e.target.value);
+      if (WYD.data.map.camera.levels.includes(zoom)) s.settings.cameraZoom = zoom;
+      this.changed();
+    };
     this.$("quiet-fx").onchange = (e) => {
       s.settings.quietFx = e.target.checked;
       this.changed();
@@ -1057,6 +1062,7 @@ WYD.ui = {
     this.$("auto-salvage").disabled = !!s.settings.filter.on;
     this.$("pause").textContent = this.paused ? "再開" : "停止";
     this.$("pause").classList.toggle("active", this.paused);
+    this.$("camera-zoom").value = WYD.data.map.camera.levels.includes(s.settings.cameraZoom) ? s.settings.cameraZoom : WYD.data.map.camera.defaultZoom;
     this.$("quiet-fx").checked = !!s.settings.quietFx;
     this.$("sound-toggle").textContent = `効果音：${s.settings.sound ? "ON" : "OFF"}`;
     this.$("music-toggle").textContent = `音楽：${s.settings.music !== false ? "ON" : "OFF"}`;
@@ -1112,13 +1118,13 @@ WYD.ui = {
       const lv = s.player.skills[id] || 0;
       const on = s.player.skillEnabled[id];
       const canUp = s.player.skillPoints > 0 && lv < def.maxLevel;
-      return `<div class="skill">
+      return `<div class="skill ${on && lv > 0 ? "skill-active" : lv > 0 ? "skill-learned" : "skill-locked"}">
         <div class="skill-head">
           ${WYD.data.skillIcons[id] ? `<img class="skill-icon" src="${WYD.data.skillIcons[id]}" alt="" onerror="this.remove()">` : ""}
           <b style="color:${def.color}">${def.name}</b>
           <span>Lv ${lv}/${def.maxLevel}</span>
-          <button data-skill="${id}" data-action="up" ${canUp ? "" : "disabled"}>＋</button>
-          <button data-skill="${id}" data-action="toggle" class="${on && lv > 0 ? "on" : "off"}" ${lv > 0 ? "" : "disabled"}>${lv > 0 ? (on ? "ON" : "OFF") : "未習得"}</button>
+          <button data-skill="${id}" data-action="up" aria-label="${def.name}を強化" ${canUp ? "" : "disabled"}>＋</button>
+          <button data-skill="${id}" data-action="toggle" aria-label="${def.name}を${on && lv > 0 ? "外す" : "使用する"}" class="${on && lv > 0 ? "on" : "off"}" ${lv > 0 ? "" : "disabled"}>${lv > 0 ? (on ? "ON" : "OFF") : "未習得"}</button>
         </div>
         <div class="skill-desc">${def.desc}（${Math.round(WYD.runes.effectiveDef(s, id).cooldown * 10) / 10}秒ごと）</div>
         ${WYD.skillInfo.html(s, id, lv)}
@@ -1145,6 +1151,12 @@ WYD.ui = {
     // 持ち物
     const size = WYD.data.items.inventorySize;
     this.$("inv-count").textContent = `${s.inventory.length} / ${size}`;
+    const inventoryEmpty = s.inventory.length === 0;
+    this.$("inventory-empty").hidden = !inventoryEmpty;
+    this.$("inventory").hidden = inventoryEmpty;
+    this.$("bag").classList.toggle("empty-inventory", inventoryEmpty);
+    this.$("sort-inv").disabled = inventoryEmpty;
+    this.$("discard-all").disabled = inventoryEmpty;
     const pending = (s.pendingLoot || []).length;
     this.$("pending-loot-panel").hidden = !pending;
     this.$("pending-loot-note").textContent = `未受取 ${pending}個：再読み込み・職業切替後も保管されます。${pending >= WYD.data.items.pendingLootLimit ? "戦闘停止中。受け取ると再開します。" : ""}`;
@@ -1630,8 +1642,10 @@ WYD.ui = {
       this.toggleCharacterDrawer(false);
       const cls = WYD.data.classes[WYD.classes.id];
       const portrait = this.$("equipment-portrait");
-      if (portrait && cls?.player?.image) portrait.src = cls.player.image;
+      // 初期職は差分が空なので、適用済みの共通プレイヤー画像を使う。
+      if (portrait) portrait.src = WYD.data.player.image || "assets/player.png";
       this.$("equipment-class-name").textContent = cls?.name || "冒険者";
+      this.$("equipment-class-desc").textContent = cls?.desc || "装備を選んで比較・交換";
       this.updateHudLayout();
       this.$('bag-close').focus();
     }
@@ -1702,7 +1716,11 @@ WYD.ui = {
     const misc = [btn("lock", item.locked ? "ロックを外す" : "ロックする")];
     if (where !== "eq") misc.push(btn("discard", `捨てる（${mat} +${WYD.inventory.salvageValue(s, item)}）`, "danger"));
     misc.push(btn("close", "閉じる"));
-    this.$("sheet-body").innerHTML = `<div class="sheet-details">${html}</div>${gemRow}<div class="sheet-btns">${main.join("")}</div><div class="sheet-btns sheet-work">${work.join("")}</div><div class="sheet-btns">${misc.join("")}</div>`;
+    const location = where === "eq" ? "装備中" : where === "stash" ? "倉庫" : "持ち物";
+    this.$("sheet-body").innerHTML = `<div class="sheet-heading"><span class="sheet-eyebrow">EQUIPMENT · ${location}</span><strong>${esc(WYD.data.items.slots[item.slot])}</strong></div>` +
+      `<div class="sheet-details">${html}</div>${gemRow}<div class="sheet-btns sheet-main">${main.join("")}</div>` +
+      `<div class="sheet-btns sheet-work"><span class="sheet-section-label">強化と加工</span>${work.join("")}</div>` +
+      `<div class="sheet-btns sheet-misc"><span class="sheet-section-label">その他</span>${misc.join("")}</div>`;
     this.$("sheet").hidden = false;
     return true;
   },

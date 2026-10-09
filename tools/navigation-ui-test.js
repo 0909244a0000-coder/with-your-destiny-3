@@ -7,7 +7,7 @@ const path=require('node:path');
  const page=await browser.newPage({viewport:{width:1920,height:1080}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('file://'+path.resolve(__dirname,'../index.html'));await page.locator('#modal-ok').click();
  await page.evaluate(()=>{WYD.state.player.level=50;WYD.ui.renderPanels();});
- await page.locator('#bag-open').click();assert(await page.locator('#inventory').isVisible());assert(!await page.locator('#equipment').isVisible());assert(!await page.locator('#stash-panel').isVisible());
+ await page.locator('#bag-open').click();/* 持ち物が空なら空枠の代わりに案内を出す（#154） */assert.equal(await page.evaluate(()=>WYD.state.inventory.length),0);assert(await page.locator('#inventory-empty').isVisible());assert(!await page.locator('#inventory').isVisible());assert(!await page.locator('#equipment').isVisible());assert(!await page.locator('#stash-panel').isVisible());
  await page.locator('#bag-gamble-open').click();assert(await page.locator('#gamble').isVisible());await page.keyboard.press('Escape');await page.keyboard.press('Escape');
  await page.locator('#character-open').click();assert(await page.locator('#stats').isVisible());assert(await page.locator('#equipment').isVisible());assert(!await page.locator('#rune-open').isVisible());assert(!await page.locator('#skills').isVisible());await page.keyboard.press('Escape');
  await page.locator('#skills-open').click();assert(await page.locator('#skills').isVisible());assert(!await page.locator('#equipment').isVisible());await page.locator('#rune-open').click();assert(await page.locator('#rune-lab').isVisible());await page.keyboard.press('Escape');assert(await page.locator('#skills').isVisible());await page.keyboard.press('Escape');
