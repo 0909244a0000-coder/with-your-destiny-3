@@ -1480,3 +1480,10 @@ html.m-ui #equipscreen .modal-box.equipscreen-box { min-height: 0; }
 #equipscreen .es-pagetabs button.on { background:none; border-color:transparent; box-shadow:0 0 0 1px #d7a356,0 0 9px #c2863255; filter:brightness(1.18); }
 #equipscreen .es-pagetabs button:hover,#equipscreen .inv-buttons button:hover { filter:brightness(1.25); }
 #equipscreen .es-pagetabs button:focus-visible,#equipscreen .inv-buttons button:focus-visible { outline:2px solid #efd18b; outline-offset:2px; }
+
+/* 持ち物のページ切替。タブと同じ石枠の操作面。 */
+#equipscreen .es-pager { display:flex; align-items:center; justify-content:center; gap:10px; margin:0 0 8px; color:#eacb93; font-weight:700; font-variant-numeric:tabular-nums; }
+#equipscreen .es-pager button { box-sizing:border-box; min-width:48px; min-height:40px; border:8px solid transparent; border-image-source:url('../assets/ui/armory-button.webp'); border-image-slice:55 90 fill; border-image-width:8px 12px; border-image-repeat:stretch; background:none; color:#f3dfba; cursor:pointer; }
+#equipscreen .es-pager button:disabled { opacity:.42; cursor:default; }
+#equipscreen .es-pager button:hover:not(:disabled) { filter:brightness(1.25); }
+#equipscreen .es-pager span { min-width:48px; text-align:center; }
