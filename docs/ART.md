@@ -23,6 +23,7 @@
 - 絵の場所を `data/` に書く方法は `assets/README.md`
 
 ## 受け取り済み（ゲームに入っている）
+- 2026-10-09 固有能力の付け替え欄に古い金属の箱 `assets/ui/power-cube.webp`、宝石の合成工房に紫の火と宝石の坩堝 `assets/ui/gem-crucible.webp`。どちらも透過WebPで、暗い窓内の小さな見出しやカードで読めるシルエットにした。
 - 2026-10-09 宝石画面用の専用アイコン `assets/ui/nav-gems.webp`。赤・青・緑の宝石を古い青銅の台座にまとめた透過256px。従来の伝説の宝石アイコンと区別して、上部のGems入口と宝石画面の見出しに使用。
 - 2026-10-08 蒐集者4枚（持ち主の生成・透過）：立ち絵 `player_collector.png`・詠唱 `player_collector_attack.png`（2枚を同じ縮尺・同じ足元で256pxに）、技の発動・召喚の目印 `vfx/collectorRing.webp`（ページの輪）、命中の目印 `vfx/collectorHit.webp`（墨とページの閃光）。墨黒を残すため加算しないで重ねる
 - 2026-10-07 エフェクト7枚（持ち主の生成。512px の webp に縮めて `assets/vfx/` へ）

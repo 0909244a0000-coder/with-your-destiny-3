@@ -829,7 +829,7 @@ WYD.ui = {
       return `<div class="cube-row"><span class="cube-name">${C.slots[cs]}</span>
         <select data-cube-slot="${cs}" ${list.length ? "" : "disabled"}>${opts}</select>
         <div class="cube-desc">${curDef ? WYD.loot.uniqueDesc(curDef) : list.length ? "" : "まだ覚えた力がない"}</div></div>`;
-    }).join("") + `<p class="muted">「入れるモード」をONにしてユニーク装備をクリックすると、分解して力を覚える（${WYD.data.crafting.materialName} ${C.extractCost}個）</p>`;
+    }).join("") + `<p class="muted">新しい力を覚えるには、Bagでユニーク装備を選び「カナイの箱に入れる」を押します（装備は分解・${WYD.data.crafting.materialName} ${C.extractCost}個）。上の3枠では習得済みの力をいつでも付け替えられます。</p>`;
   },
 
   // ロック：捨てられない・まとめて捨てない・自動装備で外れない
@@ -1183,7 +1183,7 @@ WYD.ui = {
     this.$("maps-panel").hidden = !s.cleared && !s.maps.length;
     // 序盤は使えないものを出さない（使えるようになったら出る）
     const all = s.inventory.concat(s.stash, Object.values(s.equipment)).filter(Boolean);
-    this.unlock("cube-panel", s.records.uniquesFound > 0 || Object.keys(s.cube.learned).length > 0);
+    this.unlock("cube-panel", s.records.uniquesFound > 0 || Object.keys(s.cube.learned).length > 0 || all.some((it) => !!WYD.loot.uniqueInfo(it)));
     this.unlock("gems-open", Object.keys(s.gems).length > 0 || all.some((it) => (it.sockets || []).length));
     this.unlock("merc-open", s.player.level >= WYD.data.mercenary.minLevel || !!s.mercenary.type);
     this.unlock("gamble-open", s.player.level >= WYD.data.gamble.minLevel);
