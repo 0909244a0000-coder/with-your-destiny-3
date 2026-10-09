@@ -54,6 +54,16 @@ const path = require('node:path');
         assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('tooltip')).display), 'none', '離すと消える');
         await page.click('#equipscreen [data-es="item"]', { modifiers: ['Control'] });
         assert.equal(await page.evaluate(() => WYD.state.inventory[0].locked), true, 'Ctrl＋クリックでロック');
+        // 宝石のタブ：種類ごとに1マス（数・NEW・段階の印）。乗せると性能、押すと宝石の画面ではめ先を選ぶ
+        await page.evaluate(() => { const s = WYD.state; s.gems = {}; WYD.gems.gain(s, 'ruby:4', 2); s.gems['topaz:0'] = 3; WYD.ui.changed(); WYD.equipScreen.render(); document.querySelector('[data-es="tab"][data-tab="gems"]').click(); });
+        const gt = await page.evaluate(() => ({ count: Number(document.querySelector('[data-es="tab"][data-tab="gems"] b').textContent), cells: [...document.querySelectorAll('#equipscreen [data-es="gem"]')].map(c => c.dataset.key), news: document.querySelectorAll('#equipscreen .es-gemcell .new-badge').length }));
+        assert.deepEqual(gt, { count: 2, cells: ['ruby:4', 'topaz:0'], news: 1 });
+        await page.hover('#equipscreen [data-es="gem"][data-key="ruby:4"]');
+        assert.match(await page.evaluate(() => document.getElementById('tooltip').textContent), /王者の ルビー ×2/);
+        assert.equal(await page.evaluate(() => WYD.gems.isNew(WYD.state, 'ruby:4')), false, '乗せると NEW が消える');
+        await page.click('#equipscreen [data-es="gem"][data-key="topaz:0"]');
+        assert.deepEqual(await page.evaluate(() => ({ vault: !document.getElementById('gemvault').hidden, picking: WYD.gemVault.picking })), { vault: true, picking: 'topaz:0' });
+        await page.evaluate(() => WYD.gemVault.close());
       }
       assert.deepEqual(errors, []);
       console.log(viewport.width, JSON.stringify(r));

@@ -14,7 +14,10 @@ WYD.data.equipScreen = {
     { id: "jewelry", label: "装飾品", slots: ["ring", "neck"] },
     { id: "special", label: "ユニーク・セット", rarities: ["unique", "set"] },
     { id: "up", label: "▲ 強い", upgrade: true },
+    { id: "gems", label: "宝石", gems: true },   // 手元の宝石（種類ごとに1マス。押すと宝石の画面ではめる）
   ],
+  // 宝石のマスの左上の印：ふつうの宝石は段階（data/gems.js の tiers の順）、混沌の宝石・神の混沌石は別の印
+  gemMark: { tiers: ["I", "II", "III", "IV", "V"], fused: "混", god: "神" },
   // マスの左上の印（レア度）
   rarityMark: { normal: "N", magic: "M", rare: "R", legend: "L", unique: "U", set: "S" },
   // 戦闘力 = 能力 × 重み の合計（目安。実際の強さは DPS テストで）
