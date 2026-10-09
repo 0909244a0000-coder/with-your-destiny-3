@@ -1,6 +1,7 @@
 // 能力の効き目の調査：職業×ビルド（スキル3つの組み合わせ）ごとに、能力を少し足したとき火力と生存がどれだけ変わるかを測る。
 // おすすめ装備の重み（data/optimizer.js）を決める裏どり用。ゲームのデータやセーブは変えない。
 // node tools/stat-weights.js [職業,...|all] [秒数=40] [乱数の数=2] [組み合わせの上限=0(全部)]  → 結果は標準出力に JSON
+// 環境変数 OUT_DIR を指定すると、職業ごとに <OUT_DIR>/<職業>.json へ保存し、もうあるものは飛ばす（途中で止まっても続きから）
 //
 // 測り方
 // - 条件：Lv50、選んだ3スキルだけ Lv10 で ON（ほかは Lv0。熟練・型・秘技・星座・宝石なし）、レジェンド9部位（Lv50・乱数固定）、
@@ -27,7 +28,11 @@ const [classArg = 'all', secArg = '40', seedArg = '2', limitArg = '0'] = process
     const all = await page.evaluate(() => Object.keys(WYD.data.classes).filter((id) => id !== 'collector'));
     const classes = classArg === 'all' ? all : classArg.split(',');
     const out = { config: { seconds: Number(secArg), seeds: Number(seedArg), area: 'inferno', difficulty: 5, level: 50, skillLevel: 10, stacks: 4, dieTarget: 20, hpCeil: 0.7, hpFloor: 0.2, debug: !!process.env.DEBUG }, classes: [] };
+    const outDir = process.env.OUT_DIR, fs = require('node:fs');
+    if (outDir) fs.mkdirSync(outDir, { recursive: true });
     for (const classId of classes) {
+      const file = outDir && path.join(outDir, classId + '.json');
+      if (file && fs.existsSync(file)) { out.classes.push(JSON.parse(fs.readFileSync(file, 'utf8'))); continue; }
       await page.evaluate((id) => { WYD.resetting = true; localStorage.clear(); localStorage.setItem('wyd3-active-class', id); }, classId);
       await page.reload();
       const combos = await page.evaluate(() => {
@@ -113,6 +118,7 @@ const [classArg = 'all', secArg = '40', seedArg = '2', limitArg = '0'] = process
         }, [skills, out.config]));
       }
       out.classes.push({ classId, builds });
+      if (file) fs.writeFileSync(file, JSON.stringify({ classId, builds }));
       console.error(`${classId}: ${list.length}ビルド ${((Date.now() - t0) / 1000).toFixed(0)}秒`);
     }
     out.errors = errors;
