@@ -32,6 +32,12 @@ WYD.data.crafting = {
     minSockets: [{ v: 0, label: "使わない" }, { v: 1, label: "1つ以上" }, { v: 2, label: "2つ以上" }, { v: 3, label: "3つ" }],
     minEffects: [{ v: 0, label: "使わない" }, { v: 1, label: "1つ以上" }, { v: 2, label: "2つ以上" }, { v: 3, label: "3つ以上" }],
   },
+  // 「全て捨てる」の決まり（2026-10-09）。持ち物のうち、決まりに当たらないものだけを捨てる（ロックはいつも残す）
+  //   keepSockets … ソケットがこの数以上なら残す（0 = 使わない）　keepEffects … 特殊効果がこの数以上なら残す（0 = 使わない）
+  discardRules: {
+    keepSockets: [{ v: 0, label: "使わない" }, { v: 1, label: "1つ以上は残す" }, { v: 2, label: "2つ以上は残す" }, { v: 3, label: "3つは残す" }],
+    keepEffects: [{ v: 0, label: "使わない" }, { v: 1, label: "1つ以上は残す" }, { v: 2, label: "2つ以上は残す" }, { v: 3, label: "3つ以上は残す" }],
+  },
 
   rerollCost: { normal: 0, magic: 10, rare: 25, legend: 60, unique: 40, set: 35 },
 

@@ -246,8 +246,8 @@ WYD.ui = {
     };
     const C = WYD.data.crafting;
     this.$("discard-all").onclick = () => {
-      const targets = s.inventory.filter((it) => !it.locked);
-      if (!targets.length) return;
+      const targets = WYD.inventory.discardTargets(s);
+      if (!targets.length) { this.log("捨てる設定の決まりに当たる装備がありません", "#c9b48a"); return; }
       const valuable = targets.filter((it) => it.rarity === "unique" || it.rarity === "set" || it.plus > 0 || it.forged > 0 || it.legacyRuneBonus).length;
       const gained = targets.reduce((n, it) => n + WYD.inventory.salvageValue(s, it), 0);
       const warning = valuable ? `\nユニーク・セット・強化・鍛造・継承効果の装備を${valuable}個含みます。` : "";
@@ -360,6 +360,22 @@ WYD.ui = {
     this.$("filter-open").onclick = () => {
       this.$("filter-body").innerHTML = this.filterHtml();
       this.$("filter").hidden = false;
+    };
+    this.$("discard-open").onclick = () => this.openDiscard();
+    this.$("discard-close").onclick = () => { this.$("discard").hidden = true; };
+    this.$("discard-body").onchange = (e) => {
+      const d = s.settings.discard;
+      const t = e.target;
+      if (t.dataset.discardRarity) d.rarities[t.dataset.discardRarity] = t.checked;
+      else if (t.dataset.discardSlot) d.slots[t.dataset.discardSlot] = t.checked;
+      else if (t.dataset.discardFlag) d[t.dataset.discardFlag] = t.checked;
+      else if (t.dataset.discardNum) d[t.dataset.discardNum] = Number(t.value);
+      this.changed();
+      this.openDiscard();
+    };
+    this.$("discard-body").onclick = (e) => {
+      if (e.target.closest("[data-discard-run]")) { this.$("discard-all").click(); this.openDiscard(); }
+      else if (e.target.closest("[data-discard-filter]")) this.$("filter-open").click();
     };
     this.$("filter-close").onclick = () => { this.$("filter").hidden = true; };
     this.$("filter-body").onchange = (e) => {
@@ -774,6 +790,40 @@ WYD.ui = {
       ${flag("keepAncient", "太古・原初の装備は、レア度に関係なく拾う")}
 
       <p class="muted">ユニークとセットはいつも拾います。拾わない装備はその場で素材になります。</p>`;
+  },
+
+  // 捨てる設定の画面（「全て捨てる」で何を捨てるか）
+  openDiscard() {
+    this.$("discard-body").innerHTML = this.discardHtml();
+    this.$("discard").hidden = false;
+  },
+
+  discardHtml() {
+    const s = this.state, d = s.settings.discard;
+    const C = WYD.data.crafting, I = WYD.data.items;
+    const box = (attr, key, on, label) => `<label class="filter-flag discard-chip"><input type="checkbox" ${attr}="${key}" ${on ? "checked" : ""}> ${label}</label>`;
+    const flag = (id, label) => box("data-discard-flag", id, d[id], label);
+    const num = (id) => C.discardRules[id].map((o) => `<option value="${o.v}" ${o.v === (d[id] || 0) ? "selected" : ""}>${o.label}</option>`).join("");
+    const targets = WYD.inventory.discardTargets(s);
+    const gained = targets.reduce((n, it) => n + WYD.inventory.salvageValue(s, it), 0);
+    return `<p class="muted">「全て捨てる」は、チェックの入ったレア度・部位のうち、下の「残す」に当たらないものだけを捨てます。ロックした装備はいつも残ります。</p>
+      <h3 class="filter-sub">捨てるレア度</h3>
+      <div class="discard-row">${I.rarities.map((r) => box("data-discard-rarity", r.id, d.rarities[r.id] !== false, `<span style="color:${r.color}">${r.name}</span>`)).join("")}</div>
+      <h3 class="filter-sub">捨てる部位</h3>
+      <div class="discard-row">${Object.keys(I.slots).map((k) => box("data-discard-slot", k, d.slots[k] !== false, I.slots[k])).join("")}</div>
+      <h3 class="filter-sub">残す決まり</h3>
+      <div class="filter-grid">
+        <span>ソケット</span><select data-discard-num="keepSockets">${num("keepSockets")}</select>
+        <span>特殊効果</span><select data-discard-num="keepEffects">${num("keepEffects")}</select>
+      </div>
+      ${flag("keepGems", "宝石・ルーンが入っている装備は残す")}
+      ${flag("keepWorked", "強化（+1以上）・鍛造した装備は残す")}
+      ${flag("keepAncient", "太古・原初の装備は残す")}
+      ${flag("keepUpgrades", "今の装備より強いものは残す")}
+      ${flag("keepBuild", "保存ビルドで使う装備は残す")}
+      <div class="discard-foot"><span>今の決まりで捨てるもの：<b>${targets.length}個</b>（${C.materialName} +${gained}）</span>
+        <button data-discard-run ${targets.length ? "" : "disabled"}>この決まりで捨てる</button></div>
+      <p class="muted">拾うときの決まりは <button data-discard-filter>戦利品フィルター（拾う設定）</button> で決めます。</p>`;
   },
 
   // 鍛造の画面

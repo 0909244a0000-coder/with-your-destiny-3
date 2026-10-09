@@ -242,7 +242,8 @@
             <div class="inv-buttons">
               <button id="sort-inv" title="レア度の高い順、同じなら部位・強さの順に並べる">並べ替え</button>
               <button id="bag-gamble-open">キャダラの賭け</button>
-              <button id="discard-all" title="持ち物を全て素材にする。ロックした装備・装備中は対象外。実行前に確認します">全て捨てる</button>
+              <button id="discard-all" title="持ち物を素材にする（捨てる設定の決まりに当たるものは残す）。ロックした装備・装備中は対象外。実行前に確認します">全て捨てる</button>
+              <button id="discard-open" title="「全て捨てる」で何を捨てるか（レア度・部位・ソケット・特殊効果など）を決める">捨てる設定</button>
             </div>
             <div id="inventory-empty" class="inventory-empty" hidden><img src="assets/ui/nav-bag.webp" alt=""><div><strong>冒険の始まり</strong><p>まだ装備を持っていません。戦場で拾った装備はここに並びます。装備を選ぶと、比較・強化・宝石などの操作ができます。</p></div></div>
             <div id="inventory" class="grid"></div>
@@ -318,6 +319,14 @@
       <h2>星座</h2>
       <div id="devotion-body"></div>
       <button id="devotion-close">閉じる</button>
+    </div>
+  </div>
+
+  <div id="discard" class="modal" hidden>
+    <div class="modal-box filter-box">
+      <h2>捨てる設定</h2>
+      <div id="discard-body"></div>
+      <button id="discard-close">閉じる</button>
     </div>
   </div>
 
