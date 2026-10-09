@@ -128,6 +128,49 @@ const path = require('node:path');
       assert.deepEqual(sort.gems, ['topaz:1', 'ruby:0']);
       assert.equal(sort.shownGem, 'topaz:1'); assert.equal(sort.mode, 'count'); assert.equal(sort.page, 'equip');
       assert(sort.inventoryUnchanged, '表示順の変更で実際の持ち物順は変えない'); assert(!sort.overflow);
+      // OP指定：特殊効果と能力値の数値で並べ、OPなしを最後に。クリック先は元の添字。
+      const op = await page.evaluate(() => {
+        const S = WYD.state, E = WYD.equipScreen;
+        S.inventory = [
+          WYD.loot.create(S, 10, 0, { slot: 'head', rarity: 'magic' }),
+          WYD.loot.create(S, 10, 0, { slot: 'head', rarity: 'magic' }),
+          WYD.loot.create(S, 10, 0, { slot: 'head', rarity: 'magic' }),
+        ];
+        S.inventory[0].effects = [{ id: 'cooldown', value: 5 }];
+        S.inventory[1].effects = [];
+        S.inventory[2].effects = [{ id: 'cooldown', value: 12 }];
+        E.open('sort');
+        document.querySelector('[data-es="gear-sort"][data-mode="op"]').click();
+        const effectOrder = E.shown('all').map((entry) => entry.index);
+        const labels = [...document.querySelectorAll('.es-sort-card:first-child .es-sort-op-item small')].map((x) => x.textContent);
+        document.querySelector('[data-es-op]').value = 'stat:attack';
+        document.querySelector('[data-es-op]').dispatchEvent(new Event('change', { bubbles: true }));
+        S.inventory[0].stats = [{ stat: 'attack', value: 9, main: true }];
+        S.inventory[1].stats = [{ stat: 'attack', value: 15, main: true }];
+        S.inventory[2].stats = [{ stat: 'defense', value: 50, main: true }];
+        E.render();
+        const statOrder = E.shown('all').map((entry) => entry.index);
+        document.querySelector('[data-es="sort-jump"][data-tab="all"]').click();
+        const first = document.querySelector('.es-grid [data-es="item"]').dataset.index;
+        return { effectOrder, labels, statOrder, first, selected: E.opKey, mode: E.gearSort };
+      });
+      assert.deepEqual(op.effectOrder, [2, 0, 1]);
+      assert.deepEqual(op.labels, ['12%', '5%', 'なし']);
+      assert.deepEqual(op.statOrder, [1, 0, 2]);
+      assert.equal(op.first, '1'); assert.equal(op.selected, 'stat:attack'); assert.equal(op.mode, 'op');
+      const gemOp = await page.evaluate(() => {
+        const S = WYD.state, E = WYD.equipScreen;
+        S.gems = { 'ruby:1': 2, 'fused:fx.cooldown=3': 1, 'fused:fx.cooldown=7': 1 };
+        E.gemSort = 'tier'; E.gemOpKey = 'effect:cooldown'; E.open('sort');
+        document.querySelector('[data-es="gem-sort"][data-mode="op"]').click();
+        const effectOrder = E.gemKeys();
+        document.querySelector('[data-es-gem-op]').value = 'stat:attack';
+        document.querySelector('[data-es-gem-op]').dispatchEvent(new Event('change', { bubbles: true }));
+        return { effectOrder, statOrder: E.gemKeys(), mode: E.gemSort, selected: E.gemOpKey };
+      });
+      assert.deepEqual(gemOp.effectOrder, ['fused:fx.cooldown=7', 'fused:fx.cooldown=3', 'ruby:1']);
+      assert.deepEqual(gemOp.statOrder, ['ruby:1', 'fused:fx.cooldown=7', 'fused:fx.cooldown=3']);
+      assert.equal(gemOp.mode, 'op'); assert.equal(gemOp.selected, 'stat:attack');
       assert.deepEqual(errors, []);
       console.log(viewport.width, JSON.stringify(r));
       await page.close();
