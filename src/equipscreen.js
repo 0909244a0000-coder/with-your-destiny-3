@@ -1,11 +1,13 @@
 // 装備画面（リネレボ風。Status の画面）：左右に装備の枠、真ん中にキャラと戦闘力、右に持ち物（絞り込みのタブ）、下に能力と操作。
-// 画面の下のページで、能力・リザルト／ビルド／カナイの箱／地図に切りかえる（元のかばん・Status の部品をそのまま移して使う）。
+// 画面の下のページで、能力・リザルト／ソート／カナイの箱／地図に切りかえる（元のかばん・Status の部品をそのまま移して使う）。
 // 枠・マスを選ぶと、いつもの装備の窓（src/ui.js の touchSheet）が出る。マウスを乗せると性能、右クリックで捨てる、Ctrl＋クリックでロック。並びと数値は data/equipscreen.js。
 window.WYD = window.WYD || {};
 WYD.equipScreen = {
   opened: false,
   tab: "all",
   bagPage: 0,
+  gearSort: "default",
+  gemSort: "tier",
   page: "equip",
 
   init() {
@@ -23,7 +25,12 @@ WYD.equipScreen = {
     page("equip").prepend($("pending-loot-panel"));   // 未受取（持ち物がいっぱいで入らなかった装備）
     $("es-fuse-host").before(document.querySelector(".inv-buttons"));   // 並べ替え・キャダラの賭け・全て捨てる
     for (const p of D.pages) if (p.panel && $(p.panel)) page(p.id).append($(p.panel));
-    page("builds").insertAdjacentHTML("afterbegin", `<h3>ビルド</h3><p class="muted">今の装備・使うスキル・スキルの型・カナイの箱の枠をまとめて保存し、ワンクリックで切りかえる。</p>`);
+    page("sort").innerHTML = `<div id="es-sort-host"></div>`;
+    page("sort").insertAdjacentHTML("beforeend", `<div class="es-sort-manual"><h4>持ち物の並びを固定</h4><p>レア度・部位・強さの順で持ち物自体を並べ替える。</p></div>`);
+    page("sort").querySelector(".es-sort-manual").append($("sort-inv"));
+    // 保存ビルドの操作は残し、独立した下タブだけを整理する。
+    page("stats").insertAdjacentHTML("beforeend", `<div class="es-builds-wrap"><h3>保存ビルド</h3><p class="muted">装備とスキルの構成を保存・切り替え。</p></div>`);
+    page("stats").querySelector(".es-builds-wrap").append($("builds"));
     body.onclick = (e) => {
       const p = e.target.closest("[data-es-page]");
       if (p) { this.page = p.dataset.esPage; WYD.ui.hideTooltip(); this.render(); return; }
@@ -62,11 +69,17 @@ WYD.equipScreen = {
     return Math.round(Object.keys(W).reduce((n, k) => n + (stats[k] || 0) * W[k], 0));
   },
 
-  // 手元の宝石（種類ごと。段階・種類の順。神・混沌が先）
+  // 手元の宝石（種類ごとに1マス）。並びはソート画面で選ぶ。
   gemKeys() {
-    const s = WYD.state, G = WYD.gems;
-    const score = (k) => { const i = G.info(k); return i.fused ? (i.god ? 2000 : 1000) + i.lines.length : i.tier * 10 + WYD.data.gems.gems.indexOf(i.def); };
-    return Object.keys(s.gems).filter((k) => s.gems[k] > 0 && G.info(k) && !G.info(k).rune).sort((a, b) => score(b) - score(a) || a.localeCompare(b));
+    const s = WYD.state, G = WYD.gems, keys = Object.keys(s.gems).filter((k) => s.gems[k] > 0 && G.info(k) && !G.info(k).rune);
+    const tier = (k) => { const i = G.info(k); return i.fused ? (i.god ? 2000 : 1000) + i.lines.length : i.tier * 10 + WYD.data.gems.gems.indexOf(i.def); };
+    return keys.map((key, index) => ({ key, index })).sort((a, b) => {
+      const diff = this.gemSort === "new" ? b.index - a.index :
+        this.gemSort === "lines" ? (G.info(b.key).lines || []).length - (G.info(a.key).lines || []).length :
+        this.gemSort === "count" ? s.gems[b.key] - s.gems[a.key] :
+        this.gemSort === "name" ? G.name(a.key).localeCompare(G.name(b.key), "ja") : tier(b.key) - tier(a.key);
+      return diff || tier(b.key) - tier(a.key) || a.index - b.index;
+    }).map((entry) => entry.key);
   },
 
   // 宝石のマス
@@ -82,9 +95,19 @@ WYD.equipScreen = {
   shown(tab) {
     const s = WYD.state, t = WYD.data.equipScreen.tabs.find((x) => x.id === tab) || {};
     if (t.gems) return [];
-    return s.inventory.map((item, index) => ({ item, index })).filter(({ item }) =>
+    const entries = s.inventory.map((item, index) => ({ item, index })).filter(({ item }) =>
       (!t.slots || t.slots.includes(item.slot)) && (!t.rarities || t.rarities.includes(item.rarity)) &&
       (!t.upgrade || WYD.ui.upgradeMark(item) !== ""));
+    const D = WYD.data.items, rank = (item) => D.rarities.findIndex((r) => r.id === item.rarity), slots = Object.keys(D.slots);
+    if (this.gearSort !== "default") entries.sort((a, b) => {
+      const diff = this.gearSort === "recent" ? b.index - a.index :
+        this.gearSort === "rarity" ? rank(b.item) - rank(a.item) :
+        this.gearSort === "power" ? WYD.inventory.itemScore(b.item) - WYD.inventory.itemScore(a.item) :
+        this.gearSort === "level" ? b.item.level - a.item.level :
+        this.gearSort === "slot" ? slots.indexOf(a.item.slot) - slots.indexOf(b.item.slot) : 0;
+      return diff || a.index - b.index;
+    });
+    return entries;
   },
 
   click(e) {
@@ -101,11 +124,33 @@ WYD.equipScreen = {
     }
     if (d.es === "slot") { if (item) ui.touchSheet("eq", d.slot); return; }
     if (d.es === "item") { ui.touchSheet("inv", Number(d.index)); return; }
+    if (d.es === "gear-sort" || d.es === "gem-sort") {
+      const modes = d.es === "gear-sort" ? WYD.data.equipScreen.gearSorts : WYD.data.equipScreen.gemSorts;
+      if (!modes.some(([id]) => id === d.mode)) return;
+      if (d.es === "gear-sort") this.gearSort = d.mode; else this.gemSort = d.mode;
+      this.bagPage = 0; this.render(); return;
+    }
+    if (d.es === "sort-jump") { this.page = "equip"; this.tab = d.tab; this.bagPage = 0; this.render(); return; }
     if (d.es === "page") { this.bagPage += Number(d.step); this.render(); return; }
     if (d.es === "tab") { this.tab = d.tab; this.bagPage = 0; this.render(); return; }
     else if (d.es === "fuse") { if (!WYD.gemVault.fuseNow()) return; }   // 宝石合成（宝石の画面と同じ。確認してから）
     ui.changed();
     this.render();
+  },
+
+  // 下のソートページ。並び方は表示だけを切り替え、持ち物の保存順と選択先は維持する。
+  sortHtml() {
+    const D = WYD.data.equipScreen;
+    const options = (kind, modes, active) => modes.map(([id, title, description]) =>
+      `<button data-es="${kind}-sort" data-mode="${id}" class="${active === id ? "on" : ""}" aria-pressed="${active === id}"><b>${title}</b><small>${description}</small></button>`).join("");
+    const preview = (kind) => kind === "gear"
+      ? this.shown("all").slice(0, 8).map(({ item, index }) => this.cell(item, `data-es="item" data-index="${index}"`)).join("")
+      : this.gemKeys().slice(0, 8).map((key) => this.gemCell(key)).join("");
+    return `<div class="es-sort-intro"><span>ORDER THE ARMORY</span><h3>持ち物の並べ替え</h3><p>装備と宝石、それぞれの見やすい順を選ぶ。装備や宝石の性能は変わりません。</p></div>` +
+      `<div class="es-sort-layout">` +
+        `<section class="es-sort-card"><div class="es-sort-heading"><img src="assets/ui/nav-status.webp" alt=""><div><small>EQUIPMENT</small><h4>装備 <em>${WYD.state.inventory.length}</em></h4></div></div><div class="es-sort-options">${options("gear", D.gearSorts, this.gearSort)}</div><div class="es-sort-preview">${preview("gear") || '<span class="muted">装備がない</span>'}</div><button class="es-sort-jump" data-es="sort-jump" data-tab="all">装備を見る →</button></section>` +
+        `<section class="es-sort-card"><div class="es-sort-heading"><img src="assets/ui/nav-gems.webp" alt=""><div><small>GEMSTONES</small><h4>宝石 <em>${this.gemKeys().length}種類</em></h4></div></div><div class="es-sort-options">${options("gem", D.gemSorts, this.gemSort)}</div><div class="es-sort-preview">${preview("gem") || '<span class="muted">宝石がない</span>'}</div><button class="es-sort-jump" data-es="sort-jump" data-tab="gems">宝石を見る →</button></section>` +
+      `</div>`;
   },
 
   // 右下の「宝石合成」：たまり具合（今 / 必要）を出し、足りなければ押せない
@@ -157,6 +202,7 @@ WYD.equipScreen = {
       tab.hidden = !!locked; tab.classList.toggle("on", this.page === p.id);
       this.$("equipscreen-body").querySelector(`.es-page[data-page="${p.id}"]`).hidden = this.page !== p.id;
     }
+    this.$("es-sort-host").innerHTML = this.sortHtml();
     this.$("es-stats-host").innerHTML = D.stats.map(([k, name, kind]) => `<span><small>${name}</small><b>${fmt(stats[k] || 0, kind)}</b></span>`).join("");
     this.$("es-count").textContent = `${s.inventory.length} / ${size}`;
     this.$("es-fuse-host").innerHTML = this.fuseButton();
