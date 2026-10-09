@@ -123,6 +123,14 @@ WYD.inventory = {
     return true;
   },
 
+  // 持ち物の中から、部位ごとに点数のいちばん高いものを着る（自分で選んだ装備は外さない。autoEquip と同じ決まり）。着替えた数
+  autoEquipAll(state) {
+    let n = 0;
+    const best = [...state.inventory].sort((a, b) => this.itemScore(b) - this.itemScore(a));
+    for (const item of best) if (this.autoEquip(state, item)) n++;
+    return n;
+  },
+
   unequip(state, slot) {
     const item = state.equipment[slot];
     if (!item || this.isFull(state)) return false;
