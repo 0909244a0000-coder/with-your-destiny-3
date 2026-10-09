@@ -1404,3 +1404,44 @@ html.m-ui .combat-panel { row-gap:4px; }
   .es-actions { gap:5px; }
   .es-actions button { min-width:0; padding:6px 8px; }
 }
+
+/* 描き込んだUI素材。四隅は9分割で保ち、幅が変わっても中央の文字を圧迫しない。 */
+.modal-box.equipscreen-box {
+  border:18px solid transparent;
+  border-image-source:url('../assets/ui/armory-frame.webp');
+  border-image-slice:130 fill;
+  border-image-width:18px;
+  border-image-repeat:stretch;
+  border-radius:0;
+}
+.es-cell:not(.blank)::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  background:url('../assets/ui/armory-slot.webp') center/100% 100% no-repeat;
+  opacity:.76;
+  pointer-events:none;
+}
+.es-cell:not(.blank) > * { z-index:2; }
+.es-cell img.item-icon { position:relative; }
+.es-tabs button,.es-actions button,.es-head button {
+  box-sizing:border-box;
+  border:8px solid transparent;
+  border-image-source:url('../assets/ui/armory-button.webp');
+  border-image-slice:55 90 fill;
+  border-image-width:8px 12px;
+  border-image-repeat:stretch;
+  border-radius:0;
+  background:none;
+  box-shadow:none;
+  color:#f3dfba;
+  text-shadow:0 1px 2px #000;
+}
+.es-tabs button.on { background:none; box-shadow:0 0 0 1px #d7a356,0 0 9px #c2863255; filter:brightness(1.18); }
+.es-tabs button:hover:not(:disabled),.es-actions button:hover:not(:disabled),.es-head button:hover:not(:disabled) { filter:brightness(1.25); }
+.es-actions button.es-auto:not(:disabled) { background:none; box-shadow:0 0 0 1px #ad7741,0 0 9px #9d592744; }
+.es-actions button.es-auto:disabled { background:none; box-shadow:none; opacity:.5; }
+@media (max-width:820px) {
+  .modal-box.equipscreen-box { border-width:12px; border-image-width:12px; }
+}
