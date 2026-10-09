@@ -14,8 +14,9 @@ WYD.equipScreen = {
     body.onclick = (e) => this.click(e);
     // マウスを乗せると性能（持ち物は今の装備との比べも）。説明は かばんと同じ（src/ui.js の showTooltipFor）
     body.onmouseover = (e) => {
-      const el = e.target.closest('[data-es="item"],[data-es="slot"]');
-      if (el) WYD.ui.showTooltipFor(e, el.dataset.es === "item" ? "inv" : "eq"); else WYD.ui.hideTooltip();
+      const el = e.target.closest('[data-es="item"],[data-es="slot"],[data-es="gem"]');
+      if (el && el.dataset.es === "gem") this.gemTip(e, el.dataset.key);
+      else if (el) WYD.ui.showTooltipFor(e, el.dataset.es === "item" ? "inv" : "eq"); else WYD.ui.hideTooltip();
     };
     body.onmouseleave = () => WYD.ui.hideTooltip();
     WYD.ui.bindRightDiscard(body, "inv");   // 持ち物を右クリックで捨てる（かばんと同じ。ロックは捨てない）
@@ -41,9 +42,25 @@ WYD.equipScreen = {
     return Math.round(Object.keys(W).reduce((n, k) => n + (stats[k] || 0) * W[k], 0));
   },
 
+  // 手元の宝石（種類ごと。段階・種類の順。神・混沌が先）
+  gemKeys() {
+    const s = WYD.state, G = WYD.gems;
+    const score = (k) => { const i = G.info(k); return i.fused ? (i.god ? 2000 : 1000) + i.lines.length : i.tier * 10 + WYD.data.gems.gems.indexOf(i.def); };
+    return Object.keys(s.gems).filter((k) => s.gems[k] > 0 && G.info(k) && !G.info(k).rune).sort((a, b) => score(b) - score(a) || a.localeCompare(b));
+  },
+
+  // 宝石のマス
+  gemCell(key) {
+    const s = WYD.state, G = WYD.gems, i = G.info(key), M = WYD.data.equipScreen.gemMark, esc = WYD.results.escape;
+    const mark = i.god ? M.god : i.fused ? M.fused : M.tiers[i.tier] || "";
+    return `<button class="es-cell es-gemcell" data-es="gem" data-key="${esc(key)}" style="--c:${i.def.color};--g:${i.def.color}55" aria-label="${esc(G.name(key))}">` +
+      `<b class="es-rarity">${mark}</b>${G.isNew(s, key) ? `<i class="new-badge es-new">NEW</i>` : ""}<span class="es-gem-shape">◆</span><small class="es-lv">×${s.gems[key]}</small></button>`;
+  },
+
   // 持ち物のうち、今のタブに入るもの [{ item, index }]
   shown(tab) {
     const s = WYD.state, t = WYD.data.equipScreen.tabs.find((x) => x.id === tab) || {};
+    if (t.gems) return [];
     return s.inventory.map((item, index) => ({ item, index })).filter(({ item }) =>
       (!t.slots || t.slots.includes(item.slot)) && (!t.rarities || t.rarities.includes(item.rarity)) &&
       (!t.upgrade || WYD.ui.upgradeMark(item) !== ""));
@@ -56,6 +73,11 @@ WYD.equipScreen = {
     // Ctrl＋クリックでロック（かばんと同じ）、ふつうのクリックで装備の窓
     const item = d.es === "slot" ? s.equipment[d.slot] : d.es === "item" ? s.inventory[Number(d.index)] : null;
     if (item && (e.ctrlKey || e.metaKey)) { ui.toggleLock(item); ui.changed(); this.render(); return; }
+    if (d.es === "gem") {   // 宝石の画面を開いて、この宝石のはめ先を選ぶ
+      WYD.gems.seen(s, d.key); ui.hideTooltip();
+      WYD.gemVault.open(); WYD.gemVault.picking = d.key; WYD.gemVault.render();
+      return;
+    }
     if (d.es === "slot") { if (item) ui.touchSheet("eq", d.slot); return; }
     if (d.es === "item") { ui.touchSheet("inv", Number(d.index)); return; }
     if (d.es === "tab") this.tab = d.tab;
@@ -68,6 +90,14 @@ WYD.equipScreen = {
     }
     ui.changed();
     this.render();
+  },
+
+  // 宝石の説明（乗せると NEW も消す）
+  gemTip(e, key) {
+    const s = WYD.state, G = WYD.gems, esc = WYD.results.escape;
+    if (!G.info(key)) return;
+    if (G.isNew(s, key)) { G.seen(s, key); WYD.ui.markDirty(); }
+    WYD.ui.showTooltipHtml(e, `<div class="tip-item"><div style="color:${G.color(key)};font-weight:bold">◆ ${esc(G.name(key))} ×${s.gems[key] || 0}</div><div>${esc(WYD.gemVault.text(key)).replace(/、|／/g, "<br>")}</div></div><div class="tip-help">クリック：宝石の画面で、はめ先を選ぶ</div>`);
   },
 
   // 枠・マス1つ
@@ -87,8 +117,9 @@ WYD.equipScreen = {
     const col = (ids) => ids.map((slot) => `<div class="es-slot">${this.cell(s.equipment[slot], `data-es="slot" data-slot="${slot}"`, slotName[slot])}<small>${slotName[slot]}</small></div>`).join("");
     const fmt = (v, kind) => kind === "pct" ? `${Math.round(v)}%` : kind === "rate" ? `${v.toFixed(2)}/秒` : WYD.results.number(v);
     const items = this.shown(this.tab), size = WYD.data.items.inventorySize;
-    const tabs = D.tabs.map((t) => `<button data-es="tab" data-tab="${t.id}" class="${this.tab === t.id ? "on" : ""}">${t.label}<b>${this.shown(t.id).length}</b></button>`).join("");
-    const grid = items.map(({ item, index }) => this.cell(item, `data-es="item" data-index="${index}"`)).join("") +
+    const gemKeys = this.gemKeys(), onGems = !!(D.tabs.find((t) => t.id === this.tab) || {}).gems;
+    const tabs = D.tabs.map((t) => `<button data-es="tab" data-tab="${t.id}" class="${this.tab === t.id ? "on" : ""}">${t.label}<b>${t.gems ? gemKeys.length : this.shown(t.id).length}</b></button>`).join("");
+    const grid = onGems ? gemKeys.map((k) => this.gemCell(k)).join("") : items.map(({ item, index }) => this.cell(item, `data-es="item" data-index="${index}"`)).join("") +
       (this.tab === "all" ? Array.from({ length: Math.max(0, size - s.inventory.length) }, () => `<div class="es-cell blank"></div>`).join("") : "");
     this.$("equipscreen-body").innerHTML =
       `<div class="es-top"><span class="es-money" style="color:${C.materialColor}">${C.materialName} ${WYD.results.number(s.materials)}</span><span class="es-money">宝石 ${Object.values(s.gems).reduce((n, v) => n + v, 0)}</span></div>` +
@@ -96,7 +127,7 @@ WYD.equipScreen = {
         `<section class="es-hero"><div class="es-col">${col(D.leftSlots)}</div>` +
           `<div class="es-figure"><img src="${esc(WYD.data.player.image || "assets/player.png")}" alt=""><div class="es-plate"><b>${esc(cls.name || "冒険者")}</b><span>Lv.${s.player.level}${s.player.paragon.level ? ` · 修練${s.player.paragon.level}` : ""}</span><span class="es-power">戦闘力 <b>${WYD.results.number(this.power(stats))}</b></span></div></div>` +
           `<div class="es-col">${col(D.rightSlots)}</div></section>` +
-        `<section class="es-bag"><nav class="es-tabs">${tabs}</nav><div class="es-grid">${grid || `<p class="muted">このタブに入る装備はない</p>`}</div></section>` +
+        `<section class="es-bag"><nav class="es-tabs">${tabs}</nav><div class="es-grid">${grid || `<p class="muted">${onGems ? "手元に宝石がない" : "このタブに入る装備はない"}</p>`}</div></section>` +
       `</div>` +
       `<div class="es-bottom"><div class="es-stats">${D.stats.map(([k, name, kind]) => `<span><small>${name}</small><b>${fmt(stats[k] || 0, kind)}</b></span>`).join("")}</div>` +
         `<div class="es-actions"><span class="es-count">${s.inventory.length} / ${size}</span><button data-es="discard" ${s.inventory.length ? "" : "disabled"}>一括分解</button><button data-es="sort" ${s.inventory.length ? "" : "disabled"}>並べ替え</button>${s.inventory.some((it) => it.isNew) ? `<button data-es="seenAll" title="持ち物の NEW の印をすべて消す">NEWを消す</button>` : ""}<button data-es="auto" class="es-auto">自動装備</button></div></div>`;

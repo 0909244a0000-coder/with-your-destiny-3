@@ -1784,6 +1784,11 @@ WYD.ui = {
       if (item) html = this.itemHtml(item) + `<div class="tip-help">クリック：操作の窓（外す・強化・つけ直し・鍛造・宝石）／Ctrl＋クリック：ロック</div>`;
     }
     if (!item) return this.hideTooltip();
+    this.showTooltipHtml(e, html);
+  },
+
+  // 説明の窓を、マウスの横（画面の中）に出す
+  showTooltipHtml(e, html) {
     const tip = this.$("tooltip");
     tip.innerHTML = html;
     tip.classList.toggle("wide", html.includes("tip-cols"));
