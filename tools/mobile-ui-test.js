@@ -31,7 +31,7 @@ const path = require('node:path');
     const zoom = await page.evaluate(async () => { const out = []; for (let i = 0; i < 3; i++) { document.getElementById('m-zoom').click(); await new Promise(r => setTimeout(r, 120)); const c = document.getElementById('game').getBoundingClientRect(); out.push([document.getElementById('m-zoom').textContent, Math.round(c.width)]); } return out; });
     assert(zoom.some(([l, w]) => l === '全体' && w === 390) && zoom[2][0] === '寄る', JSON.stringify(zoom));
     // タブ：押すと画面全体が切り替わり、タブは押せるまま
-    for (const tab of ['bag', 'status', 'skills', 'upgrade', 'more', 'battle']) {
+    for (const tab of ['bag', 'status', 'skills', 'more', 'battle']) {
       await page.click(`[data-m-tab="${tab}"]`); await page.waitForTimeout(150); await shot('tab-' + tab);
       const r = await page.evaluate(tab => {
         const bag = document.getElementById('bag'), more = document.getElementById('m-more'), tabs = document.getElementById('m-tabs').getBoundingClientRect();

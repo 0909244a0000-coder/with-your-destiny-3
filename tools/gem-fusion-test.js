@@ -1,4 +1,4 @@
-// 宝石合成（混沌の宝石）：種類も段階も混ぜて王者10個ぶん → ランダムな能力の宝石。基本の能力・特殊効果・割合・固有能力・神（身につけて1つ）。一度だけの巻き戻し。宝石を外すモード。保存・表示。
+// 宝石合成（混沌の宝石）：種類も段階も混ぜて王者10個ぶん → ランダムな能力の宝石。基本の能力・特殊効果・割合・固有能力・神（身につけて1つ）。一度だけの巻き戻し。宝石の画面（絞り込み・検索・並べ替え・はめる・外す・再合成）。保存・表示。
 // node tools/gem-fusion-test.js
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
@@ -96,31 +96,76 @@ const path = require('node:path');
     assert(out.firstGod); assert.equal(out.secondGod, false, '神は身につけて1つまで'); assert(out.spareGod); assert.equal(out.god, 'stun');
     assert.equal(out.stunned, 0.5); assert.equal(out.marked, 120); assert(out.executed, '断罪'); assert(out.bossAlive, 'ボスは即死しない');
     assert.match(out.godText, /【神・雷霆】通常攻撃に 100% で 0\.5秒スタン/); assert.equal(out.godName, '神の混沌石'); assert.equal(out.twoGods, null); assert.equal(out.bad, null); assert.equal(out.badFx, null);
-    // 画面：ボタンで合成（確認を受ける）
-    await page.evaluate(() => { const s = WYD.state; s.gems = { 'emerald:4': 10 }; WYD.ui.$('gems-panel').hidden = false; WYD.ui.changed(); WYD.ui.render && WYD.ui.render(); });
-    await page.evaluate(() => { document.getElementById('bag').hidden = false; });
-    await page.evaluate(() => WYD.ui.putHtml('gems', WYD.ui.gemsHtml()));
+    // 宝石の画面（独立した窓）：合成・絞り込み・検索・並べ替え・はめる（はめ先を選ぶ）・外す
+    await page.evaluate(() => { const s = WYD.state; for (const it of Object.values(s.equipment)) if (it) it.sockets = []; s.inventory = []; s.gems = { 'emerald:4': 10 }; WYD.ui.changed(); });
+    await page.evaluate(() => document.getElementById('gems-open').click());
     page.once('dialog', d => d.accept());
-    await page.evaluate(() => document.querySelector('[data-gem-fuse]').click());
+    await page.evaluate(() => document.querySelector('[data-gv-act="fuse"]').click());
     const ui = await page.evaluate(() => Object.keys(WYD.state.gems));
     assert.equal(ui.length, 1); assert(ui[0].startsWith('fused:'));
-    // 宝石を外すモード：装備をクリックすると、はまっている宝石（混沌の宝石・神・ふつうの宝石）を全部外して手元に。ルーンは残す
-    const un = await page.evaluate(() => {
-      const s = WYD.state, w = WYD.loot.create(s, 10, 0, { slot: 'weapon' });
-      for (const it of Object.values(s.equipment)) if (it) it.sockets = []; w.sockets = ['fused:god.stun=chance~3|sec~0.5', 'ruby:2', 'rune:el']; s.equipment.weapon = w; s.gems = {};
-      WYD.ui.changed(); WYD.ui.toggleBag(true); WYD.ui.render && WYD.ui.render();
-      WYD.ui.putHtml('gems', WYD.ui.gemsHtml());
-      document.querySelector('[data-gem-unsocket]').click();
-      const on = WYD.ui.unsocketMode;
-      document.querySelector('#equipment [data-slot="weapon"]').click();
-      const after = { sockets: [...s.equipment.weapon.sockets], gems: { ...s.gems }, equipped: s.equipment.weapon === w };
-      // 外した神の混沌石は、またはめられる
-      WYD.ui.unsocketMode = false; const again = WYD.gems.socket(s, w, 'fused:god.stun=chance~3|sec~0.5');
-      return { on, ...after, again, none: WYD.gems.unsocket(s, null).length };
+    const gv = await page.evaluate(() => {
+      const s = WYD.state, V = WYD.gemVault, cards = () => [...document.querySelectorAll('#gemvault-body .gv-list')[0].querySelectorAll('.gv-card b')].map(b => b.textContent);
+      s.gems = { 'ruby:0': 3, 'ruby:4': 1, 'topaz:2': 2, 'fused:attack=10,fx.lifesteal=2': 1, 'fused:pct.attack=3,attack=30,critChance=5': 1, 'fused:god.stun=chance~3|sec~0.5': 1 };
+      const w = WYD.loot.create(s, 10, 0, { slot: 'weapon' }); w.sockets = [null, null]; s.equipment.weapon = w;
+      WYD.ui.changed(); V.render();
+      const all = cards().length;
+      const set = (id, v) => { const el = document.getElementById(id); el.value = v; el.dispatchEvent(new Event(id === 'gemvault-search' ? 'input' : 'change')); };
+      set('gemvault-filter', 'fused'); const fused = cards().length;
+      set('gemvault-filter', 'god'); const god = cards();
+      set('gemvault-filter', 'normal'); const normal = cards().length;
+      set('gemvault-filter', 'all'); set('gemvault-search', '吸血'); const search = cards();
+      set('gemvault-search', '攻撃力'); set('gemvault-sort', 'value'); const byValue = [...document.querySelectorAll('#gemvault-body .gv-list')[0].querySelectorAll('.gv-card small')].map(x => x.textContent)[0];
+      set('gemvault-search', ''); set('gemvault-sort', 'tier');
+      const top = cards()[0];
+      document.querySelector('[data-gv-act="pick"][data-key="fused:god.stun=chance~3|sec~0.5"]').click();
+      const targets = document.querySelectorAll('[data-gv-act="place"]').length;
+      document.querySelector('[data-gv-act="place"][data-where="eq"][data-slot="weapon"]').click();
+      const placed = w.sockets[0], used = document.querySelectorAll('[data-gv-act="remove"]').length;
+      s.gems['fused:god.echo=chance~10'] = 1; V.render();
+      document.querySelector('[data-gv-act="pick"][data-key="fused:god.echo=chance~10"]').click();
+      const godTargets = document.querySelectorAll('[data-gv-act="place"][data-where="eq"]').length;
+      document.querySelector('[data-gv-act="remove"]').click();
+      const removed = w.sockets[0] === null && s.gems['fused:god.stun=chance~3|sec~0.5'] === 1;
+      const unlocked = !document.getElementById('gems-open').hidden, bagPanel = !!document.getElementById('gems-panel');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); const closed = document.getElementById('gemvault').hidden;
+      // 宝石を全部外す（src/gems.js の unsocket。ルーンは残す）
+      const w2 = WYD.loot.create(s, 10, 0, { slot: 'ring' }); w2.sockets = ['fused:attack=3', 'ruby:2', 'rune:el']; s.gems = {};
+      const un = { keys: WYD.gems.unsocket(s, w2).length, sockets: [...w2.sockets], gems: { ...s.gems }, none: WYD.gems.unsocket(s, null).length };
+      return { all, fused, god, normal, search, byValue, top, targets, placed, used, godTargets, removed, unlocked, bagPanel, closed, un };
     });
-    assert.equal(un.on, true); assert.equal(un.equipped, true, '外すモードでは装備は外れない');
-    assert.deepEqual(un.sockets, [null, null, 'rune:el']); assert.deepEqual(un.gems, { 'fused:god.stun=chance~3|sec~0.5': 1, 'ruby:2': 1 });
-    assert(un.again); assert.equal(un.none, 0);
+    assert.equal(gv.all, 6); assert.equal(gv.fused, 3); assert.deepEqual(gv.god, ['◆ 神の混沌石']); assert.equal(gv.normal, 3);
+    assert.equal(gv.search.length, 1); assert.match(gv.byValue, /攻撃力 \+30/, '検索した能力の強い順');
+    assert.equal(gv.top, '◆ 神の混沌石', '段階・種類順は神が上'); assert.equal(gv.targets, 1);
+    assert.equal(gv.placed, 'fused:god.stun=chance~3|sec~0.5'); assert.equal(gv.used, 1); assert.equal(gv.godTargets, 0, '神は1つまで');
+    assert(gv.removed); assert(gv.unlocked); assert.equal(gv.bagPanel, false, 'かばんの宝石の欄はなくなった'); assert(gv.closed);
+    assert.deepEqual(gv.un.sockets, [null, null, 'rune:el']); assert.deepEqual(gv.un.gems, { 'fused:attack=3': 1, 'ruby:2': 1 }); assert.equal(gv.un.none, 0);
+    // 再合成：手元の混沌の宝石5個（神もふくむ）→ 新しい混沌の宝石1個。数ちがい・持っていない・ふつうの宝石は不可
+    const rf = await page.evaluate(() => {
+      const s = WYD.state, G = WYD.gems;
+      s.gems = { 'fused:attack=1': 3, 'fused:defense=1': 1, 'fused:god.echo=chance~9': 1, 'ruby:0': 5 };
+      const four = G.refuse(s, ['fused:attack=1', 'fused:attack=1', 'fused:attack=1', 'fused:defense=1']);
+      const notOwned = G.refuse(s, ['fused:attack=1', 'fused:attack=1', 'fused:attack=1', 'fused:attack=1', 'fused:defense=1']);
+      const normal = G.refuse(s, ['ruby:0', 'ruby:0', 'ruby:0', 'ruby:0', 'ruby:0']);
+      const key = G.refuse(s, ['fused:attack=1', 'fused:attack=1', 'fused:attack=1', 'fused:defense=1', 'fused:god.echo=chance~9']);
+      const after = { ...s.gems };
+      // 画面：見えている混沌の宝石を選ぶ → 再合成
+      s.gems = { 'fused:attack=2': 2, 'fused:defense=2': 2, 'fused:critChance=2': 2, 'ruby:0': 1 };
+      WYD.gemVault.open();
+      document.querySelector('[data-gv-act="chooseShown"]').click();
+      const picked = WYD.gemVault.chosenTotal(), btnOn = !document.querySelector('[data-gv-act="refuse"]').disabled;
+      document.querySelector('[data-gv-act="chooseClear"]').click(); const cleared = WYD.gemVault.chosenTotal();
+      document.querySelector('[data-gv-act="choose"][data-key="fused:attack=2"]').click(); const one = WYD.gemVault.chosen['fused:attack=2'];
+      const btnOff = document.querySelector('[data-gv-act="refuse"]').disabled;
+      document.querySelector('[data-gv-act="chooseShown"]').click();
+      return { four, notOwned, normal, made: !!key && key.startsWith('fused:'), after, picked, btnOn, cleared, one, btnOff, total: WYD.gemVault.chosenTotal() };
+    });
+    assert.equal(rf.four, null); assert.equal(rf.notOwned, null); assert.equal(rf.normal, null); assert(rf.made);
+    assert.deepEqual(Object.keys(rf.after).filter(k => k !== 'ruby:0').length, 1, '5個が1個に'); assert.equal(rf.after['ruby:0'], 5);
+    assert.equal(rf.picked, 5); assert(rf.btnOn); assert.equal(rf.cleared, 0); assert.equal(rf.one, 2); assert(rf.btnOff); assert.equal(rf.total, 5);
+    page.once('dialog', d => d.accept());
+    await page.evaluate(() => document.querySelector('[data-gv-act="refuse"]').click());
+    const rfUi = await page.evaluate(() => Object.entries(WYD.state.gems));
+    assert.equal(rfUi.reduce((n, [k, v]) => n + (k.startsWith('fused:') ? v : 0), 0), 2, '6個のうち5個を使って1個できる');
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ plan: out.plan, name: out.name, text: out.text, ui }));
   } finally { await browser.close(); }

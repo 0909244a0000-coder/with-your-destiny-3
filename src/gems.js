@@ -58,7 +58,7 @@ WYD.gems = {
   lineText(l) {
     const F = WYD.data.gems.fusion;
     if (l.kind === "stat") return WYD.util.formatStat(l.id, l.value);
-    if (l.kind === "effect") return WYD.util.formatEffect(WYD.data.effects.list.find((d) => d.id === l.id), l.value);
+    if (l.kind === "effect") { const d = WYD.data.effects.list.find((x) => x.id === l.id); return `${d.name}：${WYD.util.formatEffect(d, l.value)}`; }
     if (l.kind === "pct") return `${F.pctNames[l.id]} +${l.value}%`;
     const def = this.poolDef(l.kind, l.id), v = { ...def.fixed, ...l.params };
     const text = def.desc.replace(/\{(\w+)\}/g, (all, k) => (k in v ? String(v[k]) : all));
@@ -138,6 +138,11 @@ WYD.gems = {
     return Object.values(state.equipment).some((it) => it && it !== except && (it.sockets || []).some((k) => k && this.isGod(k)));
   },
 
+  // その装備（身につけているもの）に、神の混沌石をこれ以上はめられないか
+  godBlocked(state, item, key) {
+    return this.isGod(key) && Object.values(state.equipment).includes(item) && this.godEquipped(state, null);
+  },
+
   statsText(key, slot) {
     const i = this.info(key);
     if (i && i.fused) return i.lines.map((l) => this.lineText(l)).join("、");
@@ -200,6 +205,24 @@ WYD.gems = {
     return n;
   },
 
+  // 再合成（data/gems.js の fusion.refuse）：手元の混沌の宝石 keys（同じ key は数だけ並べる）をちょうど count 個使って、新しい混沌の宝石1個。
+  // できたら作った宝石の key、できなければ null
+  refuse(state, keys) {
+    const R = WYD.data.gems.fusion.refuse, need = {};
+    if (!Array.isArray(keys) || keys.length !== R.count || state.materials < R.cost) return null;
+    for (const k of keys) {
+      const i = this.info(k);
+      if (!i || !i.fused) return null;
+      need[k] = (need[k] || 0) + 1;
+    }
+    if (Object.keys(need).some((k) => (state.gems[k] || 0) < need[k])) return null;
+    state.materials -= R.cost;
+    for (const k in need) this.add(state, k, -need[k]);
+    const key = this.rollFused();
+    this.add(state, key);
+    return key;
+  },
+
   // 合成する。できたら作った宝石の key、できなければ null
   fuse(state) {
     const plan = this.fusionPlan(state);
@@ -260,7 +283,7 @@ WYD.gems = {
   // 宝石をはめる。できたら true
   socket(state, item, key) {
     if (!this.info(key) || this.info(key).rune) return false;
-    if (this.isGod(key) && this.godEquipped(state, null) && Object.values(state.equipment).includes(item)) return false;   // 身につけて効く神は1つだけ
+    if (this.godBlocked(state, item, key)) return false;   // 身につけて効く神は1つだけ
     const i = this.freeSocket(item);
     if (i < 0 || !(state.gems[key] > 0)) return false;
     item.sockets[i] = key;
@@ -279,6 +302,15 @@ WYD.gems = {
       return null;
     });
     return out;
+  },
+
+  // ソケット1つから宝石を外して手元にもどす。外した key（外せなければ null）
+  unsocketAt(state, item, index) {
+    const key = item && Array.isArray(item.sockets) ? item.sockets[index] : null, i = key && this.info(key);
+    if (!i || i.rune) return null;
+    item.sockets[index] = null;
+    this.add(state, key);
+    return key;
   },
 
   // 装備を捨てるとき、はまっていた宝石を手元にもどす

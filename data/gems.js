@@ -99,6 +99,8 @@ WYD.data.gems = {
   fusion: {
     name: "混沌の宝石", godName: "神の混沌石", color: "#ff7ad9",
     need: 810, cost: 0,
+    // 再合成：手元の混沌の宝石（神の混沌石もふくむ）count 個を、新しい混沌の宝石1個に作り直す。割は悪い（使わない宝石をためないため）
+    refuse: { count: 5, cost: 0 },
     // 一度だけの巻き戻し（2026-10-09：神が出すぎ・強すぎたので、それまでの合成をなかったことにする）。
     //   旧セーブを開いたとき、混沌の宝石（持ち物・はめた分とも）を外し、1つにつき王者 refundCount 個（種類はランダム）を返す
     rollback: { flag: "fusionRollback1", refundTier: 4, refundCount: 10 },

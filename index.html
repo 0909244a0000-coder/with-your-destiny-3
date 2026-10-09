@@ -226,12 +226,8 @@
             <div id="equipment" class="grid"></div>
             <div id="builds" class="builds"></div>
           </section>
-          <section class="panel" id="gems-panel" hidden>
-            <h2>宝石 <small class="muted">選んでから装備をクリックすると、空いたソケットにはめる</small></h2>
-            <div id="gems"></div>
-          </section>
           <section class="panel" id="cube-panel" hidden>
-            <h2>カナイの箱 <small class="muted">ユニークの力を覚えて、装備とは別に3つまで使える</small> <button id="cube-mode">入れるモード：OFF</button></h2>
+            <h2>カナイの箱 <small class="muted">ユニークの力を覚えて、装備とは別に3つまで使える</small></h2>
             <div id="cube"></div>
           </section>
         </div>
@@ -246,9 +242,6 @@
               <button id="sort-inv" title="レア度の高い順、同じなら部位・強さの順に並べる">並べ替え</button>
               <button id="discard-all" title="持ち物を全て素材にする。ロックした装備・装備中は対象外。実行前に確認します">全て捨てる</button>
               <button id="bag-gamble-open">キャダラの賭け</button>
-              <button id="craft-mode">つけ直しモード：OFF</button>
-              <button id="enhance-mode">強化モード：OFF</button>
-              <button id="forge-mode" title="装備をクリックすると、能力を1つずつ狙って鍛えられる（Last Epoch の鍛造）">鍛造</button>
             </div>
             <div id="inventory" class="grid"></div>
             <p class="muted" id="inv-help">装備を触ると操作を選べます。「全て捨てる」は確認後に持ち物を分解します（ロック除く）</p>
@@ -275,6 +268,18 @@
     </div>
   </div>
 
+  <!-- 宝石の画面（src/gemvault.js）：手元の宝石・はめている宝石、絞り込み・検索・並べ替え、はめる・外す・合成 -->
+  <div id="gemvault" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="gemvault-title">
+    <div class="modal-box gemvault-box">
+      <div class="gv-head"><h2 id="gemvault-title">宝石</h2><button id="gemvault-close">閉じる ×</button></div>
+      <div class="gv-controls">
+        <label>種類 <select id="gemvault-filter"><option value="all">すべて</option><option value="normal">ふつうの宝石</option><option value="fused">混沌の宝石</option><option value="god">神の混沌石</option></select></label>
+        <label>並べ替え <select id="gemvault-sort"><option value="tier">段階・種類</option><option value="new">新しい順</option><option value="lines">能力の数</option><option value="value">検索した能力の強さ</option></select></label>
+        <label class="gv-search">検索 <input id="gemvault-search" type="search" placeholder="吸血 攻撃力 雷霆 など（空白で複数）" autocomplete="off"></label>
+      </div>
+      <div id="gemvault-body"></div>
+    </div>
+  </div>
   <div id="lgem" class="modal" hidden>
     <div class="modal-box devotion-box">
       <h2>伝説の宝石</h2>
@@ -458,6 +463,7 @@
   <script src="src/trial.js"></script>
   <script src="src/records.js"></script>
   <script src="src/gems.js"></script>
+  <script src="src/gemvault.js"></script>
   <script src="src/runeSkills.js"></script>
   <script src="src/daily.js"></script>
   <script src="src/allies.js"></script>
