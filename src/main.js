@@ -21,6 +21,7 @@ window.WYD = window.WYD || {};
   WYD.runeSkillsUI.init();
   WYD.navigation.init();
   WYD.gemVault.init();
+  WYD.optimizer.init();     // おすすめ装備の窓（入口は装備画面のボタン）
   WYD.equipScreen.init();   // 装備画面（試作）   // 宝石の画面（入口のボタンは navigation が作る）
   WYD.mobile.init();
   WYD.sound.init();

@@ -221,6 +221,7 @@ WYD.equipScreen = {
     }
     if (d.es === "op-clear") { if (d.kind === "gem") this.gemOpKeys = []; else this.opKeys = []; this.bagPage = 0; this.render(); return; }
     if (d.es === "sort-jump") { this.page = "equip"; this.tab = d.tab; this.bagPage = 0; this.render(); return; }
+    if (d.es === "optimizer") { ui.hideTooltip(); WYD.optimizer.open(); return; }   // おすすめ装備の窓（見るだけ）
     if (d.es === "page") { this.bagPage += Number(d.step); this.render(); return; }
     if (d.es === "tab") { this.tab = d.tab; this.bagPage = 0; this.render(); return; }
     else if (d.es === "fuse") { if (!WYD.gemVault.fuseNow()) return; }   // 宝石合成（宝石の画面と同じ。確認してから）
@@ -318,7 +319,7 @@ WYD.equipScreen = {
     this.$("es-sort-host").innerHTML = this.sortHtml();
     this.$("es-stats-host").innerHTML = D.stats.map(([k, name, kind]) => `<span><small>${name}</small><b>${fmt(stats[k] || 0, kind)}</b></span>`).join("");
     this.$("es-count").textContent = `${s.inventory.length} / ${size}`;
-    this.$("es-fuse-host").innerHTML = this.fuseButton();
+    this.$("es-fuse-host").innerHTML = `<button data-es="optimizer" title="手持ちから目的別（火力・防御・対人）におすすめの組み合わせを見る（着替えない）">おすすめ装備</button>` + this.fuseButton();
     this.$("es-main-host").innerHTML =
       `<div class="es-top"><span class="es-money" style="color:${C.materialColor}">${C.materialName} ${WYD.results.number(s.materials)}</span><span class="es-money">宝石 ${Object.values(s.gems).reduce((n, v) => n + v, 0)}</span></div>` +
       `<div class="es-main">` +
