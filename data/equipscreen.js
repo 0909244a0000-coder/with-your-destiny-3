@@ -6,6 +6,14 @@ WYD.data.equipScreen = {
   // キャラの左右に並べる装備の枠（data/items.js の slots）
   leftSlots: ["weapon", "head", "body", "hands", "feet"],
   rightSlots: ["offhand", "neck", "ring", "waist"],
+  // 画面の下のページ。panel = 元の画面から移してくる部品（index.html の id）。locked = その部品が隠れている（まだ使えない）ときはページも出さない
+  pages: [
+    { id: "equip", label: "装備・持ち物" },
+    { id: "stats", label: "能力・リザルト", panel: "status-content" },
+    { id: "builds", label: "ビルド", panel: "builds" },
+    { id: "cube", label: "カナイの箱", panel: "cube-panel", locked: true },
+    { id: "maps", label: "地図", panel: "maps-panel", locked: true },
+  ],
   // 持ち物の絞り込み。slots = 入る部位（なし = すべて）、rarities = レア度、socketed = 宝石つきだけ
   tabs: [
     { id: "all", label: "すべて" },

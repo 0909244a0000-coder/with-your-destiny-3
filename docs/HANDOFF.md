@@ -126,6 +126,12 @@
 
 ## 作業記録（新しい順）
 
+### 2026-10-09 Status を装備画面に完全に切りかえ
+- 持ち主の指示：かばん・宝石のアイコンはいらない。Status も新しい装備画面に。古い画面にしかない機能は、新画面の下のタブ（ページ）に入れる。
+- `src/equipscreen.js` の init で、元の部品（`status-content`・`builds`・`cube-panel`・`maps-panel`・`pending-loot-panel`・`.inv-buttons`）を装備画面のページへ移す。src/ui.js は id で描きなおすので動きは同じ。
+- `src/navigation.js`：open('bag'|'status') と toggleBag は装備画面を開く。古いかばんの窓（#bag）は Skills の表示だけ。`bag-open`・`gems-open` は隠したまま残す（ほかのファイルが id を使うため）。
+- スマホの下のタブは 戦闘／装備／スキル／その他 の4つ。テストは navigation-ui・mobile-ui・summon-stats・gem-fusion・equipscreen を合わせた。
+
 ### 2026-10-09 装備画面の右下を宝石合成に
 - 持ち主の指示：右下の「自動装備」を「宝石合成」に。合成の確認と実行は `WYD.gemVault.fuseNow`（宝石の画面と共用）。
 
