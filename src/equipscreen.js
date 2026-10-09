@@ -7,8 +7,8 @@ WYD.equipScreen = {
   tab: "all",
   bagPage: 0,
   gearSort: "default",
-  opKey: "effect:cooldown",
-  gemOpKey: "effect:cooldown",
+  opKeys: [],      // OP指定で選んだ装備の能力・特殊効果（複数。全部を持つ装備だけ出し、高い順）
+  gemOpKeys: [],   // 同じく宝石
   gemSort: "tier",
   page: "equip",
 
@@ -33,17 +33,6 @@ WYD.equipScreen = {
     // 保存ビルドの操作は残し、独立した下タブだけを整理する。
     page("stats").insertAdjacentHTML("beforeend", `<div class="es-builds-wrap"><h3>保存ビルド</h3><p class="muted">装備とスキルの構成を保存・切り替え。</p></div>`);
     page("stats").querySelector(".es-builds-wrap").append($("builds"));
-    body.onchange = (event) => {
-      if (event.target.matches("[data-es-op]")) {
-        const key = event.target.value;
-        if (!this.opChoices().some(([value]) => value === key)) return;
-        this.opKey = key; this.gearSort = "op"; this.bagPage = 0; this.render();
-      } else if (event.target.matches("[data-es-gem-op]")) {
-        const key = event.target.value;
-        if (!this.gemOpChoices().some(([value]) => value === key)) return;
-        this.gemOpKey = key; this.gemSort = "op"; this.bagPage = 0; this.render();
-      }
-    };
     body.onclick = (e) => {
       const p = e.target.closest("[data-es-page]");
       if (p) { this.page = p.dataset.esPage; WYD.ui.hideTooltip(); this.render(); return; }
@@ -86,13 +75,15 @@ WYD.equipScreen = {
   gemKeys() {
     const s = WYD.state, G = WYD.gems, keys = Object.keys(s.gems).filter((k) => s.gems[k] > 0 && G.info(k) && !G.info(k).rune);
     const tier = (k) => { const i = G.info(k); return i.fused ? (i.god ? 2000 : 1000) + i.lines.length : i.tier * 10 + WYD.data.gems.gems.indexOf(i.def); };
-    return keys.map((key, index) => ({ key, index })).sort((a, b) => {
+    let list = keys.map((key, index) => ({ key, index }));
+    const op = this.gemSort === "op" && this.gemOpKeys.length ? this.opRank(list.map((e) => e.key), this.gemOpKeys, (k, op) => this.gemOpValue(k, op)) : null;
+    if (op) list = list.filter((e) => op.has(e.key));   // 選んだOPを全部持つ宝石だけ
+    return list.sort((a, b) => {
       const diff = this.gemSort === "new" ? b.index - a.index :
         this.gemSort === "lines" ? (G.info(b.key).lines || []).length - (G.info(a.key).lines || []).length :
         this.gemSort === "count" ? s.gems[b.key] - s.gems[a.key] :
         this.gemSort === "name" ? G.name(a.key).localeCompare(G.name(b.key), "ja") :
-        this.gemSort === "op" ? (this.gemOpValue(b.key) == null ? 0 : 1) - (this.gemOpValue(a.key) == null ? 0 : 1)
-          || (this.gemOpValue(b.key) ?? 0) - (this.gemOpValue(a.key) ?? 0) : tier(b.key) - tier(a.key);
+        this.gemSort === "op" ? (op ? op.get(b.key) - op.get(a.key) : 0) : tier(b.key) - tier(a.key);
       return diff || tier(b.key) - tier(a.key) || a.index - b.index;
     }).map((entry) => entry.key);
   },
@@ -111,8 +102,8 @@ WYD.equipScreen = {
 
   // 通常宝石の能力値は武器・防具・装飾品に入れたときの最大値で比較。
   // 固有・神は複数パラメータを抽選範囲内の達成率で比較する。
-  gemOpValue(key) {
-    const i = WYD.gems.info(key), [kind, id] = this.gemOpKey.split(":");
+  gemOpValue(key, opKey) {
+    const i = WYD.gems.info(key), [kind, id] = opKey.split(":");
     if (!i) return null;
     if (!i.fused) {
       if (kind !== "stat") return null;
@@ -129,11 +120,20 @@ WYD.equipScreen = {
       sum + ((line.params[name] - lo) / (hi - lo || 1)), 0) / ranges.length * 100 : null;
   },
 
-  gemOpLabel(value) {
+  gemOpLabel(value, opKey) {
     if (value == null) return "なし";
-    const [kind] = this.gemOpKey.split(":");
+    const [kind, id] = opKey.split(":");
     if (kind === "power" || kind === "god") return `品質 ${Math.round(value)}%`;
-    return kind === "stat" ? WYD.util.formatStat(this.gemOpKey.split(":")[1], value) : `${value}%`;
+    return kind === "stat" ? WYD.util.formatStat(id, value) : `${value}%`;
+  },
+
+  // OP指定の点数 Map（key → 点数）。選んだOPを全部持つものだけ入る。点数 = 各OPの値 ÷ そのOPの最大値 の合計（単位のちがうOPも同じ重さで比べる）
+  opRank(keys, ops, valueOf) {
+    const values = new Map(keys.map((k) => [k, ops.map((op) => valueOf(k, op))]));
+    const max = ops.map((op, n) => Math.max(0, ...[...values.values()].map((v) => v[n] ?? 0)) || 1);
+    const out = new Map();
+    for (const [k, v] of values) if (v.every((x) => x != null)) out.set(k, v.reduce((sum, x, n) => sum + x / max[n], 0));
+    return out;
   },
 
   // 宝石のマス
@@ -154,8 +154,8 @@ WYD.equipScreen = {
     ];
   },
 
-  opValue(item) {
-    const [kind, id] = this.opKey.split(":");
+  opValue(item, opKey) {
+    const [kind, id] = opKey.split(":");
     if (kind === "stat") {
       const lines = (item.stats || []).filter((line) => line.stat === id);
       return lines.length ? lines.reduce((sum, line) => sum + WYD.loot.lineValue(item, line), 0) : null;
@@ -164,9 +164,9 @@ WYD.equipScreen = {
     return effect ? Number(effect.value) : null;
   },
 
-  opLabel(value) {
+  opLabel(value, opKey) {
     if (value == null) return "なし";
-    const [kind, id] = this.opKey.split(":");
+    const [kind, id] = opKey.split(":");
     return kind === "stat" ? WYD.util.formatStat(id, value) : `${value}%`;
   },
 
@@ -177,14 +177,15 @@ WYD.equipScreen = {
       (!t.slots || t.slots.includes(item.slot)) && (!t.rarities || t.rarities.includes(item.rarity)) &&
       (!t.upgrade || WYD.ui.upgradeMark(item) !== ""));
     const D = WYD.data.items, rank = (item) => D.rarities.findIndex((r) => r.id === item.rarity), slots = Object.keys(D.slots);
+    const op = this.gearSort === "op" && this.opKeys.length ? this.opRank(entries.map((e) => e.item), this.opKeys, (it, k) => this.opValue(it, k)) : null;
+    if (op) return entries.filter((e) => op.has(e.item)).sort((a, b) => op.get(b.item) - op.get(a.item) || a.index - b.index);   // 選んだOPを全部持つ装備だけ、高い順
     if (this.gearSort !== "default") entries.sort((a, b) => {
       const diff = this.gearSort === "recent" ? b.index - a.index :
         this.gearSort === "rarity" ? rank(b.item) - rank(a.item) :
         this.gearSort === "power" ? WYD.inventory.itemScore(b.item) - WYD.inventory.itemScore(a.item) :
         this.gearSort === "level" ? b.item.level - a.item.level :
         this.gearSort === "slot" ? slots.indexOf(a.item.slot) - slots.indexOf(b.item.slot) :
-        this.gearSort === "op" ? (this.opValue(b.item) == null ? 0 : 1) - (this.opValue(a.item) == null ? 0 : 1)
-          || (this.opValue(b.item) ?? 0) - (this.opValue(a.item) ?? 0) : 0;
+        0;
       return diff || a.index - b.index;
     });
     return entries;
@@ -210,6 +211,15 @@ WYD.equipScreen = {
       if (d.es === "gear-sort") this.gearSort = d.mode; else this.gemSort = d.mode;
       this.bagPage = 0; this.render(); return;
     }
+    if (d.es === "op-toggle" || d.es === "gem-op-toggle") {   // OPを選ぶ・外す（複数）。選ぶとOP指定の並びにする
+      const gear = d.es === "op-toggle", list = gear ? this.opKeys : this.gemOpKeys, valid = gear ? this.opChoices() : this.gemOpChoices();
+      if (!valid.some(([v]) => v === d.op)) return;
+      const n = list.indexOf(d.op);
+      if (n >= 0) list.splice(n, 1); else list.push(d.op);
+      if (gear) this.gearSort = "op"; else this.gemSort = "op";
+      this.bagPage = 0; this.render(); return;
+    }
+    if (d.es === "op-clear") { if (d.kind === "gem") this.gemOpKeys = []; else this.opKeys = []; this.bagPage = 0; this.render(); return; }
     if (d.es === "sort-jump") { this.page = "equip"; this.tab = d.tab; this.bagPage = 0; this.render(); return; }
     if (d.es === "page") { this.bagPage += Number(d.step); this.render(); return; }
     if (d.es === "tab") { this.tab = d.tab; this.bagPage = 0; this.render(); return; }
@@ -224,22 +234,35 @@ WYD.equipScreen = {
     const options = (kind, modes, active) => modes.map(([id, title, description]) =>
       `<button data-es="${kind}-sort" data-mode="${id}" class="${active === id ? "on" : ""}" aria-pressed="${active === id}"><b>${title}</b><small>${description}</small></button>`).join("");
     const preview = (kind) => kind === "gear"
-      ? this.shown("all").slice(0, 8).map(({ item, index }) => this.gearSort === "op"
-        ? `<div class="es-sort-op-item">${this.cell(item, `data-es="item" data-index="${index}"`)}<small>${this.opLabel(this.opValue(item))}</small></div>`
+      ? this.shown("all").slice(0, 8).map(({ item, index }) => this.gearSort === "op" && this.opKeys.length
+        ? `<div class="es-sort-op-item">${this.cell(item, `data-es="item" data-index="${index}"`)}<small>${this.opKeys.map((k) => this.opLabel(this.opValue(item, k), k)).join(" / ")}</small></div>`
         : this.cell(item, `data-es="item" data-index="${index}"`)).join("")
-      : this.gemKeys().slice(0, 8).map((key) => this.gemSort === "op"
-        ? `<div class="es-sort-op-item">${this.gemCell(key)}<small>${this.gemOpLabel(this.gemOpValue(key))}</small></div>`
+      : this.gemKeys().slice(0, 8).map((key) => this.gemSort === "op" && this.gemOpKeys.length
+        ? `<div class="es-sort-op-item">${this.gemCell(key)}<small>${this.gemOpKeys.map((k) => this.gemOpLabel(this.gemOpValue(key, k), k)).join(" / ")}</small></div>`
         : this.gemCell(key)).join("");
-    const opOptions = (defs, selected = this.opKey) => defs.map(([value, name]) =>
-      `<option value="${value}" ${selected === value ? "selected" : ""}>${name}</option>`).join("");
-    const opPicker = `<label class="es-sort-op-picker"><b>指定するOP</b><select data-es-op aria-label="並べ替えるOP"><optgroup label="装備の能力値">${opOptions(this.opChoices().filter(([value]) => value.startsWith("stat:")))}</optgroup><optgroup label="特殊効果">${opOptions(this.opChoices().filter(([value]) => value.startsWith("effect:")))}</optgroup></select></label><p class="es-sort-op-help">選んだOPの実数値が高い順。ついていない装備は最後に表示。</p>`;
-    const gemOpOptions = (kind, title) => `<optgroup label="${title}">${opOptions(this.gemOpChoices().filter(([value]) => value.startsWith(kind + ":")), this.gemOpKey)}</optgroup>`;
-    const gemPicker = `<label class="es-sort-op-picker"><b>指定するOP</b><select data-es-gem-op aria-label="並べ替える宝石のOP">${gemOpOptions("stat", "能力値")}${gemOpOptions("effect", "特殊効果")}${gemOpOptions("pct", "割合")}${gemOpOptions("power", "固有能力")}${gemOpOptions("god", "神の能力")}</select></label><p class="es-sort-op-help">通常宝石は装着部位での最大値。固有・神は抽選値の品質順。</p>`;
+    // OPは押して選ぶ（複数）。選んだOPを全部持つものだけ出し、高い順
+    const chips = (kind, defs, selected) => defs.map(([value, name]) =>
+      `<button data-es="${kind}" data-op="${value}" class="${selected.includes(value) ? "on" : ""}" aria-pressed="${selected.includes(value)}">${name}</button>`).join("");
+    const picker = (kind, groups, selected, clearKind) => `<div class="es-sort-op-picker"><div class="es-sort-op-head"><b>指定するOP（複数OK）</b>${selected.length ? `<button data-es="op-clear" data-kind="${clearKind}">選択をクリア</button>` : ""}</div>` +
+      groups.map(([title, defs]) => defs.length ? `<div class="es-op-group"><small>${title}</small><div class="es-op-chips">${chips(kind, defs, selected)}</div></div>` : "").join("") + `</div>`;
+    const gearDefs = this.opChoices(), gemDefs = this.gemOpChoices(), pick = (defs, kind) => defs.filter(([v]) => v.startsWith(kind + ":"));
+    const opPicker = picker("op-toggle", [["装備の能力値", pick(gearDefs, "stat")], ["特殊効果", pick(gearDefs, "effect")]], this.opKeys, "gear") +
+      `<p class="es-sort-op-help">選んだOPを全部持つ装備だけを、値の高い順に出す（ほかは隠す）。複数のときは、各OPの「いちばん高い値に対する割合」の合計で並べる。</p>`;
+    const gemPicker = picker("gem-op-toggle", [["能力値", pick(gemDefs, "stat")], ["特殊効果", pick(gemDefs, "effect")], ["割合", pick(gemDefs, "pct")], ["固有能力", pick(gemDefs, "power")], ["神の能力", pick(gemDefs, "god")]], this.gemOpKeys, "gem") +
+      `<p class="es-sort-op-help">選んだOPを全部持つ宝石だけを、高い順に出す。通常宝石は装着部位での最大値。固有・神は抽選値の品質。</p>`;
     return `<div class="es-sort-intro"><span>ORDER THE ARMORY</span><h3>持ち物の並べ替え</h3><p>装備と宝石、それぞれの見やすい順を選ぶ。装備や宝石の性能は変わりません。</p></div>` +
       `<div class="es-sort-layout">` +
         `<section class="es-sort-card"><div class="es-sort-heading"><img src="assets/ui/nav-status.webp" alt=""><div><small>EQUIPMENT</small><h4>装備 <em>${WYD.state.inventory.length}</em></h4></div></div><div class="es-sort-options">${options("gear", D.gearSorts, this.gearSort)}</div>${opPicker}<div class="es-sort-preview">${preview("gear") || '<span class="muted">装備がない</span>'}</div><button class="es-sort-jump" data-es="sort-jump" data-tab="all">装備を見る →</button></section>` +
         `<section class="es-sort-card"><div class="es-sort-heading"><img src="assets/ui/nav-gems.webp" alt=""><div><small>GEMSTONES</small><h4>宝石 <em>${this.gemKeys().length}種類</em></h4></div></div><div class="es-sort-options">${options("gem", D.gemSorts, this.gemSort)}</div>${gemPicker}<div class="es-sort-preview">${preview("gem") || '<span class="muted">宝石がない</span>'}</div><button class="es-sort-jump" data-es="sort-jump" data-tab="gems">宝石を見る →</button></section>` +
       `</div>`;
+  },
+
+  // OPで絞り込んでいる間は、持ち物の上に何で絞っているかと「解除」を出す（隠れている装備があるとわかるように）
+  opNote(onGems) {
+    const keys = onGems ? (this.gemSort === "op" ? this.gemOpKeys : []) : (this.gearSort === "op" ? this.opKeys : []);
+    if (!keys.length) return "";
+    const names = new Map(onGems ? this.gemOpChoices() : this.opChoices()), esc = WYD.results.escape;
+    return `<div class="es-op-note">OPで絞り込み中：<b>${keys.map((k) => esc(names.get(k) || k)).join("・")}</b>（全部を持つものだけ・高い順）<button data-es="op-clear" data-kind="${onGems ? "gem" : "gear"}">解除</button></div>`;
   },
 
   // 右下の「宝石合成」：たまり具合（今 / 必要）を出し、足りなければ押せない
@@ -275,13 +298,14 @@ WYD.equipScreen = {
     const items = this.shown(this.tab), size = WYD.data.items.inventorySize;
     const gemKeys = this.gemKeys(), onGems = !!(D.tabs.find((t) => t.id === this.tab) || {}).gems;
     const tabs = D.tabs.map((t) => `<button data-es="tab" data-tab="${t.id}" class="${this.tab === t.id ? "on" : ""}">${t.label}<b>${t.gems ? gemKeys.length : this.shown(t.id).length}</b></button>`).join("");
-    const pageSize = WYD.data.items.inventoryPageSize, total = onGems ? gemKeys.length : this.tab === "all" ? size : items.length;
+    const filtering = this.gearSort === "op" && this.opKeys.length > 0, padded = this.tab === "all" && !filtering;   // OPで絞っている間は空きマスを出さない
+    const pageSize = WYD.data.items.inventoryPageSize, total = onGems ? gemKeys.length : padded ? size : items.length;
     const pageCount = Math.max(1, Math.ceil(total / pageSize));
     this.bagPage = Math.max(0, Math.min(this.bagPage, pageCount - 1));
     const start = this.bagPage * pageSize;
     const grid = onGems ? gemKeys.slice(start, start + pageSize).map((k) => this.gemCell(k)).join("") :
       items.slice(start, start + pageSize).map(({ item, index }) => this.cell(item, `data-es="item" data-index="${index}"`)).join("") +
-      (this.tab === "all" ? Array.from({ length: Math.max(0, Math.min(pageSize, size - start) - Math.max(0, Math.min(pageSize, items.length - start))) }, () => `<div class="es-cell blank"></div>`).join("") : "");
+      (padded ? Array.from({ length: Math.max(0, Math.min(pageSize, size - start) - Math.max(0, Math.min(pageSize, items.length - start))) }, () => `<div class="es-cell blank"></div>`).join("") : "");
     const pager = pageCount > 1 ? `<nav class="es-pager" aria-label="持ち物のページ"><button data-es="page" data-step="-1" aria-label="前のページ" ${this.bagPage === 0 ? "disabled" : ""}>◀</button><span>${this.bagPage + 1} / ${pageCount}</span><button data-es="page" data-step="1" aria-label="次のページ" ${this.bagPage === pageCount - 1 ? "disabled" : ""}>▶</button></nav>` : "";
     // ページ：まだ使えないもの（カナイの箱・地図）はタブを隠す
     for (const p of D.pages) {
@@ -301,7 +325,7 @@ WYD.equipScreen = {
         `<section class="es-hero"><div class="es-col">${col(D.leftSlots)}</div>` +
           `<div class="es-figure"><img src="${esc(WYD.data.player.image || "assets/player.png")}" alt=""><div class="es-plate"><b>${esc(cls.name || "冒険者")}</b><span>Lv.${s.player.level}${s.player.paragon.level ? ` · 修練${s.player.paragon.level}` : ""}</span><span class="es-power">戦闘力 <b>${WYD.results.number(this.power(stats))}</b></span></div></div>` +
           `<div class="es-col">${col(D.rightSlots)}</div></section>` +
-        `<section class="es-bag"><nav class="es-tabs">${tabs}</nav>${pager}<div class="es-grid">${grid || `<p class="muted">${onGems ? "手元に宝石がない" : "このタブに入る装備はない"}</p>`}</div></section>` +
+        `<section class="es-bag"><nav class="es-tabs">${tabs}</nav>${this.opNote(onGems)}${pager}<div class="es-grid">${grid || `<p class="muted">${onGems ? "手元に宝石がない" : "このタブに入る装備はない"}</p>`}</div></section>` +
       `</div>`;
   },
 };

@@ -126,6 +126,10 @@
 
 ## 作業記録（新しい順）
 
+### 2026-10-09 OP指定を複数選び・該当なしは隠す・高い順
+- 持ち主の指示：GPT（#167）のOP指定ソートを、複数検索・高い順・該当しないものは非表示に。`opKey`/`gemOpKey`（1つ）→ `opKeys`/`gemOpKeys`（配列）。選ぶUIは select から押すボタンに。
+- ついでに：main で落ちていたテスト5本を直した（GPT側はテストを動かせていなかった）。持ち物の数が60→180（`data/items.js` の inventorySize）になったのに60のままだった（bag-actions・loot-safety・navigation-ui）、ビルドのページが能力のページへ移った（navigation-ui）、ソートページの見本のマスも数えていた（equipscreen・new-mark・navigation-ui）。宝石のタブの NEW の確認は、前の手順のマウスが重なると消えて時々落ちていたので、マウスを離してから見る。
+
 ### 2026-10-09 Status を装備画面に完全に切りかえ
 - 持ち主の指示：かばん・宝石のアイコンはいらない。Status も新しい装備画面に。古い画面にしかない機能は、新画面の下のタブ（ページ）に入れる。
 - `src/equipscreen.js` の init で、元の部品（`status-content`・`builds`・`cube-panel`・`maps-panel`・`pending-loot-panel`・`.inv-buttons`）を装備画面のページへ移す。src/ui.js は id で描きなおすので動きは同じ。

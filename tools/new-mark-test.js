@@ -18,7 +18,7 @@ const path = require('node:path');
       const a = WYD.loot.create(s, 10, 0, { slot: 'ring' }), b = WYD.loot.create(s, 10, 0, { slot: 'head' }), c = WYD.loot.create(s, 10, 0, { slot: 'feet' });
       for (const it of [a, b, c]) WYD.inventory.add(s, it);
       WYD.ui.changed(); WYD.equipScreen.open();
-      return { flags: [a.isNew, b.isNew, c.isNew], badges: document.querySelectorAll('#equipscreen .es-new').length, button: !!document.querySelector('[data-es="seenAll"]') };   /* 「NEWを消す」はなくした */
+      return { flags: [a.isNew, b.isNew, c.isNew], badges: document.querySelectorAll('#equipscreen .es-grid .es-new').length, button: !!document.querySelector('[data-es="seenAll"]') };   /* 「NEWを消す」はなくした */
     });
     assert.deepEqual(items, { flags: [true, true, true], badges: 3, button: false });
     await page.hover('#equipscreen [data-es="item"][data-index="0"]');
