@@ -151,7 +151,7 @@ WYD.save = {
         state.nextItemId = Math.max(state.nextItemId, it.id + 1);
         return true;
       });
-      // 倉庫廃止：旧アイテムは60枠のかばんへ、超過分は未受取に残す。
+      // 倉庫廃止：旧アイテムは180枠のかばんへ、超過分は未受取に残す。
       while (state.stash.length) {
         const item = state.stash.shift();
         if (state.inventory.length < WYD.data.items.inventorySize) state.inventory.push(item);

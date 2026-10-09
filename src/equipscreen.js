@@ -5,6 +5,7 @@ window.WYD = window.WYD || {};
 WYD.equipScreen = {
   opened: false,
   tab: "all",
+  bagPage: 0,
   page: "equip",
 
   init() {
@@ -100,7 +101,8 @@ WYD.equipScreen = {
     }
     if (d.es === "slot") { if (item) ui.touchSheet("eq", d.slot); return; }
     if (d.es === "item") { ui.touchSheet("inv", Number(d.index)); return; }
-    if (d.es === "tab") this.tab = d.tab;
+    if (d.es === "page") { this.bagPage += Number(d.step); this.render(); return; }
+    if (d.es === "tab") { this.tab = d.tab; this.bagPage = 0; this.render(); return; }
     else if (d.es === "fuse") { if (!WYD.gemVault.fuseNow()) return; }   // 宝石合成（宝石の画面と同じ。確認してから）
     ui.changed();
     this.render();
@@ -139,8 +141,14 @@ WYD.equipScreen = {
     const items = this.shown(this.tab), size = WYD.data.items.inventorySize;
     const gemKeys = this.gemKeys(), onGems = !!(D.tabs.find((t) => t.id === this.tab) || {}).gems;
     const tabs = D.tabs.map((t) => `<button data-es="tab" data-tab="${t.id}" class="${this.tab === t.id ? "on" : ""}">${t.label}<b>${t.gems ? gemKeys.length : this.shown(t.id).length}</b></button>`).join("");
-    const grid = onGems ? gemKeys.map((k) => this.gemCell(k)).join("") : items.map(({ item, index }) => this.cell(item, `data-es="item" data-index="${index}"`)).join("") +
-      (this.tab === "all" ? Array.from({ length: Math.max(0, size - s.inventory.length) }, () => `<div class="es-cell blank"></div>`).join("") : "");
+    const pageSize = WYD.data.items.inventoryPageSize, total = onGems ? gemKeys.length : this.tab === "all" ? size : items.length;
+    const pageCount = Math.max(1, Math.ceil(total / pageSize));
+    this.bagPage = Math.max(0, Math.min(this.bagPage, pageCount - 1));
+    const start = this.bagPage * pageSize;
+    const grid = onGems ? gemKeys.slice(start, start + pageSize).map((k) => this.gemCell(k)).join("") :
+      items.slice(start, start + pageSize).map(({ item, index }) => this.cell(item, `data-es="item" data-index="${index}"`)).join("") +
+      (this.tab === "all" ? Array.from({ length: Math.max(0, Math.min(pageSize, size - start) - Math.max(0, Math.min(pageSize, items.length - start))) }, () => `<div class="es-cell blank"></div>`).join("") : "");
+    const pager = pageCount > 1 ? `<nav class="es-pager" aria-label="持ち物のページ"><button data-es="page" data-step="-1" aria-label="前のページ" ${this.bagPage === 0 ? "disabled" : ""}>◀</button><span>${this.bagPage + 1} / ${pageCount}</span><button data-es="page" data-step="1" aria-label="次のページ" ${this.bagPage === pageCount - 1 ? "disabled" : ""}>▶</button></nav>` : "";
     // ページ：まだ使えないもの（カナイの箱・地図）はタブを隠す
     for (const p of D.pages) {
       const locked = p.locked && this.$(p.panel) && this.$(p.panel).hidden;
@@ -158,7 +166,7 @@ WYD.equipScreen = {
         `<section class="es-hero"><div class="es-col">${col(D.leftSlots)}</div>` +
           `<div class="es-figure"><img src="${esc(WYD.data.player.image || "assets/player.png")}" alt=""><div class="es-plate"><b>${esc(cls.name || "冒険者")}</b><span>Lv.${s.player.level}${s.player.paragon.level ? ` · 修練${s.player.paragon.level}` : ""}</span><span class="es-power">戦闘力 <b>${WYD.results.number(this.power(stats))}</b></span></div></div>` +
           `<div class="es-col">${col(D.rightSlots)}</div></section>` +
-        `<section class="es-bag"><nav class="es-tabs">${tabs}</nav><div class="es-grid">${grid || `<p class="muted">${onGems ? "手元に宝石がない" : "このタブに入る装備はない"}</p>`}</div></section>` +
+        `<section class="es-bag"><nav class="es-tabs">${tabs}</nav>${pager}<div class="es-grid">${grid || `<p class="muted">${onGems ? "手元に宝石がない" : "このタブに入る装備はない"}</p>`}</div></section>` +
       `</div>`;
   },
 };

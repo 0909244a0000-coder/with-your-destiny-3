@@ -72,6 +72,31 @@ const path = require('node:path');
         await page.click('#equipscreen [data-es="fuse"]');
         assert.deepEqual(await page.evaluate(() => Object.keys(WYD.state.gems).map(k => k.split(':')[0])), ['fused']);
       }
+      // 旧60枠セーブ相当の持ち物から180枠へ。ページ移動後も元配列の位置を選び、満杯判定は全体を見る。
+      const bag = await page.evaluate(() => {
+        const s = WYD.state, E = WYD.equipScreen;
+        s.inventory = Array.from({ length: 60 }, () => WYD.loot.create(s, 10, 0, { slot: 'head', rarity: 'rare' }));
+        E.tab = 'all'; E.bagPage = 0; E.open('equip');
+        const old = { count: document.getElementById('es-count').textContent, cells: document.querySelectorAll('#equipscreen .es-grid .es-cell').length, pages: document.querySelector('.es-pager span').textContent };
+        for (let i = 60; i < 180; i++) s.inventory.push(WYD.loot.create(s, 10, 0, { slot: 'head', rarity: 'rare' }));
+        WYD.ui.changed(); E.render();
+        document.querySelector('[data-es="page"][data-step="1"]').click();
+        document.querySelector('[data-es="page"][data-step="1"]').click();
+        const last = { count: document.getElementById('es-count').textContent, pages: document.querySelector('.es-pager span').textContent,
+          cells: document.querySelectorAll('#equipscreen .es-grid [data-es="item"]').length,
+          first: document.querySelector('#equipscreen .es-grid [data-es="item"]').dataset.index,
+          endDisabled: document.querySelector('[data-es="page"][data-step="1"]').disabled };
+        document.querySelector('#equipscreen .es-grid [data-es="item"]').click();
+        const sheet = !document.getElementById('sheet').hidden && WYD.ui.sheet?.where === 'inv' && WYD.ui.sheet?.key === 120;
+        WYD.ui.sheetAction('close');
+        document.querySelector('[data-es="tab"][data-tab="weapon"]').click();
+        const filtered = { page: E.bagPage, pager: !!document.querySelector('.es-pager') };
+        return { old, last, sheet, filtered, full: s.inventory.length >= WYD.data.items.inventorySize, size: WYD.data.items.inventorySize };
+      });
+      assert.deepEqual(bag.old, { count: '60 / 180', cells: 60, pages: '1 / 3' });
+      assert.deepEqual(bag.last, { count: '180 / 180', pages: '3 / 3', cells: 60, first: '120', endDisabled: true });
+      assert.equal(bag.size, 180); assert(bag.full); assert(bag.sheet, '3ページ目の装備を選ぶ');
+      assert.deepEqual(bag.filtered, { page: 0, pager: false }, '絞り込みでページを戻す');
       assert.deepEqual(errors, []);
       console.log(viewport.width, JSON.stringify(r));
       await page.close();
