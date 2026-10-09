@@ -3,9 +3,8 @@ window.WYD = window.WYD || {};
 WYD.navigation = {
   init() {
     const ui = WYD.ui, $ = id => document.getElementById(id);
-    const icons = { 'bag-open':['bag','Bag'], 'town-btn':['home','Home'], 'character-open':['status','Status'], 'upgrade-open':['upgrade','Upgrade'], 'skills-open':['skills','Skills'], 'bounty-open':['bounty','Bounties'], 'merc-open':['merc','Mercenary'], 'gems-open':['lgem','Gems'], 'lgem-open':['lgem','Legendary'], 'devotion-open':['devotion','Devotion'], 'codex-open':['codex','Codex'], 'arena-open':['arena','Arena'] };
+    const icons = { 'bag-open':['bag','Bag'], 'town-btn':['home','Home'], 'character-open':['status','Status'], 'skills-open':['skills','Skills'], 'bounty-open':['bounty','Bounties'], 'merc-open':['merc','Mercenary'], 'gems-open':['lgem','Gems'], 'lgem-open':['lgem','Legendary'], 'devotion-open':['devotion','Devotion'], 'codex-open':['codex','Codex'], 'arena-open':['arena','Arena'] };
     const nav = document.querySelector('.stage-btns');
-    const upgrade = document.createElement('button'); upgrade.id='upgrade-open'; nav.append(upgrade);
     const skillsButton = document.createElement('button'); skillsButton.id='skills-open'; nav.append(skillsButton);
     const gemsButton = document.createElement('button'); gemsButton.id='gems-open'; gemsButton.hidden=true; nav.append(gemsButton);   // 宝石の画面（src/gemvault.js）
     const home = document.createElement('section'); home.id='home-panel'; home.hidden=true;
@@ -28,21 +27,17 @@ WYD.navigation = {
     document.querySelector('.bag-cols').prepend(status);
     const skillsPanel = $('skills').closest('section'); skillsPanel.id='skills-content';
     document.querySelector('.bag-cols').prepend(skillsPanel);
-    const workshop = document.createElement('section'); workshop.id='workshop-tools'; workshop.className='panel';
-    workshop.innerHTML='<h2>強化工房</h2><p class="muted">加工方法を選んでから、装備またはかばんのアイテムを選択。</p>';
-    ['forge-mode','enhance-mode','craft-mode'].forEach(id=>workshop.append($(id)));
-    document.querySelector('.bag-cols').prepend(workshop);
+    // 強化・つけ直し・鍛造・箱は、装備を選ぶと出る窓（src/ui.js の touchSheet）にまとめた（2026-10-09。強化の画面とモードはなくした）
     for(const [id,[file,label]] of Object.entries(icons)) {
       const button=$(id), badge=id==='bag-open'?$('bag-badge'):null;
       button.classList.add('nav-icon'); button.setAttribute('aria-label',label); button.title=label;
       button.innerHTML=`<img src="assets/ui/nav-${file}.webp" alt=""><span>${label}</span>`;
       if(badge)button.append(badge);
     }
-    nav.append($('bag-open'),$('town-btn'),$('character-open'),$('skills-open'),$('upgrade-open'),$('gems-open'));
+    nav.append($('bag-open'),$('town-btn'),$('character-open'),$('skills-open'),$('gems-open'));
     const originalToggle=ui.toggleBag.bind(ui);
     this.view='bag';
-    this.open = view => { this.view=view; $('bag').dataset.view=view; document.querySelector('.bag-head h2').textContent={bag:'Bag',status:'Status & Equipment',skills:'Skills',upgrade:'Upgrade'}[view];
-      ui.craftMode=ui.enhanceMode=ui.forgeMode=ui.cubeMode=false;
+    this.open = view => { this.view=view; $('bag').dataset.view=view; document.querySelector('.bag-head h2').textContent={bag:'Bag',status:'Status & Equipment',skills:'Skills'}[view];
       originalToggle(true);document.querySelector('.bag-box').scrollTop=0;
     };
     ui.toggleBag=show=>{ if(show===false || (show===undefined&&!$('bag').hidden)) originalToggle(false); else this.open('bag'); };
@@ -50,7 +45,6 @@ WYD.navigation = {
     $('character-open').setAttribute('aria-controls','bag');
     $('character-open').removeAttribute('aria-expanded');
     $('character-open').onclick=()=>this.open('status');
-    $('upgrade-open').onclick=()=>this.open('upgrade');
     $('skills-open').onclick=()=>this.open('skills');
     ui.updateHudLayout();ui.markDirty();
   }

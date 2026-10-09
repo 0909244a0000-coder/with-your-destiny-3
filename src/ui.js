@@ -5,12 +5,8 @@ WYD.ui = {
   state: null,
   world: null,
   dirty: true,
-  craftMode: false,   // つけ直しモード（クリックで特殊効果をつけ直す）
   paused: false,      // 一時停止中か（セーブしない）
-  enhanceMode: false, // 強化モード（クリックで +1 する）
-  forgeMode: false,   // 鍛造モード（クリックで鍛造の画面をひらく）
   forgeItem: null,    // 鍛造の画面で鍛えている装備
-  cubeMode: false,    // カナイの箱に入れるモード（クリックでユニークを分解して覚える）
   stashOpen: false,   // 倉庫を開いているか
 
   $(id) {
@@ -266,11 +262,6 @@ WYD.ui = {
       WYD.inventory.sort(s.inventory);
       this.changed();
     };
-    this.$("craft-mode").onclick = () => {
-      this.craftMode = !this.craftMode;
-      if (this.craftMode) this.enhanceMode = this.cubeMode = this.forgeMode = false;
-      this.markDirty();
-    };
     this.$("devotion-open").onclick = () => {
       this.$("devotion-body").innerHTML = this.devotionHtml();
       this.$("devotion").hidden = false;
@@ -372,11 +363,6 @@ WYD.ui = {
       else if (t.dataset.filterFlag) f[t.dataset.filterFlag] = t.checked;
       this.changed();
     };
-    this.$("forge-mode").onclick = () => {
-      this.forgeMode = !this.forgeMode;
-      if (this.forgeMode) this.craftMode = this.enhanceMode = this.cubeMode = false;
-      this.markDirty();
-    };
     this.$("forge-close").onclick = () => { this.$("forge").hidden = true; this.forgeItem = null; };
     this.$("forge-body").onclick = (e) => {
       const btn = e.target.closest("[data-forge]");
@@ -389,11 +375,6 @@ WYD.ui = {
       }
       this.$("forge-body").innerHTML = this.forgeHtml(this.forgeItem);
       this.changed();
-    };
-    this.$("cube-mode").onclick = () => {
-      this.cubeMode = !this.cubeMode;
-      if (this.cubeMode) this.craftMode = this.enhanceMode = this.forgeMode = false;
-      this.markDirty();
     };
     this.$("maps").onclick = (e) => {
       const use = e.target.closest("[data-map-use]");
@@ -417,22 +398,15 @@ WYD.ui = {
       s.cube.slots[sel.dataset.cubeSlot] = sel.value || null;
       this.changed();
     };
-    this.$("enhance-mode").onclick = () => {
-      this.enhanceMode = !this.enhanceMode;
-      if (this.enhanceMode) this.craftMode = this.cubeMode = this.forgeMode = false;
-      this.markDirty();
-    };
 
-    // スマホでは、持ち物の説明を「触る」操作に合わせる
-    if (this.isTouch()) this.$("inv-help").textContent = "装備を触ると：説明・今の装備との比べ・装備する／ロック／捨てる";
-    // スマホの「どうするか」の窓
+    // 装備の窓（どこから選んでも同じ窓：装備する・外す・強化・つけ直し・鍛造・宝石・箱・ロック・捨てる）
     this.$("sheet-body").onclick = (e) => {
       const b = e.target.closest("[data-sheet]");
       if (b) this.sheetAction(b.dataset.sheet);
     };
     this.$("sheet").onclick = (e) => { if (e.target.id === "sheet") this.sheetAction("close"); };
 
-    // 持ち物：左クリックで装備、右クリックで捨てる
+    // 持ち物：クリックで装備の窓、右クリックで捨てる、Ctrl＋クリックでロック
     const inv = this.$("inventory");
     this.bindLongPress(inv, "[data-index]", "inv", (c) => Number(c.dataset.index));
     inv.onclick = (e) => {
@@ -440,14 +414,8 @@ WYD.ui = {
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
       const index = Number(cell.dataset.index);
-      if (this.touchSheet("inv", index)) return;   // スマホ：触ると「どうするか」の窓
-      if (e.ctrlKey || e.metaKey) this.toggleLock(s.inventory[index]);
-      else if (this.forgeMode) this.openForge(s.inventory[index]);
-      else if (this.cubeMode) this.cubeItem(s.inventory[index]);
-      else if (this.enhanceMode) this.enhanceItem(s.inventory[index]);
-      else if (this.craftMode) this.rerollItem(s.inventory[index]);
-      else WYD.inventory.equip(s, index);
-      this.changed();
+      if (e.ctrlKey || e.metaKey) { this.toggleLock(s.inventory[index]); this.changed(); }
+      else this.touchSheet("inv", index);
     };
     this.bindRightDiscard(inv, "inv");
     inv.onmouseover = (e) => this.showTooltipFor(e, "inv");
@@ -464,48 +432,22 @@ WYD.ui = {
       if (this.eatClick()) return;
       const cell = e.target.closest("[data-index]");
       if (!cell) return;
-      if (this.touchSheet("stash", Number(cell.dataset.index))) return;
-      if (e.ctrlKey || e.metaKey) this.toggleLock(s.stash[Number(cell.dataset.index)]);
-      else if (this.forgeMode) this.openForge(s.stash[Number(cell.dataset.index)]);
-      else if (this.cubeMode) this.cubeItem(s.stash[Number(cell.dataset.index)]);
-      else if (this.enhanceMode) this.enhanceItem(s.stash[Number(cell.dataset.index)]);
-      else if (this.craftMode) this.rerollItem(s.stash[Number(cell.dataset.index)]);
-      else if (!WYD.inventory.fromStash(s, Number(cell.dataset.index))) this.log("持ち物がいっぱいで戻せない", "#ff6b6b");
-      this.changed();
+      if (e.ctrlKey || e.metaKey) { this.toggleLock(s.stash[Number(cell.dataset.index)]); this.changed(); }
+      else this.touchSheet("stash", Number(cell.dataset.index));
     };
     this.bindRightDiscard(stash, "stash");
     stash.onmouseover = (e) => this.showTooltipFor(e, "stash");
     stash.onmouseleave = () => { this.hideTooltip(); this.hovered = null; };
 
-    // 装備欄：クリックで外す
+    // 装備欄：クリックで装備の窓、Ctrl＋クリックでロック
     const eq = this.$("equipment");
     this.bindLongPress(eq, "[data-slot]", "eq", (c) => c.dataset.slot);
     eq.onclick = (e) => {
       if (this.eatClick()) return;
       const cell = e.target.closest("[data-slot]");
       if (!cell || !s.equipment[cell.dataset.slot]) return;
-      if (this.touchSheet("eq", cell.dataset.slot)) return;
-      if (e.ctrlKey || e.metaKey) {
-        this.toggleLock(s.equipment[cell.dataset.slot]);
-        this.changed();
-        return;
-      }
-      if (this.forgeMode) {
-        this.openForge(s.equipment[cell.dataset.slot]);
-        return;
-      }
-      if (this.enhanceMode) {
-        this.enhanceItem(s.equipment[cell.dataset.slot]);
-        this.changed();
-        return;
-      }
-      if (this.craftMode) {
-        this.rerollItem(s.equipment[cell.dataset.slot]);
-        this.changed();
-        return;
-      }
-      if (!WYD.inventory.unequip(s, cell.dataset.slot)) this.log("持ち物がいっぱいで外せない", "#ff6b6b");
-      this.changed();
+      if (e.ctrlKey || e.metaKey) { this.toggleLock(s.equipment[cell.dataset.slot]); this.changed(); }
+      else this.touchSheet("eq", cell.dataset.slot);
     };
     eq.onmouseover = (e) => this.showTooltipFor(e, "eq");
     eq.onmouseleave = () => this.hideTooltip();
@@ -549,14 +491,6 @@ WYD.ui = {
     if (!WYD.inventory.enhance(this.state, item)) return this.log(`${C.materialName}が足りない（${cost}個必要）`, "#ff6b6b");
     this.log(`${WYD.loot.label(item)}に強化した（${C.materialName} -${cost}）`, C.enhance.color);
     WYD.sound.play("rareDrop");
-  },
-
-  enhanceHelp(item) {
-    const C = WYD.data.crafting;
-    const cost = WYD.inventory.enhanceCost(item);
-    if (cost == null) return `<div class="tip-help">これ以上強化できない（最大 +${C.enhance.max}）</div>`;
-    const ok = this.state.materials >= cost;
-    return `<div class="tip-help" style="color:${ok ? C.enhance.color : "#ff6b6b"}">クリック：+${(item.plus || 0) + 1} に強化する（能力が ${Math.round(C.enhance.statPerLevel * 100)}% ぶん上がる。${C.materialName} ${cost}個／持っている数 ${this.state.materials}）</div>`;
   },
 
   rerollItem(item) {
@@ -1227,19 +1161,9 @@ WYD.ui = {
     this.$("bag-open").classList.toggle("full", s.inventory.length >= size);
     const C = WYD.data.crafting;
     this.putHtml("materials", `<span style="color:${C.materialColor}">${C.materialName} ${s.materials}</span>`);
-    this.$("craft-mode").textContent = `つけ直しモード：${this.craftMode ? "ON" : "OFF"}`;
-    this.$("craft-mode").classList.toggle("active", this.craftMode);
-    this.$("enhance-mode").textContent = `強化モード：${this.enhanceMode ? "ON" : "OFF"}`;
-    this.$("enhance-mode").classList.toggle("active", this.enhanceMode);
-    this.$("discard-all").disabled = !s.inventory.some((it) => !it.locked);
-    this.$("bag-gamble-open").textContent = s.player.level < WYD.data.gamble.minLevel
-      ? `キャダラの賭け（Lv${WYD.data.gamble.minLevel}〜）` : "キャダラの賭け";
-    this.$("bag-gamble-open").disabled = s.player.level < WYD.data.gamble.minLevel;
-    this.$("inv-help").textContent = this.enhanceMode
-      ? "強化モード：装備をクリックすると、素材を使って +1 強化する"
-      : this.craftMode ? "つけ直しモード：装備をクリックすると、素材を使って特殊効果をつけ直す"
-      : this.isTouch() ? "装備を触ると操作を選べます。「全て捨てる」は持ち物だけを確認後に分解（ロック除く）"
-      : "左クリック：装備／右クリック・Delete：捨てる／Ctrl＋クリック：ロック。「全て捨てる」は確認後に持ち物を分解（ロック除く）";
+    this.$("inv-help").textContent = this.isTouch()
+      ? "装備を触ると操作の窓（装備する・強化・つけ直し・鍛造・宝石・箱・ロック・捨てる）。「全て捨てる」は持ち物だけを確認後に分解（ロック除く）"
+      : "クリック：操作の窓（装備する・強化・つけ直し・鍛造・宝石・箱）／右クリック・Delete：捨てる／Ctrl＋クリック：ロック。「全て捨てる」は確認後に持ち物を分解（ロック除く）";
     if (!this.$("gamble").hidden) this.refreshGamble();
     this.putHtml("inventory", this.cellsHtml(s.inventory, size));
     WYD.gemVault.refresh();   // 宝石の画面（開いていれば描きなおす）
@@ -1260,12 +1184,6 @@ WYD.ui = {
       this.lastCubeHtml = cubeHtml;
       this.putHtml("cube", cubeHtml);
     }
-    this.$("cube-mode").textContent = `入れるモード：${this.cubeMode ? "ON" : "OFF"}`;
-    this.$("forge-mode").textContent = `鍛造モード：${this.forgeMode ? "ON" : "OFF"}`;
-    this.$("forge-mode").classList.toggle("active", this.forgeMode);
-    if (this.forgeMode) this.$("inv-help").textContent = "鍛造モード：持ち物・装備をクリックすると、鍛造の画面がひらく";
-    this.$("cube-mode").classList.toggle("active", this.cubeMode);
-    if (this.cubeMode) this.$("inv-help").textContent = "カナイの箱に入れるモード：ユニーク装備をクリックすると、分解してその力を覚える";
 
     // 倉庫
     const stashSize = WYD.data.items.stashSize;
@@ -1750,51 +1668,76 @@ WYD.ui = {
     this.changed();
   },
 
-  touchSheet(where, key, force) {
-    if ((!this.isTouch() && !force) || this.forgeMode || this.cubeMode || this.enhanceMode || this.craftMode) return false;
-    const s = this.state;
+  // 装備の窓（持ち物・装備欄・倉庫のどこから選んでも同じ）：説明・比べ・宝石と、装備する／外す・強化・つけ直し・鍛造・宝石・箱・ロック・捨てる
+  touchSheet(where, key) {
+    const s = this.state, C = WYD.data.crafting, esc = WYD.results.escape;
     const item = where === "inv" ? s.inventory[key] : where === "stash" ? s.stash[key] : s.equipment[key];
     if (!item) return false;
+    this.hideTooltip();
     this.sheet = { where, key };
-    const mat = WYD.data.crafting.materialName;
+    const mat = C.materialName;
     let html = this.itemHtml(item);
     if (where !== "eq") {
       const cur = s.equipment[item.slot];
       html += cur ? this.itemHtml(cur, "いま装備中") : `<div class="tip-item tip-sub">この部位は何も装備していない</div>`;
       html += this.compareHtml(item, cur);
     }
-    const btn = (act, label, cls) => `<button data-sheet="${act}"${cls ? ` class="${cls}"` : ""}>${label}</button>`;
-    const acts = where === "inv" ? [btn("equip", "装備する")]
+    const btn = (act, label, cls, off, title) => `<button data-sheet="${act}"${cls ? ` class="${cls}"` : ""}${off ? " disabled" : ""}${title ? ` title="${title}"` : ""}>${label}</button>`;
+    // 宝石：1つずつ外す・空きがあれば宝石の画面ではめる
+    const sockets = (item.sockets || []).map((k, n) => {
+      const i = k && WYD.gems.info(k);
+      return !k ? "" : `<div class="sheet-socket"><span style="color:${WYD.gems.color(k)}">◆ ${esc(WYD.gems.name(k))}</span> <small>${esc(WYD.gems.statsText(k, item.slot))}</small>${i && !i.rune ? btn(`unsocket:${n}`, "外す") : ""}</div>`;
+    }).join("");
+    const free = WYD.gems.freeSocket(item) >= 0;
+    const gemRow = (item.sockets || []).length ? `<div class="sheet-gems"><b>宝石（ソケット${item.sockets.length}）</b>${sockets}${free ? btn("gems", "空いたソケットに宝石をはめる（宝石の画面）") : ""}</div>` : "";
+    const main = where === "inv" ? [btn("equip", "装備する", "primary")]
       : where === "stash" ? [btn("back", "持ち物へ戻す")] : [btn("unequip", "外す")];
-    acts.push(btn("lock", item.locked ? "ロックを外す" : "ロックする"));
-    if (where !== "eq") acts.push(btn("discard", `捨てる（${mat} +${WYD.inventory.salvageValue(s, item)}）`, "danger"));
-    acts.push(btn("close", "閉じる"));
-    this.$("sheet-body").innerHTML = `<div class="sheet-details">${html}</div><div class="sheet-btns">${acts.join("")}</div>`;
+    const ec = WYD.inventory.enhanceCost(item), rc = WYD.inventory.rerollCost(item);
+    const work = [
+      btn("enhance", ec == null ? `強化（最大 +${C.enhance.max}）` : `強化 +${(item.plus || 0) + 1}（${mat}${ec}）`, "", ec == null || s.materials < ec, `能力が${Math.round(C.enhance.statPerLevel * 100)}%ぶん上がる。持っている数 ${s.materials}`),
+      btn("reroll", rc > 0 ? `特殊効果をつけ直す（${mat}${rc}）` : "つけ直し（ノーマルは不可）", "", rc <= 0 || s.materials < rc, `持っている数 ${s.materials}`),
+      btn("forge", "鍛造…", "", false, "能力を1つずつ狙って鍛える"),
+    ];
+    if (WYD.loot.uniqueInfo(item) && where !== "eq") work.push(btn("cube", "カナイの箱に入れる（分解して力を覚える）"));
+    const misc = [btn("lock", item.locked ? "ロックを外す" : "ロックする")];
+    if (where !== "eq") misc.push(btn("discard", `捨てる（${mat} +${WYD.inventory.salvageValue(s, item)}）`, "danger"));
+    misc.push(btn("close", "閉じる"));
+    this.$("sheet-body").innerHTML = `<div class="sheet-details">${html}</div>${gemRow}<div class="sheet-btns">${main.join("")}</div><div class="sheet-btns sheet-work">${work.join("")}</div><div class="sheet-btns">${misc.join("")}</div>`;
     this.$("sheet").hidden = false;
     return true;
   },
 
-  // スマホの窓のボタン
+  // 装備の窓のボタン。強化・つけ直し・ロック・宝石を外すは、窓を開いたまま描きなおす
   sheetAction(act) {
     const s = this.state;
     const sh = this.sheet;
-    this.$("sheet").hidden = true;
-    if (!sh || act === "close") return;
+    if (!sh || act === "close") { this.$("sheet").hidden = true; this.sheet = null; return; }
     const item = sh.where === "inv" ? s.inventory[sh.key] : sh.where === "stash" ? s.stash[sh.key] : s.equipment[sh.key];
-    if (!item) return;
+    if (!item) { this.$("sheet").hidden = true; this.sheet = null; return; }
     const C = WYD.data.crafting;
+    let keep = false;
     if (act === "equip") WYD.inventory.equip(s, sh.key);
-    else if (act === "stash" && !WYD.inventory.toStash(s, sh.key)) this.log("倉庫がいっぱいで入れられない", "#ff6b6b");
     else if (act === "back" && !WYD.inventory.fromStash(s, sh.key)) this.log("持ち物がいっぱいで戻せない", "#ff6b6b");
     else if (act === "unequip" && !WYD.inventory.unequip(s, sh.key)) this.log("持ち物がいっぱいで外せない", "#ff6b6b");
-    else if (act === "lock") this.toggleLock(item);
+    else if (act === "lock") { this.toggleLock(item); keep = true; }
+    else if (act === "enhance") { this.enhanceItem(item); keep = true; }
+    else if (act === "reroll") { this.rerollItem(item); keep = true; }
+    else if (act.startsWith("unsocket:")) {
+      const key = WYD.gems.unsocketAt(s, item, Number(act.slice(9)));
+      if (key) this.log(`${item.name}から${WYD.gems.name(key)}を外した`, WYD.gems.color(key));
+      keep = true;
+    }
+    else if (act === "forge") this.openForge(item);
+    else if (act === "cube") this.cubeItem(item);
+    else if (act === "gems") WYD.gemVault.open();
     else if (act === "discard") {
       const gained = sh.where === "inv" ? WYD.inventory.discard(s, sh.key) : WYD.inventory.discardFromStash(s, sh.key);
       if (gained < 0) this.log(`${WYD.loot.label(item)}はロックしているので捨てられない`, "#ff6b6b");
       else this.log(`${WYD.loot.label(item)}を捨てた（${C.materialName} +${gained}）`);
     }
-    this.sheet = null;
     this.changed();
+    if (keep) this.touchSheet(sh.where, sh.key);
+    else { this.$("sheet").hidden = true; this.sheet = null; }
   },
 
   showTooltipFor(e, where) {
@@ -1810,14 +1753,12 @@ WYD.ui = {
         const cur = s.equipment[item.slot];
         html += cur ? this.itemHtml(cur, "いま装備中") : `<div class="tip-item tip-sub">この部位は何も装備していない</div>`;
         html += this.compareHtml(item, cur);
-        html += this.enhanceMode ? this.enhanceHelp(item) : this.craftMode
-          ? this.rerollHelp(item)
-          : `<div class="tip-help">${where === "inv" ? "左クリック：装備するへ／Ctrl＋クリック：ロック" : "クリック：持ち物へ戻す"}／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.inventory.salvageValue(this.state, item)}）</div>`;
+        html += `<div class="tip-help">クリック：操作の窓（装備する・強化・つけ直し・鍛造・宝石）／Ctrl＋クリック：ロック／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.inventory.salvageValue(this.state, item)}）</div>`;
       }
     } else {
       const cell = e.target.closest("[data-slot]");
       item = cell && s.equipment[cell.dataset.slot];
-      if (item) html = this.itemHtml(item) + (this.enhanceMode ? this.enhanceHelp(item) : this.craftMode ? this.rerollHelp(item) : `<div class="tip-help">クリック：外す／Ctrl＋クリック：ロック</div>`);
+      if (item) html = this.itemHtml(item) + `<div class="tip-help">クリック：操作の窓（外す・強化・つけ直し・鍛造・宝石）／Ctrl＋クリック：ロック</div>`;
     }
     if (!item) return this.hideTooltip();
     const tip = this.$("tooltip");
@@ -1829,14 +1770,6 @@ WYD.ui = {
     const y = Math.min(window.innerHeight - rect.height - 8, e.clientY + 8);
     tip.style.left = `${x}px`;
     tip.style.top = `${Math.max(8, y)}px`;
-  },
-
-  rerollHelp(item) {
-    const C = WYD.data.crafting;
-    const cost = WYD.inventory.rerollCost(item);
-    if (cost <= 0) return `<div class="tip-help">この装備は特殊効果をつけ直せない</div>`;
-    const ok = this.state.materials >= cost;
-    return `<div class="tip-help" style="color:${ok ? C.materialColor : "#ff6b6b"}">クリック：特殊効果をつけ直す（${C.materialName} ${cost}個／持っている数 ${this.state.materials}）</div>`;
   },
 
   hideTooltip() {

@@ -18,7 +18,6 @@ WYD.data.mobile = {
     { id: "bag", label: "かばん", icon: "assets/ui/nav-bag.webp" },
     { id: "status", label: "キャラ", icon: "assets/ui/nav-status.webp" },
     { id: "skills", label: "スキル", icon: "assets/ui/nav-skills.webp" },
-    { id: "upgrade", label: "強化", icon: "assets/ui/nav-upgrade.webp" },
     { id: "more", label: "その他", glyph: "☰" },
   ],
   // 「その他」のやり込みの入口：[元のボタンのid, 絵, 名前]
