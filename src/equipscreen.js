@@ -53,8 +53,9 @@ WYD.equipScreen = {
   gemCell(key) {
     const s = WYD.state, G = WYD.gems, i = G.info(key), M = WYD.data.equipScreen.gemMark, esc = WYD.results.escape;
     const mark = i.god ? M.god : i.fused ? M.fused : M.tiers[i.tier] || "";
+    const art = i.god ? "divine" : i.fused ? "chaos" : ({ ruby: "ruby", amethyst: "amethyst", topaz: "topaz", emerald: "emerald" })[i.def.id];
     return `<button class="es-cell es-gemcell" data-es="gem" data-key="${esc(key)}" style="--c:${i.def.color};--g:${i.def.color}55" aria-label="${esc(G.name(key))}">` +
-      `<b class="es-rarity">${mark}</b>${G.isNew(s, key) ? `<i class="new-badge es-new">NEW</i>` : ""}<span class="es-gem-shape">◆</span><small class="es-lv">×${s.gems[key]}</small></button>`;
+      `<b class="es-rarity">${mark}</b>${G.isNew(s, key) ? `<i class="new-badge es-new">NEW</i>` : ""}${art ? `<img class="es-gem-art" src="assets/ui/gem-${art}.webp" alt="">` : `<span class="es-gem-shape">◆</span>`}<small class="es-lv">×${s.gems[key]}</small></button>`;
   },
 
   // 持ち物のうち、今のタブに入るもの [{ item, index }]

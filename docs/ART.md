@@ -23,6 +23,7 @@
 - 絵の場所を `data/` に書く方法は `assets/README.md`
 
 ## 受け取り済み（ゲームに入っている）
+- 2026-10-09 新しいバッグの宝石枠用に6枚の透過WebP `assets/ui/gem-{ruby,amethyst,topaz,emerald,chaos,divine}.webp`。通常4種はそれぞれ異なるカット、混沌は桃色の荒い結晶、神は白金と桃色の結晶。2行×3列の生成シートを分割し192pxに縮小。宝石の段階は従来どおり枠の左上のI〜Vで表示する。
 - 2026-10-09 宝石画面用の専用アイコン `assets/ui/nav-gems.webp`。赤・青・緑の宝石を古い青銅の台座にまとめた透過256px。従来の伝説の宝石アイコンと区別して、上部のGems入口と宝石画面の見出しに使用。
 - 2026-10-08 蒐集者4枚（持ち主の生成・透過）：立ち絵 `player_collector.png`・詠唱 `player_collector_attack.png`（2枚を同じ縮尺・同じ足元で256pxに）、技の発動・召喚の目印 `vfx/collectorRing.webp`（ページの輪）、命中の目印 `vfx/collectorHit.webp`（墨とページの閃光）。墨黒を残すため加算しないで重ねる
 - 2026-10-07 エフェクト7枚（持ち主の生成。512px の webp に縮めて `assets/vfx/` へ）
