@@ -1352,7 +1352,7 @@ html.m-ui .combat-panel { row-gap:4px; }
 #equipscreen .es-pagetabs button[hidden] { display: none; }
 #equipscreen #status-content { display: block; }
 #equipscreen .es-page > .panel, #equipscreen #status-content > .panel { margin: 0 0 10px; }
-#equipscreen .es-page[data-page="builds"] { padding: 4px 0; }
+#equipscreen .es-page[data-page="sort"] { padding: 4px 0 16px; }
 #equipscreen .inv-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
 #equipscreen .inv-buttons button { min-height: 48px; padding: 6px 14px; background: #2a3448; border: 1px solid #4a5670; color: #e8ecf5; border-radius: 4px; }
 #equipscreen #pending-loot-panel { margin-bottom: 8px; }
@@ -1487,3 +1487,35 @@ html.m-ui #equipscreen .modal-box.equipscreen-box { min-height: 0; }
 #equipscreen .es-pager button:disabled { opacity:.42; cursor:default; }
 #equipscreen .es-pager button:hover:not(:disabled) { filter:brightness(1.25); }
 #equipscreen .es-pager span { min-width:48px; text-align:center; }
+
+/* 装備画面のソートページ */
+#equipscreen .es-sort-intro { padding:16px 18px; margin-bottom:14px; border:1px solid #725739; background:linear-gradient(110deg,#2a211a,#15191dbf),url('../assets/ui/armory-altar.webp') center/cover; color:#ead6b2; }
+#equipscreen .es-sort-intro span,#equipscreen .es-sort-heading small { color:#c39353; font:10px Georgia,serif; letter-spacing:.16em; }
+#equipscreen .es-sort-intro h3 { margin:5px 0; color:#f7e5c3; font-size:22px; }
+#equipscreen .es-sort-intro p { margin:0; color:#cdbb9e; font-size:13px; }
+#equipscreen .es-sort-layout { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+#equipscreen .es-sort-card { min-width:0; padding:16px; border:1px solid #765738; background:linear-gradient(150deg,#22201e,#11171b); box-shadow:inset 0 0 0 1px #130e08,0 7px 16px #0006; }
+#equipscreen .es-sort-heading { display:flex; align-items:center; gap:12px; border-bottom:1px solid #715235; padding-bottom:12px; margin-bottom:12px; }
+#equipscreen .es-sort-heading img { width:46px; height:46px; object-fit:contain; }
+#equipscreen .es-sort-heading h4 { margin:2px 0 0; color:#f5dec1; font-size:19px; }
+#equipscreen .es-sort-heading em { font-style:normal; color:#b99d72; font-size:13px; }
+#equipscreen .es-sort-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+#equipscreen .es-sort-options button { min-height:68px; padding:9px 12px; text-align:left; color:#d9c6aa; border:1px solid #59452f; border-radius:5px; background:linear-gradient(#29221b,#191b1c); cursor:pointer; }
+#equipscreen .es-sort-options button b { display:block; color:#efd6ad; font-size:14px; }
+#equipscreen .es-sort-options button small { display:block; margin-top:3px; color:#aa9a83; font-size:11px; line-height:1.3; }
+#equipscreen .es-sort-options button.on { border-color:#d9aa62; background:linear-gradient(#493520,#24221c); box-shadow:inset 0 0 0 1px #a0743e,0 0 10px #a96d2e55; }
+#equipscreen .es-sort-options button:focus-visible,#equipscreen .es-sort-jump:focus-visible,#equipscreen #sort-inv:focus-visible { outline:2px solid #f1d18f; outline-offset:2px; }
+#equipscreen .es-sort-preview { display:flex; flex-wrap:wrap; gap:6px; min-height:70px; margin:16px 0 12px; }
+#equipscreen .es-sort-preview .es-cell { flex:none; }
+#equipscreen .es-sort-jump,#equipscreen #sort-inv { min-height:44px; padding:8px 18px; border:8px solid transparent; border-image-source:url('../assets/ui/armory-button.webp'); border-image-slice:55 90 fill; border-image-width:8px 12px; border-image-repeat:stretch; background:none; color:#f6e1bd; cursor:pointer; }
+#equipscreen .es-sort-manual { margin-top:14px; padding:14px 16px; border:1px solid #665035; background:#191a1bdc; color:#dbc6a8; }
+#equipscreen .es-sort-manual h4 { margin:0 0 4px; }
+#equipscreen .es-sort-manual p { margin:0 0 10px; font-size:12px; }
+#equipscreen .es-builds-wrap { margin-top:16px; padding:12px; border:1px solid #5a4935; background:#1b1a19; }
+#equipscreen .es-builds-wrap h3 { margin:0 0 4px; color:#e5cb9c; }
+@media (max-width:700px) {
+  #equipscreen .es-sort-layout { grid-template-columns:1fr; }
+  #equipscreen .es-sort-options { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #equipscreen .es-sort-card { padding:12px; }
+  #equipscreen .es-sort-preview .es-cell { width:56px; height:56px; }
+}
