@@ -1702,7 +1702,11 @@ WYD.ui = {
     const misc = [btn("lock", item.locked ? "ロックを外す" : "ロックする")];
     if (where !== "eq") misc.push(btn("discard", `捨てる（${mat} +${WYD.inventory.salvageValue(s, item)}）`, "danger"));
     misc.push(btn("close", "閉じる"));
-    this.$("sheet-body").innerHTML = `<div class="sheet-details">${html}</div>${gemRow}<div class="sheet-btns">${main.join("")}</div><div class="sheet-btns sheet-work">${work.join("")}</div><div class="sheet-btns">${misc.join("")}</div>`;
+    const location = where === "eq" ? "装備中" : where === "stash" ? "倉庫" : "持ち物";
+    this.$("sheet-body").innerHTML = `<div class="sheet-heading"><span class="sheet-eyebrow">EQUIPMENT · ${location}</span><strong>${esc(WYD.data.items.slots[item.slot])}</strong></div>` +
+      `<div class="sheet-details">${html}</div>${gemRow}<div class="sheet-btns sheet-main">${main.join("")}</div>` +
+      `<div class="sheet-btns sheet-work"><span class="sheet-section-label">強化と加工</span>${work.join("")}</div>` +
+      `<div class="sheet-btns sheet-misc"><span class="sheet-section-label">その他</span>${misc.join("")}</div>`;
     this.$("sheet").hidden = false;
     return true;
   },

@@ -21,14 +21,21 @@ WYD.gemVault = {
   },
 
   open() {
+    this.opener = document.activeElement;
     this.opened = true; this.picking = null;
     this.$("gemvault").hidden = false;
+    this.$("gems-open").classList.add("active");
+    this.$("gems-open").setAttribute("aria-pressed", "true");
     this.render();
+    this.$("gemvault-close").focus();
   },
 
   close() {
     this.opened = false; this.picking = null; this.chosen = {};
     this.$("gemvault").hidden = true;
+    this.$("gems-open").classList.remove("active");
+    this.$("gems-open").setAttribute("aria-pressed", "false");
+    if (this.opener && this.opener.isConnected) this.opener.focus();
   },
 
   // 画面の外で宝石が増減したとき（src/ui.js の描きなおしから呼ぶ）
@@ -163,15 +170,15 @@ WYD.gemVault = {
   render() {
     const s = WYD.state, G = WYD.data.gems, F = G.fusion, esc = WYD.results.escape;
     const top = G.tiers[G.tiers.length - 1].name, unit = Math.pow(G.combineCount, G.tiers.length - 1), plan = WYD.gems.fusionPlan(s);
-    const fusion = `<div class="gv-fusion"><button data-gv-act="fuse" ${plan.ok ? "" : "disabled"} title="段階の低い宝石から使う。欠けた=1、1段ごとに${G.combineCount}倍（${top}=${unit}）">宝石合成 → <span style="color:${F.color}">${F.name}</span></button>` +
+    const fusion = `<div class="gv-fusion"><span class="gv-kicker">CREATE</span><h4>混沌の宝石を作る</h4><button data-gv-act="fuse" ${plan.ok ? "" : "disabled"} title="段階の低い宝石から使う。欠けた=1、1段ごとに${G.combineCount}倍（${top}=${unit}）">宝石合成 → <span style="color:${F.color}">${F.name}</span></button>` +
       ` <small class="muted">種類も段階も混ぜて${top}${F.need / unit}個ぶん（今 ${Math.min(plan.total, F.need)} / ${F.need}${F.cost ? `・${WYD.data.crafting.materialName}${F.cost}個` : ""}）。能力の数・種類・数値はランダム（割合・固有能力・神の能力も。神は身につけて1つだけ効く）</small></div>`;
     const RF = F.refuse, picked = this.chosenTotal();
-    const refuse = `<div class="gv-fusion"><button data-gv-act="refuse" ${picked === RF.count && s.materials >= RF.cost ? "" : "disabled"}>再合成（${picked} / ${RF.count}）</button>` +
+    const refuse = `<div class="gv-fusion"><span class="gv-kicker">RECAST</span><h4>使わない宝石を作り直す</h4><button data-gv-act="refuse" ${picked === RF.count && s.materials >= RF.cost ? "" : "disabled"}>再合成（${picked} / ${RF.count}）</button>` +
       ` <button data-gv-act="chooseShown" title="今の絞り込み・検索・並べ替えで見えている混沌の宝石を、上から${RF.count}個まで選ぶ">見えている混沌の宝石を選ぶ</button> <button data-gv-act="chooseClear" ${picked ? "" : "disabled"}>選択を外す</button>` +
       ` <small class="muted">手元の混沌の宝石（神もふくむ）を${RF.count}個選んで、新しい混沌の宝石1個に作り直す${RF.cost ? `（${WYD.data.crafting.materialName}${RF.cost}個）` : ""}。割は悪いので、使わない宝石の整理に</small></div>`;
     const card = (key, inner, extra = "") => {
       const i = WYD.gems.info(key);
-      return `<div class="gv-card${extra}" style="border-color:${i.def.color}"><div><b style="color:${i.def.color}">◆ ${esc(WYD.gems.name(key))}</b>${inner.head || ""}<br><small>${esc(this.text(key))}</small></div><div class="gv-btns">${inner.btns || ""}</div>${inner.after || ""}</div>`;
+      return `<div class="gv-card${extra}" style="--gem-color:${i.def.color}"><div class="gv-card-details"><b>◆ ${esc(WYD.gems.name(key))}</b>${inner.head || ""}<small>${esc(this.text(key))}</small></div><div class="gv-btns">${inner.btns || ""}</div>${inner.after || ""}</div>`;
     };
     const owned = this.sorted(Object.keys(s.gems).filter((k) => s.gems[k] > 0 && this.matches(k)));
     const ownedHtml = owned.map((k) => {
@@ -188,8 +195,9 @@ WYD.gemVault = {
     const usedHtml = usedSorted.map((x) => card(x.key, { head: ` <small class="muted">${esc(this.itemLabel(x.where, x.item))}</small>`,
       btns: `<button data-gv-act="remove" data-where="${x.where}" data-slot="${x.slotKey}" data-index="${x.index}">外す</button>` })).join("");
     const total = Object.values(s.gems).reduce((n, v) => n + v, 0);
-    this.$("gemvault-body").innerHTML = fusion + refuse +
-      `<h3>手元の宝石 <small class="muted">${owned.length}種類（全部で${total}個）</small></h3><div class="gv-list">${ownedHtml || `<p class="muted">${total ? "条件に合う宝石がない" : "手元に宝石がない（精鋭とボスがよく落とす）"}</p>`}</div>` +
-      `<h3>はめている宝石 <small class="muted">${usedSorted.length}個</small></h3><div class="gv-list">${usedHtml || `<p class="muted">${this.query || this.filter !== "all" ? "条件に合う宝石がない" : "はめている宝石がない"}</p>`}</div>`;
+    this.$("gemvault-body").innerHTML = `<div class="gv-overview" aria-live="polite"><span><b>${total}</b> 手元の宝石</span><span><b>${owned.length}</b> 表示中の種類</span><span><b>${this.socketed().length}</b> 装着中</span></div>` +
+      `<div class="gv-layout"><div class="gv-collection"><section class="gv-section"><h3>手元の宝石 <small>${owned.length}種類</small></h3><div class="gv-list">${ownedHtml || `<p class="gv-empty">${total ? "条件に合う宝石がありません。検索や絞り込みを変えてください。" : "手元に宝石がありません。精鋭とボスがよく落とします。"}</p>`}</div></section>` +
+      `<section class="gv-section"><h3>はめている宝石 <small>${usedSorted.length}個</small></h3><div class="gv-list">${usedHtml || `<p class="gv-empty">${this.query || this.filter !== "all" ? "条件に合う宝石がありません。" : "はめている宝石はありません。"}</p>`}</div></section></div>` +
+      `<aside class="gv-workshop" aria-label="宝石の合成">${fusion}${refuse}</aside></div>`;
   },
 };
