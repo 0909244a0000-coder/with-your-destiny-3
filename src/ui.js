@@ -1633,6 +1633,7 @@ WYD.ui = {
       // 初期職は差分が空なので、適用済みの共通プレイヤー画像を使う。
       if (portrait) portrait.src = WYD.data.player.image || "assets/player.png";
       this.$("equipment-class-name").textContent = cls?.name || "冒険者";
+      this.$("equipment-class-desc").textContent = cls?.desc || "装備を選んで比較・交換";
       this.updateHudLayout();
       this.$('bag-close').focus();
     }

@@ -1019,6 +1019,25 @@ body.drawer-open .game-screen::after { opacity:1; pointer-events:auto; }
 .nav-icon.active img { filter:drop-shadow(0 0 5px #e3b46999); }
 .nav-icon:focus-visible { outline:2px solid #e0c17a; outline-offset:5px; }
 .nav-icon:disabled { opacity:.4; }
+
+/* ステータスは能力と装備だけを一画面で確認する。持ち物は Bag に集約。 */
+#bag[data-view="status"] .bag-box { height:auto; max-height:95dvh; overflow-y:auto; overscroll-behavior:contain; }
+#bag[data-view="status"] .bag-cols { grid-template-columns:minmax(260px, .85fr) minmax(0, 1.35fr); align-items:start; }
+#bag[data-view="status"] .bag-col:last-child { display:none; }
+#bag[data-view="status"] #status-content > .panel:first-child { background:radial-gradient(circle at 100% 0,#5b432127,transparent 55%),linear-gradient(145deg,#1b1c1e,#101114); }
+#bag[data-view="status"] .equipment-showcase { min-height:152px; gap:18px; padding:12px 20px; background:radial-gradient(circle at 18% 50%,#8b633838,transparent 45%),linear-gradient(100deg,#111113,#1c1916); }
+#bag[data-view="status"] .equipment-showcase img { width:140px; height:144px; flex:none; }
+#bag[data-view="status"] .equipment-showcase strong { font-size:22px; }
+#equipment-class-desc { display:block; max-width:42ch; font-size:12px; line-height:1.55; }
+#bag[data-view="status"] .equipment-sigil { opacity:.55; }
+@media (max-width:900px) {
+  #bag[data-view="status"] .bag-cols { display:flex; flex-direction:column; }
+  #bag[data-view="status"] #status-content, #bag[data-view="status"] .bag-col { width:100%; min-width:0; }
+  #bag[data-view="status"] .equipment-showcase { min-height:132px; padding:8px 12px; gap:10px; }
+  #bag[data-view="status"] .equipment-showcase img { width:94px; height:120px; }
+  #bag[data-view="status"] .equipment-showcase strong { font-size:18px; }
+  #equipment-class-desc { font-size:11px; }
+}
 .endgame-icons { grid-template-columns:repeat(3,64px); gap:30px 14px; padding-bottom:20px; }
 #skills-content { display:none; }
 #bag[data-view="skills"] .bag-cols { display:block; }
