@@ -42,7 +42,7 @@ WYD.offline = {
     const gemNames = {};
     for (let i = 0; i < gems; i++) {
       const key = WYD.gems.key(WYD.util.pick(WYD.data.gems.gems).id, WYD.gems.dropTier(state));
-      WYD.gems.add(state, key);
+      WYD.gems.gain(state, key);
       gemNames[key] = (gemNames[key] || 0) + 1;
     }
     const lv = state.player.level - before;

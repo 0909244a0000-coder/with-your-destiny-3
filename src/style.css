@@ -1331,3 +1331,12 @@ html.m-ui .combat-panel { row-gap:4px; }
 #tooltip .tip-col { flex: 0 1 250px; min-width: 0; }
 #tooltip .tip-col + .tip-col { margin-left: 12px; padding-left: 12px; border-left: 1px dashed var(--line); }
 #tooltip .tip-col .tip-item + .tip-item, #tooltip .tip-col > .tip-item { margin-top: 0; padding-top: 0; border-top: 0; }
+
+/* 新しく手に入れた装備・宝石の印（NEW） */
+.new-badge { display: inline-block; padding: 0 4px; border-radius: 3px; background: #e2433b; color: #fff; font: bold 9px/14px sans-serif; font-style: normal; letter-spacing: .04em; vertical-align: middle; box-shadow: 0 0 6px #e2433b99; }
+.es-cell .es-new { position: absolute; left: 50%; top: 1px; transform: translateX(-50%); z-index: 1; }
+.gv-card .new-badge { margin-right: 5px; }
+.gv-overview .new-count { color: #ff7066; }
+.gv-overview button { min-height: 32px; margin-left: 6px; font-size: 12px; }
+/* 宝石の画面の右の合成欄（aside）：本編の aside { width:400px } が効いて列（282px）からはみ出していたので打ち消す */
+#gemvault aside.gv-workshop { width: auto; min-width: 0; max-height: none; overflow: visible; padding-bottom: 0; }
