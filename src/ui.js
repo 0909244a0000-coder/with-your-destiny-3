@@ -1769,10 +1769,11 @@ WYD.ui = {
       item = cell && (where === "inv" ? s.inventory : s.stash)[Number(cell.dataset.index)];
       this.hovered = item ? { where, index: Number(cell.dataset.index) } : null;
       if (item) {
-        html = this.itemHtml(item);
+        // 横並び：この装備｜いま装備中｜着替えたときの変わり方（縦だと画面の下で見切れるため）
         const cur = s.equipment[item.slot];
-        html += cur ? this.itemHtml(cur, "いま装備中") : `<div class="tip-item tip-sub">この部位は何も装備していない</div>`;
-        html += this.compareHtml(item, cur);
+        html = `<div class="tip-cols"><div class="tip-col">${this.itemHtml(item)}</div>` +
+          `<div class="tip-col">${cur ? this.itemHtml(cur, "いま装備中") : `<div class="tip-item tip-sub">この部位は何も装備していない</div>`}</div>` +
+          `<div class="tip-col">${this.compareHtml(item, cur)}</div></div>`;
         html += `<div class="tip-help">クリック：操作の窓（装備する・強化・つけ直し・鍛造・宝石）／Ctrl＋クリック：ロック／右クリック：捨てる（${WYD.data.crafting.materialName} +${WYD.inventory.salvageValue(this.state, item)}）</div>`;
       }
     } else {
@@ -1783,10 +1784,12 @@ WYD.ui = {
     if (!item) return this.hideTooltip();
     const tip = this.$("tooltip");
     tip.innerHTML = html;
+    tip.classList.toggle("wide", html.includes("tip-cols"));
     tip.style.display = "block";
     const rect = tip.getBoundingClientRect();
     let x = e.clientX - rect.width - 16;
     if (x < 8) x = e.clientX + 16;
+    x = Math.max(8, Math.min(x, window.innerWidth - rect.width - 8));   // 横に長いときも画面の中に
     const y = Math.min(window.innerHeight - rect.height - 8, e.clientY + 8);
     tip.style.left = `${x}px`;
     tip.style.top = `${Math.max(8, y)}px`;

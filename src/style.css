@@ -1324,3 +1324,10 @@ html.m-ui .combat-panel { row-gap:4px; }
   .es-actions { width: 100%; }
   .es-actions button { flex: 1; min-height: 48px; }
 }
+
+/* 持ち物の説明：この装備｜いま装備中｜変わり方 を横並び（src/ui.js の showTooltipFor） */
+#tooltip.wide { max-width: min(820px, calc(100vw - 16px)); }
+#tooltip .tip-cols { display: flex; align-items: flex-start; gap: 0; }
+#tooltip .tip-col { flex: 0 1 250px; min-width: 0; }
+#tooltip .tip-col + .tip-col { margin-left: 12px; padding-left: 12px; border-left: 1px dashed var(--line); }
+#tooltip .tip-col .tip-item + .tip-item, #tooltip .tip-col > .tip-item { margin-top: 0; padding-top: 0; border-top: 0; }
