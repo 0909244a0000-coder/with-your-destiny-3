@@ -1048,7 +1048,7 @@ body.drawer-open .game-screen::after { opacity:1; pointer-events:auto; }
 #bag[data-view="bag"].empty-inventory .bag-box { height:auto; max-height:95dvh; overflow-y:auto; }
 #inventory[hidden],#inventory-empty[hidden] { display:none; }
 #bag[data-view="bag"] .inv-buttons { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
-#bag[data-view="bag"] .inv-buttons button { min-height:46px; margin:0; border-radius:5px; }
+#bag[data-view="bag"] .inv-buttons button { min-height:48px; margin:0; border-radius:5px; }
 #bag[data-view="bag"] #bag-gamble-open { border-color:#a17947; color:#f2d399; background:linear-gradient(#423021,#201914); }
 #bag[data-view="bag"] #discard-all:not(:disabled) { color:#e8b4a1; border-color:#825046; }
 .inventory-empty { display:flex; align-items:center; gap:20px; min-height:170px; padding:22px 28px; margin:6px 0 12px; border:1px solid #5d4c34; border-radius:7px; background:radial-gradient(circle at 12% 45%,#a67c4433,transparent 40%),linear-gradient(120deg,#211d1b,#111216); }
