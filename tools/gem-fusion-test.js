@@ -1,4 +1,4 @@
-// 宝石合成（混沌の宝石）：種類も段階も混ぜて王者10個ぶん → ランダムな能力の宝石。基本の能力・特殊効果・割合・固有能力・神（身につけて1つ）。一度だけの巻き戻し。保存・表示。
+// 宝石合成（混沌の宝石）：種類も段階も混ぜて王者10個ぶん → ランダムな能力の宝石。基本の能力・特殊効果・割合・固有能力・神（身につけて1つ）。一度だけの巻き戻し。宝石を外すモード。保存・表示。
 // node tools/gem-fusion-test.js
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
@@ -104,6 +104,23 @@ const path = require('node:path');
     await page.evaluate(() => document.querySelector('[data-gem-fuse]').click());
     const ui = await page.evaluate(() => Object.keys(WYD.state.gems));
     assert.equal(ui.length, 1); assert(ui[0].startsWith('fused:'));
+    // 宝石を外すモード：装備をクリックすると、はまっている宝石（混沌の宝石・神・ふつうの宝石）を全部外して手元に。ルーンは残す
+    const un = await page.evaluate(() => {
+      const s = WYD.state, w = WYD.loot.create(s, 10, 0, { slot: 'weapon' });
+      for (const it of Object.values(s.equipment)) if (it) it.sockets = []; w.sockets = ['fused:god.stun=chance~3|sec~0.5', 'ruby:2', 'rune:el']; s.equipment.weapon = w; s.gems = {};
+      WYD.ui.changed(); WYD.ui.toggleBag(true); WYD.ui.render && WYD.ui.render();
+      WYD.ui.putHtml('gems', WYD.ui.gemsHtml());
+      document.querySelector('[data-gem-unsocket]').click();
+      const on = WYD.ui.unsocketMode;
+      document.querySelector('#equipment [data-slot="weapon"]').click();
+      const after = { sockets: [...s.equipment.weapon.sockets], gems: { ...s.gems }, equipped: s.equipment.weapon === w };
+      // 外した神の混沌石は、またはめられる
+      WYD.ui.unsocketMode = false; const again = WYD.gems.socket(s, w, 'fused:god.stun=chance~3|sec~0.5');
+      return { on, ...after, again, none: WYD.gems.unsocket(s, null).length };
+    });
+    assert.equal(un.on, true); assert.equal(un.equipped, true, '外すモードでは装備は外れない');
+    assert.deepEqual(un.sockets, [null, null, 'rune:el']); assert.deepEqual(un.gems, { 'fused:god.stun=chance~3|sec~0.5': 1, 'ruby:2': 1 });
+    assert(un.again); assert.equal(un.none, 0);
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ plan: out.plan, name: out.name, text: out.text, ui }));
   } finally { await browser.close(); }

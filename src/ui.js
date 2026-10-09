@@ -12,6 +12,7 @@ WYD.ui = {
   forgeItem: null,    // 鍛造の画面で鍛えている装備
   cubeMode: false,    // カナイの箱に入れるモード（クリックでユニークを分解して覚える）
   gemSelected: null,  // はめるために選んだ宝石（"種類:段階"）
+  unsocketMode: false,   // 宝石を外すモード（装備をクリックすると、はまっている宝石を全部外す）
   stashOpen: false,   // 倉庫を開いているか
 
   $(id) {
@@ -268,7 +269,7 @@ WYD.ui = {
     };
     this.$("craft-mode").onclick = () => {
       this.craftMode = !this.craftMode;
-      if (this.craftMode) this.enhanceMode = this.cubeMode = this.forgeMode = false;
+      if (this.craftMode) this.enhanceMode = this.cubeMode = this.forgeMode = this.unsocketMode = false;
       this.markDirty();
     };
     this.$("devotion-open").onclick = () => {
@@ -374,7 +375,7 @@ WYD.ui = {
     };
     this.$("forge-mode").onclick = () => {
       this.forgeMode = !this.forgeMode;
-      if (this.forgeMode) this.craftMode = this.enhanceMode = this.cubeMode = false;
+      if (this.forgeMode) this.craftMode = this.enhanceMode = this.cubeMode = this.unsocketMode = false;
       this.markDirty();
     };
     this.$("forge-close").onclick = () => { this.$("forge").hidden = true; this.forgeItem = null; };
@@ -392,7 +393,7 @@ WYD.ui = {
     };
     this.$("cube-mode").onclick = () => {
       this.cubeMode = !this.cubeMode;
-      if (this.cubeMode) this.craftMode = this.enhanceMode = this.forgeMode = false;
+      if (this.cubeMode) this.craftMode = this.enhanceMode = this.forgeMode = this.unsocketMode = false;
       this.markDirty();
     };
     this.$("maps").onclick = (e) => {
@@ -419,7 +420,7 @@ WYD.ui = {
     };
     this.$("enhance-mode").onclick = () => {
       this.enhanceMode = !this.enhanceMode;
-      if (this.enhanceMode) this.craftMode = this.cubeMode = this.forgeMode = false;
+      if (this.enhanceMode) this.craftMode = this.cubeMode = this.forgeMode = this.unsocketMode = false;
       this.markDirty();
     };
 
@@ -448,9 +449,17 @@ WYD.ui = {
         this.changed();
         return;
       }
+      // 宝石を外すモード
+      if (e.target.closest("[data-gem-unsocket]")) {
+        this.unsocketMode = !this.unsocketMode;
+        if (this.unsocketMode) { this.gemSelected = null; this.enhanceMode = this.craftMode = this.cubeMode = this.forgeMode = false; }
+        this.markDirty();
+        return;
+      }
       const chip = e.target.closest("[data-gem]");
       if (!chip) return;
       this.gemSelected = this.gemSelected === chip.dataset.gem ? null : chip.dataset.gem;
+      if (this.gemSelected) this.unsocketMode = false;
       this.markDirty();
     };
 
@@ -476,6 +485,7 @@ WYD.ui = {
       else if (this.forgeMode) this.openForge(s.inventory[index]);
       else if (this.cubeMode) this.cubeItem(s.inventory[index]);
       else if (this.gemSelected) this.socketGem(s.inventory[index]);
+      else if (this.unsocketMode) this.unsocketItem(s.inventory[index]);
       else if (this.enhanceMode) this.enhanceItem(s.inventory[index]);
       else if (this.craftMode) this.rerollItem(s.inventory[index]);
       else WYD.inventory.equip(s, index);
@@ -501,6 +511,7 @@ WYD.ui = {
       else if (this.forgeMode) this.openForge(s.stash[Number(cell.dataset.index)]);
       else if (this.cubeMode) this.cubeItem(s.stash[Number(cell.dataset.index)]);
       else if (this.gemSelected) this.socketGem(s.stash[Number(cell.dataset.index)]);
+      else if (this.unsocketMode) this.unsocketItem(s.stash[Number(cell.dataset.index)]);
       else if (this.enhanceMode) this.enhanceItem(s.stash[Number(cell.dataset.index)]);
       else if (this.craftMode) this.rerollItem(s.stash[Number(cell.dataset.index)]);
       else if (!WYD.inventory.fromStash(s, Number(cell.dataset.index))) this.log("持ち物がいっぱいで戻せない", "#ff6b6b");
@@ -527,8 +538,9 @@ WYD.ui = {
         this.openForge(s.equipment[cell.dataset.slot]);
         return;
       }
-      if (this.gemSelected || this.enhanceMode) {
+      if (this.gemSelected || this.enhanceMode || this.unsocketMode) {
         if (this.gemSelected) this.socketGem(s.equipment[cell.dataset.slot]);
+        else if (this.unsocketMode) this.unsocketItem(s.equipment[cell.dataset.slot]);
         else this.enhanceItem(s.equipment[cell.dataset.slot]);
         this.changed();
         return;
@@ -1300,6 +1312,7 @@ WYD.ui = {
     if (this.forgeMode) this.$("inv-help").textContent = "鍛造モード：持ち物・装備をクリックすると、鍛造の画面がひらく";
     this.$("cube-mode").classList.toggle("active", this.cubeMode);
     if (this.cubeMode) this.$("inv-help").textContent = "カナイの箱に入れるモード：ユニーク装備をクリックすると、分解してその力を覚える";
+    if (this.unsocketMode) this.$("inv-help").textContent = "宝石を外すモード：持ち物・装備をクリックすると、はまっている宝石を全部外して手元にもどす（無料・何度でも）";
     if (this.gemSelected) this.$("inv-help").textContent = `${WYD.gems.name(this.gemSelected)}を選んでいる：持ち物・装備をクリックすると、空いたソケットにはめる（もう一度宝石をクリックでやめる）`;
 
     // 倉庫
@@ -1372,17 +1385,25 @@ WYD.ui = {
     return html;
   },
 
+  // 宝石を外す（宝石を外すモード）
+  unsocketItem(item) {
+    const keys = WYD.gems.unsocket(this.state, item);
+    if (keys.length) this.log(`${item.name}から${keys.map((k) => WYD.gems.name(k)).join("、")}を外した`, WYD.gems.color(keys[0]));
+    else this.log(`${item.name}には外せる宝石がない`, "#ff6b6b");
+  },
+
   // 宝石の欄
   gemsHtml() {
     const s = this.state;
     const G = WYD.data.gems;
     const keys = Object.keys(s.gems).filter((k) => s.gems[k] > 0 && WYD.gems.info(k))
       .sort((a, b) => a.localeCompare(b));
-    if (keys.length === 0) return `<p class="muted">まだ宝石がない（精鋭とボスがよく落とす）</p>`;
+    const unsocket = `<button data-gem-unsocket class="${this.unsocketMode ? "active" : ""}" title="ONにして持ち物・装備をクリックすると、はまっている宝石を全部外して手元にもどす（無料）">宝石を外すモード：${this.unsocketMode ? "ON" : "OFF"}</button>`;
+    if (keys.length === 0) return `<div class="gem-fusion">${unsocket}</div><p class="muted">手元に宝石がない（精鋭とボスがよく落とす）</p>`;
     const F = G.fusion, plan = WYD.gems.fusionPlan(s), top = G.tiers[G.tiers.length - 1].name;
     const fusion = `<div class="gem-fusion"><button data-gem-fuse ${plan.ok ? "" : "disabled"} title="段階の低い宝石から使う。欠けた=1、1段ごとに${G.combineCount}倍（${top}=${Math.pow(G.combineCount, G.tiers.length - 1)}）">宝石合成 → <span style="color:${F.color}">${F.name}</span></button>` +
       ` <small class="muted">種類も段階も混ぜて${top}${F.need / Math.pow(G.combineCount, G.tiers.length - 1)}個ぶん（今 ${Math.min(plan.total, F.need)} / ${F.need}${F.cost ? `・${WYD.data.crafting.materialName}${F.cost}個` : ""}）。能力の数・種類・数値はランダム（割合・固有能力・神の能力も。神は身につけて1つだけ効く）</small></div>`;
-    return fusion + keys.map((k) => {
+    return fusion + `<div class="gem-fusion">${unsocket}</div>` + keys.map((k) => {
       const info = WYD.gems.info(k);
       const cost = WYD.gems.combineCost(k);
       const canCombine = cost != null && s.gems[k] >= G.combineCount;
@@ -1825,7 +1846,7 @@ WYD.ui = {
   },
 
   touchSheet(where, key, force) {
-    if ((!this.isTouch() && !force) || this.forgeMode || this.cubeMode || this.gemSelected || this.enhanceMode || this.craftMode) return false;
+    if ((!this.isTouch() && !force) || this.forgeMode || this.cubeMode || this.gemSelected || this.unsocketMode || this.enhanceMode || this.craftMode) return false;
     const s = this.state;
     const item = where === "inv" ? s.inventory[key] : where === "stash" ? s.stash[key] : s.equipment[key];
     if (!item) return false;
