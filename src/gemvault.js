@@ -165,8 +165,8 @@ WYD.gemVault = {
     const top = G.tiers[G.tiers.length - 1].name, unit = Math.pow(G.combineCount, G.tiers.length - 1), plan = WYD.gems.fusionPlan(s);
     const fusion = `<div class="gv-fusion"><button data-gv-act="fuse" ${plan.ok ? "" : "disabled"} title="段階の低い宝石から使う。欠けた=1、1段ごとに${G.combineCount}倍（${top}=${unit}）">宝石合成 → <span style="color:${F.color}">${F.name}</span></button>` +
       ` <small class="muted">種類も段階も混ぜて${top}${F.need / unit}個ぶん（今 ${Math.min(plan.total, F.need)} / ${F.need}${F.cost ? `・${WYD.data.crafting.materialName}${F.cost}個` : ""}）。能力の数・種類・数値はランダム（割合・固有能力・神の能力も。神は身につけて1つだけ効く）</small></div>`;
-    const RF = F.refuse, picked = this.chosenTotal();
-    const refuse = `<div class="gv-fusion"><button data-gv-act="refuse" ${picked === RF.count && s.materials >= RF.cost ? "" : "disabled"}>再合成（${picked} / ${RF.count}）</button>` +
+    const RF = F.refuse, picked = RF ? this.chosenTotal() : 0;
+    const refuse = !RF ? "" : `<div class="gv-fusion"><button data-gv-act="refuse" ${picked === RF.count && s.materials >= RF.cost ? "" : "disabled"}>再合成（${picked} / ${RF.count}）</button>` +
       ` <button data-gv-act="chooseShown" title="今の絞り込み・検索・並べ替えで見えている混沌の宝石を、上から${RF.count}個まで選ぶ">見えている混沌の宝石を選ぶ</button> <button data-gv-act="chooseClear" ${picked ? "" : "disabled"}>選択を外す</button>` +
       ` <small class="muted">手元の混沌の宝石（神もふくむ）を${RF.count}個選んで、新しい混沌の宝石1個に作り直す${RF.cost ? `（${WYD.data.crafting.materialName}${RF.cost}個）` : ""}。割は悪いので、使わない宝石の整理に</small></div>`;
     const card = (key, inner, extra = "") => {
