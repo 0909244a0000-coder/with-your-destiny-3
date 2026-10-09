@@ -1168,7 +1168,7 @@ html.m-ui .combat-skills > span { display: none; }
 html.m-ui .combat-panel { grid-template-columns: minmax(0, 1fr) 176px; }
 html.m-ui #hud-skills { width: 176px; height: auto; display: block; }
 /* いちばん下のタブ */
-html.m-ui #m-tabs { display: grid; grid-template-columns: repeat(6, 1fr); position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; height: var(--m-tabs);
+html.m-ui #m-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; height: var(--m-tabs);
   padding-bottom: env(safe-area-inset-bottom, 0px); background: #0b0a09; border-top: 1px solid #5c4a2c; }
 html.m-ui #m-tabs button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 0; padding: 2px 0;
   border: 0; border-radius: 0; background: none; color: #a99c80; font-size: 11px; }
@@ -1343,3 +1343,26 @@ html.m-ui .combat-panel { row-gap:4px; }
 .es-gemcell .es-gem-shape { font-size: 34px; line-height: 1; color: var(--c); text-shadow: 0 0 10px var(--c), 0 2px 3px #000; }
 .es-actions button.es-auto small { display: block; font-size: 10px; line-height: 1.1; opacity: .85; }
 .es-actions button.es-auto:disabled { background: #2a3448; border-color: #4a5670; }
+
+/* 装備画面のページ（下のタブで切りかえ。src/equipscreen.js）と、元のかばん・Status から移した部品 */
+#equipscreen .es-page[hidden] { display: none; }
+#equipscreen .es-pagetabs { position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 4px; margin: 12px -16px -14px; padding: 8px 16px; background: #141a26f7; border-top: 1px solid #3b4660; }
+#equipscreen .es-pagetabs button { flex: 1 1 110px; min-height: 44px; padding: 6px 10px; background: #1d2433; border: 1px solid #3b4660; color: #cfd6e6; border-radius: 4px; font-size: 13px; }
+#equipscreen .es-pagetabs button.on { background: #36507a; border-color: #7aa2e0; color: #fff; }
+#equipscreen .es-pagetabs button[hidden] { display: none; }
+#equipscreen #status-content { display: block; }
+#equipscreen .es-page > .panel, #equipscreen #status-content > .panel { margin: 0 0 10px; }
+#equipscreen .es-page[data-page="builds"] { padding: 4px 0; }
+#equipscreen .inv-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+#equipscreen .inv-buttons button { min-height: 48px; padding: 6px 14px; background: #2a3448; border: 1px solid #4a5670; color: #e8ecf5; border-radius: 4px; }
+#equipscreen #pending-loot-panel { margin-bottom: 8px; }
+@media (max-width: 820px) {
+  #equipscreen .inv-buttons { width: 100%; }
+  #equipscreen .inv-buttons button { flex: 1; }
+  #equipscreen .es-pagetabs button { flex: 1 1 30%; font-size: 12px; }
+}
+#equipscreen .combat-results { position: relative; inset: auto; width: auto; max-height: none; margin: 0 0 10px; box-shadow: none; z-index: auto; }
+#equipscreen .modal-box.equipscreen-box { display: flex; flex-direction: column; min-height: min(760px, 94dvh); }
+#equipscreen #equipscreen-body { flex: 1; display: flex; flex-direction: column; }
+#equipscreen .es-pagetabs { margin-top: auto; }
+html.m-ui #equipscreen .modal-box.equipscreen-box { min-height: 0; }

@@ -7,19 +7,24 @@ const path=require('node:path');
  const page=await browser.newPage({viewport:{width:1920,height:1080}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('file://'+path.resolve(__dirname,'../index.html'));await page.locator('#modal-ok').click();
  await page.evaluate(()=>{WYD.state.player.level=50;WYD.ui.renderPanels();});
- await page.locator('#bag-open').click();/* 持ち物が空なら空枠の代わりに案内を出す（#154） */assert.equal(await page.evaluate(()=>WYD.state.inventory.length),0);assert(await page.locator('#inventory-empty').isVisible());assert(!await page.locator('#inventory').isVisible());assert(!await page.locator('#equipment').isVisible());assert(!await page.locator('#stash-panel').isVisible());
- await page.locator('#bag-gamble-open').click();assert(await page.locator('#gamble').isVisible());await page.keyboard.press('Escape');await page.keyboard.press('Escape');
- await page.locator('#character-open').click();assert(await page.locator('#stats').isVisible());assert(await page.locator('#equipment').isVisible());assert(!await page.locator('#rune-open').isVisible());assert(!await page.locator('#skills').isVisible());await page.keyboard.press('Escape');
- await page.locator('#skills-open').click();assert(await page.locator('#skills').isVisible());assert(!await page.locator('#equipment').isVisible());await page.locator('#rune-open').click();assert(await page.locator('#rune-lab').isVisible());await page.keyboard.press('Escape');assert(await page.locator('#skills').isVisible());await page.keyboard.press('Escape');
- // 装備の窓：かばん・装備欄のどこから選んでも同じ窓で、装備する／外す・強化・つけ直し・鍛造（強化の画面とモードはなくした）
+ // 持ち物・装備・能力は Status の装備画面（src/equipscreen.js）。かばん・宝石のアイコンは出さない（2026-10-09）
+ assert(!await page.locator('#bag-open').isVisible());assert(!await page.locator('#gems-open').isVisible());
+ await page.locator('#character-open').click();assert(await page.locator('#equipscreen').isVisible());assert(await page.locator('#equipscreen [data-es="slot"][data-slot="weapon"]').isVisible());
+ await page.locator('#bag-gamble-open').click();assert(await page.locator('#gamble').isVisible());await page.keyboard.press('Escape');assert(await page.locator('#equipscreen').isVisible(),'上の窓だけ閉じる');
+ await page.locator('#equipscreen [data-es-page="stats"]').click();assert(await page.locator('#stats').isVisible());assert(!await page.locator('#equipscreen [data-es="slot"][data-slot="weapon"]').isVisible());
+ await page.locator('#equipscreen [data-es-page="builds"]').click();assert(await page.locator('#builds').isVisible());
+ await page.locator('#equipscreen [data-es-page="equip"]').click();await page.keyboard.press('Escape');assert(!await page.locator('#equipscreen').isVisible());
+ await page.keyboard.press('i');assert(await page.locator('#equipscreen').isVisible(),'I キーで装備画面');await page.keyboard.press('Escape');
+ await page.locator('#skills-open').click();assert(await page.locator('#skills').isVisible());assert(!await page.locator('#equipscreen').isVisible());await page.locator('#rune-open').click();assert(await page.locator('#rune-lab').isVisible());await page.keyboard.press('Escape');assert(await page.locator('#skills').isVisible());await page.keyboard.press('Escape');
+ // 装備の窓：装備画面の持ち物・装備の枠のどこから選んでも同じ窓で、装備する／外す・強化・つけ直し・鍛造（強化の画面とモードはなくした）
  assert.equal(await page.locator('#upgrade-open').count(),0);
  await page.evaluate(()=>{const s=WYD.state;s.materials=1e6;s.inventory=[WYD.loot.create(s,10,1,{rarity:'rare',slot:'ring'})];WYD.ui.changed();});
- await page.locator('#bag-open').click();await page.locator('#inventory [data-index="0"]').click();assert(await page.locator('#sheet').isVisible());
+ await page.locator('#character-open').click();await page.locator('#equipscreen [data-es="item"][data-index="0"]').click();assert(await page.locator('#sheet').isVisible());
  const acts=await page.evaluate(()=>[...document.querySelectorAll('#sheet [data-sheet]')].map(b=>b.dataset.sheet));for(const a of ['equip','enhance','reroll','forge','lock','discard','close'])assert(acts.includes(a),a);
  await page.locator('#sheet [data-sheet="enhance"]').click();assert(await page.locator('#sheet').isVisible(),'強化のあとも窓は開いたまま');assert.equal(await page.evaluate(()=>WYD.state.inventory[0].plus),1);
- await page.locator('#sheet [data-sheet="equip"]').click();assert(!await page.locator('#sheet').isVisible());assert.equal(await page.evaluate(()=>WYD.state.equipment.ring&&WYD.state.equipment.ring.plus),1);await page.keyboard.press('Escape');
- await page.locator('#character-open').click();await page.locator('#equipment [data-slot="ring"]').click();assert(await page.locator('#sheet [data-sheet="unequip"]').isVisible());
- await page.locator('#sheet [data-sheet="forge"]').click();assert(await page.locator('#forge').isVisible());await page.locator('#forge-close').click();await page.keyboard.press('Escape');
+ await page.locator('#sheet [data-sheet="equip"]').click();assert(!await page.locator('#sheet').isVisible());assert.equal(await page.evaluate(()=>WYD.state.equipment.ring&&WYD.state.equipment.ring.plus),1);
+ await page.locator('#equipscreen [data-es="slot"][data-slot="ring"]').click();assert(await page.locator('#sheet [data-sheet="unequip"]').isVisible());
+ await page.locator('#sheet [data-sheet="forge"]').click();assert(await page.locator('#forge').isVisible());await page.locator('#forge-close').click();await page.keyboard.press('Escape');assert(!await page.locator('#equipscreen').isVisible());
  assert(await page.locator('#home-panel #dps-open').isVisible());await page.locator('#dps-open').click();assert(await page.locator('#dps-test').isVisible());await page.keyboard.press('Escape');
  await page.locator('#home-depart').click();await page.locator('#home-panel').waitFor({state:'hidden'});await page.locator('#town-btn').click();assert(await page.locator('#home-panel').isVisible());
  for(const [width,height] of [[1920,1080],[1366,768],[1024,768],[844,390],[768,1024],[390,844]]){

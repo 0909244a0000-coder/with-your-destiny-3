@@ -31,13 +31,13 @@ const path = require('node:path');
     const zoom = await page.evaluate(async () => { const out = []; for (let i = 0; i < 3; i++) { document.getElementById('m-zoom').click(); await new Promise(r => setTimeout(r, 120)); const c = document.getElementById('game').getBoundingClientRect(); out.push([document.getElementById('m-zoom').textContent, Math.round(c.width)]); } return out; });
     assert(zoom.some(([l, w]) => l === '全体' && w === 390) && zoom[2][0] === '寄る', JSON.stringify(zoom));
     // タブ：押すと画面全体が切り替わり、タブは押せるまま
-    for (const tab of ['bag', 'status', 'skills', 'more', 'battle']) {
+    for (const tab of ['status', 'skills', 'more', 'battle'])   /* 持ち物・装備・能力は「装備」（status）の装備画面。かばんのタブはなくした */ {
       await page.click(`[data-m-tab="${tab}"]`); await page.waitForTimeout(150); await shot('tab-' + tab);
       const r = await page.evaluate(tab => {
         const bag = document.getElementById('bag'), more = document.getElementById('m-more'), tabs = document.getElementById('m-tabs').getBoundingClientRect();
-        const box = tab === 'more' ? more.getBoundingClientRect() : tab === 'battle' ? null : bag.getBoundingClientRect();
+        const box = tab === 'more' ? more.getBoundingClientRect() : tab === 'battle' ? null : tab === 'status' ? document.getElementById('equipscreen').getBoundingClientRect() : bag.getBoundingClientRect();
         return { cur: WYD.mobile.currentTab(), on: document.querySelector('[data-m-tab].on').dataset.mTab, full: !box || (box.width >= innerWidth - 1 && Math.abs(box.bottom - tabs.top) <= 2 && box.top <= 1),
-          tabTap: document.elementFromPoint(tabs.left + 10, tabs.top + 10)?.closest('#m-tabs') != null, hiddenAll: tab === 'battle' ? !bag.hidden || !more.hidden : false };
+          tabTap: document.elementFromPoint(tabs.left + 10, tabs.top + 10)?.closest('#m-tabs') != null, hiddenAll: tab === 'battle' ? !bag.hidden || !more.hidden || !document.getElementById('equipscreen').hidden : false };
       }, tab);
       assert(r.cur === tab && r.on === tab && r.full && r.tabTap && !r.hiddenAll, tab + ' ' + JSON.stringify(r));
     }

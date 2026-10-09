@@ -33,7 +33,7 @@ WYD.mobile = {
   build() {
     const D = WYD.data.mobile;
     const tabs = document.createElement('nav'); tabs.id = 'm-tabs'; tabs.setAttribute('aria-label', 'メニュー');
-    tabs.innerHTML = D.tabs.map(t => `<button data-m-tab="${t.id}" aria-label="${t.label}">${t.icon ? `<img src="${t.icon}" alt="">` : `<i>${t.glyph}</i>`}<span>${t.label}</span>${t.id === 'bag' ? '<em id="m-bag-badge"></em>' : ''}</button>`).join('');
+    tabs.innerHTML = D.tabs.map(t => `<button data-m-tab="${t.id}" aria-label="${t.label}">${t.icon ? `<img src="${t.icon}" alt="">` : `<i>${t.glyph}</i>`}<span>${t.label}</span>${t.id === 'status' ? '<em id="m-bag-badge"></em>' : ''}</button>`).join('');
     document.body.append(tabs);
     tabs.onclick = e => { const b = e.target.closest('[data-m-tab]'); if (b) this.openTab(b.dataset.mTab); };
 
@@ -131,6 +131,7 @@ WYD.mobile = {
 
   // 今どのタブを見ているか（窓の開き具合から決める）
   currentTab() {
+    if (WYD.equipScreen && WYD.equipScreen.opened) return 'status';   // 装備画面
     const bag = this.$('bag');
     if (bag && !bag.hidden) return bag.dataset.view || 'bag';
     if (!this.$('m-more').hidden) return 'more';
