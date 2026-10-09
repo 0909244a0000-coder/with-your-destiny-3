@@ -367,6 +367,7 @@ WYD.ui = {
       const t = e.target;
       if (t.dataset.filterSlot) f.slots[t.dataset.filterSlot] = t.value;
       else if (t.dataset.filterFlag) f[t.dataset.filterFlag] = t.checked;
+      else if (t.dataset.filterNum) f[t.dataset.filterNum] = Number(t.value);
       this.changed();
     };
     this.$("forge-close").onclick = () => { this.$("forge").hidden = true; this.forgeItem = null; };
@@ -759,9 +760,18 @@ WYD.ui = {
     const slots = WYD.data.items.slots;
     const opts = (cur) => C.filterLevels.map((l) => `<option value="${l.id}" ${l.id === cur ? "selected" : ""}>${l.label}</option>`).join("");
     const flag = (id, label) => `<label class="filter-flag"><input type="checkbox" data-filter-flag="${id}" ${f[id] ? "checked" : ""}> ${label}</label>`;
+    const num = (id) => C.filterRules[id].map((o) => `<option value="${o.v}" ${o.v === (f[id] || 0) ? "selected" : ""}>${o.label}</option>`).join("");
     return `${flag("on", "<b>フィルターを使う</b>（ONの間は上の「自動分解」のかわりにこちらが使われる）")}
       <div class="filter-grid">${Object.keys(slots).map((k) => `<span>${slots[k]}</span><select data-filter-slot="${k}">${opts(f.slots[k] || "normal")}</select>`).join("")}</div>
       ${flag("keepUpgrades", "今の装備より強いものは、上の決まりに関係なく拾う")}
+      <h3 class="filter-sub">細かい決まり <small class="muted">（上の部位ごとのレア度より先に見る）</small></h3>
+      <div class="filter-grid">
+        <span>ソケット</span><select data-filter-num="minSockets">${num("minSockets")}</select>
+        <span>特殊効果</span><select data-filter-num="minEffects">${num("minEffects")}</select>
+      </div>
+      <p class="muted">ソケット・特殊効果が選んだ数以上なら、レア度に関係なく拾う。</p>
+      ${flag("noSocketDrop", "ソケットのない装備は拾わない（今より強いもの・上の数に当たるものは拾う）")}
+      ${flag("keepAncient", "太古・原初の装備は、レア度に関係なく拾う")}
 
       <p class="muted">ユニークとセットはいつも拾います。拾わない装備はその場で素材になります。</p>`;
   },
