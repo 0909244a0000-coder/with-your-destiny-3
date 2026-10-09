@@ -1112,13 +1112,13 @@ WYD.ui = {
       const lv = s.player.skills[id] || 0;
       const on = s.player.skillEnabled[id];
       const canUp = s.player.skillPoints > 0 && lv < def.maxLevel;
-      return `<div class="skill">
+      return `<div class="skill ${on && lv > 0 ? "skill-active" : lv > 0 ? "skill-learned" : "skill-locked"}">
         <div class="skill-head">
           ${WYD.data.skillIcons[id] ? `<img class="skill-icon" src="${WYD.data.skillIcons[id]}" alt="" onerror="this.remove()">` : ""}
           <b style="color:${def.color}">${def.name}</b>
           <span>Lv ${lv}/${def.maxLevel}</span>
-          <button data-skill="${id}" data-action="up" ${canUp ? "" : "disabled"}>＋</button>
-          <button data-skill="${id}" data-action="toggle" class="${on && lv > 0 ? "on" : "off"}" ${lv > 0 ? "" : "disabled"}>${lv > 0 ? (on ? "ON" : "OFF") : "未習得"}</button>
+          <button data-skill="${id}" data-action="up" aria-label="${def.name}を強化" ${canUp ? "" : "disabled"}>＋</button>
+          <button data-skill="${id}" data-action="toggle" aria-label="${def.name}を${on && lv > 0 ? "外す" : "使用する"}" class="${on && lv > 0 ? "on" : "off"}" ${lv > 0 ? "" : "disabled"}>${lv > 0 ? (on ? "ON" : "OFF") : "未習得"}</button>
         </div>
         <div class="skill-desc">${def.desc}（${Math.round(WYD.runes.effectiveDef(s, id).cooldown * 10) / 10}秒ごと）</div>
         ${WYD.skillInfo.html(s, id, lv)}

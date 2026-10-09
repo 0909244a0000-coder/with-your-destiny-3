@@ -1045,6 +1045,45 @@ body.drawer-open .game-screen::after { opacity:1; pointer-events:auto; }
 #bag[data-view="skills"] .bag-cols { display:block; }
 #bag[data-view="skills"] #skills-content { display:block; }
 #bag[data-view="skills"] .bag-col { display:none; }
+#bag[data-view="skills"] .bag-box { height:auto; min-height:min(95dvh,760px); max-height:95dvh; overflow-y:auto; overscroll-behavior:contain; }
+#skills-content > .panel { padding:18px; background:radial-gradient(circle at 95% 0,#69472824,transparent 35%),linear-gradient(145deg,#1c1a18,#101114); }
+#skills-content > .panel > h2 { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin:0 0 12px; font-size:20px; }
+#skills-content > .panel > h2 small { color:#c7bba4; font:12px system-ui,sans-serif; letter-spacing:0; }
+#skills-content #respec { margin-left:auto; min-height:38px; font-size:12px; }
+#skills { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+#skills .skill { min-width:0; padding:14px 16px; border:1px solid #59472f; border-radius:7px; background:radial-gradient(circle at 100% 0,#6d4a2126,transparent 47%),linear-gradient(145deg,#1d1b18,#111216); box-shadow:inset 0 1px #ffffff0a,0 5px 16px #0005; }
+#skills .skill:first-child { border-top:1px solid #59472f; }
+#skills .skill-active { border-color:#8a7444; box-shadow:inset 3px 0 #9ac579,0 5px 18px #0007; }
+#skills .skill-locked { border-color:#42392d; }
+#skills .skill-head { display:flex; flex-wrap:wrap; gap:7px; min-height:38px; }
+#skills .skill-head b { font:17px var(--serif); }
+#skills .skill-head span { margin-left:auto; font-size:12px; white-space:nowrap; }
+#skills .skill-head button { min-width:42px; min-height:38px; border-radius:5px; }
+#skills .skill-head button:disabled { opacity:.55; }
+#skills .skill-icon { width:36px; height:36px; flex:none; object-fit:contain; filter:drop-shadow(0 2px 5px #000a); }
+#skills .skill-desc { margin:10px 0 8px; color:#dbcfb7; font-size:13px; line-height:1.55; }
+#skills .skill-info { color:#d9c799; font-size:12px; line-height:1.6; }
+#skills .skill-mastery { margin-top:8px; padding-top:7px; border-top:1px solid #54412b; color:#aaa08d; font-size:11px; }
+#skills .skill select { max-width:100%; min-height:34px; margin-top:4px; }
+.rune-feature { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:4px 16px; margin:0 0 16px; padding:14px 18px; border:1px solid #8a7145; border-radius:7px; background:radial-gradient(circle at 100% 50%,#72543d40,transparent 48%),linear-gradient(110deg,#211a25,#151319); box-shadow:inset 0 1px #ffffff13; }
+.rune-feature-label { grid-column:1 / -1; color:#d8bc83; font:12px var(--serif); letter-spacing:.16em; }
+.rune-feature-label span { margin-left:12px; letter-spacing:0; }
+.rune-feature .rune-active { margin:0; padding:0; border:0; background:none; line-height:1.5; }
+.rune-feature #rune-open { width:auto; min-height:44px; padding:8px 16px; margin:0; border-color:#b88b53; color:#ffe4ae; white-space:nowrap; }
+@media (max-width:900px) {
+  #skills { grid-template-columns:1fr; }
+  #skills-content > .panel { padding:10px; }
+  #skills .skill { padding:12px; }
+  #skills .skill-head button { min-height:42px; }
+  .rune-feature { padding:12px; }
+}
+@media (max-width:520px) {
+  .rune-feature { grid-template-columns:1fr; }
+  .rune-feature-label { grid-column:1; }
+  .rune-feature #rune-open { width:100%; }
+  #skills .skill-head span { margin-left:0; }
+  #skills .skill-head button:first-of-type { margin-left:auto; }
+}
 @media (max-width:900px) {
  .stage-btns { gap:10px; }
  .stage-btns .nav-icon,.endgame-icons .nav-icon { width:48px; height:48px; min-height:48px; }
