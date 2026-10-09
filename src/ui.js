@@ -163,11 +163,12 @@ WYD.ui = {
     document.addEventListener("keydown", (e) => {
       if (WYD.arena?.opened || WYD.dps?.opened) return;
       // 子ウィンドウを閉じるキーで、背後の装備/人物まで閉じない。
-      const childModal = [...document.querySelectorAll('.modal:not([hidden])')].find(el => el.id !== 'bag');
+      const childModal = [...document.querySelectorAll('.modal:not([hidden])')].reverse().find(el => el.id !== 'bag');   // いちばん上（後ろにある）の窓
       if (childModal) {
         if (e.key === 'Escape' && childModal.id === 'gamble') { e.preventDefault(); this.closeGamble(); }
         else if (e.key === 'Escape' && childModal.id === 'sheet') { e.preventDefault(); this.sheetAction('close'); }
         else if (e.key === 'Escape' && childModal.id === 'gemvault') { e.preventDefault(); WYD.gemVault.close(); }
+        else if (e.key === 'Escape' && childModal.id === 'equipscreen') { e.preventDefault(); WYD.equipScreen.close(); }
         return;
       }
       if (e.key === 'Escape') {
@@ -1179,6 +1180,7 @@ WYD.ui = {
     if (!this.$("gamble").hidden) this.refreshGamble();
     this.putHtml("inventory", this.cellsHtml(s.inventory, size));
     WYD.gemVault.refresh();   // 宝石の画面（開いていれば描きなおす）
+    WYD.equipScreen.refresh();   // 装備画面（試作。開いていれば描きなおす）
     this.putHtml("builds", this.buildsHtml());
     this.$("maps-panel").hidden = !s.cleared && !s.maps.length;
     // 序盤は使えないものを出さない（使えるようになったら出る）

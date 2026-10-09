@@ -212,6 +212,7 @@
     <div class="modal-box bag-box">
       <div class="bag-head">
         <h2>装備・持ち物</h2>
+        <button id="equipscreen-open" title="リネレボ風の新しい装備画面（試作）">新しい装備画面（試作）</button>
         <button id="bag-close" title="閉じる（I か Esc キー）">閉じる ✕</button>
       </div>
       <nav class="bag-nav" aria-label="持ち物の画面内移動">
@@ -264,6 +265,13 @@
     </div>
   </div>
 
+  <!-- 装備画面（試作・リネレボ風。src/equipscreen.js）。装備の窓・鍛造・宝石の画面はこの上に重なる -->
+  <div id="equipscreen" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="equipscreen-title">
+    <div class="modal-box equipscreen-box">
+      <div class="es-head"><h2 id="equipscreen-title">バッグ</h2><button id="equipscreen-close">閉じる ×</button></div>
+      <div id="equipscreen-body"></div>
+    </div>
+  </div>
   <div id="sheet" class="modal" hidden>
     <div class="modal-box sheet-box">
       <div id="sheet-body"></div>
@@ -427,6 +435,7 @@
   <script src="data/trial.js"></script>
   <script src="data/records.js"></script>
   <script src="data/gems.js"></script>
+  <script src="data/equipscreen.js"></script>
   <script src="data/runeSkills.js"></script>
   <script src="data/daily.js"></script>
   <script src="data/cube.js"></script>
@@ -466,6 +475,7 @@
   <script src="src/records.js"></script>
   <script src="src/gems.js"></script>
   <script src="src/gemvault.js"></script>
+  <script src="src/equipscreen.js"></script>
   <script src="src/runeSkills.js"></script>
   <script src="src/daily.js"></script>
   <script src="src/allies.js"></script>
