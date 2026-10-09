@@ -97,6 +97,37 @@ const path = require('node:path');
       assert.deepEqual(bag.last, { count: '180 / 180', pages: '3 / 3', cells: 60, first: '120', endDisabled: true });
       assert.equal(bag.size, 180); assert(bag.full); assert(bag.sheet, '3ページ目の装備を選ぶ');
       assert.deepEqual(bag.filtered, { page: 0, pager: false }, '絞り込みでページを戻す');
+      // 下段ソート：装備は表示順だけ変更し、選択は元配列の位置。宝石も独立して並び替えられる。
+      const sort = await page.evaluate(() => {
+        const S = WYD.state, E = WYD.equipScreen;
+        S.inventory = [
+          WYD.loot.create(S, 10, 0, { slot: 'head', rarity: 'rare' }),
+          WYD.loot.create(S, 30, 0, { slot: 'body', rarity: 'legend' }),
+          WYD.loot.create(S, 20, 0, { slot: 'weapon', rarity: 'magic' }),
+        ];
+        S.gems = { 'ruby:0': 2, 'topaz:1': 5 };
+        E.gearSort = 'default'; E.gemSort = 'tier'; E.open('sort');
+        const tab = [...document.querySelectorAll('[data-es-page]')].map((b) => b.dataset.esPage);
+        const builds = document.querySelector('.es-page[data-page="stats"] #builds') !== null;
+        document.querySelector('[data-es="gear-sort"][data-mode="recent"]').click();
+        const order = E.shown('all').map((x) => x.index);
+        const preview = document.querySelector('.es-sort-preview [data-es="item"]').dataset.index;
+        document.querySelector('.es-sort-preview [data-es="item"]').click();
+        const selected = WYD.ui.sheet?.key;
+        WYD.ui.sheetAction('close');
+        document.querySelector('[data-es="gem-sort"][data-mode="count"]').click();
+        const gems = E.gemKeys();
+        document.querySelector('[data-es="sort-jump"][data-tab="gems"]').click();
+        const shownGem = document.querySelector('.es-grid [data-es="gem"]').dataset.key;
+        const inventoryUnchanged = S.inventory[0].slot === 'head' && S.inventory[2].slot === 'weapon';
+        return { tab, builds, order, preview, selected, gems, shownGem, inventoryUnchanged, page: E.page, mode: E.gemSort, overflow: document.documentElement.scrollWidth > innerWidth };
+      });
+      assert(!sort.tab.includes('builds') && sort.tab.includes('sort'), 'ビルドの下タブをソートへ');
+      assert(sort.builds, '保存ビルドの操作は能力ページに残す');
+      assert.deepEqual(sort.order, [2, 1, 0]); assert.equal(sort.preview, '2'); assert.equal(sort.selected, 2);
+      assert.deepEqual(sort.gems, ['topaz:1', 'ruby:0']);
+      assert.equal(sort.shownGem, 'topaz:1'); assert.equal(sort.mode, 'count'); assert.equal(sort.page, 'equip');
+      assert(sort.inventoryUnchanged, '表示順の変更で実際の持ち物順は変えない'); assert(!sort.overflow);
       assert.deepEqual(errors, []);
       console.log(viewport.width, JSON.stringify(r));
       await page.close();
