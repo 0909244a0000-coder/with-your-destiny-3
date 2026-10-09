@@ -1145,6 +1145,12 @@ WYD.ui = {
     // 持ち物
     const size = WYD.data.items.inventorySize;
     this.$("inv-count").textContent = `${s.inventory.length} / ${size}`;
+    const inventoryEmpty = s.inventory.length === 0;
+    this.$("inventory-empty").hidden = !inventoryEmpty;
+    this.$("inventory").hidden = inventoryEmpty;
+    this.$("bag").classList.toggle("empty-inventory", inventoryEmpty);
+    this.$("sort-inv").disabled = inventoryEmpty;
+    this.$("discard-all").disabled = inventoryEmpty;
     const pending = (s.pendingLoot || []).length;
     this.$("pending-loot-panel").hidden = !pending;
     this.$("pending-loot-note").textContent = `未受取 ${pending}個：再読み込み・職業切替後も保管されます。${pending >= WYD.data.items.pendingLootLimit ? "戦闘停止中。受け取ると再開します。" : ""}`;

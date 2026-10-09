@@ -1045,6 +1045,24 @@ body.drawer-open .game-screen::after { opacity:1; pointer-events:auto; }
 #bag[data-view="skills"] .bag-cols { display:block; }
 #bag[data-view="skills"] #skills-content { display:block; }
 #bag[data-view="skills"] .bag-col { display:none; }
+#bag[data-view="bag"].empty-inventory .bag-box { height:auto; max-height:95dvh; overflow-y:auto; }
+#inventory[hidden],#inventory-empty[hidden] { display:none; }
+#bag[data-view="bag"] .inv-buttons { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+#bag[data-view="bag"] .inv-buttons button { min-height:46px; margin:0; border-radius:5px; }
+#bag[data-view="bag"] #bag-gamble-open { border-color:#a17947; color:#f2d399; background:linear-gradient(#423021,#201914); }
+#bag[data-view="bag"] #discard-all:not(:disabled) { color:#e8b4a1; border-color:#825046; }
+.inventory-empty { display:flex; align-items:center; gap:20px; min-height:170px; padding:22px 28px; margin:6px 0 12px; border:1px solid #5d4c34; border-radius:7px; background:radial-gradient(circle at 12% 45%,#a67c4433,transparent 40%),linear-gradient(120deg,#211d1b,#111216); }
+.inventory-empty img { width:100px; height:100px; flex:none; object-fit:contain; filter:drop-shadow(0 6px 14px #000b); }
+.inventory-empty strong { color:#e9d09a; font:22px var(--serif); }
+.inventory-empty p { max-width:55ch; color:#c6baa5; font-size:13px; line-height:1.65; }
+@media (max-width:600px) {
+  #bag[data-view="bag"] .inv-buttons { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #bag[data-view="bag"] #discard-all { grid-column:1 / -1; }
+  .inventory-empty { align-items:flex-start; min-height:0; padding:14px; gap:8px; }
+  .inventory-empty img { width:62px; height:62px; }
+  .inventory-empty strong { font-size:18px; }
+  .inventory-empty p { margin:5px 0 0; font-size:12px; }
+}
 #bag[data-view="skills"] .bag-box { height:auto; min-height:min(95dvh,760px); max-height:95dvh; overflow-y:auto; overscroll-behavior:contain; }
 #skills-content > .panel { padding:18px; background:radial-gradient(circle at 95% 0,#69472824,transparent 35%),linear-gradient(145deg,#1c1a18,#101114); }
 #skills-content > .panel > h2 { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin:0 0 12px; font-size:20px; }
@@ -1164,6 +1182,7 @@ html.m-ui #m-bag-badge:empty { display: none; }
 html.m-ui .modal:not(#modal):not(#sheet) { position: fixed; inset: 0 0 var(--m-tabs) 0; z-index: 30; padding: 0; align-items: stretch; justify-content: stretch; }
 html.m-ui .modal:not(#modal):not(#sheet) > .modal-box { width: 100vw; max-width: 100vw; height: 100%; max-height: none; margin: 0; border-radius: 0; border-width: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
 html.m-ui .bag-box { height: 100%; max-height: none; }
+html.m-ui #bag[data-view="bag"].empty-inventory .bag-box { height:100%; max-height:none; }
 html.m-ui #sheet, html.m-ui #modal { z-index: 50; }
 /* 「その他」の画面 */
 html.m-ui #m-more:not([hidden]) { display: block; position: fixed; inset: 0 0 var(--m-tabs) 0; z-index: 30; overflow: auto; padding: 12px 12px 24px; background: var(--panel, #121214); }
