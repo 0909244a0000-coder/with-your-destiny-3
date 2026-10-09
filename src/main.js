@@ -20,6 +20,7 @@ window.WYD = window.WYD || {};
   WYD.dps.init();
   WYD.runeSkillsUI.init();
   WYD.navigation.init();
+  WYD.gemVault.init();   // 宝石の画面（入口のボタンは navigation が作る）
   WYD.mobile.init();
   WYD.sound.init();
   WYD.ui.log("ようこそ野営地へ。装備とスキルを整え、「戦場へ」から冒険に出よう。", "#ffd447");

@@ -58,7 +58,7 @@ WYD.gems = {
   lineText(l) {
     const F = WYD.data.gems.fusion;
     if (l.kind === "stat") return WYD.util.formatStat(l.id, l.value);
-    if (l.kind === "effect") return WYD.util.formatEffect(WYD.data.effects.list.find((d) => d.id === l.id), l.value);
+    if (l.kind === "effect") { const d = WYD.data.effects.list.find((x) => x.id === l.id); return `${d.name}：${WYD.util.formatEffect(d, l.value)}`; }
     if (l.kind === "pct") return `${F.pctNames[l.id]} +${l.value}%`;
     const def = this.poolDef(l.kind, l.id), v = { ...def.fixed, ...l.params };
     const text = def.desc.replace(/\{(\w+)\}/g, (all, k) => (k in v ? String(v[k]) : all));
@@ -136,6 +136,11 @@ WYD.gems = {
   // 身につけている装備に、神の混沌石がはまっているか（except の装備は数えない）
   godEquipped(state, except) {
     return Object.values(state.equipment).some((it) => it && it !== except && (it.sockets || []).some((k) => k && this.isGod(k)));
+  },
+
+  // その装備（身につけているもの）に、神の混沌石をこれ以上はめられないか
+  godBlocked(state, item, key) {
+    return this.isGod(key) && Object.values(state.equipment).includes(item) && this.godEquipped(state, null);
   },
 
   statsText(key, slot) {
@@ -260,7 +265,7 @@ WYD.gems = {
   // 宝石をはめる。できたら true
   socket(state, item, key) {
     if (!this.info(key) || this.info(key).rune) return false;
-    if (this.isGod(key) && this.godEquipped(state, null) && Object.values(state.equipment).includes(item)) return false;   // 身につけて効く神は1つだけ
+    if (this.godBlocked(state, item, key)) return false;   // 身につけて効く神は1つだけ
     const i = this.freeSocket(item);
     if (i < 0 || !(state.gems[key] > 0)) return false;
     item.sockets[i] = key;
@@ -279,6 +284,15 @@ WYD.gems = {
       return null;
     });
     return out;
+  },
+
+  // ソケット1つから宝石を外して手元にもどす。外した key（外せなければ null）
+  unsocketAt(state, item, index) {
+    const key = item && Array.isArray(item.sockets) ? item.sockets[index] : null, i = key && this.info(key);
+    if (!i || i.rune) return null;
+    item.sockets[index] = null;
+    this.add(state, key);
+    return key;
   },
 
   // 装備を捨てるとき、はまっていた宝石を手元にもどす

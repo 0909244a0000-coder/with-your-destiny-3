@@ -23,7 +23,7 @@ WYD.data.mobile = {
   ],
   // 「その他」のやり込みの入口：[元のボタンのid, 絵, 名前]
   endgame: [
-    ["bounty-open", "bounty", "賞金首"], ["merc-open", "merc", "傭兵"], ["lgem-open", "lgem", "伝説の宝石"],
+    ["gems-open", "lgem", "宝石"], ["bounty-open", "bounty", "賞金首"], ["merc-open", "merc", "傭兵"], ["lgem-open", "lgem", "伝説の宝石"],
     ["devotion-open", "devotion", "星座"], ["codex-open", "codex", "図鑑と記録"], ["arena-open", "arena", "アリーナ"],
   ],
   // 「閉じる」ボタンの id が「窓のid-close」でない窓

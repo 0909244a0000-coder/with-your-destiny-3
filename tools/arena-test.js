@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
 const scripts = file => [...fs.readFileSync(path.resolve(__dirname,'../' + file),'utf8').matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);
-assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>!['src/main.js','src/ui.js','src/runeSkillsUI.js','src/arena.js','src/arena-sim.js','src/grimoire.js','src/navigation.js','data/dps.js','src/dps.js','data/mobile.js','src/mobile.js'].includes(s)).concat('src/arena-engine.js'),'戦闘フレームの依存ファイル漏れ');
+assert.deepEqual(scripts('arena-engine.html'),scripts('index.html').filter(s=>!['src/main.js','src/ui.js','src/runeSkillsUI.js','src/arena.js','src/arena-sim.js','src/gemvault.js','src/grimoire.js','src/navigation.js','data/dps.js','src/dps.js','data/mobile.js','src/mobile.js'].includes(s)).concat('src/arena-engine.js'),'戦闘フレームの依存ファイル漏れ');
 (async () => {
   const browser = await chromium.launch();
   try {

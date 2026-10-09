@@ -3,10 +3,11 @@ window.WYD = window.WYD || {};
 WYD.navigation = {
   init() {
     const ui = WYD.ui, $ = id => document.getElementById(id);
-    const icons = { 'bag-open':['bag','Bag'], 'town-btn':['home','Home'], 'character-open':['status','Status'], 'upgrade-open':['upgrade','Upgrade'], 'skills-open':['skills','Skills'], 'bounty-open':['bounty','Bounties'], 'merc-open':['merc','Mercenary'], 'lgem-open':['lgem','Gems'], 'devotion-open':['devotion','Devotion'], 'codex-open':['codex','Codex'], 'arena-open':['arena','Arena'] };
+    const icons = { 'bag-open':['bag','Bag'], 'town-btn':['home','Home'], 'character-open':['status','Status'], 'upgrade-open':['upgrade','Upgrade'], 'skills-open':['skills','Skills'], 'bounty-open':['bounty','Bounties'], 'merc-open':['merc','Mercenary'], 'gems-open':['lgem','Gems'], 'lgem-open':['lgem','Legendary'], 'devotion-open':['devotion','Devotion'], 'codex-open':['codex','Codex'], 'arena-open':['arena','Arena'] };
     const nav = document.querySelector('.stage-btns');
     const upgrade = document.createElement('button'); upgrade.id='upgrade-open'; nav.append(upgrade);
     const skillsButton = document.createElement('button'); skillsButton.id='skills-open'; nav.append(skillsButton);
+    const gemsButton = document.createElement('button'); gemsButton.id='gems-open'; gemsButton.hidden=true; nav.append(gemsButton);   // 宝石の画面（src/gemvault.js）
     const home = document.createElement('section'); home.id='home-panel'; home.hidden=true;
     home.innerHTML='<strong>野営地</strong><p>装備と構成を整えてから冒険へ。</p><button id="home-depart">戦場へ出発</button>';
     document.querySelector('.stage').append(home); home.append($('dps-open'));
@@ -37,11 +38,11 @@ WYD.navigation = {
       button.innerHTML=`<img src="assets/ui/nav-${file}.webp" alt=""><span>${label}</span>`;
       if(badge)button.append(badge);
     }
-    nav.append($('bag-open'),$('town-btn'),$('character-open'),$('skills-open'),$('upgrade-open'));
+    nav.append($('bag-open'),$('town-btn'),$('character-open'),$('skills-open'),$('upgrade-open'),$('gems-open'));
     const originalToggle=ui.toggleBag.bind(ui);
     this.view='bag';
     this.open = view => { this.view=view; $('bag').dataset.view=view; document.querySelector('.bag-head h2').textContent={bag:'Bag',status:'Status & Equipment',skills:'Skills',upgrade:'Upgrade'}[view];
-      ui.craftMode=ui.enhanceMode=ui.forgeMode=ui.cubeMode=false;ui.gemSelected=null;
+      ui.craftMode=ui.enhanceMode=ui.forgeMode=ui.cubeMode=false;
       originalToggle(true);document.querySelector('.bag-box').scrollTop=0;
     };
     ui.toggleBag=show=>{ if(show===false || (show===undefined&&!$('bag').hidden)) originalToggle(false); else this.open('bag'); };
