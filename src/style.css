@@ -1024,6 +1024,8 @@ body.drawer-open .game-screen::after { opacity:1; pointer-events:auto; }
 #bag[data-view="status"] .bag-box { height:auto; max-height:95dvh; overflow-y:auto; overscroll-behavior:contain; }
 #bag[data-view="status"] .bag-cols { grid-template-columns:minmax(260px, .85fr) minmax(0, 1.35fr); align-items:start; }
 #bag[data-view="status"] .bag-col:last-child { display:none; }
+#bag[data-view="status"] .combat-results { position:static; inset:auto; width:auto; max-height:50dvh; overflow:auto; box-shadow:none; }
+#bag[data-view="status"] .combat-results > summary { position:sticky; top:0; background:#171819; }
 #bag[data-view="status"] #status-content > .panel:first-child { background:radial-gradient(circle at 100% 0,#5b432127,transparent 55%),linear-gradient(145deg,#1b1c1e,#101114); }
 #bag[data-view="status"] .equipment-showcase { min-height:152px; gap:18px; padding:12px 20px; background:radial-gradient(circle at 18% 50%,#8b633838,transparent 45%),linear-gradient(100deg,#111113,#1c1916); }
 #bag[data-view="status"] .equipment-showcase img { width:140px; height:144px; flex:none; }
