@@ -268,6 +268,19 @@ WYD.gems = {
     return true;
   },
 
+  // 装備から宝石を外して手元にもどす（何度でも・無料。ルーンは外さない）。外した宝石の key の配列
+  unsocket(state, item) {
+    const out = [];
+    if (!item || !Array.isArray(item.sockets)) return out;
+    item.sockets = item.sockets.map((key) => {
+      const i = key && this.info(key);
+      if (!i || i.rune) return key;
+      this.add(state, key); out.push(key);
+      return null;
+    });
+    return out;
+  },
+
   // 装備を捨てるとき、はまっていた宝石を手元にもどす
   returnGems(state, item) {
     for (const key of item.sockets || []) if (key) this.add(state, key);
