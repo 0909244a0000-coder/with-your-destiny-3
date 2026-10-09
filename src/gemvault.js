@@ -170,7 +170,7 @@ WYD.gemVault = {
   render() {
     const s = WYD.state, G = WYD.data.gems, F = G.fusion, esc = WYD.results.escape;
     const top = G.tiers[G.tiers.length - 1].name, unit = Math.pow(G.combineCount, G.tiers.length - 1), plan = WYD.gems.fusionPlan(s);
-    const fusion = `<div class="gv-fusion"><span class="gv-kicker">CREATE</span><h4>混沌の宝石を作る</h4><button data-gv-act="fuse" ${plan.ok ? "" : "disabled"} title="段階の低い宝石から使う。欠けた=1、1段ごとに${G.combineCount}倍（${top}=${unit}）">宝石合成 → <span style="color:${F.color}">${F.name}</span></button>` +
+    const fusion = `<div class="gv-fusion"><img class="gv-workshop-art" src="assets/ui/gem-crucible.webp" alt=""><span class="gv-kicker">CREATE</span><h4>混沌の宝石を作る</h4><button data-gv-act="fuse" ${plan.ok ? "" : "disabled"} title="段階の低い宝石から使う。欠けた=1、1段ごとに${G.combineCount}倍（${top}=${unit}）">宝石合成 → <span style="color:${F.color}">${F.name}</span></button>` +
       ` <small class="muted">種類も段階も混ぜて${top}${F.need / unit}個ぶん（今 ${Math.min(plan.total, F.need)} / ${F.need}${F.cost ? `・${WYD.data.crafting.materialName}${F.cost}個` : ""}）。能力の数・種類・数値はランダム（割合・固有能力・神の能力も。神は身につけて1つだけ効く）</small></div>`;
     const RF = F.refuse, picked = RF ? this.chosenTotal() : 0;
     const refuse = !RF ? "" : `<div class="gv-fusion"><span class="gv-kicker">RECAST</span><h4>使わない宝石を作り直す</h4><button data-gv-act="refuse" ${picked === RF.count && s.materials >= RF.cost ? "" : "disabled"}>再合成（${picked} / ${RF.count}）</button>` +
