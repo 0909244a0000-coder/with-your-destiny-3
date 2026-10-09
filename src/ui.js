@@ -1218,7 +1218,7 @@ WYD.ui = {
       const item = list[i];
       html += item
         ? `<div class="cell" data-index="${i}" style="border-color:${this.color(item)};--r:${this.glow(item)}">
-             <small>${slots[item.slot]}${this.upgradeMark(item)}${this.fxMark(item)}</small><span style="color:${this.color(item)}">${WYD.loot.label(item)}</span>${this.iconImg(item)}
+             <small>${item.isNew ? `<i class="new-badge">NEW</i> ` : ""}${slots[item.slot]}${this.upgradeMark(item)}${this.fxMark(item)}</small><span style="color:${this.color(item)}">${WYD.loot.label(item)}</span>${this.iconImg(item)}
            </div>`
         : `<div class="cell blank"></div>`;
     }
@@ -1690,6 +1690,7 @@ WYD.ui = {
     const item = where === "inv" ? s.inventory[key] : where === "stash" ? s.stash[key] : s.equipment[key];
     if (!item) return false;
     this.hideTooltip();
+    delete item.isNew;   // 見たので NEW の印を消す
     this.sheet = { where, key };
     const mat = C.materialName;
     let html = this.itemHtml(item);
@@ -1768,6 +1769,7 @@ WYD.ui = {
       const cell = e.target.closest("[data-index]");
       item = cell && (where === "inv" ? s.inventory : s.stash)[Number(cell.dataset.index)];
       this.hovered = item ? { where, index: Number(cell.dataset.index) } : null;
+      if (item && item.isNew) { delete item.isNew; this.markDirty(); }   // 見たので NEW の印を消す
       if (item) {
         // 横並び：この装備｜いま装備中｜着替えたときの変わり方（縦だと画面の下で見切れるため）
         const cur = s.equipment[item.slot];

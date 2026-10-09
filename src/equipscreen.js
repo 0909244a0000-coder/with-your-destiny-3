@@ -60,6 +60,7 @@ WYD.equipScreen = {
     if (d.es === "item") { ui.touchSheet("inv", Number(d.index)); return; }
     if (d.es === "tab") this.tab = d.tab;
     else if (d.es === "sort") WYD.inventory.sort(s.inventory);
+    else if (d.es === "seenAll") for (const it of s.inventory) delete it.isNew;
     else if (d.es === "discard") { ui.$("discard-all").click(); }
     else if (d.es === "auto") {
       const n = WYD.inventory.autoEquipAll(s);
@@ -75,7 +76,7 @@ WYD.equipScreen = {
     if (!item) return `<button class="es-cell empty" ${attrs}><span class="es-empty">${esc(label || "")}</span></button>`;
     const color = ui.color(item), gems = (item.sockets || []).filter(Boolean).length;
     return `<button class="es-cell" ${attrs} style="--c:${color};--g:${ui.glow(item)}" aria-label="${esc(WYD.loot.label(item))}">` +
-      `<b class="es-rarity">${D.rarityMark[item.rarity] || ""}</b>${item.plus ? `<b class="es-plus">+${item.plus}</b>` : ""}` +
+      `<b class="es-rarity">${D.rarityMark[item.rarity] || ""}</b>${item.plus ? `<b class="es-plus">+${item.plus}</b>` : ""}${item.isNew ? `<i class="new-badge es-new">NEW</i>` : ""}` +
       `${ui.iconImg(item) || `<span class="es-name">${esc(item.name)}</span>`}` +
       `<small class="es-lv">Lv.${item.level}</small>${item.locked ? `<i class="es-lock">🔒</i>` : ""}${gems ? `<i class="es-gem">◆${gems}</i>` : ""}${attrs.includes('"item"') ? ui.upgradeMark(item).replace("up-mark", "up-mark es-up") : ""}</button>`;
   },
@@ -98,6 +99,6 @@ WYD.equipScreen = {
         `<section class="es-bag"><nav class="es-tabs">${tabs}</nav><div class="es-grid">${grid || `<p class="muted">このタブに入る装備はない</p>`}</div></section>` +
       `</div>` +
       `<div class="es-bottom"><div class="es-stats">${D.stats.map(([k, name, kind]) => `<span><small>${name}</small><b>${fmt(stats[k] || 0, kind)}</b></span>`).join("")}</div>` +
-        `<div class="es-actions"><span class="es-count">${s.inventory.length} / ${size}</span><button data-es="discard" ${s.inventory.length ? "" : "disabled"}>一括分解</button><button data-es="sort" ${s.inventory.length ? "" : "disabled"}>並べ替え</button><button data-es="auto" class="es-auto">自動装備</button></div></div>`;
+        `<div class="es-actions"><span class="es-count">${s.inventory.length} / ${size}</span><button data-es="discard" ${s.inventory.length ? "" : "disabled"}>一括分解</button><button data-es="sort" ${s.inventory.length ? "" : "disabled"}>並べ替え</button>${s.inventory.some((it) => it.isNew) ? `<button data-es="seenAll" title="持ち物の NEW の印をすべて消す">NEWを消す</button>` : ""}<button data-es="auto" class="es-auto">自動装備</button></div></div>`;
   },
 };

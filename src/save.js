@@ -56,6 +56,7 @@ WYD.save = {
       achievements: {},   // 達成した実績の id
       runeSkills: WYD.runeSkills.initial(),
       gems: {},        // 持っている宝石（"種類:段階" → 数）
+      gemNew: {},      // 新しく手に入れた宝石の印（key → true）
       [WYD.data.gems.fusion.rollback.flag]: true,   // 新しいセーブは、宝石合成の巻き戻しをしない
       maps: [],        // 持っている地図（src/maps.js）
       runHistory: [],  // 成功した挑戦の記録（新しい順）

@@ -1416,7 +1416,7 @@ WYD.world = {
     }
     const mats = G.materials + G.materialsPerDifficulty * (state.difficulty - 1);
     state.materials += mats;
-    for (let i = 0; i < G.gems; i++) WYD.gems.add(state, WYD.gems.key(WYD.util.pick(WYD.data.gems.gems).id, WYD.gems.dropTier(state)));
+    for (let i = 0; i < G.gems; i++) WYD.gems.gain(state, WYD.gems.key(WYD.util.pick(WYD.data.gems.gems).id, WYD.gems.dropTier(state)));
     WYD.records.add(state, "goblinKills");
     WYD.fx.burst(w, e.x, e.y, WYD.data.fx.levelUp, G.color, { glow: true });
     WYD.sound.play("uniqueDrop");
