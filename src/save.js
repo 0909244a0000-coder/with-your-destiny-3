@@ -56,6 +56,7 @@ WYD.save = {
       achievements: {},   // 達成した実績の id
       runeSkills: WYD.runeSkills.initial(),
       gems: {},        // 持っている宝石（"種類:段階" → 数）
+      [WYD.data.gems.fusion.rollback.flag]: true,   // 新しいセーブは、宝石合成の巻き戻しをしない
       maps: [],        // 持っている地図（src/maps.js）
       runHistory: [],  // 成功した挑戦の記録（新しい順）
       runBest: {},     // 種類ごとのいちばんの記録
@@ -162,6 +163,12 @@ WYD.save = {
         // ソケットがなかった頃の装備は、ソケットなし
         if (!Array.isArray(item.sockets)) item.sockets = [];
         this.renameItem(item);
+      }
+      // 宝石合成の一度だけの巻き戻し（data/gems.js の fusion.rollback）
+      const RB = WYD.data.gems.fusion.rollback;
+      if (!saved[RB.flag]) {
+        this.fusionRolledBack = WYD.gems.rollbackFusion(state, state.inventory.concat(state.pendingLoot, Object.values(state.equipment)));
+        state[RB.flag] = true;
       }
       if (!saved.runeSkills?.migrated) {
         // 再設計前の原本は、通常バックアップの更新とは別に一度だけ残す。

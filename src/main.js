@@ -25,6 +25,7 @@ window.WYD = window.WYD || {};
   WYD.ui.log("ようこそ野営地へ。装備とスキルを整え、「戦場へ」から冒険に出よう。", "#ffd447");
   const cls = WYD.data.classes[WYD.classes.id];
   if (cls.desc) WYD.ui.log(`${cls.name}：${cls.desc}`, WYD.data.player.color);
+  if (WYD.save.fusionRolledBack) WYD.ui.log(`宝石合成の調整のため、混沌の宝石${WYD.save.fusionRolledBack}個を外し、使った宝石（1つにつき${WYD.data.gems.tiers[WYD.data.gems.fusion.rollback.refundTier].name}宝石${WYD.data.gems.fusion.rollback.refundCount}個）にもどした`, WYD.data.gems.fusion.color);
   if (WYD.save.restoredFromBackup) WYD.ui.log("セーブが壊れていたので、前回の控えから読み込みました", "#ff8a2a");
   WYD.offline.apply(state, world, lastSeen);
   WYD.town.enter(world, state);   // 新規・再開とも安全な拠点から。保存したエリア・階は保つ。

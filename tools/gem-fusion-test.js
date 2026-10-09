@@ -1,4 +1,4 @@
-// 宝石合成（混沌の宝石）：種類も段階も混ぜて王者10個ぶん → ランダムな能力の宝石。基本の能力・特殊効果・割合・固有能力・神（身につけて1つ）。保存・表示。
+// 宝石合成（混沌の宝石）：種類も段階も混ぜて王者10個ぶん → ランダムな能力の宝石。基本の能力・特殊効果・割合・固有能力・神（身につけて1つ）。一度だけの巻き戻し。保存・表示。
 // node tools/gem-fusion-test.js
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
@@ -21,7 +21,7 @@ const path = require('node:path');
       s.gems = { 'ruby:0': 30, 'amethyst:4': 6, 'topaz:4': 4, 'rune:el': 3 };
       const plan = G.fusionPlan(s), key = G.fuse(s), info = G.info(key), left = { ...s.gems };
       // ランダムの幅：能力の数・種類の重複なし・数値が幅の中
-      const rolls = Array.from({ length: 2000 }, () => G.info(G.rollFused()).lines);
+      const rolls = Array.from({ length: 20000 }, () => G.info(G.rollFused()).lines);
       const inRange = rolls.every(ls => ls.every(l => { const p = F.pool.find(x => x.kind === l.kind && x.id === l.id); if (!p) return false;
         return p.params ? Object.entries(p.params).every(([k, [lo, hi]]) => l.params[k] >= lo && l.params[k] <= hi) : l.value >= p.range[0] && l.value <= p.range[1]; }));
       const kindsSeen = [...new Set(rolls.flat().map(l => l.kind))].sort(), oneGod = rolls.every(ls => ls.filter(l => l.kind === 'god').length <= 1);
@@ -66,9 +66,20 @@ const path = require('node:path');
       w.enemies.push(low, boss); W.tryGod(w, s, ex, low); W.tryGod(w, s, ex, boss);
       const godText = G.statsText(god1), godName = G.name(god1), bad = G.info('fused:god.stun=chance~3|sec~0.5,god.echo=chance~9');
       WYD.save.write(s); const loaded = WYD.save.load();
+      // 一度だけの巻き戻し：フラグのない旧セーブの混沌の宝石（持ち物・はめた分）を外し、1つにつき王者10個を返す。2回目は何もしない
+      const old = JSON.parse(JSON.stringify(s)); delete old.fusionRollback1; for (const it of Object.values(old.equipment)) if (it) it.sockets = [];
+      old.gems = { 'fused:attack=5': 2, 'ruby:0': 1 }; const oi = WYD.loot.create(s, 10, 0, { slot: 'ring' }); oi.sockets = ['fused:god.echo=chance~10', 'ruby:1']; old.inventory = [oi];
+      const ow = WYD.loot.create(s, 10, 0, { slot: 'weapon' }); ow.sockets = ['fused:attack=1', null]; old.equipment = { ...old.equipment, weapon: ow };
+      localStorage.setItem(WYD.save.KEY, JSON.stringify(old)); WYD.save.fusionRolledBack = 0;
+      const rb = WYD.save.load(), rbCount = WYD.save.fusionRolledBack;
+      const kings = Object.entries(rb.gems).filter(([k]) => k.endsWith(':4')).reduce((n, [, v]) => n + v, 0);
+      const rbClean = !Object.keys(rb.gems).some(k => k.startsWith('fused:')) && rb.inventory[0].sockets.join() === ',ruby:1' && rb.equipment.weapon.sockets.every(k => k === null) && rb.gems['ruby:0'] === 1 && rb.fusionRollback1 === true;
+      rb.gems['fused:attack=7'] = 1; localStorage.setItem(WYD.save.KEY, JSON.stringify(rb)); WYD.save.fusionRolledBack = 0;
+      const again = WYD.save.load(), keptNew = again.gems['fused:attack=7'] === 1 && !WYD.save.fusionRolledBack;
+      const fresh = WYD.save.newState().fusionRollback1 === true;
       return { short: { ok: short.ok, total: short.total }, shortFuse, plan: { use: plan.use, total: plan.total, ok: plan.ok }, fused: !!(info && info.fused), name: G.name(key),
         left, inRange, unique, counts, effectSeen, hasTarget: !!target, socketed, attackUp, lifeUp, text,
-        persisted: loaded.gems[key] === 1, kindsSeen, oneGod, allIds, twoPct, pctOk, hunter, firstGod, secondGod, spareGod, god: god && god.id, stunned, marked,
+        persisted: loaded.gems[key] === 1, rbCount, kings, rbClean, keptNew, fresh, kindsSeen, oneGod, allIds, twoPct, pctOk, hunter, firstGod, secondGod, spareGod, god: god && god.id, stunned, marked,
         executed: low.hp <= 0, bossAlive: boss.hp > 0, godText, godName, twoGods: bad, bad: G.info('fused:nope=3'), badFx: G.info('fused:fx.nope=3') };
     });
     assert.deepEqual(out.short, { ok: false, total: 783 }); assert.equal(out.shortFuse, null);
@@ -79,6 +90,7 @@ const path = require('node:path');
     assert(out.hasTarget, '装備がない'); assert(out.socketed); assert(out.attackUp >= 20, '攻撃力が上がらない'); assert(Math.abs(out.lifeUp - 3.5) < 1e-9, '吸血が上がらない');
     assert.match(out.text, /攻撃力 \+20/); assert.match(out.text, /3\.5% をHPとして吸収/);
     assert(out.persisted);
+    assert.equal(out.rbCount, 4, '巻き戻した数'); assert.equal(out.kings, 40, '王者を返す'); assert(out.rbClean, '巻き戻しのあと'); assert(out.keptNew, '巻き戻しは一度だけ'); assert(out.fresh);
     assert.deepEqual(out.kindsSeen, ['effect', 'god', 'pct', 'power', 'stat']); assert(out.oneGod, '神が2つ'); assert.equal(out.allIds, 28, '出る能力の種類');
     assert(out.twoPct, '極レアは何個でもはめられる'); assert(out.pctOk, '割合が効かない'); assert.equal(out.hunter, 20);
     assert(out.firstGod); assert.equal(out.secondGod, false, '神は身につけて1つまで'); assert(out.spareGod); assert.equal(out.god, 'stun');

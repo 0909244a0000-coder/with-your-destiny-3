@@ -84,7 +84,7 @@ WYD.data.gems = {
   // ---- 宝石合成（混沌の宝石）----
   // あまった宝石を、種類も段階も混ぜて入れ、ランダムな能力をもつ「混沌の宝石」を1つ作る。どの部位にはめても同じ能力。
   // 当たりは種類を多くし、極レア・神は出にくく（2026-10-09：持ち主の指示で下げた）。理想の組み合わせ（能力の種類×数値）は、運か大量の合成が必要。
-  //   1回の合成でのめやす（20万回の試算）：神が付く 4.1%（狙った神 0.8%）・割合 7.9%・固有能力 6.6%・どれか 17.8%
+  //   1回の合成でのめやす（20万回の試算）：神が付く 約1%（狙った神 約0.2%。2026-10-09 さらに下げた）・割合 約8%・固有能力 約7%
   //   need      … 必要な量（欠けた = 1、1段上がるごとに combineCount 倍。王者 = 81 → 810 で王者10個ぶん）
   //   cost      … 素材（0 = いらない）
   //   lineCount … 能力の数とその出やすさ（weight）
@@ -99,6 +99,9 @@ WYD.data.gems = {
   fusion: {
     name: "混沌の宝石", godName: "神の混沌石", color: "#ff7ad9",
     need: 810, cost: 0,
+    // 一度だけの巻き戻し（2026-10-09：神が出すぎ・強すぎたので、それまでの合成をなかったことにする）。
+    //   旧セーブを開いたとき、混沌の宝石（持ち物・はめた分とも）を外し、1つにつき王者 refundCount 個（種類はランダム）を返す
+    rollback: { flag: "fusionRollback1", refundTier: 4, refundCount: 10 },
     lineCount: [{ n: 1, weight: 10 }, { n: 2, weight: 40 }, { n: 3, weight: 35 }, { n: 4, weight: 15 }],
     pctNames: { attack: "攻撃力", defense: "防御力", maxHp: "最大HP", all: "全ステータス（攻撃力・防御力・最大HP）" },
     pool: [
@@ -129,15 +132,15 @@ WYD.data.gems = {
         desc: "精鋭とボスに与えるダメージ +{percent}%" },
       { kind: "power", id: "ascetic", weight: 0.5, params: { percentPerSlot: [10, 25, 0] },
         desc: "スキルの空き枠1つにつき、スキル威力 +{percentPerSlot}%" },
-      { kind: "god", id: "stun", name: "雷霆", weight: 0.35, params: { chance: [2, 5, 1], sec: [0.3, 0.8, 1] },
+      { kind: "god", id: "stun", name: "雷霆", weight: 0.085, params: { chance: [2, 5, 1], sec: [0.3, 0.8, 1] },
         desc: "通常攻撃に {chance}% で {sec}秒スタン（ボスは短い。対人は拘束の規則どおり）" },
-      { kind: "god", id: "echo", name: "残響", weight: 0.35, params: { chance: [8, 20, 0] },
+      { kind: "god", id: "echo", name: "残響", weight: 0.085, params: { chance: [8, 20, 0] },
         desc: "通常攻撃が {chance}% でもう1回当たる" },
-      { kind: "god", id: "execute", name: "断罪", weight: 0.35, params: { hp: [10, 20, 0], chance: [10, 30, 0] },
+      { kind: "god", id: "execute", name: "断罪", weight: 0.085, params: { hp: [10, 20, 0], chance: [10, 30, 0] },
         desc: "通常攻撃で、HP{hp}%以下の敵（ボス・対人の相手は除く）を {chance}% で即死" },
-      { kind: "god", id: "nova", name: "震撃", weight: 0.35, params: { chance: [5, 12, 0], mult: [0.8, 1.6, 1] }, fixed: { radius: 80, color: "#ffe066" },
+      { kind: "god", id: "nova", name: "震撃", weight: 0.085, params: { chance: [5, 12, 0], mult: [0.8, 1.6, 1] }, fixed: { radius: 80, color: "#ffe066" },
         desc: "通常攻撃に {chance}% で、周り{radius}に攻撃力×{mult}倍の衝撃波" },
-      { kind: "god", id: "mark", name: "烙印", weight: 0.35, params: { v: [8, 20, 0], sec: [2, 4, 0] },
+      { kind: "god", id: "mark", name: "烙印", weight: 0.085, params: { v: [8, 20, 0], sec: [2, 4, 0] },
         desc: "通常攻撃が当たった敵は {sec}秒間、受けるダメージ +{v}%" },
     ],
   },

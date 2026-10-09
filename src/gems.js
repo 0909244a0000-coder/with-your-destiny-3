@@ -184,6 +184,22 @@ WYD.gems = {
     return `fused:${lines.join(",")}`;
   },
 
+  // 一度だけの巻き戻し（data/gems.js の fusion.rollback）：混沌の宝石をすべて外して、使った量の宝石を返す。返した数
+  rollbackFusion(state, items) {
+    const R = WYD.data.gems.fusion.rollback;
+    let n = 0;
+    for (const key of Object.keys(state.gems)) {
+      if (!key.startsWith("fused:")) continue;
+      n += state.gems[key]; delete state.gems[key];
+    }
+    for (const item of items) {
+      if (!item || !Array.isArray(item.sockets)) continue;
+      item.sockets = item.sockets.map((key) => { if (key && String(key).startsWith("fused:")) { n++; return null; } return key; });
+    }
+    for (let i = 0; i < n * R.refundCount; i++) this.add(state, this.key(WYD.util.pick(WYD.data.gems.gems).id, R.refundTier));
+    return n;
+  },
+
   // 合成する。できたら作った宝石の key、できなければ null
   fuse(state) {
     const plan = this.fusionPlan(state);
