@@ -151,8 +151,6 @@ WYD.gemVault = {
       this.choose(d.key);
     } else if (d.gvAct === "chooseShown") {
       for (const k of this.sorted(Object.keys(s.gems).filter((k) => s.gems[k] > 0 && this.matches(k) && WYD.gems.info(k).fused))) if (!this.chosen[k]) this.choose(k);
-    } else if (d.gvAct === "seenAll") {
-      WYD.gems.seen(s);
     } else if (d.gvAct === "chooseClear") {
       this.chosen = {};
     } else if (d.gvAct === "refuse") {
@@ -208,7 +206,7 @@ WYD.gemVault = {
       btns: `<button data-gv-act="remove" data-where="${x.where}" data-slot="${x.slotKey}" data-index="${x.index}">外す</button>` })).join("");
     const total = Object.values(s.gems).reduce((n, v) => n + v, 0);
     const fresh = Object.keys(s.gems).filter((k) => WYD.gems.isNew(s, k)).length;
-    this.$("gemvault-body").innerHTML = `<div class="gv-overview" aria-live="polite"><span><b>${total}</b> 手元の宝石</span><span><b>${owned.length}</b> 表示中の種類</span><span><b>${this.socketed().length}</b> 装着中</span>${fresh ? `<span><b class="new-count">${fresh}</b> NEW <button data-gv-act="seenAll">NEWを消す</button></span>` : ""}</div>` +
+    this.$("gemvault-body").innerHTML = `<div class="gv-overview" aria-live="polite"><span><b>${total}</b> 手元の宝石</span><span><b>${owned.length}</b> 表示中の種類</span><span><b>${this.socketed().length}</b> 装着中</span>${fresh ? `<span><b class="new-count">${fresh}</b> NEW</span>` : ""}</div>` +
       `<div class="gv-layout"><div class="gv-collection"><section class="gv-section"><h3>手元の宝石 <small>${owned.length}種類</small></h3><div class="gv-list">${ownedHtml || `<p class="gv-empty">${total ? "条件に合う宝石がありません。検索や絞り込みを変えてください。" : "手元に宝石がありません。精鋭とボスがよく落とします。"}</p>`}</div></section>` +
       `<section class="gv-section"><h3>はめている宝石 <small>${usedSorted.length}個</small></h3><div class="gv-list">${usedHtml || `<p class="gv-empty">${this.query || this.filter !== "all" ? "条件に合う宝石がありません。" : "はめている宝石はありません。"}</p>`}</div></section></div>` +
       `<aside class="gv-workshop" aria-label="宝石の合成">${fusion}${refuse}</aside></div>`;

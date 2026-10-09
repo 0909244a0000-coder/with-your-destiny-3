@@ -82,7 +82,6 @@ WYD.equipScreen = {
     if (d.es === "item") { ui.touchSheet("inv", Number(d.index)); return; }
     if (d.es === "tab") this.tab = d.tab;
     else if (d.es === "sort") WYD.inventory.sort(s.inventory);
-    else if (d.es === "seenAll") for (const it of s.inventory) delete it.isNew;
     else if (d.es === "discard") { ui.$("discard-all").click(); }
     else if (d.es === "fuse") { if (!WYD.gemVault.fuseNow()) return; }   // 宝石合成（宝石の画面と同じ。確認してから）
     ui.changed();
@@ -133,6 +132,6 @@ WYD.equipScreen = {
         `<section class="es-bag"><nav class="es-tabs">${tabs}</nav><div class="es-grid">${grid || `<p class="muted">${onGems ? "手元に宝石がない" : "このタブに入る装備はない"}</p>`}</div></section>` +
       `</div>` +
       `<div class="es-bottom"><div class="es-stats">${D.stats.map(([k, name, kind]) => `<span><small>${name}</small><b>${fmt(stats[k] || 0, kind)}</b></span>`).join("")}</div>` +
-        `<div class="es-actions"><span class="es-count">${s.inventory.length} / ${size}</span><button data-es="discard" ${s.inventory.length ? "" : "disabled"}>一括分解</button><button data-es="sort" ${s.inventory.length ? "" : "disabled"}>並べ替え</button>${s.inventory.some((it) => it.isNew) ? `<button data-es="seenAll" title="持ち物の NEW の印をすべて消す">NEWを消す</button>` : ""}${this.fuseButton()}</div></div>`;
+        `<div class="es-actions"><span class="es-count">${s.inventory.length} / ${size}</span><button data-es="discard" ${s.inventory.length ? "" : "disabled"}>一括分解</button><button data-es="sort" ${s.inventory.length ? "" : "disabled"}>並べ替え</button>${this.fuseButton()}</div></div>`;
   },
 };
