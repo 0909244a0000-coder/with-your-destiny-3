@@ -1541,3 +1541,4 @@ html.m-ui #equipscreen .modal-box.equipscreen-box { min-height: 0; }
 #equipscreen .es-op-chips button.on { border-color: #e2b56a; background: #5a3f1e; color: #fff1d0; box-shadow: 0 0 8px #a96d2e66; }
 #equipscreen .es-op-note { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; padding: 6px 10px; border: 1px solid #a07a44; border-radius: 4px; background: #2a2116; color: #f0d9b0; font-size: 12px; }
 #equipscreen .es-op-note button { margin-left: auto; }
+.filter-sub { margin: 14px 0 2px; font-size: 14px; }

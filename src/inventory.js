@@ -222,7 +222,7 @@ WYD.inventory = {
     return order.indexOf(item.rarity) <= order.indexOf(opt.upTo);
   },
 
-  // 戦利品フィルターで拾うか
+  // 戦利品フィルターで拾うか。残す決まり（強い・ソケット・特殊効果・太古）→ 捨てる決まり（ソケットなし）→ 部位ごとのレア度 の順に見る
   filterKeeps(state, item) {
     const f = state.settings.filter;
     if (this.keepReason(item, state)) return true;
@@ -230,6 +230,11 @@ WYD.inventory = {
       const cur = state.equipment[item.slot];
       if (!cur || this.itemScore(item) > this.itemScore(cur) * (1 + WYD.data.items.autoEquip.minGain)) return true;
     }
+    const sockets = (item.sockets || []).length;
+    if (f.minSockets > 0 && sockets >= f.minSockets) return true;
+    if (f.minEffects > 0 && (item.effects || []).length >= f.minEffects) return true;
+    if (f.keepAncient && item.ancient > 0) return true;
+    if (f.noSocketDrop && sockets === 0) return false;
     const min = f.slots[item.slot] || "normal";
     if (min === "none") return false;
     const order = WYD.data.items.rarities.map((r) => r.id);

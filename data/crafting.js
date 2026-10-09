@@ -25,6 +25,13 @@ WYD.data.crafting = {
     { id: "legend", label: "レジェンド以上" },
     { id: "none", label: "拾わない" },
   ],
+  // 戦利品フィルターの細かい決まり（2026-10-09）。上の「部位ごとのレア度」より先に見る
+  //   minSockets … ソケットがこの数以上なら拾う（0 = 使わない）　minEffects … 特殊効果がこの数以上なら拾う（0 = 使わない）
+  //   noSocketDrop … ソケットのない装備は拾わない（今より強い・残す決まりに当たるものは拾う）　keepAncient … 太古・原初は拾う
+  filterRules: {
+    minSockets: [{ v: 0, label: "使わない" }, { v: 1, label: "1つ以上" }, { v: 2, label: "2つ以上" }, { v: 3, label: "3つ" }],
+    minEffects: [{ v: 0, label: "使わない" }, { v: 1, label: "1つ以上" }, { v: 2, label: "2つ以上" }, { v: 3, label: "3つ以上" }],
+  },
 
   rerollCost: { normal: 0, magic: 10, rare: 25, legend: 60, unique: 40, set: 35 },
 
