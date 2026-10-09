@@ -54,7 +54,7 @@ WYD.puppeteer = {
     };
   },
   spawn(w, stats, percent) {
-    if (this.active(w) || !this.canPay(w, stats, percent, this.mode().summonHpReserve)) return false;
+    if (this.active(w) || w.time < (w.puppetRespawnAt || 0) || !this.canPay(w, stats, percent, this.mode().summonHpReserve)) return false;
     this.pay(w, stats, percent);
     const d = this.config().puppet;
     const a = WYD.allies.spawn(w, stats, d, 1, 'pup_thread');

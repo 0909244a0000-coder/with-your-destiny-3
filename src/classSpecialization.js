@@ -57,7 +57,13 @@ WYD.classSpecialization = {
     }
     if (R.mode === "corpses") {
       const bodies = (w.necRemains || []).filter(c => WYD.util.dist(p, c) <= R.range && w.enemies.some(e => e.hp > 0 && WYD.util.dist(c, e) <= s.radius * R.radiusScale + WYD.data.enemies[e.kind].radius)).slice(0, R.consume);
-      if (!bodies.length) return base.call(host, w, state, stats, s, lv);
+      if (!bodies.length) {
+        const ally = w.allies.find(a => (a.source === "nec_raise" || a.source === "nec_mage") && a.hp > 0 && WYD.util.dist(p, a) <= R.range && w.enemies.some(e => e.hp > 0 && WYD.util.dist(a, e) <= s.radius + WYD.data.enemies[e.kind].radius));
+        if (!ally) return base.call(host, w, state, stats, s, lv);
+        this.area(w, state, stats, ally, s.radius, attack * R.allyScale);
+        this.ring(w, ally, s.radius, s.color);
+        return true;
+      }
       w.necRemains = w.necRemains.filter(c => !bodies.includes(c));
       for (const c of bodies) {
         if (p.dead) break;
@@ -67,6 +73,25 @@ WYD.classSpecialization = {
           this.ring(w, c, s.radius * R.radiusScale, s.color);
         }
       }
+      return true;
+    }
+    if (R.mode === "staticArc") {
+      if (!target || WYD.util.dist(p, target) > R.range) return false;
+      const targets = w.enemies.filter(e => e.hp > 0 && WYD.util.dist(target, e) <= s.radius + WYD.data.enemies[e.kind].radius)
+        .sort((a, b) => WYD.util.dist(target, a) - WYD.util.dist(target, b)).slice(0, R.maxTargets);
+      for (const e of targets) {
+        WYD.world.playerHit(w, state, stats, e, attack);
+        WYD.vfx.segment(w, "lightning", p, e);
+      }
+      this.ring(w, target, s.radius, s.color);
+      return true;
+    }
+    if (R.mode === "minionAura") {
+      const origins = [p, ...w.allies.filter(a => a.hp > 0 && (a.source === "nec_raise" || a.source === "nec_mage"))];
+      const targets = w.enemies.filter(e => e.hp > 0 && origins.some(a => WYD.util.dist(a, e) <= s.radius + WYD.data.enemies[e.kind].radius));
+      if (!targets.length) return false;
+      for (const e of targets) WYD.world.playerHit(w, state, stats, e, attack);
+      for (const a of origins) this.ring(w, a, s.radius, s.color);
       return true;
     }
     if (R.mode === "pierce") {
