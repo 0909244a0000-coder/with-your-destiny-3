@@ -21,7 +21,7 @@ const path = require('node:path');
         const bodyUnique = WYD.data.uniques.list.find((u) => !u.uberOnly && WYD.data.items.bases.find((b) => b.id === u.base).slot === 'body');   /* タブの数を決めるため、胴のユニーク */
         s.inventory = [ring, strong, WYD.loot.createUnique(s, 20, bodyUnique)];
         WYD.ui.changed(); WYD.navigation.open('bag');
-        document.getElementById('equipscreen-open').click();
+        document.getElementById('character-open').click();   /* Status のアイコンで装備画面 */
         const E = WYD.equipScreen, q = (sel) => document.querySelectorAll('#equipscreen ' + sel);
         const slots = q('[data-es="slot"]').length, items = q('[data-es="item"]').length;
         const tabs = Object.fromEntries([...q('[data-es="tab"]')].map((b) => [b.dataset.tab, Number(b.querySelector('b').textContent)]));

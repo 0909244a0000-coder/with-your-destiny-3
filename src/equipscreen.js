@@ -1,17 +1,33 @@
-// 装備画面（試作・リネレボ風）：左右に装備の枠、真ん中にキャラと戦闘力、右に持ち物（絞り込みのタブ）、下に能力と操作。
+// 装備画面（リネレボ風。Status の画面）：左右に装備の枠、真ん中にキャラと戦闘力、右に持ち物（絞り込みのタブ）、下に能力と操作。
+// 画面の下のページで、能力・リザルト／ビルド／カナイの箱／地図に切りかえる（元のかばん・Status の部品をそのまま移して使う）。
 // 枠・マスを選ぶと、いつもの装備の窓（src/ui.js の touchSheet）が出る。マウスを乗せると性能、右クリックで捨てる、Ctrl＋クリックでロック。並びと数値は data/equipscreen.js。
 window.WYD = window.WYD || {};
 WYD.equipScreen = {
   opened: false,
   tab: "all",
+  page: "equip",
 
   init() {
     const $ = (id) => document.getElementById(id);
     this.$ = $;
     $("equipscreen-close").onclick = () => this.close();
-    $("equipscreen-open").onclick = () => { WYD.ui.toggleBag(false); this.open(); };
-    const body = $("equipscreen-body");
-    body.onclick = (e) => this.click(e);
+    const body = $("equipscreen-body"), D = WYD.data.equipScreen;
+    // 骨組み：装備ページ（描きなおす所と、元の部品）と、ほかのページ（元の部品を移す）。下にページのタブ
+    body.innerHTML = `<div class="es-page" data-page="equip"><div id="es-main-host"></div>` +
+      `<div class="es-bottom"><div id="es-stats-host" class="es-stats"></div><div class="es-actions" id="es-actions"><span id="es-count" class="es-count"></span><span id="es-fuse-host"></span></div></div></div>` +
+      D.pages.filter((p) => p.id !== "equip").map((p) => `<div class="es-page" data-page="${p.id}" hidden></div>`).join("") +
+      `<nav class="es-pagetabs" aria-label="画面の切りかえ">${D.pages.map((p) => `<button data-es-page="${p.id}">${p.label}</button>`).join("")}</nav>`;
+    const page = (id) => body.querySelector(`.es-page[data-page="${id}"]`);
+    // 元のかばん・Status から部品を移す（動きはそのまま。src/ui.js が id で描きなおす）
+    page("equip").prepend($("pending-loot-panel"));   // 未受取（持ち物がいっぱいで入らなかった装備）
+    $("es-fuse-host").before(document.querySelector(".inv-buttons"));   // 並べ替え・キャダラの賭け・全て捨てる
+    for (const p of D.pages) if (p.panel && $(p.panel)) page(p.id).append($(p.panel));
+    page("builds").insertAdjacentHTML("afterbegin", `<h3>ビルド</h3><p class="muted">今の装備・使うスキル・スキルの型・カナイの箱の枠をまとめて保存し、ワンクリックで切りかえる。</p>`);
+    body.onclick = (e) => {
+      const p = e.target.closest("[data-es-page]");
+      if (p) { this.page = p.dataset.esPage; WYD.ui.hideTooltip(); this.render(); return; }
+      this.click(e);
+    };
     // マウスを乗せると性能（持ち物は今の装備との比べも）。説明は かばんと同じ（src/ui.js の showTooltipFor）
     body.onmouseover = (e) => {
       const el = e.target.closest('[data-es="item"],[data-es="slot"],[data-es="gem"]');
@@ -19,10 +35,11 @@ WYD.equipScreen = {
       else if (el) WYD.ui.showTooltipFor(e, el.dataset.es === "item" ? "inv" : "eq"); else WYD.ui.hideTooltip();
     };
     body.onmouseleave = () => WYD.ui.hideTooltip();
-    WYD.ui.bindRightDiscard(body, "inv");   // 持ち物を右クリックで捨てる（かばんと同じ。ロックは捨てない）
+    WYD.ui.bindRightDiscard($("es-main-host"), "inv");   // 持ち物を右クリックで捨てる（かばんと同じ。ロックは捨てない）
   },
 
-  open() {
+  open(page) {
+    if (page) this.page = page;
     this.opened = true;
     this.$("equipscreen").hidden = false;
     this.render();
@@ -31,6 +48,8 @@ WYD.equipScreen = {
   close() {
     this.opened = false;
     this.$("equipscreen").hidden = true;
+    WYD.ui.hideTooltip();
+    const nav = this.$("character-open"); if (nav) { nav.classList.remove("active"); nav.setAttribute("aria-pressed", "false"); }
   },
 
   // 画面の外で装備・持ち物が変わったとき（src/ui.js の描きなおしから呼ぶ）
@@ -82,8 +101,6 @@ WYD.equipScreen = {
     if (d.es === "slot") { if (item) ui.touchSheet("eq", d.slot); return; }
     if (d.es === "item") { ui.touchSheet("inv", Number(d.index)); return; }
     if (d.es === "tab") this.tab = d.tab;
-    else if (d.es === "sort") WYD.inventory.sort(s.inventory);
-    else if (d.es === "discard") { ui.$("discard-all").click(); }
     else if (d.es === "fuse") { if (!WYD.gemVault.fuseNow()) return; }   // 宝石合成（宝石の画面と同じ。確認してから）
     ui.changed();
     this.render();
@@ -124,15 +141,24 @@ WYD.equipScreen = {
     const tabs = D.tabs.map((t) => `<button data-es="tab" data-tab="${t.id}" class="${this.tab === t.id ? "on" : ""}">${t.label}<b>${t.gems ? gemKeys.length : this.shown(t.id).length}</b></button>`).join("");
     const grid = onGems ? gemKeys.map((k) => this.gemCell(k)).join("") : items.map(({ item, index }) => this.cell(item, `data-es="item" data-index="${index}"`)).join("") +
       (this.tab === "all" ? Array.from({ length: Math.max(0, size - s.inventory.length) }, () => `<div class="es-cell blank"></div>`).join("") : "");
-    this.$("equipscreen-body").innerHTML =
+    // ページ：まだ使えないもの（カナイの箱・地図）はタブを隠す
+    for (const p of D.pages) {
+      const locked = p.locked && this.$(p.panel) && this.$(p.panel).hidden;
+      if (locked && this.page === p.id) this.page = "equip";
+      const tab = this.$("equipscreen-body").querySelector(`[data-es-page="${p.id}"]`);
+      tab.hidden = !!locked; tab.classList.toggle("on", this.page === p.id);
+      this.$("equipscreen-body").querySelector(`.es-page[data-page="${p.id}"]`).hidden = this.page !== p.id;
+    }
+    this.$("es-stats-host").innerHTML = D.stats.map(([k, name, kind]) => `<span><small>${name}</small><b>${fmt(stats[k] || 0, kind)}</b></span>`).join("");
+    this.$("es-count").textContent = `${s.inventory.length} / ${size}`;
+    this.$("es-fuse-host").innerHTML = this.fuseButton();
+    this.$("es-main-host").innerHTML =
       `<div class="es-top"><span class="es-money" style="color:${C.materialColor}">${C.materialName} ${WYD.results.number(s.materials)}</span><span class="es-money">宝石 ${Object.values(s.gems).reduce((n, v) => n + v, 0)}</span></div>` +
       `<div class="es-main">` +
         `<section class="es-hero"><div class="es-col">${col(D.leftSlots)}</div>` +
           `<div class="es-figure"><img src="${esc(WYD.data.player.image || "assets/player.png")}" alt=""><div class="es-plate"><b>${esc(cls.name || "冒険者")}</b><span>Lv.${s.player.level}${s.player.paragon.level ? ` · 修練${s.player.paragon.level}` : ""}</span><span class="es-power">戦闘力 <b>${WYD.results.number(this.power(stats))}</b></span></div></div>` +
           `<div class="es-col">${col(D.rightSlots)}</div></section>` +
         `<section class="es-bag"><nav class="es-tabs">${tabs}</nav><div class="es-grid">${grid || `<p class="muted">${onGems ? "手元に宝石がない" : "このタブに入る装備はない"}</p>`}</div></section>` +
-      `</div>` +
-      `<div class="es-bottom"><div class="es-stats">${D.stats.map(([k, name, kind]) => `<span><small>${name}</small><b>${fmt(stats[k] || 0, kind)}</b></span>`).join("")}</div>` +
-        `<div class="es-actions"><span class="es-count">${s.inventory.length} / ${size}</span><button data-es="discard" ${s.inventory.length ? "" : "disabled"}>一括分解</button><button data-es="sort" ${s.inventory.length ? "" : "disabled"}>並べ替え</button>${this.fuseButton()}</div></div>`;
+      `</div>`;
   },
 };

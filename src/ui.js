@@ -1186,7 +1186,6 @@ WYD.ui = {
     // 序盤は使えないものを出さない（使えるようになったら出る）
     const all = s.inventory.concat(s.stash, Object.values(s.equipment)).filter(Boolean);
     this.unlock("cube-panel", s.records.uniquesFound > 0 || Object.keys(s.cube.learned).length > 0);
-    this.unlock("gems-open", Object.keys(s.gems).length > 0 || all.some((it) => (it.sockets || []).length));
     this.unlock("merc-open", s.player.level >= WYD.data.mercenary.minLevel || !!s.mercenary.type);
     this.unlock("gamble-open", s.player.level >= WYD.data.gamble.minLevel);
     this.unlock("lgem-open", Object.keys(s.lgems.owned).length > 0);
