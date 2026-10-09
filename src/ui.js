@@ -202,6 +202,11 @@ WYD.ui = {
       const button = e.target.closest("[data-bag-target]");
       if (button) this.$(button.dataset.bagTarget).scrollIntoView({ block: "start" });
     };
+    this.$("camera-zoom").onchange = (e) => {
+      const zoom = Number(e.target.value);
+      if (WYD.data.map.camera.levels.includes(zoom)) s.settings.cameraZoom = zoom;
+      this.changed();
+    };
     this.$("quiet-fx").onchange = (e) => {
       s.settings.quietFx = e.target.checked;
       this.changed();
@@ -1057,6 +1062,7 @@ WYD.ui = {
     this.$("auto-salvage").disabled = !!s.settings.filter.on;
     this.$("pause").textContent = this.paused ? "再開" : "停止";
     this.$("pause").classList.toggle("active", this.paused);
+    this.$("camera-zoom").value = WYD.data.map.camera.levels.includes(s.settings.cameraZoom) ? s.settings.cameraZoom : WYD.data.map.camera.defaultZoom;
     this.$("quiet-fx").checked = !!s.settings.quietFx;
     this.$("sound-toggle").textContent = `効果音：${s.settings.sound ? "ON" : "OFF"}`;
     this.$("music-toggle").textContent = `音楽：${s.settings.music !== false ? "ON" : "OFF"}`;

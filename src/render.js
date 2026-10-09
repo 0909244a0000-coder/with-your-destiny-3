@@ -53,7 +53,64 @@ WYD.render = {
     return list;
   },
 
+  // 描画だけのカメラ。戦闘座標・射程・乱数は変更しない。
+  cameraFor(ctx, w, state) {
+    const M = WYD.data.map, D = M.camera;
+    const zoom = ctx.canvas.id === "game" && !w.town && !WYD.mobile?.active ? (D.levels.includes(state.settings.cameraZoom) ? state.settings.cameraZoom : D.defaultZoom) : 1;
+    const width = M.width / zoom, height = M.height / zoom;
+    return { zoom, x: WYD.util.clamp(w.player.x - width / 2, 0, M.width - width), y: WYD.util.clamp(w.player.y - height / 2, 0, M.height - height), width, height };
+  },
+  activeStates(w) {
+    const p = w.player, rows = [], add = (name, time, symbol, bad = false) => { if (time > 0) rows.push({ name, time, symbol, bad }); };
+    if (w.town || p.dead) return rows;
+    add("行動停止", p.stunTimer, "×", true);
+    add("鈍足", p.chill, "↓", true);
+    if (p.buff) add("防御強化", p.buff.timeLeft, "◇");
+    if (p.haste) add("攻撃加速", p.haste.timeLeft, "↑");
+    if (p.form) add(WYD.data.skills[p.form.id]?.name || "変身", p.form.timeLeft, "◆");
+    if (p.shrine) add(WYD.shrines.def(p.shrine.id)?.name || "祠の加護", p.shrine.timeLeft, "✦");
+    return rows;
+  },
+  drawStateHud(w) {
+    const box = document.getElementById("combat-states");
+    if (!box) return;
+    const escape = WYD.results.escape;
+    const states = this.activeStates(w).map(s => `<span class="state-chip${s.bad ? ' state-bad' : ''}" title="${escape(s.name)}・残り時間">${s.symbol} ${escape(s.name)} <b>${Math.ceil(s.time)}秒</b></span>`);
+    const groups = {};
+    if (!w.town && !w.player.dead) for (const a of w.allies) if (a.hp > 0 && a.timeLeft > 0) {
+      const name = a.puppet ? "人形" : a.source === "merc" ? "傭兵" : WYD.data.skills[a.source]?.name || "召喚";
+      groups[name] = (groups[name] || 0) + 1;
+    }
+    for (const [name, count] of Object.entries(groups)) states.push(`<span class="state-chip summon-chip">${escape(name)} <b>×${count}</b></span>`);
+    const html = states.join("");
+    if (box.innerHTML !== html) box.innerHTML = html;
+    box.hidden = !html;
+  },
+  drawUnitStates(ctx, w) {
+    const D = WYD.data.map.readability;
+    for (const e of [...w.enemies, ...w.allies]) {
+      if (e.hp <= 0 || !(e.stunTimer > 0)) continue;
+      const label = `× ${e.stunTimer.toFixed(1)}秒`, y = e.y - (e.radius || WYD.data.enemies[e.kind]?.radius || 0) - D.statusOffset;
+      ctx.save();ctx.font = `bold ${D.badgeFont}px sans-serif`;ctx.textAlign = "center";
+      const width = ctx.measureText(label).width + D.badgeFont;
+      ctx.fillStyle = "#181225";ctx.fillRect(e.x - width / 2, y - D.badgeHeight, width, D.badgeHeight);
+      ctx.fillStyle = "#e8ccff";ctx.fillText(label, e.x, y - D.badgeHeight / 4);ctx.restore();
+    }
+  },
+  drawOffscreen(ctx, w, camera) {
+    if (camera.zoom === 1) return;
+    const D = WYD.data.map.camera, M = WYD.data.map, pad = D.edgePadding;
+    const outside = w.enemies.filter(e => e.hp > 0 && (e.x < camera.x || e.x > camera.x + camera.width || e.y < camera.y || e.y > camera.y + camera.height))
+      .sort((a, b) => Number(!!b.boss) - Number(!!a.boss) || WYD.util.dist(w.player, a) - WYD.util.dist(w.player, b)).slice(0, D.maxArrows);
+    for (const e of outside) {
+      const x = (e.x - camera.x) * camera.zoom, y = (e.y - camera.y) * camera.zoom;
+      ctx.save();ctx.translate(WYD.util.clamp(x, pad, M.width - pad), WYD.util.clamp(y, pad, M.height - pad));
+      ctx.rotate(Math.atan2(y - M.height / 2, x - M.width / 2));ctx.fillStyle = e.boss ? "#ffbe63" : "#ff7272";ctx.strokeStyle = "#190e0c";
+      ctx.beginPath();ctx.moveTo(D.arrowSize, 0);ctx.lineTo(-D.arrowSize, -D.arrowSize);ctx.lineTo(-D.arrowSize, D.arrowSize);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+    }
+  },
   draw(ctx, w, state) {
+    if (ctx.canvas.id === "game") this.drawStateHud(w);
     if (w.town) {
       // 拠点（野営地）：敵のいない画面。知らせ・スキルの並びは出す
       WYD.town.draw(ctx, w, state);
@@ -70,6 +127,9 @@ WYD.render = {
     ctx.save();
     const shakeScale = state.settings.quietFx ? WYD.data.fx.quiet.shakeScale : 1;
     ctx.translate(sh.x * shakeScale, sh.y * shakeScale);
+    const camera = this.cameraFor(ctx, w, state);
+    ctx.scale(camera.zoom, camera.zoom);
+    ctx.translate(-camera.x, -camera.y);
 
     const scene = this.getImage(area.sceneImage);
     // 完成した景色は一枚で表示。読み込み中・画像欠損時は従来の地面に戻す。
@@ -170,6 +230,7 @@ WYD.render = {
     // 名前は火花より手前に描き、光の中でも読めるようにする。
     this.drawDropLabels(ctx, w.drops);
     this.drawUnitLabels(ctx);
+    this.drawUnitStates(ctx, w);
 
     // ダメージの数字：出た瞬間にふくらんで、上にのぼりながら消える
     const T = WYD.data.fx.text;
@@ -190,6 +251,7 @@ WYD.render = {
     }
     ctx.globalAlpha = 1;
     ctx.restore();
+    this.drawOffscreen(ctx, w, camera);
     this.drawBossIntro(ctx, w);   // 上の文字やボスの体力の棒より下に描く
     this.drawBossDefeat(ctx, w, state);
 
