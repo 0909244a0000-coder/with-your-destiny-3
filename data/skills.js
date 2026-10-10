@@ -23,9 +23,9 @@ WYD.data.skills = {
     startLevel: 0,        // 0 = 最初は覚えていない（スキルポイントで覚える）
     maxLevel: 10,
     cooldown: 12,
-    duration: 5,          // 効果が続く秒数
-    defenseBase: 5,
-    defensePerLevel: 3,
+    duration: 6,          // 効果が続く秒数（2026-10-10 に 5→6）
+    defenseBase: 40,      // 防御力の何%上がるか（2026-10-10 に「+固定値 5+3/Lv」から変更）
+    defensePerLevel: 6,
     healPercentBase: 10,  // 最大HPの何%回復するか
     healPercentPerLevel: 2,
     triggerHpPercent: 60, // HPがこの%以下になったら使う
@@ -115,7 +115,7 @@ WYD.data.skills = {
     kind: "aura", auraType: "heal", name: "鼓舞の叫び",
     desc: "オーラ：叫びで自分と仲間を奮い立たせ、HPが回復し続ける。最大HPの何%か。",
     startLevel: 0, maxLevel: 10, cooldown: 1,
-    radius: 140, healPercentBase: 1.0, healPercentPerLevel: 0.22, color: "#9fffb0",
+    radius: 140, healPercentBase: 2.0, healPercentPerLevel: 0.45, color: "#9fffb0",   // 2026-10-10 に回復を2倍
   },
 };
 

@@ -26,7 +26,7 @@ WYD.skillInfo = {
       }
       case "whirl": return [["威力", x(mult)], ["範囲", () => Math.round(s.radius)]];
       case "vajra": return [
-        ["防御", (lv) => `+${this.r1(s.defenseBase + s.defensePerLevel * (lv - 1))}`],
+        ["防御", (lv) => `+${this.r1(s.defenseBase + s.defensePerLevel * (lv - 1))}%`],
         ["回復", (lv) => `最大HPの${this.r1(s.healPercentBase + s.healPercentPerLevel * (lv - 1))}%`],
         ["発動", () => `HP${s.triggerHpPercent}%以下`], ["時間", () => `${this.r1(s.duration)}秒`]];
       case "sudarshana": return [["威力", x(mult)], ["当たる数", (lv) => Math.floor(s.targetsBase + s.targetsPerLevel * (lv - 1))]];
