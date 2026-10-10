@@ -506,9 +506,7 @@ WYD.world = {
       p.swing = 0.15;
       const slashKey = WYD.vfx.has(WYD.data.player.slash) ? WYD.data.player.slash : "slash";
       WYD.vfx.spawn(w, slashKey, target.x, target.y, { angle: Math.atan2(target.y - p.y, target.x - p.x) });
-      this.playerHit(w, state, stats, target, stats.attack);
-      this.tryThunder(w, state, stats, target);
-      this.tryGod(w, state, stats, target);
+      this.basicHit(w, state, stats, target);
       // 固有能力：狂王の籠手（狂戦士の怒りの間、周りにも当たる）
       const cleave = stats.powers.hasteCleave;
       if (cleave && p.haste) {
@@ -516,6 +514,27 @@ WYD.world = {
           if (e !== target && WYD.util.dist(target, e) <= cleave.radius) this.playerHit(w, state, stats, e, stats.attack * cleave.mult, "effect:hasteCleave");
         }
       }
+    }
+  },
+
+  // 猛攻（data/skills.js の WYD.data.frenzy）：攻撃速度アップのスキルか、frenzy の変身（狼）が効いている間。{ pct } か null
+  frenzy(w) {
+    const p = w.player;
+    if (p.haste && p.haste.frenzyPct) return { pct: p.haste.frenzyPct };
+    if (p.form && p.form.frenzyPct) return { pct: p.form.frenzyPct };
+    return null;
+  },
+
+  // 通常攻撃が当たったとき（近接の一振り・遠くから撃った弾の着弾）。猛攻の間は威力アップ＋周りの敵にも当たる
+  basicHit(w, state, stats, target) {
+    const fr = this.frenzy(w), F = WYD.data.frenzy;
+    const attack = stats.attack * (fr ? 1 + fr.pct / 100 : 1);
+    this.playerHit(w, state, stats, target, attack);
+    this.tryThunder(w, state, stats, target);
+    this.tryGod(w, state, stats, target);
+    if (!fr) return;
+    for (const e of w.enemies.slice()) {
+      if (e !== target && e.hp > 0 && WYD.util.dist(target, e) <= F.radius) this.playerHit(w, state, stats, e, attack * F.cleaveMult, "effect:frenzy");
     }
   },
 
@@ -530,11 +549,7 @@ WYD.world = {
       const step = R.speed * dt;
       if (d <= step + 4) {
         b.done = true;
-        if (e && e.hp > 0) {
-          this.playerHit(w, state, stats, e, stats.attack);
-          this.tryThunder(w, state, stats, e);
-          this.tryGod(w, state, stats, e);
-        }
+        if (e && e.hp > 0) this.basicHit(w, state, stats, e);
         WYD.fx.burst(w, b.tx, b.ty, { ...WYD.data.fx.hit, count: 8 }, R.color, { glow: true });
         continue;
       }
@@ -722,7 +737,9 @@ WYD.world = {
       const p = w.player;
       const near = w.enemies.some((e) => WYD.util.dist(p, e) <= s.triggerRange);
       if (!near) return false;
-      p.haste = { percent: s.hasteBase + s.hastePerLevel * (lv - 1), timeLeft: s.duration, color: s.color, source: this.castingId };
+      const F = WYD.data.frenzy;
+      p.haste = { percent: s.hasteBase + s.hastePerLevel * (lv - 1), timeLeft: s.duration, color: s.color, source: this.castingId,
+        frenzyPct: F.damagePctBase + F.damagePctPerLevel * (lv - 1) };   // 猛攻（通常攻撃の威力 +%・周りにも当たる）
       this.addText(w, p.x, p.y - 24, "剛力！", s.color);
       return true;
     },

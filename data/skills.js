@@ -61,16 +61,16 @@ WYD.data.skills = {
     damagePerLevel: 0.12,
     color: "#ff7a2a",
   },
-  // 強化スキル：攻撃速度アップ
+  // 強化スキル：攻撃速度アップ。効いている間は「猛攻」（WYD.data.frenzy）：通常攻撃の威力アップ＋周りの敵にも当たる
   hanuman: {
     name: "狂戦士の怒り",
-    desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
+    desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がり、通常攻撃が強くなって周りの敵にも当たる（猛攻）。",
     startLevel: 0,
     maxLevel: 10,
-    cooldown: 14,
-    duration: 6,
-    hasteBase: 40,        // 攻撃速度 +%
-    hastePerLevel: 6,
+    cooldown: 10,         // 2026-10-10 に 14→10（効いている時間を8割に）
+    duration: 8,          // 2026-10-10 に 6→8
+    hasteBase: 60,        // 攻撃速度 +%（2026-10-10 に 40+6/Lv から上げた）
+    hastePerLevel: 10,
     triggerRange: 120,    // この距離に敵がいたら使う
     color: "#ff9a5e",
   },
@@ -141,3 +141,9 @@ WYD.data.autoBuild = ["whirl", "vajra", "sudarshana"];
 
 // AIがスキルを試す順番
 WYD.data.skillOrder = ["vajra", "bar_orders", "bar_cry", "hanuman", "bar_ancients", "nagapasha", "whirl", "sudarshana", "agni"];
+
+// 猛攻（2026-10-10）：攻撃速度アップのスキル（しくみ hanuman）と狼変化（frenzy: true の変身）が効いている間、通常攻撃が強くなる。
+// 通常攻撃の威力 +(damagePctBase + damagePctPerLevel×(Lv-1))%、当てた敵の周り radius の敵にも cleaveMult 倍で当たる（遠くから撃つ職業は着弾の周り）。
+// 通常攻撃で戦うビルド（攻撃速度を集める）を成り立たせるため。src/world.js の frenzy
+WYD.data.frenzy = { damagePctBase: 30, damagePctPerLevel: 5, radius: 70, cleaveMult: 0.6, color: "#ffb36a" };
+

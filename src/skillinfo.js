@@ -31,7 +31,8 @@ WYD.skillInfo = {
         ["発動", () => `HP${s.triggerHpPercent}%以下`], ["時間", () => `${this.r1(s.duration)}秒`]];
       case "sudarshana": return [["威力", x(mult)], ["当たる数", (lv) => Math.floor(s.targetsBase + s.targetsPerLevel * (lv - 1))]];
       case "agni": return [["1回の威力", x(mult)], ["範囲", () => Math.round(s.radius)], ["燃える時間", () => `${this.r1(s.duration)}秒（${s.tick}秒ごと）`]];
-      case "hanuman": return [["攻撃速度", (lv) => `+${Math.round(s.hasteBase + s.hastePerLevel * (lv - 1))}%`], ["時間", () => `${this.r1(s.duration)}秒`]];
+      case "hanuman": return [["攻撃速度", (lv) => `+${Math.round(s.hasteBase + s.hastePerLevel * (lv - 1))}%`], ["時間", () => `${this.r1(s.duration)}秒`],
+        ["猛攻", (lv) => `通常攻撃 +${Math.round(WYD.data.frenzy.damagePctBase + WYD.data.frenzy.damagePctPerLevel * (lv - 1))}%・周りにも${Math.round(WYD.data.frenzy.cleaveMult * 100)}%`]];
       case "nagapasha": return [["威力", x(mult)], ["縛る", (lv) => `${this.r1(s.bindBase + s.bindPerLevel * (lv - 1))}秒`], ["範囲", () => Math.round(s.radius)]];
       case "raise": return [
         ["数", (lv) => WYD.allies.maxCount(s, lv)],
@@ -50,6 +51,7 @@ WYD.skillInfo = {
         if (s.defensePct) out.push(["防御", () => `+${s.defensePct}%`]);
         if (s.moveSpeedPct) out.push(["移動速度", () => `+${s.moveSpeedPct}%`]);
         out.push(["時間", () => `${this.r1(s.duration)}秒`]);
+        if (s.frenzy) out.push(["猛攻", (lv) => `通常攻撃 +${Math.round(WYD.data.frenzy.damagePctBase + WYD.data.frenzy.damagePctPerLevel * (lv - 1))}%・周りにも${Math.round(WYD.data.frenzy.cleaveMult * 100)}%`]);
         return out;
       }
       case "trap": return [
