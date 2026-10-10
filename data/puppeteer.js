@@ -13,12 +13,12 @@ WYD.data.classes.puppeteer = {
   skills: {
     pup_thread: { kind:"puppet", mode:"thread", name:"命の糸", desc:"本体のHPを使って人形を修復。人形がいなければ召喚する。", startLevel:1,maxLevel:10,cooldown:5,hpCost:4,repairBase:0.25,repairPerLevel:0.025,color:"#d47078" },
     pup_pierce: { kind:"puppet", mode:"pierce", name:"鉄杭の突撃", desc:"人形を敵へ突進させ、周囲の敵も貫く。",startLevel:1,maxLevel:10,cooldown:4,hpCost:3,range:260,radius:36,damageBase:1.8,damagePerLevel:0.28,color:"#e0a8a0" },
-    // 2026-10-10：守りの傀儡は本体の防御も +80%（playerDefensePct）・6秒、血の縫合の回復 2.5倍、終幕の威力 約2倍（死にスキル直し）
-    pup_guard: { kind:"puppet", mode:"guard", name:"守りの傀儡",desc:"人形が近くの敵を引きつけ、しばらく人形と本体の防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:4,duration:6,range:180,defenseMult:1.7,playerDefensePct:80,color:"#d0b18b" },
+    // 2026-10-10：守りの傀儡は本体の防御も +150%（playerDefensePct）・6秒、血の縫合の回復 5倍、身代わり縫いの回復・防御 2倍、終幕の威力 約2倍（死にスキル直し）
+    pup_guard: { kind:"puppet", mode:"guard", name:"守りの傀儡",desc:"人形が近くの敵を引きつけ、しばらく人形と本体の防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:4,duration:6,range:180,defenseMult:1.7,playerDefensePct:150,color:"#d0b18b" },
     pup_needles: { kind:"puppet",mode:"needles",name:"針の雨",desc:"人形の周囲にいる敵をまとめて刺す。",startLevel:0,maxLevel:10,cooldown:6,hpCost:5,radius:130,damageBase:1.35,damagePerLevel:0.2,color:"#bca0b9" },
     pup_bind: { kind:"puppet",mode:"bind",name:"絡め糸",desc:"人形の周囲の敵を縛る。ボスへの拘束は短い。",startLevel:0,maxLevel:10,cooldown:10,hpCost:4,radius:120,bindBase:1.5,bindPerLevel:0.15,bossBindMult:0.3,damageBase:0.8,damagePerLevel:0.12,color:"#be6f7e" },
-    pup_swap: { kind:"puppet",mode:"swap",name:"身代わり縫い",desc:"本体のHPが減ると少し回復し、本体と人形の防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:2,triggerHpPercent:55,duration:4,defenseMult:0.6,puppetDefenseMult:1.5,healPercentBase:10,healPercentPerLevel:1,color:"#e1b791" },
-    pup_stitch: { kind:"puppet",mode:"stitch",name:"血の縫合",desc:"一定時間、人形の攻撃が当たると本体のHPを回復する。",startLevel:0,maxLevel:10,cooldown:13,hpCost:3,duration:6,healPercentBase:4.5,healPercentPerLevel:0.35,healInterval:0.8,color:"#d26771" },
+    pup_swap: { kind:"puppet",mode:"swap",name:"身代わり縫い",desc:"本体のHPが減ると少し回復し、本体と人形の防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:2,triggerHpPercent:55,duration:4,defenseMult:1.2,puppetDefenseMult:1.5,healPercentBase:20,healPercentPerLevel:2,color:"#e1b791" },
+    pup_stitch: { kind:"puppet",mode:"stitch",name:"血の縫合",desc:"一定時間、人形の攻撃が当たると本体のHPを回復する。",startLevel:0,maxLevel:10,cooldown:13,hpCost:3,duration:6,healPercentBase:9,healPercentPerLevel:0.7,healInterval:0.8,color:"#d26771" },
     pup_cut: { kind:"puppet",mode:"cut",name:"赤糸の裁断",desc:"本体のHPを大きく使い、人形で敵を強く切り裂く。",startLevel:0,maxLevel:10,cooldown:8,hpCost:9,range:260,damageBase:3.2,damagePerLevel:0.48,color:"#ff6680" },
     pup_finale: { kind:"puppet",mode:"finale",name:"終幕",desc:"人形のHPが40%以下のとき、人形を壊して周囲の敵へ大きなダメージを与える。",startLevel:0,maxLevel:10,cooldown:15,hpCost:7,triggerPuppetHpPercent:40,radius:140,damageBase:6,damagePerLevel:0.9,color:"#f0ad8b" },
   },
