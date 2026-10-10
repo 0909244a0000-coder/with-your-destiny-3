@@ -89,5 +89,6 @@ WYD.data.optimizer = {
         pvp: { attack: 1.85, defense: 1.22, maxHp: 0.26, hpRegen: 1.02, attackSpeed: 1.34, critChance: 4.65, moveSpeed: 29.18, skillDamage: 1.37 } },
     },
   },
+  growShow: 5,      // おすすめ装備の窓の「育てる候補（下限）」に出す部位の数
   reasonCount: 3,   // 選んだ理由に出す能力の数（点数の差が大きい順）
 };

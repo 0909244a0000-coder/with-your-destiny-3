@@ -173,6 +173,10 @@ WYD.equipScreen = {
   shown(tab) {
     const s = WYD.state, t = WYD.data.equipScreen.tabs.find((x) => x.id === tab) || {};
     if (t.gems) return [];
+    if (t.grow) {   // 育てる候補（下限）：伸びの大きい順。持ち物の装備だけ
+      const c = WYD.optimizer.growCandidates(s, WYD.optimizer.goal).filter((x) => x.where === "inv");
+      return c.map((x) => ({ item: x.item, index: s.inventory.indexOf(x.item) }));
+    }
     const entries = s.inventory.map((item, index) => ({ item, index })).filter(({ item }) =>
       (!t.slots || t.slots.includes(item.slot)) && (!t.rarities || t.rarities.includes(item.rarity)) &&
       (!t.upgrade || WYD.ui.upgradeMark(item) !== ""));
@@ -299,7 +303,8 @@ WYD.equipScreen = {
     const items = this.shown(this.tab), size = WYD.data.items.inventorySize;
     const gemKeys = this.gemKeys(), onGems = !!(D.tabs.find((t) => t.id === this.tab) || {}).gems;
     const tabs = D.tabs.map((t) => `<button data-es="tab" data-tab="${t.id}" class="${this.tab === t.id ? "on" : ""}">${t.label}<b>${t.gems ? gemKeys.length : this.shown(t.id).length}</b></button>`).join("");
-    const filtering = this.gearSort === "op" && this.opKeys.length > 0, padded = this.tab === "all" && !filtering;   // OPで絞っている間は空きマスを出さない
+    const filtering = this.gearSort === "op" && this.opKeys.length > 0, padded = this.tab === "all" && !filtering;
+    const growTab = !!(D.tabs.find((t) => t.id === this.tab) || {}).grow;   // OPで絞っている間は空きマスを出さない
     const pageSize = WYD.data.items.inventoryPageSize, total = onGems ? gemKeys.length : padded ? size : items.length;
     const pageCount = Math.max(1, Math.ceil(total / pageSize));
     this.bagPage = Math.max(0, Math.min(this.bagPage, pageCount - 1));
@@ -326,7 +331,7 @@ WYD.equipScreen = {
         `<section class="es-hero"><div class="es-col">${col(D.leftSlots)}</div>` +
           `<div class="es-figure"><img src="${esc(WYD.data.player.image || "assets/player.png")}" alt=""><div class="es-plate"><b>${esc(cls.name || "冒険者")}</b><span>Lv.${s.player.level}${s.player.paragon.level ? ` · 修練${s.player.paragon.level}` : ""}</span><span class="es-power">戦闘力 <b>${WYD.results.number(this.power(stats))}</b></span></div></div>` +
           `<div class="es-col">${col(D.rightSlots)}</div></section>` +
-        `<section class="es-bag"><nav class="es-tabs">${tabs}</nav>${this.opNote(onGems)}${pager}<div class="es-grid">${grid || `<p class="muted">${onGems ? "手元に宝石がない" : "このタブに入る装備はない"}</p>`}</div></section>` +
+        `<section class="es-bag"><nav class="es-tabs">${tabs}</nav>${this.opNote(onGems)}${growTab ? `<div class="es-op-note">強化 +10・鍛造（いちばん運が悪いとき）まで育てると、今の装備（同じだけ育てた下限）より強くなる装備。伸びの大きい順。目的：${(WYD.optimizer.goalDef(WYD.optimizer.goal) || {}).label}（おすすめ装備で選んだもの）</div>` : ""}${pager}<div class="es-grid">${grid || `<p class="muted">${onGems ? "手元に宝石がない" : "このタブに入る装備はない"}</p>`}</div></section>` +
       `</div>`;
   },
 };

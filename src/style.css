@@ -1583,3 +1583,8 @@ html.m-ui #equipscreen .modal-box.equipscreen-box { min-height: 0; }
 .opt-actions button:disabled { opacity: .5; }
 .opt-builds { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .opt-builds button { min-width: 44px; padding: 6px 8px; }
+.opt-grow { margin: 0 0 10px; padding: 6px 10px; background: #141a26; border: 1px solid #3b4660; border-radius: 4px; }
+.opt-grow summary { cursor: pointer; font-weight: bold; }
+.opt-grow ul { margin: 6px 0 0; padding-left: 18px; font-size: 12px; }
+.opt-grow li { margin: 3px 0; }
+.opt-grow li small { display: block; color: #9aa4b8; }

@@ -122,6 +122,28 @@ const path = require('node:path');
         return { buttons, slots: WYD.data.items.buildSlots, name: saved && saved.name, savedWeapon: saved && saved.equipment.weapon === better.id, ok };
       });
       assert.equal(b.slots, 8); assert.equal(b.buttons, 8, '保存枠のボタン8つ'); assert(b.ok, 'ボタンで着替える'); assert.equal(b.name, 'テスト用'); assert(b.savedWeapon, '着替えた装備をビルドに保存');
+      // 育てる候補（下限）：強化 +10・鍛造（毎回いちばん多く余地を使う・会心なし）・ソケットは持っている宝石で埋める
+      const gr = await page.evaluate(() => {
+        const s = WYD.state, O = WYD.optimizer, E = WYD.data.crafting.enhance, F = WYD.data.crafting.forge;
+        const make = (stats, opts) => { const it = WYD.loot.create(s, 30, 0, { slot: 'weapon', rarity: 'legend' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = []; it.plus = 0; it.forgePotential = 0; return Object.assign(it, opts); };
+        const cur = make({ skillDamage: 20 }, { plus: 10 }), raw = make({ skillDamage: 20 }, { forgePotential: 22 }), weak = make({ skillDamage: 5 }), holes = make({ skillDamage: 20 }, { sockets: [null, null] });
+        s.equipment = { weapon: cur }; s.inventory = [raw, weak, holes]; s.stash = []; s.gems = {};
+        const W = O.weightsFor('damage').skillDamage, mult = 1 + E.max * E.statPerLevel;
+        const noGems = O.growCandidates(s, 'damage');
+        s.gems = { 'topaz:4': 2 };
+        const withGems = O.growCandidates(s, 'damage'), rawC = withGems.find((c) => c.item === raw);
+        O.goal = 'damage'; WYD.ui.changed(); WYD.equipScreen.open(); WYD.equipScreen.tab = 'grow'; WYD.equipScreen.render();
+        const tabItems = [...document.querySelectorAll('#equipscreen .es-grid [data-es="item"]')].map((el) => Number(el.dataset.index));
+        const tabCount = Number(document.querySelector('[data-es="tab"][data-tab="grow"] b').textContent);
+        WYD.equipScreen.tab = 'all'; WYD.equipScreen.close();
+        return { noGems: noGems.map((c) => s.inventory.indexOf(c.item)), withGems: withGems.map((c) => s.inventory.indexOf(c.item)),
+          improves: rawC && rawC.improves, plus: rawC && rawC.plus, gainOk: rawC && Math.abs(rawC.gain - Math.ceil(22 / F.improvePotential[1]) * 20 * F.improvePercent / 100 * mult * W) < 1e-6,
+          costOk: rawC && rawC.cost > 0, tabItems, tabCount };
+      });
+      assert.deepEqual(gr.noGems, [0], '宝石がなければ、育てて伸びる装備（鍛造の余地あり）だけ'); assert.equal(gr.improves, 6, '鍛造は 余地22 ÷ 4 を切り上げて6回（下限）'); assert.equal(gr.plus, 10);
+      assert(gr.gainOk, '伸び = 鍛造の回数 × 元の値の8% × 強化1.8倍 × 重み'); assert(gr.costOk, '素材の目安');
+      assert(gr.withGems.includes(2), '持っている宝石で埋めると、ソケットのある装備も候補'); assert(!gr.withGems.includes(1), '弱い装備は出ない');
+      assert.deepEqual(gr.tabItems, gr.withGems, '「★育てる」タブは伸びの大きい順'); assert.equal(gr.tabCount, gr.withGems.length);
       assert.deepEqual(errors, []);
       await page.close();
     }
