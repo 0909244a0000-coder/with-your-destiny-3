@@ -272,6 +272,13 @@
       <div id="equipscreen-body"></div>
     </div>
   </div>
+  <!-- おすすめ装備（src/optimizer.js）：目的別に手持ちから部位ごとのおすすめを出す。見るだけ -->
+  <div id="optimizer" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="optimizer-title">
+    <div class="modal-box optimizer-box">
+      <div class="es-head"><div class="es-title"><div><span>RECOMMENDED GEAR</span><h2 id="optimizer-title">おすすめ装備</h2></div></div><button id="optimizer-close">閉じる ×</button></div>
+      <div id="optimizer-body"></div>
+    </div>
+  </div>
   <div id="sheet" class="modal" hidden>
     <div class="modal-box sheet-box">
       <div id="sheet-body"></div>
@@ -444,6 +451,7 @@
   <script src="data/records.js"></script>
   <script src="data/gems.js"></script>
   <script src="data/equipscreen.js"></script>
+  <script src="data/optimizer.js"></script>
   <script src="data/runeSkills.js"></script>
   <script src="data/daily.js"></script>
   <script src="data/cube.js"></script>
@@ -484,6 +492,7 @@
   <script src="src/gems.js"></script>
   <script src="src/gemvault.js"></script>
   <script src="src/equipscreen.js"></script>
+  <script src="src/optimizer.js"></script>
   <script src="src/runeSkills.js"></script>
   <script src="src/daily.js"></script>
   <script src="src/allies.js"></script>
