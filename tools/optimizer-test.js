@@ -69,7 +69,7 @@ const path = require('node:path');
       assert.equal(r.profN, 'normal'); assert.equal(r.profF, 'frenzy', '猛攻をONにすると型が変わる'); assert(r.spdUp, '猛攻の型は攻撃速度を重く見る');
       assert(r.shown, '装備画面のボタンで開く'); assert.equal(r.tabCount, 3, '目的のタブ3つ');
       assert.match(r.html, /そのまま/); assert.match(r.html, /防御力 \+\d+点/); assert.match(r.html, /倉庫/); assert(r.neckKeep);
-      assert(r.same, '見るだけで着替えない'); assert(r.closed, 'Escで閉じる'); assert(r.esStill, '装備画面は閉じない');
+      assert(r.same, 'ボタンを押すまでは着替えない'); assert(r.closed, 'Escで閉じる'); assert(r.esStill, '装備画面は閉じない');
       assert(!r.overflow, '横にはみ出さない');
       // 宝石：装備は宝石ぬきで選び、宝石（手元＋はめている全部）は選んだ装備へ配りなおす
       const g = await page.evaluate(() => {
@@ -88,7 +88,38 @@ const path = require('node:path');
       });
       assert(g.feetBest, '宝石ぬきで強い装備を選ぶ（弱い装備の良い宝石にだまされない）'); assert.deepEqual(g.feetGems, ['topaz:4'], '良い宝石は選んだ装備へ移す');
       assert(g.waistOnly, '装備はそのまま・宝石だけ付け替え'); assert.deepEqual(g.waistNow, ['topaz:0']); assert.deepEqual(g.waistGems, ['topaz:3'], '手元の強い宝石と入れ替える'); assert(g.gemDiff);
-      assert.match(g.text, /宝石だけ付け替え/); assert.match(g.text, /宝石：/); assert(g.same, '見るだけで宝石は動かさない');
+      assert.match(g.text, /宝石だけ付け替え/); assert.match(g.text, /宝石：/); assert(g.same, 'ボタンを押すまでは宝石を動かさない');
+      // 着替える：おすすめのとおりに装備と宝石を入れかえる。ロックした装備も外す（ロックは残る）。倉庫の装備は倉庫の中で入れかえる
+      const a = await page.evaluate(() => {
+        const s = WYD.state, O = WYD.optimizer;
+        const make = (slot, stats, sockets) => { const it = WYD.loot.create(s, 10, 0, { slot, rarity: 'magic' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = sockets; it.plus = 0; return it; };
+        s.equipment = {}; s.inventory = []; s.stash = []; s.gems = {};
+        const weakFeet = make('feet', { defense: 5 }, ['topaz:4']), strongFeet = make('feet', { defense: 20 }, [null]);
+        const waist = make('waist', { defense: 10 }, ['topaz:0']), stashHead = make('head', { defense: 30 }, []), weakHead = make('head', { defense: 1 }, []);
+        weakFeet.locked = true;
+        s.equipment = { feet: weakFeet, waist, head: weakHead }; s.inventory = [strongFeet]; s.stash = [stashHead]; s.gems = { 'topaz:3': 1 };
+        while (s.inventory.length < WYD.data.items.inventorySize) s.inventory.push(make('ring', {}, []));   /* 持ち物は満杯（能力なしの指輪。おすすめには選ばれない） */
+        const r = O.apply(s, 'defense'), after = O.plan(s, 'defense');
+        return { r, feet: s.equipment.feet === strongFeet, feetGems: strongFeet.sockets, waistGems: waist.sockets, head: s.equipment.head === stashHead,
+          lockedBack: s.inventory.includes(weakFeet) && weakFeet.locked, weakFeetGems: weakFeet.sockets, stashSwap: s.stash[0] === weakHead,
+          hand: s.gems['topaz:0'] || 0, hand3: s.gems['topaz:3'] || 0, invCount: s.inventory.length, changes: after.changes };
+      });
+      assert(a.feet && a.head, '装備を着替える（倉庫の装備も）'); assert(a.lockedBack, 'ロックした装備も外し、ロックは残る'); assert(a.stashSwap, '倉庫の装備は倉庫の中で入れかえる');
+      assert.deepEqual(a.feetGems, ['topaz:4'], '良い宝石は新しい装備へ'); assert.deepEqual(a.weakFeetGems, [null]); assert.deepEqual(a.waistGems, ['topaz:3'], '手元の強い宝石と入れかえ');
+      assert.equal(a.hand, 1, '外した宝石は手元へ'); assert.equal(a.hand3, 0); assert.equal(a.invCount, 180, '持ち物の数は変わらない'); assert.equal(a.changes, 0, '着替えたあとは全部そのまま');
+      // 窓のボタン：着替えてビルドの枠に保存（保存枠は8つ）
+      page.on('dialog', (d) => d.accept(d.type() === 'prompt' ? 'テスト用' : undefined));
+      const b = await page.evaluate(() => {
+        const s = WYD.state, make = (slot, stats) => { const it = WYD.loot.create(s, 10, 0, { slot, rarity: 'magic' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = []; return it; };
+        s.equipment = { weapon: make('weapon', { attack: 1 }) }; const better = make('weapon', { attack: 99 }); s.inventory = [better]; s.stash = []; s.gems = {}; s.builds = [];
+        WYD.ui.changed(); WYD.optimizer.open(); WYD.optimizer.goal = 'damage'; WYD.optimizer.render();
+        const buttons = document.querySelectorAll('#optimizer [data-opt-act="build"]').length;
+        document.querySelector('#optimizer [data-opt-act="build"][data-build="6"]').click();
+        const saved = s.builds[6], ok = s.equipment.weapon === better;
+        WYD.optimizer.close();
+        return { buttons, slots: WYD.data.items.buildSlots, name: saved && saved.name, savedWeapon: saved && saved.equipment.weapon === better.id, ok };
+      });
+      assert.equal(b.slots, 8); assert.equal(b.buttons, 8, '保存枠のボタン8つ'); assert(b.ok, 'ボタンで着替える'); assert.equal(b.name, 'テスト用'); assert(b.savedWeapon, '着替えた装備をビルドに保存');
       assert.deepEqual(errors, []);
       await page.close();
     }

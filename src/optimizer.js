@@ -1,6 +1,6 @@
 // おすすめ装備の窓（装備画面の「おすすめ装備」から開く）。目的（火力・防御・対人）ごとに、
 // 手持ち（持ち物・今の装備・倉庫）から部位ごとに点数のいちばん高い装備を選んで「今 → おすすめ」と点数の差を出す。
-// 見るだけで、着替えない。点数は能力×重み（data/optimizer.js）＋特殊効果・ユニーク・セットの加点（data/items.js の autoEquip）。
+// 「このおすすめに着替える」「着替えてビルドに保存（枠1〜8）」で、おすすめのとおりに着替える（apply）。点数は能力×重み（data/optimizer.js）＋特殊効果・ユニーク・セットの加点（data/items.js の autoEquip）。
 // 宝石は外すのが無料なので、装備は宝石ぬきで選び、宝石は手元＋はめている全部を選んだ装備に配りなおす（plan）。
 window.WYD = window.WYD || {};
 WYD.optimizer = {
@@ -13,7 +13,9 @@ WYD.optimizer = {
     $("optimizer-close").onclick = () => this.close();
     $("optimizer-body").onclick = (e) => {
       const el = e.target.closest("[data-opt-goal]");
-      if (el && this.goalDef(el.dataset.optGoal)) { this.goal = el.dataset.optGoal; this.render(); }
+      if (el && this.goalDef(el.dataset.optGoal)) { this.goal = el.dataset.optGoal; this.render(); return; }
+      const act = e.target.closest("[data-opt-act]");
+      if (act) this.act(act.dataset.optAct, Number(act.dataset.build));
     };
   },
 
@@ -126,6 +128,45 @@ WYD.optimizer = {
     return { rows, curTotal, bestTotal, diff: bestTotal - curTotal, changes: rows.filter((r) => !r.keep).length };
   },
 
+  // おすすめのとおりに着替える（宝石の付け替えもふくむ）。ロックした装備も外す（外した装備は持ち物か倉庫へ。ロックは残る）
+  // 倉庫の装備は、外した装備と倉庫の中で入れかえるので、持ち物がいっぱいでも着替えられる。{ items: 着替えた数, gems: 動かした宝石の数 }
+  apply(state, goalId) {
+    const p = this.plan(state, goalId), G = WYD.gems;
+    let items = 0, gems = 0;
+    for (const r of p.rows) {
+      if (r.keep || r.gemsOnly || !r.best || r.best === r.cur) continue;
+      const cur = state.equipment[r.slot] || null;
+      const inv = state.inventory.indexOf(r.best), st = (state.stash || []).indexOf(r.best);
+      if (inv >= 0) { state.inventory.splice(inv, 1); if (cur) state.inventory.splice(inv, 0, cur); }
+      else if (st >= 0) { state.stash.splice(st, 1); if (cur) state.stash.splice(st, 0, cur); }
+      else continue;
+      state.equipment[r.slot] = r.best;
+      items++;
+    }
+    // 宝石：まず、身につけた装備から おすすめにない宝石を外す
+    const want = {};
+    for (const r of p.rows) if (state.equipment[r.slot]) want[r.slot] = [...r.gemsNew];
+    for (const slot in want) {
+      const item = state.equipment[slot], need = [...want[slot]];
+      (item.sockets || []).forEach((key, i) => {
+        if (!key || !G.info(key) || G.info(key).rune) return;
+        const at = need.indexOf(key);
+        if (at >= 0) need.splice(at, 1); else { G.unsocketAt(state, item, i); gems++; }
+      });
+      want[slot] = need;   // まだはめる必要がある宝石
+    }
+    // つぎに、足りない宝石を手元（なければ身につけていない装備から外して）からはめる
+    const others = [...state.inventory, ...(state.stash || [])];
+    for (const slot in want) for (const key of want[slot]) {
+      if (!(state.gems[key] > 0)) {
+        const from = others.find((it) => (it.sockets || []).includes(key));
+        if (from) G.unsocketAt(state, from, from.sockets.indexOf(key));
+      }
+      if (G.socket(state, state.equipment[slot], key)) gems++;
+    }
+    return { items, gems };
+  },
+
   // 選んだ理由：どの能力で何点ちがうか（上がる大きい順に数個と、いちばん下がるもの1つ）
   reasons(cur, best) {
     const keys = new Set([...Object.keys(cur.parts), ...Object.keys(best.parts)]);
@@ -134,6 +175,26 @@ WYD.optimizer = {
     const up = d.filter((x) => x.points > 0).sort((a, b) => b.points - a.points).slice(0, WYD.data.optimizer.reasonCount);
     const down = d.filter((x) => x.points < 0).sort((a, b) => a.points - b.points).slice(0, 1);
     return [...up, ...down];
+  },
+
+  // 窓のボタン：着替える（apply）／着替えてビルドの枠 n に保存（build）。確認してから
+  act(kind, n) {
+    const s = WYD.state, goal = this.goalDef(this.goal), ui = WYD.ui;
+    if (kind === "apply") {
+      if (!confirm(`おすすめ（${goal.label}）に着替えますか？\n宝石も付け替えます。ロックした装備も外します（外した装備は持ち物へ。ロックは残ります）。`)) return;
+    } else if (kind === "build") {
+      const old = s.builds[n];
+      const name = prompt(old ? `枠${n + 1}「${old.name}」を上書きします。ビルドの名前` : `おすすめ（${goal.label}）に着替えて、枠${n + 1}に保存します。ビルドの名前`, old ? old.name : `${goal.label}のおすすめ`);
+      if (name == null) return;
+      const r = this.apply(s, this.goal);
+      WYD.builds.save(s, n, name);
+      ui.log(`おすすめ（${goal.label}）に着替えた（装備 ${r.items}・宝石 ${r.gems}）。ビルド「${name}」に保存した`, "#7dff8a");
+      ui.changed(); this.render();
+      return;
+    } else return;
+    const r = this.apply(s, this.goal);
+    ui.log(`おすすめ（${goal.label}）に着替えた（装備 ${r.items}・宝石 ${r.gems}）`, "#7dff8a");
+    ui.changed(); this.render();
   },
 
   open() {
@@ -174,8 +235,10 @@ WYD.optimizer = {
         `</tr>`;
     }).join("");
     this.$("optimizer-body").innerHTML =
-      `<nav class="opt-goals" aria-label="目的">${tabs}</nav><p class="muted">${esc(goal.desc)}。重みは${esc(((WYD.data.classes[WYD.classes.id] || {}).name) || "")}・${this.profile(s) === "frenzy" ? "猛攻を使うビルド" : "猛攻を使わないビルド"}の実測（10点＝能力が1%伸びる。強化こみ）。宝石は、手元とはめている全部の宝石を、選んだ装備へ点数の高い順に配りなおして数える（混沌の宝石は能力値だけ）。見るだけで、着替えはしない。</p>` +
+      `<nav class="opt-goals" aria-label="目的">${tabs}</nav><p class="muted">${esc(goal.desc)}。重みは${esc(((WYD.data.classes[WYD.classes.id] || {}).name) || "")}・${this.profile(s) === "frenzy" ? "猛攻を使うビルド" : "猛攻を使わないビルド"}の実測（10点＝能力が1%伸びる。強化こみ）。宝石は、手元とはめている全部の宝石を、選んだ装備へ点数の高い順に配りなおして数える（混沌の宝石は能力値だけ）。「着替える」を押すまでは見るだけ。</p>` +
       `<div class="opt-total">合計 <b>${Math.round(p.curTotal)}</b> → <b>${Math.round(p.bestTotal)}</b> 点 <b class="${p.diff > 0 ? "opt-up" : ""}">（${pt(p.diff)}）</b>　替える部位 <b>${p.changes}</b> / ${p.rows.length}</div>` +
+      `<div class="opt-actions"><button data-opt-act="apply" class="opt-apply" ${p.changes ? "" : "disabled"}>このおすすめに着替える</button>` +
+        `<span class="opt-builds"><small>着替えてビルドに保存：</small>${Array.from({ length: WYD.data.items.buildSlots }, (_, n) => `<button data-opt-act="build" data-build="${n}" title="${s.builds[n] ? esc(s.builds[n].name) + "（上書き）" : "空き"}">${n + 1}${s.builds[n] ? "●" : ""}</button>`).join("")}</span></div>` +
       `<div class="opt-scroll"><table class="opt-table"><thead><tr><th>部位</th><th>今</th><th>おすすめ</th><th>差・理由</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   },
 };
