@@ -19,6 +19,8 @@ WYD.forms = {
       attackSpeedPct: (s.attackSpeedPctBase || 0) + (s.attackSpeedPctPerLevel || 0) * L,
       maxHpPct: s.maxHpPct || 0, defensePct: s.defensePct || 0, moveSpeedPct: s.moveSpeedPct || 0,
       scale: s.scale || 1, filter: s.formFilter || null, image: s.formImage || null, color: s.color,
+      // 猛攻（data/skills.js の WYD.data.frenzy）：frenzy: true の姿（狼）の間、通常攻撃が強くなって周りにも当たる
+      frenzyPct: s.frenzy ? WYD.data.frenzy.damagePctBase + WYD.data.frenzy.damagePctPerLevel * L : 0,
     };
     WYD.world.addText(w, p.x, p.y - 30, `${s.formName}に変身！`, s.color);
     w.effects.push({ type: "ring", x: p.x, y: p.y, radius: 50, color: s.color, time: 0, duration: 0.4 });
