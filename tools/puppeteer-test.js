@@ -58,6 +58,7 @@ const path = require('node:path');
    assert(w.effects.some(ef=>ef.key==='puppetBurst'),'finale effect');
    WYD.puppeteer.update(w,state,stats);
    assert(!WYD.puppeteer.active(w),'respawn delay');
+   if(!w.enemies.some(e=>e.hp>0))WYD.world.spawnEnemy(w,state,'preta',{x:w.player.x+90,y:w.player.y});   /* 人形は生きている敵がいるときだけ出る。終幕で敵が倒れきったときのため */
    w.time+=WYD.data.puppeteer.respawnCooldown+.1;WYD.puppeteer.update(w,state,stats);
    assert(!!WYD.puppeteer.active(w) && w.allies.filter(x=>x.puppet&&x.hp>0).length===1,'auto respawn one');
    const sim=WYD.save.newState();sim.player.level=40;sim.settings.speed=0;sim.settings.autoSkill=true;

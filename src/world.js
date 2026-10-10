@@ -70,6 +70,7 @@ WYD.world = {
     }
 
     this.healPlayer(w, stats.maxHp, stats.hpRegen * dt, "regen");
+    this.refillLeech(w, stats, dt);
     if (p.buff) {
       p.buff.timeLeft -= dt;
       if (p.buff.timeLeft <= 0) p.buff = null;
@@ -505,9 +506,7 @@ WYD.world = {
       p.swing = 0.15;
       const slashKey = WYD.vfx.has(WYD.data.player.slash) ? WYD.data.player.slash : "slash";
       WYD.vfx.spawn(w, slashKey, target.x, target.y, { angle: Math.atan2(target.y - p.y, target.x - p.x) });
-      this.playerHit(w, state, stats, target, stats.attack);
-      this.tryThunder(w, state, stats, target);
-      this.tryGod(w, state, stats, target);
+      this.basicHit(w, state, stats, target);
       // 固有能力：狂王の籠手（狂戦士の怒りの間、周りにも当たる）
       const cleave = stats.powers.hasteCleave;
       if (cleave && p.haste) {
@@ -515,6 +514,27 @@ WYD.world = {
           if (e !== target && WYD.util.dist(target, e) <= cleave.radius) this.playerHit(w, state, stats, e, stats.attack * cleave.mult, "effect:hasteCleave");
         }
       }
+    }
+  },
+
+  // 猛攻（data/skills.js の WYD.data.frenzy）：攻撃速度アップのスキルか、frenzy の変身（狼）が効いている間。{ pct } か null
+  frenzy(w) {
+    const p = w.player;
+    if (p.haste && p.haste.frenzyPct) return { pct: p.haste.frenzyPct };
+    if (p.form && p.form.frenzyPct) return { pct: p.form.frenzyPct };
+    return null;
+  },
+
+  // 通常攻撃が当たったとき（近接の一振り・遠くから撃った弾の着弾）。猛攻の間は威力アップ＋周りの敵にも当たる
+  basicHit(w, state, stats, target) {
+    const fr = this.frenzy(w), F = WYD.data.frenzy;
+    const attack = stats.attack * (fr ? 1 + fr.pct / 100 : 1);
+    this.playerHit(w, state, stats, target, attack);
+    this.tryThunder(w, state, stats, target);
+    this.tryGod(w, state, stats, target);
+    if (!fr) return;
+    for (const e of w.enemies.slice()) {
+      if (e !== target && e.hp > 0 && WYD.util.dist(target, e) <= F.radius) this.playerHit(w, state, stats, e, attack * F.cleaveMult, "effect:frenzy");
     }
   },
 
@@ -529,11 +549,7 @@ WYD.world = {
       const step = R.speed * dt;
       if (d <= step + 4) {
         b.done = true;
-        if (e && e.hp > 0) {
-          this.playerHit(w, state, stats, e, stats.attack);
-          this.tryThunder(w, state, stats, e);
-          this.tryGod(w, state, stats, e);
-        }
+        if (e && e.hp > 0) this.basicHit(w, state, stats, e);
         WYD.fx.burst(w, b.tx, b.ty, { ...WYD.data.fx.hit, count: 8 }, R.color, { glow: true });
         continue;
       }
@@ -651,7 +667,8 @@ WYD.world = {
       const healPct = (s.healPercentBase + s.healPercentPerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
       const heal = Math.round(stats.maxHp * healPct / 100);
       this.healPlayer(w, stats.maxHp, heal, "skill:" + this.castingId);
-      p.buff = { defense: s.defenseBase + s.defensePerLevel * (lv - 1), timeLeft: s.duration, color: s.color, source: this.castingId };
+      // 防御は今の防御力の%（data の defenseBase・defensePerLevel。2026-10-10 に +固定値 から変更）
+      p.buff = { defense: stats.defense * (s.defenseBase + s.defensePerLevel * (lv - 1)) / 100, timeLeft: s.duration, color: s.color, source: this.castingId };
       this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
       return true;
     },
@@ -720,7 +737,9 @@ WYD.world = {
       const p = w.player;
       const near = w.enemies.some((e) => WYD.util.dist(p, e) <= s.triggerRange);
       if (!near) return false;
-      p.haste = { percent: s.hasteBase + s.hastePerLevel * (lv - 1), timeLeft: s.duration, color: s.color, source: this.castingId };
+      const F = WYD.data.frenzy;
+      p.haste = { percent: s.hasteBase + s.hastePerLevel * (lv - 1), timeLeft: s.duration, color: s.color, source: this.castingId,
+        frenzyPct: F.damagePctBase + F.damagePctPerLevel * (lv - 1) };   // 猛攻（通常攻撃の威力 +%・周りにも当たる）
       this.addText(w, p.x, p.y - 24, "剛力！", s.color);
       return true;
     },
@@ -1139,7 +1158,8 @@ WYD.world = {
   // ---------- 共通の処理 ----------
   calcDamage(attack, defense, critChance, critMultiplier) {
     const C = WYD.data.combat;
-    let dmg = Math.max(attack * C.minDamageRatio, attack - defense * C.defenseFactor);
+    const k = Math.max(0, attack) * C.defenseScale;   // 防御は割合で減らす（data/items.js の combat.defenseScale）
+    let dmg = k > 0 ? attack * k / (k + Math.max(0, defense)) : 0;
     dmg *= 1 + WYD.util.rand(-C.damageVariance, C.damageVariance);
     const crit = Math.random() * 100 < critChance;
     if (crit) dmg *= critMultiplier || WYD.data.player.critMultiplier;
@@ -1165,12 +1185,28 @@ WYD.world = {
     // スキルの型のおまけ：吸血・縛る（スキルを使っている最中だけ）
     const ex = this.castExtra;
     if (ex) {
-      if (ex.lifesteal && !p.dead) this.healPlayer(w, stats.maxHp, hit.damage * ex.lifesteal / 100, source);
+      if (ex.lifesteal && !p.dead) this.leech(w, stats, hit.damage * ex.lifesteal / 100, source);
       if (ex.bind && e.hp > 0) e.stunTimer = Math.max(e.stunTimer || 0, e.boss ? ex.bind * WYD.data.runes.bossBindMult : ex.bind);
     }
     if (fx.lifesteal > 0 && !p.dead) {
-      this.healPlayer(w, stats.maxHp, hit.damage * fx.lifesteal / 100, "effect:lifesteal");
+      this.leech(w, stats, hit.damage * fx.lifesteal / 100, "effect:lifesteal");
     }
+  },
+
+  // 吸血で回復できる量（1秒に最大HPの perSecond%。data/effects.js の lifesteal）。少しずつたまり、1秒ぶんまで持てる
+  leechCap(stats) { return stats.maxHp * (WYD.loot.effectInfo("lifesteal").perSecond || 0) / 100; },
+  refillLeech(w, stats, dt) {
+    const p = w.player, cap = this.leechCap(stats);
+    p.leech = Math.min(cap, (p.leech == null ? cap : p.leech) + cap * dt);
+  },
+  // 吸血の回復。たまっている量までしか回復しない（減っていないHPのぶんは使わない）
+  leech(w, stats, amount, source) {
+    const p = w.player;
+    if (p.leech == null) p.leech = this.leechCap(stats);
+    const heal = Math.min(amount, p.leech, Math.max(0, stats.maxHp - p.hp));
+    if (heal <= 0) return;
+    p.leech -= heal;
+    this.healPlayer(w, stats.maxHp, heal, source);
   },
 
   // 特殊効果：雷鳴（通常攻撃のときに確率で発動）

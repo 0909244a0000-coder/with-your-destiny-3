@@ -167,6 +167,8 @@ WYD.puppeteer = {
     if (s.mode === 'guard') {
       a.guardUntil = w.time + s.duration * mult;
       a.guardMult = s.defenseMult * mult;
+      // 本体の防御も上げる（playerDefensePct = 今の防御力の%。2026-10-10 追加：守りの傀儡が本体の生存に効かなかったため）
+      if (s.playerDefensePct) p.buff = { defense: stats.defense * s.playerDefensePct / 100 * mult, timeLeft: s.duration * mult, color: s.color, source: 'pup_guard' };
     } else if (s.mode === 'stitch') {
       a.stitch = { until: w.time + s.duration * mult, interval: s.healInterval,
         healPercent: (s.healPercentBase + s.healPercentPerLevel * (lv - 1)) * mult };

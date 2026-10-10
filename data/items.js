@@ -67,13 +67,13 @@ WYD.data.items = {
     { slot: "feet",   id: "leggings", name: "グリーブ",   main: { defense: [1, 3] } },
     { slot: "feet",   id: "sandals", name: "ブーツ",     main: { moveSpeed: [5, 10] } },
     { slot: "ring",   id: "ring", name: "指輪",       main: { maxHp: [5, 10] } },
-    { slot: "ring",   id: "rosary", name: "印章指輪",   main: { hpRegen: [0.5, 1] } },
+    { slot: "ring",   id: "rosary", name: "印章指輪",   main: { hpRegen: [1.5, 3.5] } },   // 2026-10-10 に [0.5, 1] から上げた
     { slot: "offhand", id: "shield", name: "盾",         main: { defense: [2, 4], maxHp: [5, 12] } },
     { slot: "offhand", id: "tome", name: "魔導書",       main: { skillDamage: [5, 10] } },
     { slot: "neck",   id: "amulet", name: "首飾り",     main: { critChance: [1, 3] } },
     { slot: "neck",   id: "talisman", name: "護符",     main: { maxHp: [8, 15] } },
     { slot: "waist",  id: "belt", name: "帯",           main: { maxHp: [8, 15] } },
-    { slot: "waist",  id: "sash", name: "飾り帯",       main: { hpRegen: [0.3, 0.8] } },
+    { slot: "waist",  id: "sash", name: "飾り帯",       main: { hpRegen: [1, 2.5] } },     // 2026-10-10 に [0.3, 0.8] から上げた
   ],
 
   // 装備のアイコンの絵（id → ファイル）。例: dual_blades: "assets/items/dual_blades.png"
@@ -105,8 +105,8 @@ WYD.data.items = {
     { stat: "attack",      range: [1, 4] },
     { stat: "defense",     range: [1, 4] },
     { stat: "maxHp",       range: [5, 15] },
-    { stat: "hpRegen",     range: [0.3, 1.2] },
-    { stat: "attackSpeed", range: [3, 8] },
+    { stat: "hpRegen",     range: [1, 4] },     // 2026-10-10 に [0.3, 1.2] から上げた（最大HPの追加能力1つぶんと同じくらい生存に効くように）
+    { stat: "attackSpeed", range: [6, 14] },   // 2026-10-10 に [3, 8] から上げた（通常攻撃で戦うビルドのため）
     { stat: "critChance",  range: [1, 4] },
     { stat: "moveSpeed",   range: [3, 8] },
     { stat: "skillDamage", range: [5, 12] },
@@ -152,9 +152,10 @@ WYD.data.items = {
 
 // 戦闘の計算
 WYD.data.combat = {
-  defenseFactor: 0.5,   // ダメージ = 攻撃力 − 防御力×これ
+  // ダメージ = 攻撃力 × 攻撃力×これ ÷（攻撃力×これ ＋ 防御力）。防御は割合で減らす（重ねるほど少しずつ効きが鈍る。0にも100%にもならない）
+  // 1 なら、防御が攻撃力と同じとき半分になる。2026-10-10 に「攻撃力 − 防御×0.5（下限15%）」から変更（下限に張りついて防御が効かない崖をなくす）
+  defenseScale: 1,
   damageVariance: 0.1,  // ダメージのブレ（±10%）
   minDamage: 1,
-  minDamageRatio: 0.15, // 防御力がどれだけ高くても、攻撃力のこの割合は通る（防御を重ねて無敵にならないように）
   dpsWindow: 10,        // 秒間ダメージを、直近の何秒で計るか
 };

@@ -48,8 +48,8 @@ WYD.data.classes = {
       sorc_shield: {
         kind: "vajra", name: "マナシールド",
         desc: "HPが減ると発動。魔力の盾で防御力アップし、HPを回復。",
-        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 5,
-        defenseBase: 6, defensePerLevel: 3, healPercentBase: 12, healPercentPerLevel: 2,
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
+        defenseBase: 60, defensePerLevel: 9, healPercentBase: 12, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#7fb0ff",
       },
       sorc_chain: {
@@ -67,9 +67,9 @@ WYD.data.classes = {
       },
       sorc_haste: {
         kind: "hanuman", name: "魔力の奔流",
-        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
-        startLevel: 0, maxLevel: 10, cooldown: 14, duration: 6,
-        hasteBase: 50, hastePerLevel: 6, triggerRange: 260, color: "#d58aff",
+        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がり、通常攻撃が強くなって周りの敵にも当たる（猛攻）。",
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 8,
+        hasteBase: 70, hastePerLevel: 10, triggerRange: 260, color: "#d58aff",   // 2026-10-10：+50+6/Lv・6秒・CD14 から上げた。効いている間は猛攻（data/skills.js の WYD.data.frenzy）
       },
       sorc_freeze: {
         kind: "nagapasha", name: "凍てつく檻",
@@ -97,7 +97,7 @@ WYD.data.classes = {
         kind: "aura", auraType: "heal", name: "温もり",
         desc: "オーラ：魔力の温もりで、HPがずっと回復する。手下にも効く。最大HPの何%か。",
         startLevel: 0, maxLevel: 10, cooldown: 1,
-        radius: 140, healPercentBase: 1.1, healPercentPerLevel: 0.22, color: "#ffc07a",
+        radius: 140, healPercentBase: 3.3, healPercentPerLevel: 0.66, color: "#ffc07a",   // 2026-10-10 に回復を3倍
       },
     },
     autoBuild: ["sorc_nova", "sorc_shield", "sorc_chain"],   // 「おまかせ」で先に覚えてONにするスキル
@@ -174,8 +174,8 @@ WYD.data.classes = {
       nec_armor: {
         kind: "vajra", name: "骨の鎧",
         desc: "HPが減ると発動。骨の鎧で防御力アップし、HPを回復。",
-        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 5,
-        defenseBase: 7, defensePerLevel: 3, healPercentBase: 12, healPercentPerLevel: 2,
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
+        defenseBase: 65, defensePerLevel: 9, healPercentBase: 12, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#d8d0b0",
       },
       nec_spear: {
@@ -193,9 +193,9 @@ WYD.data.classes = {
       },
       nec_pact: {
         kind: "hanuman", name: "血の契約",
-        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
-        startLevel: 0, maxLevel: 10, cooldown: 14, duration: 6,
-        hasteBase: 45, hastePerLevel: 6, triggerRange: 240, color: "#c03a3a",
+        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がり、通常攻撃が強くなって周りの敵にも当たる（猛攻）。",
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 8,
+        hasteBase: 65, hastePerLevel: 10, triggerRange: 240, color: "#c03a3a",   // 2026-10-10：+45+6/Lv・6秒・CD14 から上げた。効いている間は猛攻（data/skills.js の WYD.data.frenzy）
       },
       nec_grasp: {
         kind: "nagapasha", name: "亡者の手",
@@ -252,8 +252,8 @@ WYD.data.classes = {
       pal_shield: {
         kind: "vajra", name: "聖なる盾",
         desc: "HPが減ると発動。光の盾で防御力アップし、HPを回復。",
-        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 5,
-        defenseBase: 7, defensePerLevel: 3.5, healPercentBase: 10, healPercentPerLevel: 2,
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
+        defenseBase: 65, defensePerLevel: 9.5, healPercentBase: 10, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#ffe68a",
       },
       pal_hammer: {
@@ -271,9 +271,9 @@ WYD.data.classes = {
       },
       pal_vow: {
         kind: "hanuman", name: "聖戦の誓い",
-        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
-        startLevel: 0, maxLevel: 10, cooldown: 14, duration: 6,
-        hasteBase: 40, hastePerLevel: 6, triggerRange: 120, color: "#ffb84a",
+        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がり、通常攻撃が強くなって周りの敵にも当たる（猛攻）。",
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 8,
+        hasteBase: 60, hastePerLevel: 10, triggerRange: 120, color: "#ffb84a",   // 2026-10-10：+40+6/Lv・6秒・CD14 から上げた。効いている間は猛攻（data/skills.js の WYD.data.frenzy）
       },
       pal_chain: {
         kind: "nagapasha", name: "審判の鎖",
@@ -295,7 +295,7 @@ WYD.data.classes = {
         kind: "aura", auraType: "heal", name: "祈り",
         desc: "オーラ：HPがずっと回復する。手下にも効く。最大HPの何%か。",
         startLevel: 0, maxLevel: 10, cooldown: 1,
-        radius: 140, healPercentBase: 1.2, healPercentPerLevel: 0.25, color: "#9fffb0",
+        radius: 140, healPercentBase: 3.6, healPercentPerLevel: 0.75, color: "#9fffb0",   // 2026-10-10 に回復を3倍
       },
       pal_might: {
         kind: "aura", auraType: "might", name: "力",
@@ -345,8 +345,8 @@ WYD.data.classes = {
       asn_cloak: {
         kind: "vajra", name: "影の外套",
         desc: "HPが減ると発動。影に身を包んで防御力アップし、HPを回復。",
-        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 5,
-        defenseBase: 6, defensePerLevel: 3, healPercentBase: 11, healPercentPerLevel: 2,
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
+        defenseBase: 60, defensePerLevel: 9, healPercentBase: 11, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#7a5aa8",
       },
       asn_shuriken: {
@@ -364,9 +364,9 @@ WYD.data.classes = {
       },
       asn_burst: {
         kind: "hanuman", name: "疾風の構え",
-        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
-        startLevel: 0, maxLevel: 10, cooldown: 13, duration: 6,
-        hasteBase: 45, hastePerLevel: 6, triggerRange: 140, color: "#9affd8",
+        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がり、通常攻撃が強くなって周りの敵にも当たる（猛攻）。",
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 8,
+        hasteBase: 65, hastePerLevel: 10, triggerRange: 140, color: "#9affd8",   // 2026-10-10：+45+6/Lv・6秒・CD14 から上げた。効いている間は猛攻（data/skills.js の WYD.data.frenzy）
       },
       asn_mind: {
         kind: "nagapasha", name: "心縛り",
@@ -451,10 +451,10 @@ WYD.data.classes = {
       },
       dru_wolf: {
         kind: "shift", name: "狼変化", formName: "狼",
-        desc: "変身：近くに敵がいると狼に変身。攻撃速度と移動速度が大きく上がる。",
+        desc: "変身：近くに敵がいると狼に変身。攻撃速度と移動速度が大きく上がり、通常攻撃が強くなって周りの敵にも当たる（猛攻）。",
         startLevel: 0, maxLevel: 10, cooldown: 16,
         triggerRange: 200, duration: 15,
-        attackPctBase: 10, attackPctPerLevel: 2, attackSpeedPctBase: 35, attackSpeedPctPerLevel: 5, moveSpeedPct: 25,
+        attackPctBase: 10, attackPctPerLevel: 2, attackSpeedPctBase: 60, attackSpeedPctPerLevel: 10, moveSpeedPct: 25, frenzy: true,   // 2026-10-10：攻撃速度 35+5/Lv から上げ、狼の間は猛攻
         scale: 1.1, formImage: "assets/druid_wolf.png", formFilter: null, color: "#b8c8d8",
       },
       dru_wolves: {
@@ -478,8 +478,8 @@ WYD.data.classes = {
       dru_bark: {
         kind: "vajra", name: "樹皮の守り",
         desc: "HPが減ると発動。木の皮で体を包んで防御力アップし、HPを回復。",
-        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 5,
-        defenseBase: 7, defensePerLevel: 3, healPercentBase: 12, healPercentPerLevel: 2,
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
+        defenseBase: 65, defensePerLevel: 9, healPercentBase: 12, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#8a6a3a",
       },
       dru_boulder: {
@@ -497,9 +497,9 @@ WYD.data.classes = {
       },
       dru_howl: {
         kind: "hanuman", name: "野生の咆哮",
-        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
-        startLevel: 0, maxLevel: 10, cooldown: 14, duration: 6,
-        hasteBase: 40, hastePerLevel: 6, triggerRange: 140, color: "#e0c070",
+        desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がり、通常攻撃が強くなって周りの敵にも当たる（猛攻）。",
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 8,
+        hasteBase: 60, hastePerLevel: 10, triggerRange: 140, color: "#e0c070",   // 2026-10-10：+40+6/Lv・6秒・CD14 から上げた。効いている間は猛攻（data/skills.js の WYD.data.frenzy）
       },
       dru_vines: {
         kind: "nagapasha", name: "絡みつく蔓",
