@@ -652,7 +652,8 @@ WYD.world = {
       const healPct = (s.healPercentBase + s.healPercentPerLevel * (lv - 1)) * (1 + stats.skillDamage / 100);
       const heal = Math.round(stats.maxHp * healPct / 100);
       this.healPlayer(w, stats.maxHp, heal, "skill:" + this.castingId);
-      p.buff = { defense: s.defenseBase + s.defensePerLevel * (lv - 1), timeLeft: s.duration, color: s.color, source: this.castingId };
+      // 防御は今の防御力の%（data の defenseBase・defensePerLevel。2026-10-10 に +固定値 から変更）
+      p.buff = { defense: stats.defense * (s.defenseBase + s.defensePerLevel * (lv - 1)) / 100, timeLeft: s.duration, color: s.color, source: this.castingId };
       this.addText(w, p.x, p.y - 24, `+${heal}`, "#7dff8a");
       return true;
     },
