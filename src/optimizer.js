@@ -172,6 +172,58 @@ WYD.optimizer = {
     return { items, gems };
   },
 
+  // ---- 育てる候補（下限）：強化 +10 と鍛造を、いちばん運が悪いときでも ----
+  // 強化はランダムなし（+1ごとに能力 statPerLevel）。鍛造の「能力を上げる」は上げる能力を選べて、1回の量も決まっている（元の値の improvePercent%）。
+  // ランダムなのは使う余地（improvePotential）と会心だけなので、下限は「毎回いちばん多く余地を使う・会心なし」の回数を、いちばん点の高い能力に使う。
+  // 「能力を足す」は何が付くかランダムなので数えない。ソケットは、手元と持っている装備から外せる宝石で埋めたときの点数（持っていない宝石は数えない）
+  gemPool(state) {
+    const pool = {}, items = [...Object.values(state.equipment || {}).filter(Boolean), ...(state.inventory || []), ...(state.stash || [])];
+    for (const [key, n] of Object.entries(state.gems || {})) if (n > 0 && WYD.gems.info(key) && !WYD.gems.info(key).rune) pool[key] = (pool[key] || 0) + n;
+    for (const it of items) for (const key of this.removable(it)) pool[key] = (pool[key] || 0) + 1;
+    return pool;
+  },
+  // その部位の n 個のソケットを、持っている宝石の点数の高い順で埋めた点数（神は1つまで）
+  gemFill(pool, slot, n, W) {
+    if (n <= 0) return 0;
+    const vals = [];
+    for (const [key, c] of Object.entries(pool)) { const v = this.gemValue(key, slot, W); if (v > 0) for (let i = 0; i < Math.min(c, n); i++) vals.push({ v, god: WYD.gems.isGod(key) }); }
+    vals.sort((a, b) => b.v - a.v);
+    let sum = 0, used = 0, god = false;
+    for (const x of vals) { if (used >= n) break; if (x.god && god) continue; sum += x.v; used++; if (x.god) god = true; }
+    return sum;
+  },
+  growth(item, goalId, pool) {
+    if (!item) return { score: 0, cost: 0, plus: 0, improves: 0, stat: null };
+    const E = WYD.data.crafting.enhance, F = WYD.data.crafting.forge, A = WYD.data.items.autoEquip, W = this.weightsFor(goalId);
+    const mult = 1 + E.max * E.statPerLevel;
+    const pot = item.forgePotential != null ? item.forgePotential : (F.potential[item.rarity] || 0);
+    let score = 0, best = 0, bestStat = null;
+    for (const line of item.stats || []) {
+      score += line.value * mult * (W[line.stat] || 0);
+      const gain = Math.abs(line.base != null ? line.base : line.value) * F.improvePercent / 100 * mult * (W[line.stat] || 0);
+      if (gain > best) { best = gain; bestStat = line.stat; }
+    }
+    const rw = WYD.gems.runeword(item);
+    if (rw) for (const k in rw.bonus.stats || {}) score += rw.bonus.stats[k] * (W[k] || 0);
+    const improves = best > 0 ? Math.ceil(pot / F.improvePotential[1]) : 0;
+    score += improves * best;
+    score += (item.effects || []).length * A.perEffect + (item.rarity === "unique" ? A.uniqueBonus : 0) + (item.rarity === "set" ? A.setBonus : 0);
+    score += this.gemFill(pool, item.slot, this.capacity(item), W);
+    let cost = improves * WYD.inventory.forgeCost(item, "improve");
+    for (let p = item.plus || 0; p < E.max; p++) cost += Math.round(E.costBase * Math.pow(E.costGrowth, p) * (E.rarityCostMult[item.rarity] || 1));
+    return { score, cost, plus: Math.max(0, E.max - (item.plus || 0)), improves, stat: bestStat };
+  },
+  // 育てると、今の装備を同じだけ育てた下限より強くなる装備（持ち物・倉庫）。伸びの大きい順
+  growCandidates(state, goalId) {
+    const pool = this.gemPool(state), out = [], cur = {};
+    for (const slot of Object.keys(WYD.data.items.slots)) cur[slot] = this.growth(state.equipment[slot] || null, goalId, pool);
+    for (const [list, where] of [[state.inventory || [], "inv"], [state.stash || [], "stash"]]) for (const item of list) {
+      const g = this.growth(item, goalId, pool), c = cur[item.slot];
+      if (c && g.score > c.score) out.push({ item, slot: item.slot, where, gain: g.score - c.score, grown: g.score, curGrown: c.score, cost: g.cost, plus: g.plus, improves: g.improves, stat: g.stat });
+    }
+    return out.sort((a, b) => b.gain - a.gain);
+  },
+
   // 選んだ理由：どの能力で何点ちがうか（上がる大きい順に数個と、いちばん下がるもの1つ）
   reasons(cur, best) {
     const keys = new Set([...Object.keys(cur.parts), ...Object.keys(best.parts)]);
@@ -180,6 +232,17 @@ WYD.optimizer = {
     const up = d.filter((x) => x.points > 0).sort((a, b) => b.points - a.points).slice(0, WYD.data.optimizer.reasonCount);
     const down = d.filter((x) => x.points < 0).sort((a, b) => a.points - b.points).slice(0, 1);
     return [...up, ...down];
+  },
+
+  // 窓の「育てる候補（下限）」：部位ごとにいちばん伸びる装備（data/optimizer.js の growShow 件まで）
+  growHtml(s, goal) {
+    const esc = WYD.results.escape, slotName = WYD.data.items.slots, C = WYD.data.crafting, seen = new Set();
+    const list = this.growCandidates(s, goal.id).filter((c) => !seen.has(c.slot) && seen.add(c.slot)).slice(0, WYD.data.optimizer.growShow);
+    if (!list.length) return `<details class="opt-grow"><summary>育てる候補（下限）：なし</summary><p class="muted">強化 +10・鍛造（いちばん運が悪いとき）まで育てても、今の装備を同じだけ育てたより強くなる装備はない。</p></details>`;
+    const rows = list.map((c) => `<li><b>${slotName[c.slot]}</b> <span style="color:${WYD.ui.color(c.item)}">${esc(WYD.loot.label(c.item))}</span>${c.where === "stash" ? "（倉庫）" : ""}：` +
+      `${c.plus ? `強化 +${c.plus}` : "強化ずみ"}${c.improves ? `・鍛造「${esc(WYD.data.items.stats[c.stat].name)}」${c.improves}回` : ""} → <b class="opt-up">+${Math.round(c.gain)}点</b>` +
+      `<small>（${Math.round(c.grown)}点。今の装備を同じだけ育てると ${Math.round(c.curGrown)}点。${C.materialName} 約${c.cost}）</small></li>`).join("");
+    return `<details class="opt-grow" open><summary>育てる候補（下限）：${list.length}部位</summary><p class="muted">強化 +10 と鍛造（毎回いちばん多く余地を使い、会心なし）まで育てたとき。ソケットは持っている宝石で埋めた点数。持ち物の「★育てる」にも出ます。</p><ul>${rows}</ul></details>`;
   },
 
   // 窓のボタン：着替える（apply）／着替えてビルドの枠 n に保存（build）。確認してから
@@ -244,6 +307,7 @@ WYD.optimizer = {
       `<div class="opt-total">合計 <b>${Math.round(p.curTotal)}</b> → <b>${Math.round(p.bestTotal)}</b> 点 <b class="${p.diff > 0 ? "opt-up" : ""}">（${pt(p.diff)}）</b>　替える部位 <b>${p.changes}</b> / ${p.rows.length}</div>` +
       `<div class="opt-actions"><button data-opt-act="apply" class="opt-apply" ${p.changes ? "" : "disabled"}>このおすすめに着替える</button>` +
         `<span class="opt-builds"><small>着替えてビルドに保存：</small>${Array.from({ length: WYD.data.items.buildSlots }, (_, n) => `<button data-opt-act="build" data-build="${n}" title="${s.builds[n] ? esc(s.builds[n].name) + "（上書き）" : "空き"}">${n + 1}${s.builds[n] ? "●" : ""}</button>`).join("")}</span></div>` +
+      this.growHtml(s, goal) +
       `<div class="opt-scroll"><table class="opt-table"><thead><tr><th>部位</th><th>今</th><th>おすすめ</th><th>差・理由</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   },
 };
