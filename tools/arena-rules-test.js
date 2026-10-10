@@ -19,7 +19,7 @@ const {chromium}=require('playwright'), assert=require('node:assert/strict'),pat
   A.time=1.01;D.world.damageEnemy(E.world,E.state,q,1e9,false);const expires=q.hp<current;
   reset();F.stats.effects.thorns=1e6;const ph=p.hp;D.world.damageEnemy(E.world,E.state,q,1e9,false);const reflection=near(ph-p.hp,Math.min(q.maxHp*C.hitHpCap*C.reflectRatioCap,p.maxHp*C.hitHpCap));F.stats.effects.thorns=0;
   reset();p.hp=p.maxHp/2;const before=p.hp;D.world.castExtra={lifesteal:100};E.stats.effects.lifesteal=0;D.world.calcDamage=()=>({damage:1e9,crit:false});
-  D.world.playerHit(E.world,E.state,E.stats,q,1e9,'skill:whirl');const lifesteal=near(p.hp-before,q.maxHp*C.hitHpCap*C.healScale);D.world.castExtra=null;
+  D.world.playerHit(E.world,E.state,E.stats,q,1e9,'skill:whirl');const lifesteal=near(p.hp-before,Math.min(q.maxHp*C.hitHpCap,p.maxHp*D.loot.effectInfo('lifesteal').perSecond/100)*C.healScale);/* 吸血は1秒に最大HPの perSecond% まで（data/effects.js） */D.world.castExtra=null;
   reset();p.hp=p.maxHp/2;const hh=p.hp;D.world.healPlayer(E.world,p.maxHp,10,'skill:vajra');const healing=near(p.hp-hh,10*C.healScale);
   reset();p.hp=p.maxHp/2;const cloakBefore=p.hp;D.world.healPlayer(E.world,p.maxHp,10,'skill:asn_cloak');const cloakHeal=near(p.hp-cloakBefore,10*C.healScale*C.skillHealScale.asn_cloak);
   A.time=C.pressureStart+C.pressureRamp;const end=p.hp;D.world.healPlayer(E.world,p.maxHp,10,'skill:vajra');const pressureHeal=near(p.hp-end,10*C.healScale*C.pressureHealMin);const pressureDamage=near(E.pressureDamage(),C.pressureDamageMax);
