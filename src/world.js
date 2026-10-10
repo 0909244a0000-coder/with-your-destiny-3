@@ -1139,7 +1139,8 @@ WYD.world = {
   // ---------- 共通の処理 ----------
   calcDamage(attack, defense, critChance, critMultiplier) {
     const C = WYD.data.combat;
-    let dmg = Math.max(attack * C.minDamageRatio, attack - defense * C.defenseFactor);
+    const k = Math.max(0, attack) * C.defenseScale;   // 防御は割合で減らす（data/items.js の combat.defenseScale）
+    let dmg = k > 0 ? attack * k / (k + Math.max(0, defense)) : 0;
     dmg *= 1 + WYD.util.rand(-C.damageVariance, C.damageVariance);
     const crit = Math.random() * 100 < critChance;
     if (crit) dmg *= critMultiplier || WYD.data.player.critMultiplier;
