@@ -71,6 +71,24 @@ const path = require('node:path');
       assert.match(r.html, /そのまま/); assert.match(r.html, /防御力 \+\d+点/); assert.match(r.html, /倉庫/); assert(r.neckKeep);
       assert(r.same, '見るだけで着替えない'); assert(r.closed, 'Escで閉じる'); assert(r.esStill, '装備画面は閉じない');
       assert(!r.overflow, '横にはみ出さない');
+      // 宝石：装備は宝石ぬきで選び、宝石（手元＋はめている全部）は選んだ装備へ配りなおす
+      const g = await page.evaluate(() => {
+        const s = WYD.state, O = WYD.optimizer;
+        const make = (slot, stats, sockets) => { const it = WYD.loot.create(s, 10, 0, { slot, rarity: 'magic' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = sockets; it.plus = 0; return it; };
+        s.equipment = {}; s.inventory = []; s.stash = []; s.gems = {};
+        const weakFeet = make('feet', { defense: 5 }, ['topaz:4']), strongFeet = make('feet', { defense: 20 }, [null]);
+        const waist = make('waist', { defense: 10 }, ['topaz:0']);
+        s.equipment.feet = weakFeet; s.equipment.waist = waist; s.inventory = [strongFeet]; s.gems = { 'topaz:3': 1 };
+        const before = JSON.stringify([weakFeet.sockets, waist.sockets, s.gems]);
+        const p = O.plan(s, 'defense'), row = (slot) => p.rows.find((x) => x.slot === slot);
+        WYD.ui.changed(); WYD.optimizer.open(); WYD.optimizer.goal = 'defense'; WYD.optimizer.render();
+        const text = document.getElementById('optimizer-body').textContent; WYD.optimizer.close();
+        return { feetBest: row('feet').best === strongFeet, feetGems: row('feet').gemsNew, waistOnly: row('waist').gemsOnly, waistGems: row('waist').gemsNew, waistNow: row('waist').gemsNow,
+          gemDiff: row('waist').gemDiff > 0, text, same: before === JSON.stringify([weakFeet.sockets, waist.sockets, s.gems]) };
+      });
+      assert(g.feetBest, '宝石ぬきで強い装備を選ぶ（弱い装備の良い宝石にだまされない）'); assert.deepEqual(g.feetGems, ['topaz:4'], '良い宝石は選んだ装備へ移す');
+      assert(g.waistOnly, '装備はそのまま・宝石だけ付け替え'); assert.deepEqual(g.waistNow, ['topaz:0']); assert.deepEqual(g.waistGems, ['topaz:3'], '手元の強い宝石と入れ替える'); assert(g.gemDiff);
+      assert.match(g.text, /宝石だけ付け替え/); assert.match(g.text, /宝石：/); assert(g.same, '見るだけで宝石は動かさない');
       assert.deepEqual(errors, []);
       await page.close();
     }
