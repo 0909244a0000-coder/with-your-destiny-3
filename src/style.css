@@ -1570,3 +1570,9 @@ html.m-ui #equipscreen .modal-box.equipscreen-box { min-height: 0; }
   .opt-table td:empty { display: none; }
 }
 .opt-gems { margin-top: 3px; font-size: 11px; color: #c8cfdd; }
+.opt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; }
+.opt-actions button { min-height: 44px; padding: 6px 14px; background: #2a3448; border: 1px solid #4a5670; color: #e8ecf5; border-radius: 4px; }
+.opt-actions button.opt-apply:not(:disabled) { background: #2f7a3a; border-color: #6fd27c; }
+.opt-actions button:disabled { opacity: .5; }
+.opt-builds { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.opt-builds button { min-width: 44px; padding: 6px 8px; }
