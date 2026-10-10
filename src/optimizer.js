@@ -18,11 +18,25 @@ WYD.optimizer = {
 
   goalDef(id) { return WYD.data.optimizer.goals.find((g) => g.id === id); },
 
+  // 今のビルドの型：猛攻（しくみ hanuman か frenzy の変身）がONなら "frenzy"、ほかは "normal"
+  profile(state) {
+    const pl = state.player;
+    return Object.keys(WYD.data.skills).some((id) => (pl.skills[id] || 0) > 0 && pl.skillEnabled[id] &&
+      (WYD.classes.kindOf(id) === "hanuman" || WYD.data.skills[id].frenzy)) ? "frenzy" : "normal";
+  },
+
+  // 目的の重み：職業と型の実測（data/optimizer.js の byClass）、なければ全職業の中央値（weights）
+  weightsFor(goalId, state = WYD.state) {
+    const O = WYD.data.optimizer, c = O.byClass[WYD.classes.id];
+    const w = c && c[this.profile(state)] && c[this.profile(state)][goalId];
+    return w || O.weights[goalId];
+  },
+
   // 装備1つの点数と内訳。parts = { 能力名 or 加点の名前: 点 }
   score(item, goalId) {
     const out = { total: 0, parts: {} };
     if (!item) return out;
-    const A = WYD.data.items.autoEquip, W = this.goalDef(goalId).weights, st = WYD.loot.statTotals(item);
+    const A = WYD.data.items.autoEquip, W = this.weightsFor(goalId), st = WYD.loot.statTotals(item);
     const add = (key, v) => { if (!v) return; out.parts[key] = (out.parts[key] || 0) + v; out.total += v; };
     for (const k in st) add(k, st[k] * (W[k] || 0));
     add("effects", (item.effects || []).length * A.perEffect);
@@ -98,7 +112,7 @@ WYD.optimizer = {
         `</tr>`;
     }).join("");
     this.$("optimizer-body").innerHTML =
-      `<nav class="opt-goals" aria-label="目的">${tabs}</nav><p class="muted">${esc(goal.desc)}。点数は目安（強化・宝石こみ）。見るだけで、着替えはしない。</p>` +
+      `<nav class="opt-goals" aria-label="目的">${tabs}</nav><p class="muted">${esc(goal.desc)}。重みは${esc(((WYD.data.classes[WYD.classes.id] || {}).name) || "")}・${this.profile(s) === "frenzy" ? "猛攻を使うビルド" : "猛攻を使わないビルド"}の実測（10点＝能力が1%伸びる。強化・宝石こみ）。見るだけで、着替えはしない。</p>` +
       `<div class="opt-total">合計 <b>${Math.round(p.curTotal)}</b> → <b>${Math.round(p.bestTotal)}</b> 点 <b class="${p.diff > 0 ? "opt-up" : ""}">（${pt(p.diff)}）</b>　替える部位 <b>${p.changes}</b> / ${p.rows.length}</div>` +
       `<div class="opt-scroll"><table class="opt-table"><thead><tr><th>部位</th><th>今</th><th>おすすめ</th><th>差・理由</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   },
