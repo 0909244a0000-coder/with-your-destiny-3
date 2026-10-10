@@ -70,6 +70,7 @@ WYD.world = {
     }
 
     this.healPlayer(w, stats.maxHp, stats.hpRegen * dt, "regen");
+    this.refillLeech(w, stats, dt);
     if (p.buff) {
       p.buff.timeLeft -= dt;
       if (p.buff.timeLeft <= 0) p.buff = null;
@@ -1166,12 +1167,28 @@ WYD.world = {
     // スキルの型のおまけ：吸血・縛る（スキルを使っている最中だけ）
     const ex = this.castExtra;
     if (ex) {
-      if (ex.lifesteal && !p.dead) this.healPlayer(w, stats.maxHp, hit.damage * ex.lifesteal / 100, source);
+      if (ex.lifesteal && !p.dead) this.leech(w, stats, hit.damage * ex.lifesteal / 100, source);
       if (ex.bind && e.hp > 0) e.stunTimer = Math.max(e.stunTimer || 0, e.boss ? ex.bind * WYD.data.runes.bossBindMult : ex.bind);
     }
     if (fx.lifesteal > 0 && !p.dead) {
-      this.healPlayer(w, stats.maxHp, hit.damage * fx.lifesteal / 100, "effect:lifesteal");
+      this.leech(w, stats, hit.damage * fx.lifesteal / 100, "effect:lifesteal");
     }
+  },
+
+  // 吸血で回復できる量（1秒に最大HPの perSecond%。data/effects.js の lifesteal）。少しずつたまり、1秒ぶんまで持てる
+  leechCap(stats) { return stats.maxHp * (WYD.loot.effectInfo("lifesteal").perSecond || 0) / 100; },
+  refillLeech(w, stats, dt) {
+    const p = w.player, cap = this.leechCap(stats);
+    p.leech = Math.min(cap, (p.leech == null ? cap : p.leech) + cap * dt);
+  },
+  // 吸血の回復。たまっている量までしか回復しない（減っていないHPのぶんは使わない）
+  leech(w, stats, amount, source) {
+    const p = w.player;
+    if (p.leech == null) p.leech = this.leechCap(stats);
+    const heal = Math.min(amount, p.leech, Math.max(0, stats.maxHp - p.hp));
+    if (heal <= 0) return;
+    p.leech -= heal;
+    this.healPlayer(w, stats.maxHp, heal, source);
   },
 
   // 特殊効果：雷鳴（通常攻撃のときに確率で発動）
