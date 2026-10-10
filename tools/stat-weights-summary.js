@@ -5,8 +5,13 @@ const path = require('node:path');
 const dir = process.argv[2] || path.resolve(__dirname, '../docs/reviews/2026-10-09-stat-weights');
 const stats = ['attack', 'defense', 'maxHp', 'hpRegen', 'attackSpeed', 'critChance', 'moveSpeed', 'skillDamage'];
 const jp = { attack: '攻撃', defense: '防御', maxHp: 'HP', hpRegen: '回復', attackSpeed: '攻速', critChance: '会心', moveSpeed: '移速', skillDamage: '技威' };
-// 1つぶん = Lv50 の追加能力の平均（data/items.js の affixes と levelScaling。tools/stat-weights.js と同じ）
-const roll = { attack: 17.2, defense: 17.2, maxHp: 68.8, hpRegen: 5.16, attackSpeed: 5.5, critChance: 2.5, moveSpeed: 5.5, skillDamage: 8.5 };
+// 1つぶん = Lv50 の追加能力の平均（data/items.js の affixes と levelScaling。tools/stat-weights.js と同じ。今のデータから読む）
+const vm = require('node:vm'), ctx = { window: {} };
+ctx.window.WYD = ctx.WYD = {};
+vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(path.resolve(__dirname, '../data/items.js'), 'utf8'), ctx);
+const I = ctx.WYD.data.items, roll = {};
+for (const a of I.affixes) roll[a.stat] = (a.range[0] + a.range[1]) / 2 * (I.stats[a.stat].scales ? 1 + I.levelScaling * 49 : 1);
 const q = (v, p) => { v = [...v].sort((a, b) => a - b); const i = (v.length - 1) * p, lo = Math.floor(i), hi = Math.min(lo + 1, v.length - 1); return v[lo] + (v[hi] - v[lo]) * (i - lo); };
 const classes = fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
 for (const metric of ['dpsGain', 'survGain']) {

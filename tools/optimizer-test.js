@@ -28,8 +28,13 @@ const path = require('node:path');
         const plans = Object.fromEntries(WYD.data.optimizer.goals.map((g) => [g.id, O.plan(s, g.id)]));
         const row = (goal, slot) => plans[goal].rows.find((x) => x.slot === slot);
         // 手で計算した点数と同じか（能力×重み）
-        const W = (goal) => WYD.data.optimizer.goals.find((g) => g.id === goal).weights;
+        const W = (goal) => O.weightsFor(goal);   /* 職業と型の実測の重み（data/optimizer.js の byClass） */
         const manual = (goal, it) => WYD.loot.statTotals(it) && Object.entries(WYD.loot.statTotals(it)).reduce((n, [k, v]) => n + v * (W(goal)[k] || 0), 0);
+        // 型の切りかえ：攻撃速度アップのスキル（猛攻）をONにすると、攻撃速度を重く見る重みになる
+        const profN = O.profile(s), spdN = O.weightsFor('damage').attackSpeed;
+        s.player.skills.hanuman = 1; s.player.skillEnabled.hanuman = true;
+        const profF = O.profile(s), spdF = O.weightsFor('damage').attackSpeed;
+        s.player.skills.hanuman = 0; s.player.skillEnabled.hanuman = false;
         // 装備画面のボタンから開く
         WYD.ui.changed(); WYD.equipScreen.open();
         document.querySelector('#equipscreen [data-es="optimizer"]').click();
@@ -52,6 +57,7 @@ const path = require('node:path');
           totalOk: Math.abs(plans.defense.diff - plans.defense.rows.reduce((n, x) => n + x.diff, 0)) < 1e-9 && plans.defense.diff > 0,
           reason: row('defense', 'head').reasons.map((x) => x.name), pvpHeadIsDef: row('pvp', 'head').best === defHead,
           emptySlot: row('damage', 'feet').keep && !row('damage', 'feet').cur,
+          profN, profF, spdUp: spdF > spdN,
           shown, tabCount, html, neckKeep, overflow, same: before === after, closed, esStill,
         };
       });
@@ -60,6 +66,7 @@ const path = require('node:path');
       assert(r.ring, '倉庫の装備も候補'); assert(r.neckKeep, '今の装備が強い部位はそのまま'); assert(r.emptySlot, '候補がない部位');
       assert(r.scoreOk, '点数＝能力×重み'); assert(r.diffOk, '部位の点数の差'); assert(r.totalOk, '合計の差＝部位の差の合計');
       assert.deepEqual(r.reason.slice(0, 2).sort(), ['最大HP', '防御力'].sort(), '理由に能力の名前');
+      assert.equal(r.profN, 'normal'); assert.equal(r.profF, 'frenzy', '猛攻をONにすると型が変わる'); assert(r.spdUp, '猛攻の型は攻撃速度を重く見る');
       assert(r.shown, '装備画面のボタンで開く'); assert.equal(r.tabCount, 3, '目的のタブ3つ');
       assert.match(r.html, /そのまま/); assert.match(r.html, /防御力 \+\d+点/); assert.match(r.html, /倉庫/); assert(r.neckKeep);
       assert(r.same, '見るだけで着替えない'); assert(r.closed, 'Escで閉じる'); assert(r.esStill, '装備画面は閉じない');
