@@ -102,9 +102,11 @@ const path = require('node:path');
         const r = O.apply(s, 'defense'), after = O.plan(s, 'defense');
         return { r, feet: s.equipment.feet === strongFeet, feetGems: strongFeet.sockets, waistGems: waist.sockets, head: s.equipment.head === stashHead,
           lockedBack: s.inventory.includes(weakFeet) && weakFeet.locked, weakFeetGems: weakFeet.sockets, stashSwap: s.stash[0] === weakHead,
+          allLocked: [weakFeet, waist, weakHead, strongFeet, stashHead].every((it) => it.locked),
           hand: s.gems['topaz:0'] || 0, hand3: s.gems['topaz:3'] || 0, invCount: s.inventory.length, changes: after.changes };
       });
       assert(a.feet && a.head, '装備を着替える（倉庫の装備も）'); assert(a.lockedBack, 'ロックした装備も外し、ロックは残る'); assert(a.stashSwap, '倉庫の装備は倉庫の中で入れかえる');
+      assert(a.allLocked, '着替える前の装備と着替えた後の装備は全部ロック');
       assert.deepEqual(a.feetGems, ['topaz:4'], '良い宝石は新しい装備へ'); assert.deepEqual(a.weakFeetGems, [null]); assert.deepEqual(a.waistGems, ['topaz:3'], '手元の強い宝石と入れかえ');
       assert.equal(a.hand, 1, '外した宝石は手元へ'); assert.equal(a.hand3, 0); assert.equal(a.invCount, 180, '持ち物の数は変わらない'); assert.equal(a.changes, 0, '着替えたあとは全部そのまま');
       // 窓のボタン：着替えてビルドの枠に保存（保存枠は8つ）
