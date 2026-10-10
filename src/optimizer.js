@@ -128,11 +128,14 @@ WYD.optimizer = {
     return { rows, curTotal, bestTotal, diff: bestTotal - curTotal, changes: rows.filter((r) => !r.keep).length };
   },
 
-  // おすすめのとおりに着替える（宝石の付け替えもふくむ）。ロックした装備も外す（外した装備は持ち物か倉庫へ。ロックは残る）
+  // おすすめのとおりに着替える（宝石の付け替えもふくむ）。ロックした装備も外す（外した装備は持ち物か倉庫へ）。
+  // 着替える前に身につけていた装備と、着替えた後の装備は全部ロックする（分解されないように）
   // 倉庫の装備は、外した装備と倉庫の中で入れかえるので、持ち物がいっぱいでも着替えられる。{ items: 着替えた数, gems: 動かした宝石の数 }
   apply(state, goalId) {
     const p = this.plan(state, goalId), G = WYD.gems;
     let items = 0, gems = 0;
+    // 着替える前に身につけていた装備は全部ロックする（前の構成に戻せるように。持ち主の指示 2026-10-10）
+    for (const it of Object.values(state.equipment)) if (it) it.locked = true;
     for (const r of p.rows) {
       if (r.keep || r.gemsOnly || !r.best || r.best === r.cur) continue;
       const cur = state.equipment[r.slot] || null;
@@ -164,6 +167,8 @@ WYD.optimizer = {
       }
       if (G.socket(state, state.equipment[slot], key)) gems++;
     }
+    // 着替えた後の装備も全部ロックする
+    for (const it of Object.values(state.equipment)) if (it) it.locked = true;
     return { items, gems };
   },
 
@@ -181,7 +186,7 @@ WYD.optimizer = {
   act(kind, n) {
     const s = WYD.state, goal = this.goalDef(this.goal), ui = WYD.ui;
     if (kind === "apply") {
-      if (!confirm(`おすすめ（${goal.label}）に着替えますか？\n宝石も付け替えます。ロックした装備も外します（外した装備は持ち物へ。ロックは残ります）。`)) return;
+      if (!confirm(`おすすめ（${goal.label}）に着替えますか？\n宝石も付け替えます。ロックした装備も外します。\n今身につけている装備と、着替えた後の装備は、全部ロックします（外した装備は持ち物へ）。`)) return;
     } else if (kind === "build") {
       const old = s.builds[n];
       const name = prompt(old ? `枠${n + 1}「${old.name}」を上書きします。ビルドの名前` : `おすすめ（${goal.label}）に着替えて、枠${n + 1}に保存します。ビルドの名前`, old ? old.name : `${goal.label}のおすすめ`);
