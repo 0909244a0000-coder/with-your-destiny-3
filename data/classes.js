@@ -48,8 +48,8 @@ WYD.data.classes = {
       sorc_shield: {
         kind: "vajra", name: "マナシールド",
         desc: "HPが減ると発動。魔力の盾で防御力アップし、HPを回復。",
-        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 6,
-        defenseBase: 40, defensePerLevel: 6, healPercentBase: 12, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
+        defenseBase: 60, defensePerLevel: 9, healPercentBase: 12, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#7fb0ff",
       },
       sorc_chain: {
@@ -97,7 +97,7 @@ WYD.data.classes = {
         kind: "aura", auraType: "heal", name: "温もり",
         desc: "オーラ：魔力の温もりで、HPがずっと回復する。手下にも効く。最大HPの何%か。",
         startLevel: 0, maxLevel: 10, cooldown: 1,
-        radius: 140, healPercentBase: 2.2, healPercentPerLevel: 0.45, color: "#ffc07a",   // 2026-10-10 に回復を2倍
+        radius: 140, healPercentBase: 3.3, healPercentPerLevel: 0.66, color: "#ffc07a",   // 2026-10-10 に回復を3倍
       },
     },
     autoBuild: ["sorc_nova", "sorc_shield", "sorc_chain"],   // 「おまかせ」で先に覚えてONにするスキル
@@ -174,8 +174,8 @@ WYD.data.classes = {
       nec_armor: {
         kind: "vajra", name: "骨の鎧",
         desc: "HPが減ると発動。骨の鎧で防御力アップし、HPを回復。",
-        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 6,
-        defenseBase: 45, defensePerLevel: 6, healPercentBase: 12, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
+        defenseBase: 65, defensePerLevel: 9, healPercentBase: 12, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#d8d0b0",
       },
       nec_spear: {
@@ -252,8 +252,8 @@ WYD.data.classes = {
       pal_shield: {
         kind: "vajra", name: "聖なる盾",
         desc: "HPが減ると発動。光の盾で防御力アップし、HPを回復。",
-        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 6,
-        defenseBase: 45, defensePerLevel: 6.5, healPercentBase: 10, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
+        defenseBase: 65, defensePerLevel: 9.5, healPercentBase: 10, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#ffe68a",
       },
       pal_hammer: {
@@ -295,7 +295,7 @@ WYD.data.classes = {
         kind: "aura", auraType: "heal", name: "祈り",
         desc: "オーラ：HPがずっと回復する。手下にも効く。最大HPの何%か。",
         startLevel: 0, maxLevel: 10, cooldown: 1,
-        radius: 140, healPercentBase: 2.4, healPercentPerLevel: 0.5, color: "#9fffb0",   // 2026-10-10 に回復を2倍
+        radius: 140, healPercentBase: 3.6, healPercentPerLevel: 0.75, color: "#9fffb0",   // 2026-10-10 に回復を3倍
       },
       pal_might: {
         kind: "aura", auraType: "might", name: "力",
@@ -345,8 +345,8 @@ WYD.data.classes = {
       asn_cloak: {
         kind: "vajra", name: "影の外套",
         desc: "HPが減ると発動。影に身を包んで防御力アップし、HPを回復。",
-        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 6,
-        defenseBase: 40, defensePerLevel: 6, healPercentBase: 11, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
+        defenseBase: 60, defensePerLevel: 9, healPercentBase: 11, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#7a5aa8",
       },
       asn_shuriken: {
@@ -478,8 +478,8 @@ WYD.data.classes = {
       dru_bark: {
         kind: "vajra", name: "樹皮の守り",
         desc: "HPが減ると発動。木の皮で体を包んで防御力アップし、HPを回復。",
-        startLevel: 0, maxLevel: 10, cooldown: 12, duration: 6,
-        defenseBase: 45, defensePerLevel: 6, healPercentBase: 12, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒
+        startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
+        defenseBase: 65, defensePerLevel: 9, healPercentBase: 12, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#8a6a3a",
       },
       dru_boulder: {
