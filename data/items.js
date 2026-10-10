@@ -106,7 +106,7 @@ WYD.data.items = {
     { stat: "defense",     range: [1, 4] },
     { stat: "maxHp",       range: [5, 15] },
     { stat: "hpRegen",     range: [1, 4] },     // 2026-10-10 に [0.3, 1.2] から上げた（最大HPの追加能力1つぶんと同じくらい生存に効くように）
-    { stat: "attackSpeed", range: [3, 8] },
+    { stat: "attackSpeed", range: [6, 14] },   // 2026-10-10 に [3, 8] から上げた（通常攻撃で戦うビルドのため）
     { stat: "critChance",  range: [1, 4] },
     { stat: "moveSpeed",   range: [3, 8] },
     { stat: "skillDamage", range: [5, 12] },
