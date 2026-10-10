@@ -1569,3 +1569,4 @@ html.m-ui #equipscreen .modal-box.equipscreen-box { min-height: 0; }
   .opt-table th { grid-row: span 3; }
   .opt-table td:empty { display: none; }
 }
+.opt-gems { margin-top: 3px; font-size: 11px; color: #c8cfdd; }
