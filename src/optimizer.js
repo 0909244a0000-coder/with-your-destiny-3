@@ -80,10 +80,11 @@ WYD.optimizer = {
       ...(state.inventory || []).map((item) => ({ item, from: "inv" })),
       ...(state.stash || []).map((item) => ({ item, from: "stash" })),
     ];
-    const pick = {};
+    const pick = {}, held = this.completeSlots(state);
     for (const slot of slots) {
       const cur = state.equipment[slot] || null;
       let best = cur, bestBase = this.score(cur, goalId, []).total, from = "eq";
+      if (held.has(slot)) { pick[slot] = { best, from, setHeld: true }; continue; }   // 全部そろったセットの部位は外さない（完成の力が消えるため）
       for (const c of pool) {
         if (c.item.slot !== slot || c.item === cur) continue;
         const b = this.score(c.item, goalId, []).total;
@@ -115,12 +116,12 @@ WYD.optimizer = {
     }
     const same = (a, b) => a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
     const rows = slots.map((slot) => {
-      const cur = state.equipment[slot] || null, { best, from } = pick[slot];
+      const cur = state.equipment[slot] || null, { best, from, setHeld } = pick[slot];
       const curScore = this.score(cur, goalId), bestScore = best ? this.score(best, goalId, assigned[slot]) : curScore;
       const gemsNow = this.removable(cur), gemsNew = best ? assigned[slot] : [];
       const sameItem = best === cur, sameGems = same(gemsNow, gemsNew);
       const keep = sameItem && sameGems;
-      return { slot, cur, best: best || cur, from, keep, gemsOnly: sameItem && !sameGems, gemsNow, gemsNew,
+      return { slot, cur, best: best || cur, from, keep, setHeld: !!setHeld, gemsOnly: sameItem && !sameGems, gemsNow, gemsNew,
         curScore: curScore.total, bestScore: bestScore.total, diff: bestScore.total - curScore.total,
         gemDiff: (bestScore.parts.gems || 0) - (curScore.parts.gems || 0), reasons: keep ? [] : this.reasons(curScore, bestScore) };
     });
@@ -214,10 +215,20 @@ WYD.optimizer = {
     return { score, cost, plus: Math.max(0, E.max - (item.plus || 0)), improves, stat: bestStat };
   },
   // 育てると、今の装備を同じだけ育てた下限より強くなる装備（持ち物・倉庫）。伸びの大きい順
+  // 全部そろっているセットの装備がある部位（data/sets.js の complete。外すと完成の力が消えるので、おすすめでも育てる候補でも替えない）
+  completeSlots(state) {
+    const counts = WYD.stats.setCounts(state), out = new Set();
+    for (const [slot, it] of Object.entries(state.equipment || {})) {
+      const info = it && WYD.loot.setInfo(it);
+      if (info && (counts[info.set.id] || 0) >= info.set.pieces.length) out.add(slot);
+    }
+    return out;
+  },
   growCandidates(state, goalId) {
-    const pool = this.gemPool(state), out = [], cur = {};
+    const pool = this.gemPool(state), out = [], cur = {}, held = this.completeSlots(state);
     for (const slot of Object.keys(WYD.data.items.slots)) cur[slot] = this.growth(state.equipment[slot] || null, goalId, pool);
     for (const [list, where] of [[state.inventory || [], "inv"], [state.stash || [], "stash"]]) for (const item of list) {
+      if (held.has(item.slot)) continue;
       const g = this.growth(item, goalId, pool), c = cur[item.slot];
       if (c && g.score > c.score) out.push({ item, slot: item.slot, where, gain: g.score - c.score, grown: g.score, curGrown: c.score, cost: g.cost, plus: g.plus, improves: g.improves, stat: g.stat });
     }
@@ -297,7 +308,7 @@ WYD.optimizer = {
       const gems = !r.keep && (r.gemsNow.length || r.gemsNew.length) && [...r.gemsNow].sort().join("|") !== [...r.gemsNew].sort().join("|") ? `<div class="opt-gems">宝石：${gemList(r.gemsNow)} → ${gemList(r.gemsNew)}（${pt(r.gemDiff)}点）</div>` : "";
       return `<tr class="${r.keep ? "opt-keep" : "opt-change"}" data-opt-slot="${r.slot}"><th>${slotName[r.slot]}</th>` +
         `<td>${name(r.cur)}<small>${Math.round(r.curScore)}点</small></td>` +
-        (r.keep ? `<td class="opt-same">${r.cur ? "そのまま" : "候補なし"}</td><td></td>` :
+        (r.keep ? `<td class="opt-same">${r.setHeld ? "そのまま（セット完成中）" : r.cur ? "そのまま" : "候補なし"}</td><td></td>` :
           `<td>${r.gemsOnly ? `<span class="opt-same">装備はそのまま・宝石だけ付け替え</span>` : `→ ${name(r.best)}`}<small>${Math.round(r.bestScore)}点${r.gemsOnly ? "" : `・${where[r.from]}`}</small>${gems}</td>` +
           `<td><b class="${r.diff >= 0 ? "opt-up" : "opt-down"}">${pt(r.diff)}</b><div class="opt-why">${why}</div></td>`) +
         `</tr>`;

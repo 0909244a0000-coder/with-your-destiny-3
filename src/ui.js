@@ -1426,7 +1426,10 @@ WYD.ui = {
     const list = WYD.loot.setBonuses(info.set);
     const bon = Object.keys(list).map((need) =>
       `<div style="color:${have >= Number(need) ? C : "#777"}">（${need}つ）${this.bonusText(list[need])}</div>`).join("");
-    return `<div class="unique-power"><span style="color:${C}">■ ${info.set.name}（装備中 ${have}/${info.set.pieces.length}）</span><br><small>${pieces}</small><small>${bon}</small></div>`;
+    const SC = WYD.data.sets.complete || {}, cm = (SC.attackMult || {})[info.set.id], sm = (SC.statMult || {})[info.set.id] || {};
+    const fullParts = [cm && cm !== 1 ? `攻撃力 ×${cm}` : "", ...Object.entries(sm).map(([k, v]) => `${WYD.data.items.stats[k].name} ×${v}`)].filter(Boolean);
+    const full = fullParts.length ? `<div style="color:${have >= info.set.pieces.length ? C : "#777"}">（${info.set.pieces.length}つ・完成の力）${fullParts.join("・")}</div>` : "";
+    return `<div class="unique-power"><span style="color:${C}">■ ${info.set.name}（装備中 ${have}/${info.set.pieces.length}）</span><br><small>${pieces}</small><small>${bon}${full}</small></div>`;
   },
 
   // スキルの型（ルーン）を選ぶ欄。覚えていないスキルには出さない
