@@ -3,7 +3,7 @@ window.WYD = window.WYD || {};
 
 WYD.uber = {
   canStart(state) {
-    return state.uber.keys >= WYD.data.uber.keysNeeded && !WYD.trial.active(state);
+    return state.uber.keys >= WYD.data.uber.keysNeeded && !WYD.trial.active(state) && !WYD.world.battleStopped(state);
   },
 
   // 挑める最高の段階（試練の最高記録＋stageOffset。最低でも minStage）

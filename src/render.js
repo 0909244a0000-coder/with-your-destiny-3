@@ -275,6 +275,19 @@ WYD.render = {
     this.drawSkillBar(ctx, w, state);
     WYD.trial.draw(ctx, w, state);
     this.drawNotices(ctx, w);
+    if (WYD.world.battleStopped(state) && !w.town) {
+      // 未受取がいっぱいで戦闘停止中の表示（受け取るまで敵が出ない）
+      const map = WYD.data.map;
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.fillRect(0, 0, map.width, map.height);
+      ctx.textAlign = "center";
+      ctx.font = "bold 26px serif";
+      ctx.fillStyle = "#ff8a6a";
+      ctx.fillText(`戦闘停止中：未受取が ${state.pendingLoot.length}個（上限 ${WYD.data.items.pendingLootLimit}）`, map.width / 2, map.height / 2 - 110);
+      ctx.font = "18px sans-serif";
+      ctx.fillStyle = "#e8d8a8";
+      ctx.fillText("Status の「未受取を受け取る」で再開（持ち物に空きが必要）", map.width / 2, map.height / 2 - 78);
+    }
     if (WYD.ui.paused) {
       // 一時停止中の表示
       const map = WYD.data.map;
