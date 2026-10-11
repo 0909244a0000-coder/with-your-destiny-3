@@ -9,6 +9,22 @@ WYD.data = WYD.data || {};
 
 WYD.data.sets = {
   color: "#3fd06a",          // セット装備の名前の色
+  // 完成の力（2026-10-10）：セットの装備を全部（4つ）そろえると、攻撃力が attackMult 倍（セットごと）。
+  // そろうまでは弱く、厳選してそろえきったときのご褒美。そろえたセットが、同じ部位をレジェンドにしたときの約 target 倍の与ダメージ/秒になるよう、実測で決める。
+  // 職業専用のセット（冥爆術師・傀儡師のものもふくむ）も、ここで決める。src/stats.js の setCompleteMult
+  complete: {
+    target: 1.5,
+    // 2026-10-10 の実測（tools/set-bench.js）：今の「そろえたセット÷同じ部位のレジェンド」の比から、1.5÷比 で決めた
+    attackMult: {
+      undying: 3.8, thunderlord: 2.5, pyre: 2.6,          // 共通（バーバリアン・ソーサレス・冥爆術師の平均）
+      immortalKing: 1.4, talRasha: 1.7, boneLord: 1.7, crusader: 3.3, shadowGuild: 1.9, wildheart: 3.4,
+      mourningCourt: 1.3, facelessTroupe: 2.6,
+    },
+    // 攻撃力のほかに上げる能力の倍率。傀儡師は人形が本体の最大HP・防御から強くなるので、攻撃力だけでは火力が伸びにくい
+    statMult: {
+      facelessTroupe: { maxHp: 2.5, defense: 2.5 },
+    },
+  },
   chanceFromBoss: 0.3,       // ボスを倒したときに1個落とす確率
   chanceFromElite: 0.05,     // 精鋭を倒したときに1個落とす確率
   // home … よく落ちるエリア。そのエリアでは、そのセットが選ばれやすさ homeMult 倍（職業専用のセットはパーターラ）
