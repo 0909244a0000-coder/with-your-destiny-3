@@ -215,6 +215,35 @@ WYD.optimizer = {
     return { score, cost, plus: Math.max(0, E.max - (item.plus || 0)), improves, stat: bestStat };
   },
   // 育てると、今の装備を同じだけ育てた下限より強くなる装備（持ち物・倉庫）。伸びの大きい順
+  // ---- セットを完成させる候補 ----
+  // 完成の力の価値（点。10点＝1%）：火力は全体が約 attackMult 倍になる（倍率は実測で決めたので、与ダメージ/秒もほぼその倍）。
+  // 防御は最大HPの倍率（statMult）だけ数える。対人は火力と防御の半分ずつ
+  completePoints(set, goalId) {
+    const C = WYD.data.sets.complete || {}, dmg = 1000 * (((C.attackMult || {})[set.id] || 1) - 1);
+    const def = 1000 * ((((C.statMult || {})[set.id] || {}).maxHp || 1) - 1);
+    return goalId === "damage" ? dmg : goalId === "defense" ? def : (dmg + def) / 2;
+  },
+  // 持っている装備（装備中・持ち物・倉庫）で完成できるのに、そろえていないセット。差し引き（完成の力 − 替える部位の育てた下限の差）が
+  // プラスのものだけ。あと1つで完成するセットは near に入れる（狙う手がかり）
+  setPlans(state, goalId, pool = this.gemPool(state)) {
+    const equipped = Object.values(state.equipment || {}).filter(Boolean), all = [...equipped, ...(state.inventory || []), ...(state.stash || [])];
+    const counts = WYD.stats.setCounts(state), plans = [], near = [];
+    for (const set of WYD.loot.forClass(WYD.data.sets.list)) {
+      if ((counts[set.id] || 0) >= set.pieces.length) continue;
+      const have = {};
+      for (const it of all) { const info = WYD.loot.setInfo(it); if (info && info.set.id === set.id && (!have[info.piece.id] || equipped.includes(it))) have[info.piece.id] = it; }
+      const missing = set.pieces.filter((p) => !have[p.id]);
+      if (missing.length === 1) near.push({ set, missing: missing[0] });
+      if (missing.length) continue;
+      const need = set.pieces.map((p) => have[p.id]).filter((it) => !equipped.includes(it));
+      let loss = 0;
+      for (const it of need) loss += this.growth(state.equipment[it.slot] || null, goalId, pool).score - this.growth(it, goalId, pool).score;
+      const gain = this.completePoints(set, goalId) - loss;
+      if (gain > 0) plans.push({ set, items: need, gain, loss });
+    }
+    return { plans: plans.sort((a, b) => b.gain - a.gain), near };
+  },
+
   // 全部そろっているセットの装備がある部位（data/sets.js の complete。外すと完成の力が消えるので、おすすめでも育てる候補でも替えない）
   completeSlots(state) {
     const counts = WYD.stats.setCounts(state), out = new Set();
@@ -232,6 +261,11 @@ WYD.optimizer = {
       const g = this.growth(item, goalId, pool), c = cur[item.slot];
       if (c && g.score > c.score) out.push({ item, slot: item.slot, where, gain: g.score - c.score, grown: g.score, curGrown: c.score, cost: g.cost, plus: g.plus, improves: g.improves, stat: g.stat });
     }
+    // セットを完成させる候補の部位も入れる（差し引きの伸び。同じ装備はセットのほうを使う）
+    for (const sp of this.setPlans(state, goalId, pool).plans) for (const item of sp.items) {
+      const i = out.findIndex((c) => c.item === item); if (i >= 0) out.splice(i, 1);
+      out.push({ item, slot: item.slot, where: (state.stash || []).includes(item) ? "stash" : "inv", gain: sp.gain, set: sp.set });
+    }
     return out.sort((a, b) => b.gain - a.gain);
   },
 
@@ -248,12 +282,16 @@ WYD.optimizer = {
   // 窓の「育てる候補（下限）」：部位ごとにいちばん伸びる装備（data/optimizer.js の growShow 件まで）
   growHtml(s, goal) {
     const esc = WYD.results.escape, slotName = WYD.data.items.slots, C = WYD.data.crafting, seen = new Set();
-    const list = this.growCandidates(s, goal.id).filter((c) => !seen.has(c.slot) && seen.add(c.slot)).slice(0, WYD.data.optimizer.growShow);
-    if (!list.length) return `<details class="opt-grow"><summary>育てる候補（下限）：なし</summary><p class="muted">強化 +10・鍛造（いちばん運が悪いとき）まで育てても、今の装備を同じだけ育てたより強くなる装備はない。</p></details>`;
+    const sp = this.setPlans(s, goal.id), SC = WYD.data.sets.complete || {};
+    const setRows = sp.plans.map((p) => `<li><b>セット完成</b> <span style="color:${WYD.data.sets.color}">${esc(p.set.name)}</span>：${p.items.map((it) => `${slotName[it.slot]}「${esc(WYD.loot.label(it))}」`).join("・")} に替える → <b class="opt-up">+${Math.round(p.gain)}点</b>` +
+      `<small>（完成の力 攻撃力 ×${(SC.attackMult || {})[p.set.id] || 1}。替える部位の育てた下限の差 −${Math.round(p.loss)}点をふくむ）</small></li>`).join("") +
+      sp.near.map((n) => `<li><b>あと1つ</b> <span style="color:${WYD.data.sets.color}">${esc(n.set.name)}</span>：「${esc(n.missing.name)}」がそろえば完成（完成の力 攻撃力 ×${(SC.attackMult || {})[n.set.id] || 1}）</li>`).join("");
+    const list = this.growCandidates(s, goal.id).filter((c) => !c.set && !seen.has(c.slot) && seen.add(c.slot)).slice(0, WYD.data.optimizer.growShow);
+    if (!list.length && !setRows) return `<details class="opt-grow"><summary>育てる候補（下限）：なし</summary><p class="muted">強化 +10・鍛造（いちばん運が悪いとき）まで育てても、今の装備を同じだけ育てたより強くなる装備はない。</p></details>`;
     const rows = list.map((c) => `<li><b>${slotName[c.slot]}</b> <span style="color:${WYD.ui.color(c.item)}">${esc(WYD.loot.label(c.item))}</span>${c.where === "stash" ? "（倉庫）" : ""}：` +
       `${c.plus ? `強化 +${c.plus}` : "強化ずみ"}${c.improves ? `・鍛造「${esc(WYD.data.items.stats[c.stat].name)}」${c.improves}回` : ""} → <b class="opt-up">+${Math.round(c.gain)}点</b>` +
       `<small>（${Math.round(c.grown)}点。今の装備を同じだけ育てると ${Math.round(c.curGrown)}点。${C.materialName} 約${c.cost}）</small></li>`).join("");
-    return `<details class="opt-grow" open><summary>育てる候補（下限）：${list.length}部位</summary><p class="muted">強化 +10 と鍛造（毎回いちばん多く余地を使い、会心なし）まで育てたとき。ソケットは持っている宝石で埋めた点数。持ち物の「★育てる」にも出ます。</p><ul>${rows}</ul></details>`;
+    return `<details class="opt-grow" open><summary>育てる候補（下限）：${list.length}部位${sp.plans.length ? `・セット完成 ${sp.plans.length}` : ""}${sp.near.length ? `・あと1つ ${sp.near.length}` : ""}</summary><p class="muted">強化 +10 と鍛造（毎回いちばん多く余地を使い、会心なし）まで育てたとき。ソケットは持っている宝石で埋めた点数。セットは、全部そろえたときの完成の力（火力が約 攻撃力の倍率 倍）から、替える部位の差を引いた点。持ち物の「★育てる」にも出ます。</p><ul>${setRows}${rows}</ul></details>`;
   },
 
   // 窓のボタン：着替える（apply）／着替えてビルドの枠 n に保存（build）。確認してから
