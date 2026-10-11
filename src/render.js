@@ -526,12 +526,39 @@ WYD.render = {
     const D = def.spriteAnimation;
     if (!D || o.form) return null;
     const t = this.clock || 0, cast = o.spriteCast;
-    const casting = !o.dead && !o.stunTimer && cast && t >= cast.start && t < cast.start + cast.duration;
-    const action = casting ? "cast" : !o.dead && !o.stunTimer && o.moving ? "walk" : "idle";
+    const casting = !o.dead && !(o.stunTimer > 0) && cast && t >= cast.start && t < cast.start + cast.duration;
+    const action = casting ? cast.action || "cast" : !o.dead && !(o.stunTimer > 0) && o.moving ? "walk" : "idle";
     const A = D[action], img = this.getImage(A.image);
     if (!img) return null;
     const frame = casting ? Math.min(A.frames - 1, Math.floor((t - cast.start) / cast.duration * A.frames)) : Math.floor(t / A.frameTime) % A.frames;
-    return { ...D, image: A.image, frame, action };
+    return { ...D, image: A.image, frame, action, fx: casting ? A.fx : null, progress: casting ? (t - cast.start) / cast.duration : 0 };
+  },
+
+  // 杖の光はセル内の宝珠の位置に追従。床の絵は足元、人物の後ろへ描く。
+  drawPlayerCastFx(ctx, p, sprite, pose, foreground) {
+    const F = sprite?.fx;
+    if (!F || p.dead || p.stunTimer > 0) return;
+    const t = sprite.progress, size = WYD.data.player.radius * WYD.data.map.spriteScale;
+    const key = foreground ? F.staff : F.ground, img = WYD.vfx.img(key);
+    if (!img) return;
+    const quiet = WYD.state?.settings.quietFx ? F.quietAlpha : 1;
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    ctx.translate(p.x + pose.dx, p.y + pose.dy + size * 0.4);
+    if (foreground) {
+      const point = F.staffPoints[sprite.frame], ratio = size * sprite.scale / sprite.width;
+      ctx.rotate(pose.rot); ctx.scale(pose.sx * pose.flip, pose.sy);
+      const r = F.staffSize * Math.sin(Math.PI * t);
+      ctx.globalAlpha *= F.staffAlpha * Math.sin(Math.PI * t) * quiet;
+      const x = (point[0] - sprite.anchorX) * ratio, y = (point[1] - sprite.anchorY) * ratio;
+      ctx.drawImage(img, x - r / 2, y - r / 2, r, r);
+    } else if (t >= F.groundStart) {
+      const phase = (t - F.groundStart) / (1 - F.groundStart);
+      const r = F.groundSize * (F.groundFrom + (F.groundTo - F.groundFrom) * phase);
+      ctx.scale(1, F.groundFlatten);
+      ctx.globalAlpha *= F.groundAlpha * Math.sin(Math.PI * phase) * quiet;
+      WYD.vfx.frame(ctx, key, img, -r / 2, -r / 2, r, r, phase);
+    }
+    ctx.restore();
   },
 
   // flash = true のときは白く光らせる（攻撃が当たったとき）、pose = 絵の動き
@@ -787,8 +814,10 @@ WYD.render = {
     // 歩行/詠唱の絵に、旧1枚絵用の傾きと踏み込みを重ねない。
     const visualPose = this.pose(sprite ? { ...p, moving: false, atkAnim: 0 } : p, p.swingTarget, this.clock);
     if (sprite && sprite.action !== "idle") { visualPose.sx = 1; visualPose.sy = 1; }
+    this.drawPlayerCastFx(ctx, p, sprite, visualPose, false);
     this.drawCircleOrImage(ctx, p.x, p.y, P.radius * (form ? form.scale : 1), p.dead ? "#555" : form ? form.color : P.color,
       formImg || sprite?.image || this.poseImage(p, P), false, visualPose, filter, p.dead ? null : WYD.data.map.rim.player, sprite);
+    this.drawPlayerCastFx(ctx, p, sprite, visualPose, true);
     // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
     if (p.buff && !p.dead) {
       const size = P.radius * WYD.data.map.spriteScale * 1.3;

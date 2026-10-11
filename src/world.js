@@ -116,6 +116,11 @@ WYD.world = {
 
   // 絵の動きのために、動いた量・向き・攻撃してからの時間を覚えておく
   trackMotion(w, dt) {
+    const p = w.player;
+    if (p.dead) { p.spriteCast = null; p.spriteCastNext = null; }
+    else if (!(p.stunTimer > 0) && p.spriteCastNext && (w.time || 0) >= p.spriteCast.start + p.spriteCast.duration) {
+      p.spriteCast = { ...p.spriteCastNext, start: w.time || 0 }; p.spriteCastNext = null;
+    }
     for (const o of [w.player].concat(w.enemies)) {
       if (o.lastX != null && dt > 0) {
         const vx = (o.x - o.lastX) / dt, vy = (o.y - o.lastY) / dt;
@@ -130,12 +135,17 @@ WYD.world = {
   },
 
   // 描画専用の詠唱。連射中も再生途中を巻き戻さず、戦闘の発動時刻は変えない。
-  startSpriteCast(w, interval) {
-    const cast = WYD.data.player.spriteAnimation?.cast;
+  startSpriteCast(w, interval, skillId) {
+    const D = WYD.data.player.spriteAnimation, action = D?.skills?.[skillId] || "cast", cast = D?.[action];
     if (!cast || w.player.dead) return;
     const now = w.time || 0, p = w.player;
-    if (p.spriteCast && now < p.spriteCast.start + p.spriteCast.duration) return;
-    p.spriteCast = { start: now, duration: Math.min(cast.frames * cast.frameTime, interval || Infinity) };
+    const next = { action, duration: Math.min(cast.frames * cast.frameTime, action === "cast" ? interval || Infinity : Infinity) };
+    if (p.spriteCast && now < p.spriteCast.start + p.spriteCast.duration) {
+      // 専用技は通常詠唱より優先。同時に別の専用技が発動したら1件だけ続けて描く。
+      if (action === "cast" || action === p.spriteCast.action) return;
+      if (p.spriteCast.action && p.spriteCast.action !== "cast") { p.spriteCastNext = next; return; }
+    }
+    p.spriteCast = { ...next, start: now };
   },
 
   // ---------- 敵の出現 ----------
@@ -592,7 +602,7 @@ WYD.world = {
       this.castExtra = null;
       if (!used) WYD.collector.misfire(w, state, stats, id, def);   // 検証モード：不発の理由を数える
       if (used) {
-        this.startSpriteCast(w);
+        this.startSpriteCast(w, undefined, id);
         WYD.results.add(w, "skill:" + id, { casts: 1 });
         WYD.vfx.cast(w, id, p.x, p.y, def.radius);
         const shake = WYD.data.vfx.castShake[WYD.classes.kindOf(id)];
