@@ -45,6 +45,37 @@ const path = require('node:path');
       assert(r.attackRatioOk, '攻撃力が倍率ぶん上がる');
       assert(r.keep, 'おすすめは、そろったセットの部位を替えない（セット完成中）'); assert(r.row3Change, '3つのときは替える提案が出る');
       assert(!r.grow, '育てる候補にも出さない'); assert.match(r.html, /完成の力/);
+      // 育てる候補のセットの重み：持っている装備で完成できるセットは「完成の力 − 替える部位の育てた下限の差」の点で出す
+      const g = await page.evaluate((cls) => {
+        const s = WYD.state, L = WYD.loot, O = WYD.optimizer, setId = cls === 'puppeteer' ? 'facelessTroupe' : 'pyre', set = WYD.data.sets.list.find((x) => x.id === setId);
+        const pieces = set.pieces.map((p) => L.createSetPiece(s, 50, setId, p.id));
+        const weak = (slot) => { const it = L.create(s, 50, 0, { slot, rarity: 'magic' }); it.stats = []; it.effects = []; it.sockets = []; return it; };
+        s.equipment = {}; s.stash = []; s.gems = {};
+        s.equipment[pieces[0].slot] = pieces[0]; s.equipment[pieces[1].slot] = pieces[1];
+        s.equipment[pieces[2].slot] = weak(pieces[2].slot); s.equipment[pieces[3].slot] = weak(pieces[3].slot);
+        s.inventory = [pieces[2], pieces[3]];
+        const sp = O.setPlans(s, 'damage'), plan = sp.plans.find((p) => p.set.id === setId);
+        const loss = [pieces[2], pieces[3]].reduce((a, it) => a + O.growth(s.equipment[it.slot], 'damage', O.gemPool(s)).score - O.growth(it, 'damage', O.gemPool(s)).score, 0);
+        const cands = O.growCandidates(s, 'damage').filter((c) => c.set && c.set.id === setId).map((c) => c.item);
+        O.goal = 'damage'; WYD.ui.changed(); WYD.equipScreen.open(); WYD.equipScreen.tab = 'grow'; WYD.equipScreen.render();
+        const tab = [...document.querySelectorAll('#equipscreen .es-grid [data-es="item"]')].map((el) => Number(el.dataset.index));
+        WYD.equipScreen.tab = 'all'; WYD.equipScreen.close();
+        const html = O.growHtml(s, O.goalDef('damage'));
+        // あと1つ：3つしか持っていない
+        s.inventory = [pieces[2]];
+        const near = O.setPlans(s, 'damage').near.find((n) => n.set.id === setId), html3 = O.growHtml(s, O.goalDef('damage'));
+        // 替える部位がとても強いと、差し引きがマイナスで出さない
+        s.inventory = [pieces[2], pieces[3]];
+        for (const it of [s.equipment[pieces[2].slot], s.equipment[pieces[3].slot]]) it.stats = [{ stat: 'attack', value: 99999 }];
+        const minus = O.setPlans(s, 'damage').plans.some((p) => p.set.id === setId);
+        return { plan: !!plan, items: plan && plan.items.length, gainOk: plan && Math.abs(plan.gain - (O.completePoints(set, 'damage') - loss)) < 1e-6,
+          points: O.completePoints(set, 'damage'), mult: WYD.data.sets.complete.attackMult[setId], cands: cands.length, tab, html, near: near && near.missing.id === pieces[3].piece, nearAny: !!near, html3, minus };
+      }, cls);
+      assert(g.plan, `${cls}：持っている装備で完成できるセットは候補`); assert.equal(g.items, 2, '替えるのは装備していない2つ');
+      assert(Math.abs(g.points - 1000 * (g.mult - 1)) < 1e-6, '完成の力の点 = 1000 ×（攻撃力の倍率 − 1）'); assert(g.gainOk, '伸び = 完成の力 − 替える部位の育てた下限の差');
+      assert.equal(g.cands, 2, '育てる候補にセットの2つ'); assert.deepEqual([...g.tab].sort(), [0, 1], '「★育てる」タブにも出る');
+      assert.match(g.html, /セット完成/); assert(g.nearAny, 'あと1つのセット'); assert.match(g.html3, /あと1つ/);
+      assert(!g.minus, '差し引きがマイナスなら出さない');
     }
     assert.deepEqual(errors, []);
     console.log('セットの完成の力のテスト：成功');
