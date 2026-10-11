@@ -31,6 +31,12 @@ const path = require('node:path');
         s.inventory = [strong];
         const row = WYD.optimizer.plan(s, 'damage').rows.find((x) => x.slot === last.slot);
         const grow = WYD.optimizer.growCandidates(s, 'damage').some((c) => c.item === strong);
+        // 同じセットの同じ部位で強いもの（レベル違いなど）には替える（セットはそろったまま）
+        const same = L.createSetPiece(s, 50, setId, set.pieces[3].id); same.stats = [{ stat: 'attack', value: 999 }, { stat: 'skillDamage', value: 999 }]; same.effects = []; same.sockets = [];
+        s.inventory = [strong, same];
+        const rowSame = WYD.optimizer.plan(s, 'damage').rows.find((x) => x.slot === last.slot);
+        const growSame = WYD.optimizer.growCandidates(s, 'damage').some((c) => c.item === same);
+        s.inventory = [strong];
         // 3つにすると、替える提案が出る（完成していないセットは守らない）
         delete s.equipment[pieces[0].slot];
         const row3 = WYD.optimizer.plan(s, 'damage').rows.find((x) => x.slot === last.slot);
@@ -38,13 +44,13 @@ const path = require('node:path');
         // 装備の説明
         WYD.ui.changed(); const html = WYD.ui.setHtml(last);
         return { mult, attackMult: C.attackMult[setId], sm, threeMult: (() => { const t = { ...s.equipment }; delete s.equipment[last.slot]; const m = WYD.stats.setCompleteMult(s); s.equipment = t; return m; })(),
-          attackRatioOk: four.attack > noLast.attack * C.attackMult[setId] * 0.99, keep: row.keep && row.setHeld, row3Change: !row3.keep, grow, html };
+          attackRatioOk: four.attack > noLast.attack * C.attackMult[setId] * 0.99, keep: row.keep && row.setHeld, same: rowSame.best === same && !rowSame.keep, growSame, row3Change: !row3.keep, grow, html };
       }, cls);
       assert.equal(r.threeMult.attack, 1, '3つでは完成の力なし'); assert.equal(r.mult.attack, r.attackMult, '4つで攻撃力の倍率');
       for (const [k, v] of Object.entries(r.sm)) assert.equal(r.mult[k], v, `${cls} の ${k} の倍率`);
       assert(r.attackRatioOk, '攻撃力が倍率ぶん上がる');
       assert(r.keep, 'おすすめは、そろったセットの部位を替えない（セット完成中）'); assert(r.row3Change, '3つのときは替える提案が出る');
-      assert(!r.grow, '育てる候補にも出さない'); assert.match(r.html, /完成の力/);
+      assert(!r.grow, '育てる候補にも出さない'); assert(r.same, '同じセットの同じ部位で強いものには替える'); assert(r.growSame, '育てる候補にも出す'); assert.match(r.html, /完成の力/);
       // 育てる候補のセットの重み：持っている装備で完成できるセットは「完成の力 − 替える部位の育てた下限の差」の点で出す
       const g = await page.evaluate((cls) => {
         const s = WYD.state, L = WYD.loot, O = WYD.optimizer, setId = cls === 'puppeteer' ? 'facelessTroupe' : 'pyre', set = WYD.data.sets.list.find((x) => x.id === setId);
