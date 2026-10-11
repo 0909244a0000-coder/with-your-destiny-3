@@ -211,11 +211,15 @@ WYD.inventory = {
 
   // 「全て捨てる」で捨てるもの（ロック以外で、捨てる設定の決まりに当たらないもの）
   discardTargets(state) {
-    return state.inventory.filter((it) => !it.locked && this.discardMatches(state, it));
+    const d = state.settings.discard || {};
+    // 「★育てる」タブにいる装備（おすすめ装備で選んだ目的の育てる候補。持ち物だけ）
+    const grow = d.keepGrow ? new Set(WYD.optimizer.growCandidates(state, WYD.optimizer.goal).filter((c) => c.where === "inv").map((c) => c.item)) : null;
+    return state.inventory.filter((it) => !it.locked && this.discardMatches(state, it, grow));
   },
 
-  discardMatches(state, item) {
+  discardMatches(state, item, grow) {
     const d = state.settings.discard || {};
+    if (grow && grow.has(item)) return false;
     if (d.rarities && d.rarities[item.rarity] === false) return false;
     if (d.slots && d.slots[item.slot] === false) return false;
     const sockets = item.sockets || [];

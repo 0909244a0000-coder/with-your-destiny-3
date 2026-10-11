@@ -43,6 +43,20 @@ const path = require('node:path');
     assert.equal(await page.textContent('#discard-body .discard-foot b'), '0個');
     await page.click('[data-discard-filter]');
     assert.equal(await page.isVisible('#filter'), true, '拾う設定へ飛べる');
+    // 「★育てる」タブにいる装備は残す（育てる候補 = 持ち物の、育てると今の装備より強くなるもの）
+    const g = await page.evaluate(() => {
+      const s = WYD.state, I = WYD.inventory, make = (stats) => { const it = WYD.loot.create(s, 30, 0, { slot: 'weapon', rarity: 'legend' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = []; it.plus = 0; it.forgePotential = 0; it.forged = 0; it.ancient = 0; return it; };
+      s.settings.discard = { rarities: {}, slots: {}, keepSockets: 0, keepEffects: 0 };
+      s.equipment = { weapon: make({ attack: 5 }) }; const strong = make({ attack: 50 }), weak = make({ attack: 1 }); s.inventory = [strong, weak]; s.stash = []; s.gems = {};
+      WYD.optimizer.goal = 'damage';
+      const off = I.discardTargets(s).length;
+      document.getElementById('discard-open').click();
+      const el = document.querySelector('[data-discard-flag="keepGrow"]'); el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true }));
+      const on = I.discardTargets(s), tab = WYD.optimizer.growCandidates(s, 'damage').map((c) => c.item);
+      return { off, keepStrong: !on.includes(strong), dropWeak: on.includes(weak), inTab: tab.includes(strong) && !tab.includes(weak), saved: s.settings.discard.keepGrow };
+    });
+    assert.equal(g.off, 2, '決まりを入れなければ両方捨てる'); assert(g.inTab, '強い装備だけが育てる候補');
+    assert(g.keepStrong, '「★育てる」タブにいる装備は残す'); assert(g.dropWeak, 'ほかは捨てる'); assert.equal(g.saved, true);
     assert.deepEqual(errors, []);
     console.log(JSON.stringify(r));
   } finally { await browser.close(); }

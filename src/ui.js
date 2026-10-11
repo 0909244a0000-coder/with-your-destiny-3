@@ -822,6 +822,7 @@ WYD.ui = {
       ${flag("keepAncient", "太古・原初の装備は残す")}
       ${flag("keepUpgrades", "今の装備より強いものは残す")}
       ${flag("keepBuild", "保存ビルドで使う装備は残す")}
+      ${flag("keepGrow", "「★育てる」タブにいる装備は残す")}
       <div class="discard-foot"><span>今の決まりで捨てるもの：<b>${targets.length}個</b>（${C.materialName} +${gained}）</span>
         <button data-discard-run ${targets.length ? "" : "disabled"}>この決まりで捨てる</button></div>
       <p class="muted">拾うときの決まりは <button data-discard-filter>戦利品フィルター（拾う設定）</button> で決めます。</p>`;
