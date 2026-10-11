@@ -27,6 +27,14 @@ WYD.data.classes = {
       color: "#ff8a4a",
       image: "assets/player_sorceress.png",
       poses: { attack: "assets/player_sorceress_attack.png" },
+      // 256pxセル・共通の足元。元の静止画は未読込時の代替に残す。
+      spriteAnimation: {
+        width: 256, height: 256, anchorX: 128, anchorY: 234, scale: 1.3,
+        idle: { image: "assets/sorceress/idle.webp", frames: 1, frameTime: 1 },
+        walk: { image: "assets/sorceress/walk.webp", frames: 8, frameTime: 0.075 },
+        cast: { image: "assets/sorceress/cast.webp", frames: 8, frameTime: 0.09 },
+      },
+      preloadImages: ["assets/sorceress/idle.webp", "assets/sorceress/walk.webp", "assets/sorceress/cast.webp"],
       base: { maxHp: 95, attack: 11, defense: 1, attackSpeed: 1.0, critChance: 6, hpRegen: 1, moveSpeed: 120 },
       perLevel: { maxHp: 11, attack: 2.3, defense: 0.7 },
       // 通常攻撃を「火の玉」にする（敵と距離をとって撃つ）

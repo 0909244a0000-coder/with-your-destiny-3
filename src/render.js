@@ -521,9 +521,22 @@ WYD.render = {
     return def.image;
   },
 
+  // セルごとの足元をそろえて描く。輪郭光はセル単位で一度だけ作る。
+  playerSprite(o, def) {
+    const D = def.spriteAnimation;
+    if (!D || o.form) return null;
+    const t = this.clock || 0, cast = o.spriteCast;
+    const casting = !o.dead && !o.stunTimer && cast && t >= cast.start && t < cast.start + cast.duration;
+    const action = casting ? "cast" : !o.dead && !o.stunTimer && o.moving ? "walk" : "idle";
+    const A = D[action], img = this.getImage(A.image);
+    if (!img) return null;
+    const frame = casting ? Math.min(A.frames - 1, Math.floor((t - cast.start) / cast.duration * A.frames)) : Math.floor(t / A.frameTime) % A.frames;
+    return { ...D, image: A.image, frame, action };
+  },
+
   // flash = true のときは白く光らせる（攻撃が当たったとき）、pose = 絵の動き
   // filter = 絵の色を変える（仮の絵に使う。例 "grayscale(1)"）
-  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash, pose, filter, rim) {
+  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash, pose, filter, rim, sprite) {
     const img = this.getImage(imageSrc);
     if (img) {
       const M = WYD.data.map;
@@ -541,6 +554,23 @@ WYD.render = {
       ctx.scale(p.sx * p.flip, p.sy);
       if (flash) ctx.filter = "brightness(2.2)";
       else if (filter) ctx.filter = filter;
+      if (sprite) {
+        const tileSize = size * sprite.scale, ratio = tileSize / sprite.width;
+        const left = -sprite.anchorX * ratio, top = -sprite.anchorY * ratio;
+        const key = imageSrc + "|frame:" + sprite.frame;
+        let tile = this.images[key];
+        if (!tile) {
+          tile = document.createElement("canvas"); tile.width = sprite.width; tile.height = sprite.height;
+          tile.getContext("2d").drawImage(img, sprite.frame * sprite.width, 0, sprite.width, sprite.height, 0, 0, sprite.width, sprite.height);
+          this.images[key] = tile;
+        }
+        const glow = rim && !flash ? this.rimImage(tile, key, rim) : null;
+        if (glow) {
+          const pad = glow.pad * ratio;
+          ctx.drawImage(glow.canvas, left - pad, top - pad, tileSize + pad * 2, tileSize + pad * 2);
+        } else ctx.drawImage(tile, left, top, tileSize, tileSize);
+        ctx.restore(); return;
+      }
       // ふちの光（data/map.js の rim）：光らせた絵（作り置き）を、まわりの余白のぶん大きく描く
       const glow = rim && !flash ? this.rimImage(img, imageSrc, rim) : null;
       if (glow) {
@@ -753,8 +783,12 @@ WYD.render = {
     // 変身の絵（formImage）があればその絵を、なければ主人公の絵に色をかぶせる
     const formImg = form && !p.dead && form.image;
     const filter = formImg ? form.filter : form && form.filter ? [P.imageFilter, form.filter].filter(Boolean).join(" ") : P.imageFilter;
+    const sprite = this.playerSprite(p, P);
+    // 歩行/詠唱の絵に、旧1枚絵用の傾きと踏み込みを重ねない。
+    const visualPose = this.pose(sprite ? { ...p, moving: false, atkAnim: 0 } : p, p.swingTarget, this.clock);
+    if (sprite && sprite.action !== "idle") { visualPose.sx = 1; visualPose.sy = 1; }
     this.drawCircleOrImage(ctx, p.x, p.y, P.radius * (form ? form.scale : 1), p.dead ? "#555" : form ? form.color : P.color,
-      formImg || this.poseImage(p, P), false, this.pose(p, p.swingTarget, this.clock), filter, p.dead ? null : WYD.data.map.rim.player);
+      formImg || sprite?.image || this.poseImage(p, P), false, visualPose, filter, p.dead ? null : WYD.data.map.rim.player, sprite);
     // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
     if (p.buff && !p.dead) {
       const size = P.radius * WYD.data.map.spriteScale * 1.3;

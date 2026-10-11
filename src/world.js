@@ -129,6 +129,15 @@ WYD.world = {
     }
   },
 
+  // 描画専用の詠唱。連射中も再生途中を巻き戻さず、戦闘の発動時刻は変えない。
+  startSpriteCast(w, interval) {
+    const cast = WYD.data.player.spriteAnimation?.cast;
+    if (!cast || w.player.dead) return;
+    const now = w.time || 0, p = w.player;
+    if (p.spriteCast && now < p.spriteCast.start + p.spriteCast.duration) return;
+    p.spriteCast = { start: now, duration: Math.min(cast.frames * cast.frameTime, interval || Infinity) };
+  },
+
   // ---------- 敵の出現 ----------
   updateSpawns(w, state, dt) {
     const map = WYD.data.map;
@@ -501,6 +510,7 @@ WYD.world = {
     if (d <= reach && p.attackTimer <= 0 && !WYD.collector.blocksAttack(state)) {   // 蒐集者の検証モードでは通常攻撃を止められる
       p.attackTimer = 1 / (stats.attackSpeed * (1 + (p.haste ? p.haste.percent : 0) / 100) * WYD.lgems.attackSpeedMult(w, state));
       p.atkAnim = WYD.data.anim.attack.time;
+      this.startSpriteCast(w, p.attackTimer);
       p.face = target.x >= p.x ? 1 : -1;
       p.swingTarget = { x: target.x, y: target.y };
       if (ranged) {
@@ -582,6 +592,7 @@ WYD.world = {
       this.castExtra = null;
       if (!used) WYD.collector.misfire(w, state, stats, id, def);   // 検証モード：不発の理由を数える
       if (used) {
+        this.startSpriteCast(w);
         WYD.results.add(w, "skill:" + id, { casts: 1 });
         WYD.vfx.cast(w, id, p.x, p.y, def.radius);
         const shake = WYD.data.vfx.castShake[WYD.classes.kindOf(id)];
