@@ -47,7 +47,7 @@ WYD.save = {
       settings: { speed: 1, autoSalvage: "none", autoDifficulty: false, sound: true, autoEquip: true, fullReplace: true, season: "none", music: true, quietFx: false,
         filter: { on: false, slots: {}, keepUpgrades: true },
         // 「全て捨てる」の決まり。rarities・slots は false で「捨てない」。最初は全部捨てる（前と同じ）
-        discard: { rarities: {}, slots: {}, keepSockets: 0, keepEffects: 0, keepAncient: false, keepWorked: false, keepGems: false, keepBuild: false, keepUpgrades: false } },
+        discard: { rarities: {}, slots: {}, keepSockets: 0, keepEffects: 0, keepAncient: false, keepWorked: false, keepGems: false, keepBuild: false, keepUpgrades: false, keepGrow: false } },
       seenHelp: false, // 遊び方を見たか（最初の1回だけ自動で出す）
       cleared: false,  // 最後のボスを倒したか
       trial: { best: 0, level: 1, autoNext: true, runs: 0 },   // 終わりのない試練の記録
