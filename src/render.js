@@ -534,7 +534,7 @@ WYD.render = {
     return { ...D, image: A.image, frame, action, fx: casting ? A.fx : null, progress: casting ? (t - cast.start) / cast.duration : 0 };
   },
 
-  // 杖の光はセル内の宝珠の位置に追従。床の絵は足元、人物の後ろへ描く。
+  // 杖や手元の光はセル内の位置に追従。床の絵は足元、人物の後ろへ描く。
   drawPlayerCastFx(ctx, p, sprite, pose, foreground) {
     const F = sprite?.fx;
     if (!F || p.dead || p.stunTimer > 0) return;
