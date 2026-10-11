@@ -27,6 +27,14 @@ const path = require('node:path');
       s.trial.best = 25; out.followsBest = WYD.uber.stage(s) === 25 + U.stageOffset;
       // 記録より高い段階を選んでいても、最高を超えない（古い値・書き換え対策）
       s.uber.stage = 999; out.clamped = WYD.uber.stage(s) === WYD.uber.maxStage(s);
+      // 未受取がいっぱいで戦闘停止中は、挑めない（鍵も地図も使わない）。試練も始まらない
+      const pending = s.pendingLoot; s.pendingLoot = Array.from({ length: WYD.data.items.pendingLootLimit }, () => WYD.loot.create(s, 10, 0, { rarity: 'unique' }));
+      const keys0 = s.uber.keys; if (ui.world.town) WYD.town.toggle(ui.world, s); ui.renderPanels();
+      out.stoppedButton = $('uber-start').disabled && !WYD.uber.canStart(s);
+      WYD.uber.start(ui.world, s); WYD.trial.start(ui.world, s, 1);
+      s.maps = s.maps || []; s.maps.push(WYD.maps.create(1)); const mapCount = s.maps.length; WYD.maps.use(ui.world, s, mapCount - 1);
+      out.stoppedNoStart = !s.trialRun && s.uber.keys === keys0 && s.maps.length === mapCount;
+      s.pendingLoot = pending || [];
       // 選んだ段階で挑み、鍵を使う。挑戦中は段階を変えられない
       s.uber.stage = 8; ui.renderPanels(); const keys = s.uber.keys;
       if (ui.world.town) WYD.town.toggle(ui.world, s);

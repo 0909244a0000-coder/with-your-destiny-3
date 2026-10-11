@@ -60,6 +60,7 @@ WYD.maps = {
   use(w, state, index) {
     const map = state.maps[index];
     if (!map || WYD.trial.active(state)) return;
+    if (WYD.world.battleStopped(state)) return WYD.trial.stoppedNotice();
     state.maps.splice(index, 1);
     WYD.trial.start(w, state, this.stage(map), null, map);
   },

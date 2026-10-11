@@ -34,6 +34,7 @@ WYD.trial = {
   // map = 地図で挑むとき（src/maps.js）
   // uber = 奈落の双王（src/uber.js）。はじめからボス2体
   start(w, state, level, daily, map, uber) {
+    if (WYD.world.battleStopped(state)) return this.stoppedNotice();
     const T = WYD.data.trial;
     state.trialRun = { level, guardian: daily ? daily.guardian : WYD.util.pick(T.guardians), daily: daily || null, map: map || null, uber: !!uber };
     const timeLimit = Math.round((uber ? WYD.data.uber.timeLimit : map ? WYD.data.maps.timeLimit : T.timeLimit) * WYD.daily.mult(state, "timeMult"));
@@ -47,6 +48,11 @@ WYD.trial = {
     if (daily) WYD.ui.log(`今日の条件：${WYD.daily.describe(daily.date)}`, WYD.data.daily.color);
     if (map && map.modIds.length) WYD.ui.log(`地図の条件：${WYD.maps.mods(map).map((m) => `${m.name}（${m.desc}）`).join("・")}`, WYD.data.maps.color);
     WYD.ui.changed();
+  },
+
+  // 未受取がいっぱいで戦闘停止中は、試練・地図・奈落の双王を始めない（鍵や地図を使わない）
+  stoppedNotice() {
+    WYD.ui.notice("未受取がいっぱいで戦闘停止中：Status の「未受取」から受け取ると始められます", "#ff8a6a");
   },
 
   // 試練をやめる・終わる（ふつうの冒険にもどる）

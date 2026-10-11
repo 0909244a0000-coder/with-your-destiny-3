@@ -38,10 +38,15 @@ WYD.world = {
     return b.time < D.slowTime ? D.slowScale : 1;
   },
 
+  // 未受取がいっぱいで、戦闘を止めているか（data/items.js の pendingLootLimit。受け取ると再開）
+  battleStopped(state) {
+    return (state.pendingLoot || []).length >= WYD.data.items.pendingLootLimit;
+  },
+
   // 1コマ分すすめる（dt = 経過秒数）
   update(w, state, dt) {
     // 未受取が増え続けてセーブを圧迫しないよう、受け取るまで戦闘を止める。
-    if ((state.pendingLoot || []).length >= WYD.data.items.pendingLootLimit) {
+    if (this.battleStopped(state)) {
       // 戦闘停止中も入場演出は完了させる。暗転を残したままにしない。
       this.updateEntrance(w, dt);
       return;
