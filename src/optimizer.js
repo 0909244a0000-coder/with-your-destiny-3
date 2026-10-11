@@ -84,13 +84,13 @@ WYD.optimizer = {
     for (const slot of slots) {
       const cur = state.equipment[slot] || null;
       let best = cur, bestBase = this.score(cur, goalId, []).total, from = "eq";
-      if (held.has(slot)) { pick[slot] = { best, from, setHeld: true }; continue; }   // 全部そろったセットの部位は外さない（完成の力が消えるため）
+      const locked = held.has(slot);   // 全部そろったセットの部位は、同じセットの同じ部位にだけ替える（完成の力が消えないように）
       for (const c of pool) {
-        if (c.item.slot !== slot || c.item === cur) continue;
+        if (c.item.slot !== slot || c.item === cur || (locked && !this.samePiece(c.item, cur))) continue;
         const b = this.score(c.item, goalId, []).total;
         if (b > bestBase) { best = c.item; bestBase = b; from = c.from; }
       }
-      pick[slot] = { best, from };
+      pick[slot] = { best, from, setHeld: locked && best === cur };
     }
     // 宝石を集める（手元＋持っている装備の外せる宝石）
     const gems = {};
@@ -244,7 +244,11 @@ WYD.optimizer = {
     return { plans: plans.sort((a, b) => b.gain - a.gain), near };
   },
 
-  // 全部そろっているセットの装備がある部位（data/sets.js の complete。外すと完成の力が消えるので、おすすめでも育てる候補でも替えない）
+  // 全部そろっているセットの装備がある部位（data/sets.js の complete。外すと完成の力が消えるので、おすすめでも育てる候補でも、同じセットの同じ部位にしか替えない）
+  // 同じセットの同じ部位か（レベル・追加能力ちがいの同じ装備。替えてもセットはそろったまま）
+  samePiece(a, b) {
+    return !!(a && b && a.set && a.set === b.set && a.piece === b.piece);
+  },
   completeSlots(state) {
     const counts = WYD.stats.setCounts(state), out = new Set();
     for (const [slot, it] of Object.entries(state.equipment || {})) {
@@ -257,7 +261,7 @@ WYD.optimizer = {
     const pool = this.gemPool(state), out = [], cur = {}, held = this.completeSlots(state);
     for (const slot of Object.keys(WYD.data.items.slots)) cur[slot] = this.growth(state.equipment[slot] || null, goalId, pool);
     for (const [list, where] of [[state.inventory || [], "inv"], [state.stash || [], "stash"]]) for (const item of list) {
-      if (held.has(item.slot)) continue;
+      if (held.has(item.slot) && !this.samePiece(item, state.equipment[item.slot])) continue;
       const g = this.growth(item, goalId, pool), c = cur[item.slot];
       if (c && g.score > c.score) out.push({ item, slot: item.slot, where, gain: g.score - c.score, grown: g.score, curGrown: c.score, cost: g.cost, plus: g.plus, improves: g.improves, stat: g.stat });
     }
