@@ -27,6 +27,23 @@ WYD.data.classes = {
       color: "#ff8a4a",
       image: "assets/player_sorceress.png",
       poses: { attack: "assets/player_sorceress_attack.png" },
+      // 256pxセル・共通の足元。元の静止画は未読込時の代替に残す。
+      spriteAnimation: {
+        width: 256, height: 256, anchorX: 128, anchorY: 234, scale: 1.3,
+        idle: { image: "assets/sorceress/idle.webp", frames: 1, frameTime: 1 },
+        walk: { image: "assets/sorceress/walk.webp", frames: 8, frameTime: 0.075 },
+        cast: { image: "assets/sorceress/cast.webp", frames: 8, frameTime: 0.09 },
+        skills: { sorc_meteor: "meteor", sorc_nova: "nova" },
+        meteor: { image: "assets/sorceress/meteor.webp", frames: 8, frameTime: 0.105,
+          fx: { staff: "fireball", staffSize: 20, staffAlpha: 0.55,
+            staffPoints: [[73,72],[156,86],[180,40],[104,29],[75,77],[180,40],[85,75],[78,76]],
+            ground: "rageWisp", groundSize: 96, groundFlatten: 0.38, groundAlpha: 0.48, groundFrom: 0.3, groundTo: 1.1, groundStart: 0, quietAlpha: 0.35 } },
+        nova: { image: "assets/sorceress/nova.webp", frames: 8, frameTime: 0.085,
+          fx: { staff: "hitIce", staffSize: 14, staffAlpha: 0.55,
+            staffPoints: [[67,72],[131,69],[140,58],[159,118],[159,97],[159,93],[145,54],[61,73]],
+            ground: "frostCrown", groundSize: 136, groundFlatten: 0.48, groundAlpha: 0.7, groundFrom: 0.4, groundTo: 1.1, groundStart: 0.375, quietAlpha: 0.35 } },
+      },
+      preloadImages: ["assets/sorceress/idle.webp", "assets/sorceress/walk.webp", "assets/sorceress/cast.webp", "assets/sorceress/meteor.webp", "assets/sorceress/nova.webp", "assets/vfx/fireball.png", "assets/vfx/hitIce.png", "assets/vfx/rageWisp.png", "assets/vfx/frostCrownAtlas.webp"],
       base: { maxHp: 95, attack: 11, defense: 1, attackSpeed: 1.0, critChance: 6, hpRegen: 1, moveSpeed: 120 },
       perLevel: { maxHp: 11, attack: 2.3, defense: 0.7 },
       // 通常攻撃を「火の玉」にする（敵と距離をとって撃つ）

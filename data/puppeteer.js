@@ -4,7 +4,21 @@ WYD.data.classes.puppeteer = {
   name: "傀儡師", desc: "本体の最大HPはほかの職業の約6割。最大HPと防御力で人形の攻撃・耐久を強化し、HPを使って命令する。",
   player: {
     className: "傀儡師", weaponName: "操糸具", color: "#c75c69", image: "assets/player_puppeteer.png", imageFilter: null,
-    poses: { attack: "assets/player_puppeteer_attack.png" }, preloadImages: ["assets/ally_puppet.png", "assets/ally_puppet_attack.png", "assets/vfx/puppetNeedles.webp", "assets/vfx/puppetCross.webp"],
+    poses: { attack: "assets/player_puppeteer_attack.png" }, preloadImages: ["assets/puppeteer/idle.webp","assets/puppeteer/walk.webp","assets/puppeteer/cast.webp","assets/puppeteer/finale.webp","assets/vfx/puppetThreadBurstAtlas.webp","assets/ally_puppet.png", "assets/ally_puppet_attack.png", "assets/vfx/puppetNeedles.webp", "assets/vfx/puppetCross.webp"],
+    // 操作と裁断の8コマ。描画専用の設定。
+    spriteAnimation: {
+      width: 256,
+      height: 256,
+      anchorX: 128,
+      anchorY: 234,
+      scale: 1.3,
+      idle: {"image": "assets/puppeteer/idle.webp", "frames": 1, "frameTime": 1},
+      walk: {"image": "assets/puppeteer/walk.webp", "frames": 8, "frameTime": 0.075},
+      cast: {"image": "assets/puppeteer/cast.webp", "frames": 8, "frameTime": 0.09, "fx": {"staff": "puppetThread", "staffSize": 18, "staffAlpha": 0.65, "staffPoints": [[192, 96], [165, 59], [186, 62], [198, 93], [195, 90], [177, 124], [180, 137], [198, 94]], "ground": "puppetBind", "groundSize": 115, "groundFlatten": 0.48, "groundAlpha": 0.45, "groundFrom": 0.35, "groundTo": 1.15, "groundStart": 0, "quietAlpha": 0.35}},
+      command: {"image": "assets/puppeteer/cast.webp", "frames": 8, "frameTime": 0.09, "fx": {"staff": "puppetThread", "staffSize": 18, "staffAlpha": 0.65, "staffPoints": [[192, 96], [165, 59], [186, 62], [198, 93], [195, 90], [177, 124], [180, 137], [198, 94]], "ground": "puppetBind", "groundSize": 115, "groundFlatten": 0.48, "groundAlpha": 0.45, "groundFrom": 0.35, "groundTo": 1.15, "groundStart": 0, "quietAlpha": 0.35}},
+      sever: {"image": "assets/puppeteer/finale.webp", "frames": 8, "frameTime": 0.095, "fx": {"staff": "puppetThread", "staffSize": 18, "staffAlpha": 0.65, "staffPoints": [[173, 102], [188, 46], [172, 78], [211, 85], [208, 76], [181, 107], [181, 111], [179, 136]], "ground": "puppetBurst", "groundSize": 115, "groundFlatten": 0.48, "groundAlpha": 0.45, "groundFrom": 0.35, "groundTo": 1.15, "groundStart": 0.25, "quietAlpha": 0.35}},
+      skills: {"pup_thread": "command", "pup_pierce": "command", "pup_guard": "command", "pup_needles": "command", "pup_bind": "command", "pup_swap": "command", "pup_stitch": "command", "pup_cut": "sever", "pup_finale": "sever"},
+    },
     maxHpMult: 0.6,
     base: { maxHp: 110, attack: 8, defense: 2, attackSpeed: 0.85, critChance: 5, hpRegen: 1.2, moveSpeed: 120 },
     perLevel: { maxHp: 14, attack: 1.75, defense: 0.9 },
@@ -149,3 +163,8 @@ WYD.data.results.labels["effect:puppetCleave"] = { name: "狂王の籠手", grou
 WYD.data.results.labels["effect:puppetStormThread"] = { name: "雷帝の装い", group: "装備効果", color: "#9fd8ff" };
 WYD.data.results.labels["effect:puppetPyreTrail"] = { name: "業火の遺産", group: "装備効果", color: "#ff7a2a" };
 WYD.data.results.labels["effect:puppetCurtainCall"] = { name: "幕引きの裁ち鋏", group: "装備効果", color: "#e8c46a" };
+
+// 終幕は人形の位置で赤糸が集まり、弾け、ほどける4コマ。
+WYD.data.vfx.textures.puppetBurst = "assets/vfx/puppetThreadBurstAtlas.webp";
+WYD.data.vfx.atlases.puppetBurst = {columns:2,rows:2,frames:4,alpha:0.85,anchorY:0.5,maxSize:220};
+WYD.data.vfx.anim.puppetBurst = {duration:0.55,size:170,scaleFrom:0.65,scaleTo:1.15,additive:true};

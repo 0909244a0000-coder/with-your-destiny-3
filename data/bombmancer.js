@@ -5,7 +5,17 @@ WYD.data.classes.bombmancer = {
   player: {
     className: "冥爆術師", weaponName: "触媒", color: "#d29cff", image: "assets/player_bombmancer.png", imageFilter: null,
     poses: { attack: "assets/player_bombmancer_attack.png" },
-    preloadImages: ["assets/player_bombmancer_attack.png", "assets/bomb_hunter.png", "assets/vfx/bombOrb.png", "assets/vfx/bombBurst.png", "assets/vfx/bombSmoke.png", "assets/vfx/bombCloudBurst.webp", "assets/vfx/bombRingBurst.webp"],
+    // 同じ人物の歩行・仕込み・指鳴らし。数値は描画専用で戦闘には使わない。
+    spriteAnimation: {
+      width: 256, height: 256, anchorX: 128, anchorY: 234, scale: 1.3,
+      idle: { image: "assets/bombmancer/idle.webp", frames: 1, frameTime: 1 },
+      walk: { image: "assets/bombmancer/walk.webp", frames: 8, frameTime: 0.075 },
+      cast: { image: "assets/bombmancer/cast.webp", frames: 8, frameTime: 0.08, fx: { staff: "bombOrb", staffSize: 15, staffAlpha: 0.6, staffPoints: [[174, 94], [147, 96], [140, 96], [179, 94], [181, 85], [170, 83], [155, 97], [177, 90]], ground: "bombSmoke", groundSize: 96, groundFlatten: 0.42, groundAlpha: 0.38, groundFrom: 0.3, groundTo: 1.1, groundStart: 0, quietAlpha: 0.35 } },
+      plant: { image: "assets/bombmancer/cast.webp", frames: 8, frameTime: 0.08, fx: { staff: "bombOrb", staffSize: 15, staffAlpha: 0.6, staffPoints: [[174, 94], [147, 96], [140, 96], [179, 94], [181, 85], [170, 83], [155, 97], [177, 90]], ground: "bombSmoke", groundSize: 96, groundFlatten: 0.42, groundAlpha: 0.38, groundFrom: 0.3, groundTo: 1.1, groundStart: 0, quietAlpha: 0.35 } },
+      finale: { image: "assets/bombmancer/finale.webp", frames: 8, frameTime: 0.075, fx: { staff: "hitShadow", staffSize: 12, staffAlpha: 0.5, staffPoints: [[163, 101], [168, 81], [164, 87], [160, 89], [171, 82], [178, 82], [165, 102], [166, 105]], ground: "bombRingBurst", groundSize: 124, groundFlatten: 0.42, groundAlpha: 0.5, groundFrom: 0.3, groundTo: 1.1, groundStart: 0.375, quietAlpha: 0.35 } },
+      skills: { bomb_brand: "plant", bomb_hunter: "plant", bomb_mine: "plant", bomb_finale: "finale", bomb_cinders: "plant", bomb_smoke: "plant" },
+    },
+    preloadImages: ["assets/bombmancer/idle.webp", "assets/bombmancer/walk.webp", "assets/bombmancer/cast.webp", "assets/bombmancer/finale.webp", "assets/vfx/bombAshBurstAtlas.webp", "assets/vfx/hitShadow.png","assets/player_bombmancer_attack.png", "assets/bomb_hunter.png", "assets/vfx/bombOrb.png", "assets/vfx/bombBurst.png", "assets/vfx/bombSmoke.png", "assets/vfx/bombCloudBurst.webp", "assets/vfx/bombRingBurst.webp"],
     base: { maxHp: 105, attack: 10, defense: 1.5, attackSpeed: 1, critChance: 7, hpRegen: 1.1, moveSpeed: 125 },
     perLevel: { maxHp: 12, attack: 2.1, defense: 0.8 },
     rangedAttack: { range: 250, keepDistance: 155, speed: 430, size: 5, color: "#dda2ff", texture: "bombOrb" },
@@ -60,7 +70,11 @@ Object.assign(WYD.data.runes.skills, {
 // 爆発の絵：ふつうの爆弾は紫と橙の爆炎、終幕の一斉起爆（終幕で起爆した爆弾も）と地雷は輪の爆発（data/vfx.js の bombTexture／bombTextureBySkill）
 Object.assign(WYD.data.vfx.textures, { bombCloudBurst: "assets/vfx/bombCloudBurst.webp", bombRingBurst: "assets/vfx/bombRingBurst.webp" });
 Object.assign(WYD.data.vfx.anim, { bombCloudBurst: { duration: 0.5, scaleFrom: 0.35, scaleTo: 1.15, spin: 0.3, additive: true }, bombRingBurst: { duration: 0.6, scaleFrom: 0.3, scaleTo: 1.2, spin: 0.5, additive: true } });
-WYD.data.vfx.bombTexture = "bombCloudBurst";
+// 時限・追尾の爆炎は専用4コマ。終幕/地雷の輪は別の絵を維持する。
+WYD.data.vfx.textures.bombAshBurst = "assets/vfx/bombAshBurstAtlas.webp";
+WYD.data.vfx.atlases.bombAshBurst = { columns: 2, rows: 2, frames: 4, alpha: 0.85, anchorY: 0.5, maxSize: 240 };
+WYD.data.vfx.anim.bombAshBurst = { duration: 0.5, scaleFrom: 0.65, scaleTo: 1.15, additive: false };
+WYD.data.vfx.bombTexture = "bombAshBurst";
 WYD.data.vfx.bombTextureBySkill = { bomb_finale: "bombRingBurst", bomb_mine: "bombRingBurst" };
 Object.assign(WYD.data.vfx.textures, { bombOrb: "assets/vfx/bombOrb.png", bombBurst: "assets/vfx/bombBurst.png", bombSmoke: "assets/vfx/bombSmoke.png", bombHunter: "assets/bomb_hunter.png" });
 Object.assign(WYD.data.vfx.anim, { bombOrb: { duration: 0.34, size: 34, additive: true }, bombBurst: { duration: 0.48, scaleFrom: 0.35, scaleTo: 1.15, additive: true }, bombSmoke: { duration: 0.65, scaleFrom: 0.6, scaleTo: 1.1, additive: true } });
