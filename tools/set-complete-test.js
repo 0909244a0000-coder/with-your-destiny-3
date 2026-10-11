@@ -77,6 +77,16 @@ const path = require('node:path');
       assert.match(g.html, /セット完成/); assert(g.nearAny, 'あと1つのセット'); assert.match(g.html3, /あと1つ/);
       assert(!g.minus, '差し引きがマイナスなら出さない');
     }
+    // レジェンドの名前は、セットの部位の名前とかぶらない（「雷帝の」→「雷神の」）。古いセーブのレジェンドは名前を直し、セットはそのまま
+    const n = await page.evaluate(() => {
+      const s = WYD.state, L = WYD.loot, D = WYD.data.items, pieceNames = new Set(WYD.data.sets.list.flatMap((x) => x.pieces.map((p) => p.name)));
+      const clash = D.legendPrefixes.flatMap((pre) => D.bases.map((b) => pre + b.name)).filter((name) => pieceNames.has(name));
+      const leg = L.create(s, 50, 0, { slot: 'ring', rarity: 'legend' }); leg.name = '雷帝の指輪';
+      const piece = L.createSetPiece(s, 50, 'thunderlord', 'thunder_ring');
+      WYD.save.renameItem(leg); WYD.save.renameItem(piece);
+      return { clash, leg: leg.name, piece: piece.name };
+    });
+    assert.deepEqual(n.clash, [], 'レジェンドとセットで同じ名前がない'); assert.equal(n.leg, '雷神の指輪', '古いセーブのレジェンドは「雷神の」に'); assert.equal(n.piece, '雷帝の指輪', 'セットの名前はそのまま');
     assert.deepEqual(errors, []);
     console.log('セットの完成の力のテスト：成功');
   } finally { await browser.close(); }
