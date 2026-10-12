@@ -154,13 +154,25 @@ WYD.save = {
         state.nextItemId = Math.max(state.nextItemId, it.id + 1);
         return true;
       });
+      const checkpoint = state.dungeonReturn;
+      if (checkpoint && checkpoint.area === state.area && WYD.data.dungeon.areas[checkpoint.area]) {
+        checkpoint.drops = (Array.isArray(checkpoint.drops) ? checkpoint.drops : []).filter(d => {
+          const it = d && d.item;
+          if (!it || !Number.isFinite(it.id) || ownedIds.has(it.id) || !Array.isArray(it.stats) || !WYD.data.items.slots[it.slot]) return false;
+          ownedIds.add(it.id); state.nextItemId = Math.max(state.nextItemId, it.id + 1);
+          d.age = Number.isFinite(d.age) ? Math.max(0, d.age) : 0;
+          d.x = Number.isFinite(d.x) ? d.x : WYD.data.map.width / 2;
+          d.y = Number.isFinite(d.y) ? d.y : WYD.data.map.height / 2;
+          return true;
+        });
+      } else state.dungeonReturn = null;
       // 倉庫廃止：旧アイテムは180枠のかばんへ、超過分は未受取に残す。
       while (state.stash.length) {
         const item = state.stash.shift();
         if (state.inventory.length < WYD.data.items.inventorySize) state.inventory.push(item);
         else state.pendingLoot.push(item);
       }
-      for (const item of state.inventory.concat(state.stash, state.pendingLoot, Object.values(state.equipment))) {
+      for (const item of state.inventory.concat(state.stash, state.pendingLoot, Object.values(state.equipment), (state.dungeonReturn?.drops || []).map(d => d.item))) {
         if (!item) continue;
         // 特殊効果がなかった頃の装備には、空の特殊効果を付けておく
         if (!Array.isArray(item.effects)) item.effects = [];
@@ -262,7 +274,9 @@ WYD.save = {
         ownedIds.add(it.id);
         return true;
       });
-      localStorage.setItem(this.KEY, JSON.stringify(Object.assign({}, state, { pendingLoot })));
+      const dungeonReturn = state.dungeonReturn ? { ...state.dungeonReturn,
+        drops: w ? w.drops.filter(d => !d.picked && !ownedIds.has(d.item.id)).map(d => ({ x: d.x, y: d.y, item: d.item, age: d.age, bossLoot: d.bossLoot })) : state.dungeonReturn.drops || [] } : null;
+      localStorage.setItem(this.KEY, JSON.stringify(Object.assign({}, state, { pendingLoot, dungeonReturn })));
     } catch (e) {
       console.warn("セーブできませんでした。", e);
     }

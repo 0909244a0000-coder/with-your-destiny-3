@@ -11,6 +11,7 @@ WYD.town = {
       WYD.ui.log(T.trialText, "#ff6b6b");
       return false;
     }
+    WYD.dungeon.cancel(w);
     w.town = true;
     w.enemies = [];
     WYD.bombs.clear(w); WYD.runeSkills.clear(w);

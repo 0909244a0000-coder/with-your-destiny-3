@@ -56,7 +56,8 @@ WYD.render = {
   // 描画だけのカメラ。戦闘座標・射程・乱数は変更しない。
   cameraFor(ctx, w, state) {
     const M = WYD.data.map, D = M.camera;
-    const zoom = ctx.canvas.id === "game" && !w.town && !WYD.mobile?.active ? (D.levels.includes(state.settings.cameraZoom) ? state.settings.cameraZoom : D.defaultZoom) : 1;
+    let zoom = ctx.canvas.id === "game" && !w.town && !WYD.mobile?.active ? (D.levels.includes(state.settings.cameraZoom) ? state.settings.cameraZoom : D.defaultZoom) : 1;
+    if (WYD.dungeon.enabled(w, state) && w.bossIntro && !state.settings.quietFx) zoom += WYD.data.dungeon.introZoom * Math.sin(Math.PI * Math.min(1, w.bossIntro.time / WYD.data.boss.intro.time));
     const width = M.width / zoom, height = M.height / zoom;
     return { zoom, x: WYD.util.clamp(w.player.x - width / 2, 0, M.width - width), y: WYD.util.clamp(w.player.y - height / 2, 0, M.height - height), width, height };
   },
@@ -136,7 +137,7 @@ WYD.render = {
     const ground = scene ? null : this.getImage(area.groundImage);
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
-    if (scene) this.drawScene(ctx, scene, state);
+    if (scene) this.drawScene(ctx, scene, state, w);
     if (ground || scene) {
       ctx.fillStyle = `rgba(0,0,0,${scene ? map.scene.dim : map.groundDim})`;
       ctx.fillRect(0, 0, map.width, map.height);
@@ -153,6 +154,7 @@ WYD.render = {
       ctx.fill();
     }
 
+    WYD.dungeon.drawProps(ctx, w, state);
     // 明かり：地面はしっかり暗くし、キャラは下でうすく暗くする（遠くの敵も見分けられるように）
     this.drawLight(ctx, w.player, state, scene ? "scene" : "ground");
     for (const f of w.fields) this.drawField(ctx, f);
@@ -254,6 +256,7 @@ WYD.render = {
     this.drawOffscreen(ctx, w, camera);
     this.drawBossIntro(ctx, w);   // 上の文字やボスの体力の棒より下に描く
     this.drawBossDefeat(ctx, w, state);
+    WYD.dungeon.drawReward(ctx, w, state);
 
     // 左上：マップ名と危険度
     const H = WYD.data.map.hud;
@@ -433,11 +436,11 @@ WYD.render = {
   },
 
   // 比率を保って一枚の景色を画面いっぱいに表示。切り取りは階ごとに固定で、戦闘乱数は使わない。
-  drawScene(ctx, img, state) {
+  drawScene(ctx, img, state, w) {
     const map = WYD.data.map;
     const views = map.scene.views;
     const floor = WYD.trial.active(state) ? 1 : (state.floor || 1);
-    const view = views[Math.max(0, Math.min(views.length - 1, floor - 1))];
+    const view = w && WYD.dungeon.enabled(w, state) ? WYD.dungeon.view(state, w) : views[Math.max(0, Math.min(views.length - 1, floor - 1))];
     const scale = Math.max(map.width / img.width, map.height / img.height) * view.zoom;
     const sw = map.width / scale, sh = map.height / scale;
     ctx.drawImage(img, (img.width - sw) * view.x, (img.height - sh) * view.y,
@@ -995,7 +998,7 @@ WYD.render = {
     // 太古・始原は柱と光の色を変える
     const color = (drop.item.ancient && WYD.data.items.ancient.colors[drop.item.ancient]) || r.color;
     // 良い装備は足もとが光る
-    if (L.glowRarities.includes(drop.item.rarity) || drop.item.ancient) {
+    if (L.glowRarities.includes(drop.item.rarity) || drop.item.ancient || drop.bossLoot) {
       const k = 1 + L.glowPulse * Math.sin(drop.age * L.glowSpeed);
       const g = ctx.createRadialGradient(drop.x, drop.y, 0, drop.x, drop.y, L.glowRadius * k);
       g.addColorStop(0, color);
