@@ -433,7 +433,7 @@ WYD.world = {
       WYD.sound.play("slam");
       if (!p.dead && WYD.util.dist(h, p) <= h.radius) {
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
-        const hit = this.calcDamage(h.damage, defense, 0);
+        const hit = this.calcTaken(h.damage, defense);
         this.receiveDamage(w, hit.damage);
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
         if (p.hp <= 0) this.playerDied(w, { by: h.by, how: "explode" });
@@ -875,7 +875,7 @@ WYD.world = {
         e.atkAnim = WYD.data.anim.attack.time;
         e.face = p.x >= e.x ? 1 : -1;
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
-        const hit = this.calcDamage(e.attack, defense, 0);
+        const hit = this.calcTaken(e.attack, defense, state);
         this.receiveDamage(w, hit.damage);
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
         WYD.fx.burst(w, p.x, p.y, WYD.data.fx.playerHit, null, { gravity: true });
@@ -965,7 +965,7 @@ WYD.world = {
         continue;
       }
       const defense = stats.defense + (p.buff ? p.buff.defense : 0);
-      const hit = this.calcDamage(b.attack, defense, 0);
+      const hit = this.calcTaken(b.attack, defense, state);
       this.receiveDamage(w, hit.damage);
       this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff6b6b");
       // 特殊効果：茨の鎧（撃った敵が生きていれば返す）
@@ -1024,7 +1024,7 @@ WYD.world = {
       e.y += (c.to.y - e.y) / (left || 1) * move;
       if (!c.hit && !p.dead && WYD.util.dist(e, p) < H.width + WYD.data.player.radius) {
         c.hit = true;
-        const hit = this.calcDamage(e.attack * H.damageMult, stats.defense + (p.buff ? p.buff.defense : 0), 0);
+        const hit = this.calcTaken(e.attack * H.damageMult, stats.defense + (p.buff ? p.buff.defense : 0), state);
         this.receiveDamage(w, hit.damage);
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
         WYD.fx.shake(w, WYD.data.fx.shakeSlam);
@@ -1092,7 +1092,7 @@ WYD.world = {
       WYD.sound.play("slam");
       if (WYD.util.dist(e, p) <= slam.radius) {
         const defense = stats.defense + (p.buff ? p.buff.defense : 0);
-        const hit = this.calcDamage(e.attack * slam.damageMult, defense, 0);
+        const hit = this.calcTaken(e.attack * slam.damageMult, defense);
         this.receiveDamage(w, hit.damage);
         this.addText(w, p.x, p.y - 20, `-${hit.damage}`, "#ff3030");
         if (p.hp <= 0) this.playerDied(w, { by: this.enemyName(e), how: "slam" });
@@ -1198,6 +1198,17 @@ WYD.world = {
   },
 
   // ---------- 共通の処理 ----------
+  // 敵からプレイヤーが受けるダメージ（data/items.js の combat.takenPerLevel）。防御の効きは敵のレベル（その場所のアイテムレベル）で決まり、1発の大きさによらない
+  takenReduction(defense, state = WYD.state) {
+    const C = WYD.data.combat, d = Math.max(0, defense), lv = Math.max(1, this.itemLevel(state));
+    return Math.min(C.maxTakenReduction, d / (d + C.takenPerLevel * lv));
+  },
+  calcTaken(attack, defense, state = WYD.state) {
+    const C = WYD.data.combat;
+    let dmg = Math.max(0, attack) * (1 - this.takenReduction(defense, state));
+    dmg *= 1 + WYD.util.rand(-C.damageVariance, C.damageVariance);
+    return { damage: Math.max(C.minDamage, Math.round(dmg)), crit: false };
+  },
   calcDamage(attack, defense, critChance, critMultiplier) {
     const C = WYD.data.combat;
     const k = Math.max(0, attack) * C.defenseScale;   // 防御は割合で減らす（data/items.js の combat.defenseScale）
