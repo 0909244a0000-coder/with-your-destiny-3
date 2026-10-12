@@ -49,7 +49,7 @@ assert.equal(JSON.stringify(s),stateBefore);
 u.sheet.lastAction=0; u.sheetAction('reroll'); assert.equal(JSON.stringify(s),stateBefore);
 u.sheetAction('forge'); assert.equal(u.forgeItem,selected); assert.equal(nodes.forge.hidden,false); assert.equal(u.sheet,null);
 u.touchSheet('inv',0,'work'); let gemsOpened=false; W.gemVault.open=()=>{gemsOpened=true;};
-u.sheetAction('gems'); assert(gemsOpened); assert.equal(u.sheet,null);
+u.sheetAction('gems'); assert.equal(gemsOpened,false); assert.equal(u.sheet.mode,'gems'); assert.equal(u.sheet.id,selected.id);
 // 選択した装備が別の場所へ移ったら旧場所のアイテムは処理しない。
 u.touchSheet('inv',0); s.equipment[selected.slot]=selected; s.inventory=[other];
 u.sheetAction('discard'); assert.equal(s.inventory[0],other); assert.equal(u.sheet,null);
@@ -68,4 +68,34 @@ W.inventory.equip(s,0); s.builds=[{name:'保持',equipment:{weapon:selected.id}}
 assert(W.inventory.keepEquipped(selected,s)); assert.equal(W.inventory.autoEquip(s,candidate),false);
 W.save.write(s); const loaded=W.save.load(); assert.equal(loaded.equipment.weapon.id,selected.id);
 assert.equal(loaded.builds[0].equipment.weapon,selected.id);
-console.log('ok 実計算の差分・比較の状態不変 / 二層操作・ID追従・消失・連打・ロック / 強化・つけ直し・宝石返却 / 装備・外す・倉庫・満杯 / セット成立解除・固有能力 / 自動装備保護・ビルド・保存復元');
+// 個別宝石選択：はめ先固定・部位ごとの効果・全種類・所持数・連打・ID保護。
+const fused='fused:attack=24', god='fused:god.stun=chance~3|sec~0.5';
+for(const where of ['inv','eq','stash']) {
+  const target=make(), untouched=make(); target.sockets=[null,null]; untouched.sockets=[null];
+  s.inventory=where==='inv'?[target,untouched]:[untouched]; s.stash=where==='stash'?[target]:[];
+  s.equipment=where==='eq'?{weapon:target}:{};
+  s.gems={'ruby:0':2,[fused]:1,[god]:1}; const mat=s.materials;
+  const key=where==='eq'?'weapon':0;
+  u.touchSheet(where,key,'work'); u.sheetAction('gems');
+  assert.equal(u.sheet.id,target.id); assert.equal(u.sheet.mode,'gems');
+  const picker=nodes['sheet-body'].innerHTML;
+  assert(picker.includes('空き 2 / 2')); assert(picker.includes(W.gems.statsText('ruby:0',target.slot)));
+  assert(picker.includes('socket:'+fused)); assert(picker.includes('socket:'+god));
+  assert(!picker.includes('gv-targets')); assert(!picker.includes('混沌の宝石を作る'));
+  // ソート後も同じ装備へはめる。連打で2個消費しない。
+  if(where==='inv') s.inventory.reverse();
+  u.sheet.lastAction=0; u.sheetAction('socket:ruby:0'); u.sheetAction('socket:ruby:0');
+  assert.equal(target.sockets[0],'ruby:0'); assert.equal(target.sockets[1],null);
+  assert.equal(s.gems['ruby:0'],1); assert.equal(untouched.sockets[0],null); assert.equal(s.materials,mat);
+  u.sheet.lastAction=0; u.sheetAction('socket:'+fused); assert.equal(target.sockets[1],fused);
+  assert.equal(s.gems[fused],undefined); assert(nodes['sheet-body'].innerHTML.includes('空きソケットなし'));
+  u.sheet.lastAction=0; u.sheetAction('unsocket:0'); assert.equal(s.gems['ruby:0'],2);
+  u.sheetAction('work'); assert.equal(u.sheet.id,target.id); assert.equal(u.sheet.mode,'work');
+}
+// 神の装着制限は従来関数に任せる。消失や装備交換では別装備へ作用しない。
+const target=make(), otherGod=make(); target.sockets=[null]; otherGod.sockets=[god];
+s.equipment={weapon:target,body:otherGod}; s.inventory=[]; s.gems={[god]:1};
+u.touchSheet('eq','weapon','gems'); assert(nodes['sheet-body'].innerHTML.includes('先に外してください'));
+u.sheetAction('socket:'+god); assert.equal(target.sockets[0],null); assert.equal(s.gems[god],1);
+u.sheet.lastAction=0; s.equipment.weapon=other; u.sheetAction('socket:'+god); assert.equal(u.sheet,null); assert.equal(s.gems[god],1);
+console.log('ok 実計算の差分・比較の状態不変 / 二層操作・ID追従・消失・連打・ロック / 強化・つけ直し・宝石返却 / 装備・外す・倉庫・満杯 / セット成立解除・固有能力 / 自動装備保護・ビルド・保存復元 / 個別宝石の直接装着・全種類・3保管場所・神の制限');
