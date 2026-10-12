@@ -1800,6 +1800,11 @@ WYD.ui = {
     this.hideTooltip();
     delete item.isNew;   // 見たので NEW の印を消す
     this.sheet = { where, key, id: item.id, mode, lastAction: this.sheet && this.sheet.id === item.id ? this.sheet.lastAction : 0 };
+    if (mode === "gems") {
+      this.$("sheet-body").innerHTML = this.sheetGemPickerHtml(item, where);
+      this.$("sheet").hidden = false;
+      return true;
+    }
     const mat = C.materialName;
     const cur = s.equipment[item.slot];
     let html = this.itemHtml(item, mode === "work" ? "強化・加工" : "選択した装備", mode !== "work");
@@ -1820,7 +1825,7 @@ WYD.ui = {
       return !k ? "" : `<div class="sheet-socket"><span style="color:${WYD.gems.color(k)}">◆ ${esc(WYD.gems.name(k))}</span> <small>${esc(WYD.gems.statsText(k, item.slot))}</small>${i && !i.rune ? btn(`unsocket:${n}`, "外す") : ""}</div>`;
     }).join("");
     const free = WYD.gems.freeSocket(item) >= 0;
-    const gemRow = (item.sockets || []).length ? `<div class="sheet-gems"><b>宝石（ソケット${item.sockets.length}）</b>${sockets}${free ? btn("gems", "空いたソケットに宝石をはめる（宝石の画面）") : ""}</div>` : "";
+    const gemRow = (item.sockets || []).length ? `<div class="sheet-gems"><b>宝石（ソケット${item.sockets.length}）</b>${sockets}${btn("gems", free ? "宝石を選んではめる" : "宝石を付け替える")}</div>` : "";
     const main = where === "inv" ? [btn("equip", "装備する", "primary")]
       : where === "stash" ? [btn("back", "持ち物へ戻す", "primary", WYD.inventory.isFull(s), "持ち物がいっぱいの場合は戻せません")] : [btn("unequip", "外す", "primary", WYD.inventory.isFull(s), "持ち物がいっぱいの場合は外せません")];
     const ec = WYD.inventory.enhanceCost(item), rc = WYD.inventory.rerollCost(item);
@@ -1847,6 +1852,27 @@ WYD.ui = {
     return true;
   },
 
+  // 個別装備からは、はめ先を選び直さずこの装備へ直接はめる。
+  sheetGemPickerHtml(item, where) {
+    const s = this.state, G = WYD.gems, esc = WYD.results.escape;
+    const location = where === "eq" ? "装備中" : where === "stash" ? "倉庫" : "持ち物";
+    const sockets = (item.sockets || []).map((key, n) => {
+      const info = key && G.info(key);
+      return `<div class="sheet-gem-slot"><b>${n + 1}</b><span>${key ? `<strong style="color:${G.color(key)}">${esc(G.name(key))}</strong><small>${esc(G.statsText(key, item.slot))}</small>` : "空きソケット"}</span>${info && !info.rune ? `<button data-sheet="unsocket:${n}">外す</button>` : ""}</div>`;
+    }).join("");
+    const free = (item.sockets || []).filter(key => key === null).length;
+    const keys = WYD.gemVault.sorted(Object.keys(s.gems).filter(key => s.gems[key] > 0 && G.info(key) && !G.info(key).rune));
+    const gems = keys.map(key => {
+      const blocked = G.godBlocked(s, item, key);
+      const reason = !free ? "空きソケットなし（先に外してください）" : blocked ? "神の混沌石は身につけている装備に1つまで（先に外してください）" : "";
+      return `<div class="sheet-gem-choice"><div><strong style="color:${G.color(key)}">${esc(G.name(key))}</strong> <small>×${s.gems[key]}</small><p>${esc(G.statsText(key, item.slot))}</p>${reason ? `<small class="down">${reason}</small>` : ""}</div><button data-sheet="socket:${esc(key)}" ${reason ? "disabled" : ""}>はめる</button></div>`;
+    }).join("");
+    return `<div class="sheet-heading"><span class="sheet-eyebrow">宝石をセット</span><button data-sheet="close">閉じる</button></div>
+      <div class="sheet-gem-target"><strong style="color:${this.color(item)}">${esc(WYD.loot.label(item))}</strong><small>${location}・${esc(WYD.data.items.slots[item.slot])} ／ 空き ${free} / ${(item.sockets || []).length}</small>${sockets || '<p class="tip-sub">ソケットなし</p>'}</div>
+      <div class="sheet-details sheet-gem-list"><p class="tip-sub">この装備での効果。はめる・外すは無料です。選んだ宝石は最初の空きソケットにはまります。</p>${gems || '<p class="tip-sub">手元に宝石がありません。装着中の宝石は「外す」で手元へ戻せます。</p>'}</div>
+      <div class="sheet-btns sheet-work"><button data-sheet="work">戻る：強化・加工</button></div>`;
+  },
+
   // 装備の窓のボタン。強化・つけ直し・ロック・宝石を外すは、窓を開いたまま描きなおす
   sheetAction(act) {
     const s = this.state;
@@ -1854,8 +1880,8 @@ WYD.ui = {
     if (!sh || act === "close") { this.$("sheet").hidden = true; this.sheet = null; return; }
     const item = this.resolveSheet(sh);
     if (!item) { this.$("sheet").hidden = true; this.sheet = null; return; }
-    if (act === "work" || act === "compare") { this.touchSheet(sh.where, sh.key, act); return; }
-    const consumes = ["enhance", "reroll", "discard", "cube"].includes(act) || act.startsWith("unsocket:");
+    if (act === "work" || act === "compare" || act === "gems") { this.touchSheet(sh.where, sh.key, act); return; }
+    const consumes = ["enhance", "reroll", "discard", "cube"].includes(act) || act.startsWith("unsocket:") || act.startsWith("socket:");
     if (consumes && Date.now() - (sh.lastAction || 0) < 350) return;
     if (consumes) sh.lastAction = Date.now();
     const C = WYD.data.crafting;
@@ -1877,7 +1903,12 @@ WYD.ui = {
     }
     else if (act === "forge") this.openForge(item);
     else if (act === "cube") this.cubeItem(item);
-    else if (act === "gems") WYD.gemVault.open();
+    else if (act.startsWith("socket:") && sh.mode === "gems") {
+      const key = act.slice(7);
+      if (WYD.gems.socket(s, item, key)) this.log(`${item.name}に${WYD.gems.name(key)}をはめた（${WYD.gems.statsText(key, item.slot)}）`, WYD.gems.color(key));
+      else this.log("宝石をはめられない（所持数・空きソケット・神の制限を確認してください）", "#ff6b6b");
+      keep = true;
+    }
     else if (act === "discard" && sh.where !== "eq") {
       const gained = sh.where === "inv" ? WYD.inventory.discard(s, sh.key) : WYD.inventory.discardFromStash(s, sh.key);
       if (gained < 0) this.log(`${WYD.loot.label(item)}はロックしているので捨てられない`, "#ff6b6b");

@@ -31,6 +31,16 @@ const path = require('node:path');
       assert(await page.locator('#sheet-body').innerText().then(t=>t.includes('現在 +1')));
       await page.evaluate(() => { WYD.ui.sheet.lastAction=0; WYD.ui.sheetAction('unsocket:0'); });
       assert.equal(await page.evaluate(()=>WYD.state.gems['ruby:0']),1);
+      await page.locator('[data-sheet="gems"]').click();
+      assert(await page.locator('#gemvault').isHidden());
+      assert.equal(await page.locator('#sheet .gv-targets').count(),0);
+      assert(await page.locator('.sheet-gem-target').innerText().then(t=>t.includes('空き 2 / 2')));
+      await page.evaluate(()=>{WYD.ui.sheet.lastAction=0;});
+      await page.locator('[data-sheet="socket:ruby:0"]').click();
+      assert.equal(await page.evaluate(()=>WYD.ui.resolveSheet(WYD.ui.sheet).sockets[0]),'ruby:0');
+      assert.equal(await page.evaluate(()=>WYD.ui.sheet.mode),'gems');
+      await page.locator('[data-sheet="work"]').click();
+
       await page.evaluate(() => {
         WYD.ui.sheet.lastAction=0; WYD.ui.sheetAction('reroll');
         const item=WYD.ui.resolveSheet(WYD.ui.sheet); item.plus=WYD.data.crafting.enhance.max;
