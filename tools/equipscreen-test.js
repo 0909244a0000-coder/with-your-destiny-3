@@ -165,6 +165,20 @@ const path = require('node:path');
       assert.deepEqual(gemOp.cooldown, ['fused:fx.cooldown=7', 'fused:attack=20,fx.cooldown=5', 'fused:fx.cooldown=3']);
       assert.deepEqual(gemOp.both, ['fused:attack=20,fx.cooldown=5']);
       assert.equal(gemOp.mode, 'op'); assert.deepEqual(gemOp.selected, ['effect:cooldown', 'stat:attack']);
+      // 持ち物の欄をスクロールしたあと、描き直しても（物を拾うなど）一番上に戻らない。タブを変えたら一番上へ
+      const sc = await page.evaluate(() => {
+        const s = WYD.state, E = WYD.equipScreen; s.inventory = []; while (s.inventory.length < 120) s.inventory.push(WYD.loot.create(s, 10, 0, { slot: 'ring', rarity: 'magic' }));
+        E.close(); E.tab = 'all'; E.bagPage = 0; E.open('equip');
+        // PCは持ち物の欄が、スマホは窓全体がスクロールする
+        const g = document.querySelector('#equipscreen .es-grid'), inner = g.scrollHeight > g.clientHeight + 4;
+        const el = () => inner ? document.querySelector('#equipscreen .es-grid') : document.querySelector('#equipscreen .modal-box');
+        el().scrollTop = 200; const set = el().scrollTop;
+        WYD.ui.changed(); E.render(); const kept = el().scrollTop;
+        document.querySelector('[data-es="tab"][data-tab="weapon"]').click(); const other = inner ? el().scrollTop : 0;
+        E.close();
+        return { set, kept, other };
+      });
+      assert(sc.set > 0, 'スクロールできる'); assert.equal(sc.kept, sc.set, '描き直してもスクロール位置はそのまま'); assert.equal(sc.other, 0, 'タブを変えたら一番上');
       assert.deepEqual(errors, []);
       console.log(viewport.width, JSON.stringify(r));
       await page.close();
