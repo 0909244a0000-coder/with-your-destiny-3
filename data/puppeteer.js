@@ -4,7 +4,21 @@ WYD.data.classes.puppeteer = {
   name: "傀儡師", desc: "本体の最大HPはほかの職業の約6割。最大HPと防御力で人形の攻撃・耐久を強化し、HPを使って命令する。",
   player: {
     className: "傀儡師", weaponName: "操糸具", color: "#c75c69", image: "assets/player_puppeteer.png", imageFilter: null,
-    poses: { attack: "assets/player_puppeteer_attack.png" }, preloadImages: ["assets/ally_puppet.png", "assets/ally_puppet_attack.png", "assets/vfx/puppetNeedles.webp", "assets/vfx/puppetCross.webp"],
+    poses: { attack: "assets/player_puppeteer_attack.png" }, preloadImages: ["assets/puppeteer/idle.webp","assets/puppeteer/walk.webp","assets/puppeteer/cast.webp","assets/puppeteer/finale.webp","assets/vfx/puppetThreadBurstAtlas.webp","assets/ally_puppet.png", "assets/ally_puppet_attack.png", "assets/vfx/puppetNeedles.webp", "assets/vfx/puppetCross.webp"],
+    // 操作と裁断の8コマ。描画専用の設定。
+    spriteAnimation: {
+      width: 256,
+      height: 256,
+      anchorX: 128,
+      anchorY: 234,
+      scale: 1.3,
+      idle: {"image": "assets/puppeteer/idle.webp", "frames": 1, "frameTime": 1},
+      walk: {"image": "assets/puppeteer/walk.webp", "frames": 8, "frameTime": 0.075},
+      cast: {"image": "assets/puppeteer/cast.webp", "frames": 8, "frameTime": 0.09, "fx": {"staff": "puppetThread", "staffSize": 18, "staffAlpha": 0.65, "staffPoints": [[192, 96], [165, 59], [186, 62], [198, 93], [195, 90], [177, 124], [180, 137], [198, 94]], "ground": "puppetBind", "groundSize": 115, "groundFlatten": 0.48, "groundAlpha": 0.45, "groundFrom": 0.35, "groundTo": 1.15, "groundStart": 0, "quietAlpha": 0.35}},
+      command: {"image": "assets/puppeteer/cast.webp", "frames": 8, "frameTime": 0.09, "fx": {"staff": "puppetThread", "staffSize": 18, "staffAlpha": 0.65, "staffPoints": [[192, 96], [165, 59], [186, 62], [198, 93], [195, 90], [177, 124], [180, 137], [198, 94]], "ground": "puppetBind", "groundSize": 115, "groundFlatten": 0.48, "groundAlpha": 0.45, "groundFrom": 0.35, "groundTo": 1.15, "groundStart": 0, "quietAlpha": 0.35}},
+      sever: {"image": "assets/puppeteer/finale.webp", "frames": 8, "frameTime": 0.095, "fx": {"staff": "puppetThread", "staffSize": 18, "staffAlpha": 0.65, "staffPoints": [[173, 102], [188, 46], [172, 78], [211, 85], [208, 76], [181, 107], [181, 111], [179, 136]], "ground": "puppetBurst", "groundSize": 115, "groundFlatten": 0.48, "groundAlpha": 0.45, "groundFrom": 0.35, "groundTo": 1.15, "groundStart": 0.25, "quietAlpha": 0.35}},
+      skills: {"pup_thread": "command", "pup_pierce": "command", "pup_guard": "command", "pup_needles": "command", "pup_bind": "command", "pup_swap": "command", "pup_stitch": "command", "pup_cut": "sever", "pup_finale": "sever"},
+    },
     maxHpMult: 0.6,
     base: { maxHp: 110, attack: 8, defense: 2, attackSpeed: 0.85, critChance: 5, hpRegen: 1.2, moveSpeed: 120 },
     perLevel: { maxHp: 14, attack: 1.75, defense: 0.9 },
@@ -13,13 +27,14 @@ WYD.data.classes.puppeteer = {
   skills: {
     pup_thread: { kind:"puppet", mode:"thread", name:"命の糸", desc:"本体のHPを使って人形を修復。人形がいなければ召喚する。", startLevel:1,maxLevel:10,cooldown:5,hpCost:4,repairBase:0.25,repairPerLevel:0.025,color:"#d47078" },
     pup_pierce: { kind:"puppet", mode:"pierce", name:"鉄杭の突撃", desc:"人形を敵へ突進させ、周囲の敵も貫く。",startLevel:1,maxLevel:10,cooldown:4,hpCost:3,range:260,radius:36,damageBase:1.8,damagePerLevel:0.28,color:"#e0a8a0" },
-    pup_guard: { kind:"puppet", mode:"guard", name:"守りの傀儡",desc:"人形が近くの敵を引きつけ、しばらく防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:4,duration:5,range:180,defenseMult:1.7,color:"#d0b18b" },
+    // 2026-10-10：守りの傀儡は本体の防御も +150%（playerDefensePct）・6秒、血の縫合の回復 5倍、身代わり縫いの回復・防御 2倍、終幕の威力 約2倍（死にスキル直し）
+    pup_guard: { kind:"puppet", mode:"guard", name:"守りの傀儡",desc:"人形が近くの敵を引きつけ、しばらく人形と本体の防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:4,duration:6,range:180,defenseMult:1.7,playerDefensePct:150,color:"#d0b18b" },
     pup_needles: { kind:"puppet",mode:"needles",name:"針の雨",desc:"人形の周囲にいる敵をまとめて刺す。",startLevel:0,maxLevel:10,cooldown:6,hpCost:5,radius:130,damageBase:1.35,damagePerLevel:0.2,color:"#bca0b9" },
     pup_bind: { kind:"puppet",mode:"bind",name:"絡め糸",desc:"人形の周囲の敵を縛る。ボスへの拘束は短い。",startLevel:0,maxLevel:10,cooldown:10,hpCost:4,radius:120,bindBase:1.5,bindPerLevel:0.15,bossBindMult:0.3,damageBase:0.8,damagePerLevel:0.12,color:"#be6f7e" },
-    pup_swap: { kind:"puppet",mode:"swap",name:"身代わり縫い",desc:"本体のHPが減ると少し回復し、本体と人形の防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:2,triggerHpPercent:55,duration:4,defenseMult:0.6,puppetDefenseMult:1.5,healPercentBase:10,healPercentPerLevel:1,color:"#e1b791" },
-    pup_stitch: { kind:"puppet",mode:"stitch",name:"血の縫合",desc:"一定時間、人形の攻撃が当たると本体のHPを回復する。",startLevel:0,maxLevel:10,cooldown:13,hpCost:3,duration:6,healPercentBase:1.8,healPercentPerLevel:0.14,healInterval:0.8,color:"#d26771" },
+    pup_swap: { kind:"puppet",mode:"swap",name:"身代わり縫い",desc:"本体のHPが減ると少し回復し、本体と人形の防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:2,triggerHpPercent:55,duration:4,defenseMult:1.2,puppetDefenseMult:1.5,healPercentBase:20,healPercentPerLevel:2,color:"#e1b791" },
+    pup_stitch: { kind:"puppet",mode:"stitch",name:"血の縫合",desc:"一定時間、人形の攻撃が当たると本体のHPを回復する。",startLevel:0,maxLevel:10,cooldown:13,hpCost:3,duration:6,healPercentBase:9,healPercentPerLevel:0.7,healInterval:0.8,color:"#d26771" },
     pup_cut: { kind:"puppet",mode:"cut",name:"赤糸の裁断",desc:"本体のHPを大きく使い、人形で敵を強く切り裂く。",startLevel:0,maxLevel:10,cooldown:8,hpCost:9,range:260,damageBase:3.2,damagePerLevel:0.48,color:"#ff6680" },
-    pup_finale: { kind:"puppet",mode:"finale",name:"終幕",desc:"人形のHPが40%以下のとき、人形を壊して周囲の敵へ大きなダメージを与える。",startLevel:0,maxLevel:10,cooldown:15,hpCost:7,triggerPuppetHpPercent:40,radius:140,damageBase:2.8,damagePerLevel:0.44,color:"#f0ad8b" },
+    pup_finale: { kind:"puppet",mode:"finale",name:"終幕",desc:"人形のHPが40%以下のとき、人形を壊して周囲の敵へ大きなダメージを与える。",startLevel:0,maxLevel:10,cooldown:15,hpCost:7,triggerPuppetHpPercent:40,radius:140,damageBase:6,damagePerLevel:0.9,color:"#f0ad8b" },
   },
   autoBuild: ["pup_thread","pup_pierce","pup_stitch"],
   skillOrder: ["pup_finale","pup_thread","pup_swap","pup_guard","pup_stitch","pup_bind","pup_needles","pup_pierce","pup_cut"],
@@ -148,3 +163,8 @@ WYD.data.results.labels["effect:puppetCleave"] = { name: "狂王の籠手", grou
 WYD.data.results.labels["effect:puppetStormThread"] = { name: "雷帝の装い", group: "装備効果", color: "#9fd8ff" };
 WYD.data.results.labels["effect:puppetPyreTrail"] = { name: "業火の遺産", group: "装備効果", color: "#ff7a2a" };
 WYD.data.results.labels["effect:puppetCurtainCall"] = { name: "幕引きの裁ち鋏", group: "装備効果", color: "#e8c46a" };
+
+// 終幕は人形の位置で赤糸が集まり、弾け、ほどける4コマ。
+WYD.data.vfx.textures.puppetBurst = "assets/vfx/puppetThreadBurstAtlas.webp";
+WYD.data.vfx.atlases.puppetBurst = {columns:2,rows:2,frames:4,alpha:0.85,anchorY:0.5,maxSize:220};
+WYD.data.vfx.anim.puppetBurst = {duration:0.55,size:170,scaleFrom:0.65,scaleTo:1.15,additive:true};

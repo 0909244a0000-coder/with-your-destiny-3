@@ -3,7 +3,8 @@ window.WYD = window.WYD || {};
 WYD.data = WYD.data || {};
 
 WYD.data.items = {
-  inventorySize: 60,   // 持ち物に入る数（6列なので6の倍数に）
+  inventorySize: 180,  // 持ち物に入る数
+  inventoryPageSize: 60, // 装備画面で一度に表示する枠数
   pendingLootLimit: 60, // 未受取がこの件数に達したら戦闘を停止し、受取で再開（重要品は消さない）
   stashSize: 0,         // 倉庫廃止（旧保存はかばん／未受取へ移行）
   fullSalvage: ["normal", "magic"],   // 持ち物がいっぱいのとき、拾ったその場で素材にするレア度
@@ -66,13 +67,13 @@ WYD.data.items = {
     { slot: "feet",   id: "leggings", name: "グリーブ",   main: { defense: [1, 3] } },
     { slot: "feet",   id: "sandals", name: "ブーツ",     main: { moveSpeed: [5, 10] } },
     { slot: "ring",   id: "ring", name: "指輪",       main: { maxHp: [5, 10] } },
-    { slot: "ring",   id: "rosary", name: "印章指輪",   main: { hpRegen: [0.5, 1] } },
+    { slot: "ring",   id: "rosary", name: "印章指輪",   main: { hpRegen: [1.5, 3.5] } },   // 2026-10-10 に [0.5, 1] から上げた
     { slot: "offhand", id: "shield", name: "盾",         main: { defense: [2, 4], maxHp: [5, 12] } },
     { slot: "offhand", id: "tome", name: "魔導書",       main: { skillDamage: [5, 10] } },
     { slot: "neck",   id: "amulet", name: "首飾り",     main: { critChance: [1, 3] } },
     { slot: "neck",   id: "talisman", name: "護符",     main: { maxHp: [8, 15] } },
     { slot: "waist",  id: "belt", name: "帯",           main: { maxHp: [8, 15] } },
-    { slot: "waist",  id: "sash", name: "飾り帯",       main: { hpRegen: [0.3, 0.8] } },
+    { slot: "waist",  id: "sash", name: "飾り帯",       main: { hpRegen: [1, 2.5] } },     // 2026-10-10 に [0.3, 0.8] から上げた
   ],
 
   // 装備のアイコンの絵（id → ファイル）。例: dual_blades: "assets/items/dual_blades.png"
@@ -104,8 +105,8 @@ WYD.data.items = {
     { stat: "attack",      range: [1, 4] },
     { stat: "defense",     range: [1, 4] },
     { stat: "maxHp",       range: [5, 15] },
-    { stat: "hpRegen",     range: [0.3, 1.2] },
-    { stat: "attackSpeed", range: [3, 8] },
+    { stat: "hpRegen",     range: [1, 4] },     // 2026-10-10 に [0.3, 1.2] から上げた（最大HPの追加能力1つぶんと同じくらい生存に効くように）
+    { stat: "attackSpeed", range: [6, 14] },   // 2026-10-10 に [3, 8] から上げた（通常攻撃で戦うビルドのため）
     { stat: "critChance",  range: [1, 4] },
     { stat: "moveSpeed",   range: [3, 8] },
     { stat: "skillDamage", range: [5, 12] },
@@ -113,18 +114,18 @@ WYD.data.items = {
 
   // 名前の頭につく言葉
   rarePrefixes: ["鋭き", "古の", "猛き", "聖なる", "呪われし", "黄昏の"],
-  legendPrefixes: ["熾天使の", "冥王の", "雷帝の", "焔王の", "嵐の"],
+  legendPrefixes: ["熾天使の", "冥王の", "雷神の", "焔王の", "嵐の"],   // 「雷帝の」はセット「雷帝の装い」と部位の名前がかぶるので「雷神の」（2026-10-11）
 
   // 名前を変えた言葉（前 → 今）。古いセーブに残っている装備の名前を、読みこむときに直す
   // id はセーブとのつながりのため、名前を変えても同じままにしている
   renamedWords: {
     "大刀": "大剣", "チャクラム": "ダガー", "ターバン": "兜", "宝冠": "サークレット",
     "法衣": "ローブ", "脚絆": "グリーブ", "サンダル": "ブーツ", "数珠": "印章指輪",
-    "シヴァの": "熾天使の", "ヴィシュヌの": "冥王の", "インドラの": "雷帝の",
+    "シヴァの": "熾天使の", "ヴィシュヌの": "冥王の", "インドラの": "雷神の", "雷帝の": "雷神の",
     "アグニの": "焔王の", "ヴァーユの": "嵐の",
   },
 
-  buildSlots: 4,            // ビルドを保存できる数
+  buildSlots: 8,            // ビルドを保存できる数（2026-10-10 に 4→8。おすすめ装備からも保存できる）
 
   // 太古・始原（Diablo 3 のしくみ）：レジェンド・ユニーク・セットが、まれに能力の高い版で落ちる
   ancient: {
@@ -151,9 +152,10 @@ WYD.data.items = {
 
 // 戦闘の計算
 WYD.data.combat = {
-  defenseFactor: 0.5,   // ダメージ = 攻撃力 − 防御力×これ
+  // ダメージ = 攻撃力 × 攻撃力×これ ÷（攻撃力×これ ＋ 防御力）。防御は割合で減らす（重ねるほど少しずつ効きが鈍る。0にも100%にもならない）
+  // 1 なら、防御が攻撃力と同じとき半分になる。2026-10-10 に「攻撃力 − 防御×0.5（下限15%）」から変更（下限に張りついて防御が効かない崖をなくす）
+  defenseScale: 1,
   damageVariance: 0.1,  // ダメージのブレ（±10%）
   minDamage: 1,
-  minDamageRatio: 0.15, // 防御力がどれだけ高くても、攻撃力のこの割合は通る（防御を重ねて無敵にならないように）
   dpsWindow: 10,        // 秒間ダメージを、直近の何秒で計るか
 };

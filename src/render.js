@@ -275,6 +275,19 @@ WYD.render = {
     this.drawSkillBar(ctx, w, state);
     WYD.trial.draw(ctx, w, state);
     this.drawNotices(ctx, w);
+    if (WYD.world.battleStopped(state) && !w.town) {
+      // 未受取がいっぱいで戦闘停止中の表示（受け取るまで敵が出ない）
+      const map = WYD.data.map;
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.fillRect(0, 0, map.width, map.height);
+      ctx.textAlign = "center";
+      ctx.font = "bold 26px serif";
+      ctx.fillStyle = "#ff8a6a";
+      ctx.fillText(`戦闘停止中：未受取が ${state.pendingLoot.length}個（上限 ${WYD.data.items.pendingLootLimit}）`, map.width / 2, map.height / 2 - 110);
+      ctx.font = "18px sans-serif";
+      ctx.fillStyle = "#e8d8a8";
+      ctx.fillText("Status の「未受取を受け取る」で再開（持ち物に空きが必要）", map.width / 2, map.height / 2 - 78);
+    }
     if (WYD.ui.paused) {
       // 一時停止中の表示
       const map = WYD.data.map;
@@ -508,9 +521,49 @@ WYD.render = {
     return def.image;
   },
 
+  // セルごとの足元をそろえて描く。輪郭光はセル単位で一度だけ作る。
+  playerSprite(o, def) {
+    const D = WYD.world.spriteDefinition(o, def);
+    if (!D) return null;
+    const t = this.clock || 0, cast = o.spriteCast;
+    const casting = !o.dead && !(o.stunTimer > 0) && cast && (cast.appearance || null) === (o.form?.id || null) && t >= cast.start && t < cast.start + cast.duration;
+    const action = casting ? cast.action || "cast" : !o.dead && !(o.stunTimer > 0) && o.moving ? "walk" : "idle";
+    const A = D[action] || D.idle, img = this.getImage(A.image);
+    if (!img) return null;
+    const frame = casting ? Math.min(A.frames - 1, Math.floor((t - cast.start) / cast.duration * A.frames)) : Math.floor(t / A.frameTime) % A.frames;
+    return { ...D, appearanceScale: o.form?.scale || 1, image: A.image, frame, action, fx: casting ? A.fx : null, progress: casting ? (t - cast.start) / cast.duration : 0 };
+  },
+
+  // 杖や手元の光はセル内の位置に追従。床の絵は足元、人物の後ろへ描く。
+  drawPlayerCastFx(ctx, p, sprite, pose, foreground) {
+    const F = sprite?.fx;
+    if (!F || p.dead || p.stunTimer > 0) return;
+    const t = sprite.progress, size = WYD.data.player.radius * WYD.data.map.spriteScale * (sprite.appearanceScale || 1);
+    const key = foreground ? F.staff : F.ground, img = WYD.vfx.img(key);
+    if (!img) return;
+    const quiet = WYD.state?.settings.quietFx ? F.quietAlpha : 1;
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    ctx.translate(p.x + pose.dx, p.y + pose.dy + size * 0.4);
+    if (foreground) {
+      const point = F.staffPoints[sprite.frame], ratio = size * sprite.scale / sprite.width;
+      ctx.rotate(pose.rot); ctx.scale(pose.sx * pose.flip, pose.sy);
+      const r = F.staffSize * Math.sin(Math.PI * t);
+      ctx.globalAlpha *= F.staffAlpha * Math.sin(Math.PI * t) * quiet;
+      const x = (point[0] - sprite.anchorX) * ratio, y = (point[1] - sprite.anchorY) * ratio;
+      WYD.vfx.frame(ctx, key, img, x - r / 2, y - r / 2, r, r, t);
+    } else if (t >= F.groundStart) {
+      const phase = (t - F.groundStart) / (1 - F.groundStart);
+      const r = F.groundSize * (F.groundFrom + (F.groundTo - F.groundFrom) * phase);
+      ctx.scale(1, F.groundFlatten);
+      ctx.globalAlpha *= F.groundAlpha * Math.sin(Math.PI * phase) * quiet;
+      WYD.vfx.frame(ctx, key, img, -r / 2, -r / 2, r, r, phase);
+    }
+    ctx.restore();
+  },
+
   // flash = true のときは白く光らせる（攻撃が当たったとき）、pose = 絵の動き
   // filter = 絵の色を変える（仮の絵に使う。例 "grayscale(1)"）
-  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash, pose, filter, rim) {
+  drawCircleOrImage(ctx, x, y, r, color, imageSrc, flash, pose, filter, rim, sprite) {
     const img = this.getImage(imageSrc);
     if (img) {
       const M = WYD.data.map;
@@ -528,6 +581,23 @@ WYD.render = {
       ctx.scale(p.sx * p.flip, p.sy);
       if (flash) ctx.filter = "brightness(2.2)";
       else if (filter) ctx.filter = filter;
+      if (sprite) {
+        const tileSize = size * sprite.scale, ratio = tileSize / sprite.width;
+        const left = -sprite.anchorX * ratio, top = -sprite.anchorY * ratio;
+        const key = imageSrc + "|frame:" + sprite.frame;
+        let tile = this.images[key];
+        if (!tile) {
+          tile = document.createElement("canvas"); tile.width = sprite.width; tile.height = sprite.height;
+          tile.getContext("2d").drawImage(img, sprite.frame * sprite.width, 0, sprite.width, sprite.height, 0, 0, sprite.width, sprite.height);
+          this.images[key] = tile;
+        }
+        const glow = rim && !flash ? this.rimImage(tile, key, rim) : null;
+        if (glow) {
+          const pad = glow.pad * ratio;
+          ctx.drawImage(glow.canvas, left - pad, top - pad, tileSize + pad * 2, tileSize + pad * 2);
+        } else ctx.drawImage(tile, left, top, tileSize, tileSize);
+        ctx.restore(); return;
+      }
       // ふちの光（data/map.js の rim）：光らせた絵（作り置き）を、まわりの余白のぶん大きく描く
       const glow = rim && !flash ? this.rimImage(img, imageSrc, rim) : null;
       if (glow) {
@@ -740,8 +810,14 @@ WYD.render = {
     // 変身の絵（formImage）があればその絵を、なければ主人公の絵に色をかぶせる
     const formImg = form && !p.dead && form.image;
     const filter = formImg ? form.filter : form && form.filter ? [P.imageFilter, form.filter].filter(Boolean).join(" ") : P.imageFilter;
+    const sprite = this.playerSprite(p, P);
+    // 歩行/詠唱の絵に、旧1枚絵用の傾きと踏み込みを重ねない。
+    const visualPose = this.pose(sprite ? { ...p, moving: false, atkAnim: 0 } : p, p.swingTarget, this.clock);
+    if (sprite && sprite.action !== "idle") { visualPose.sx = 1; visualPose.sy = 1; }
+    this.drawPlayerCastFx(ctx, p, sprite, visualPose, false);
     this.drawCircleOrImage(ctx, p.x, p.y, P.radius * (form ? form.scale : 1), p.dead ? "#555" : form ? form.color : P.color,
-      formImg || this.poseImage(p, P), false, this.pose(p, p.swingTarget, this.clock), filter, p.dead ? null : WYD.data.map.rim.player);
+      sprite?.image || formImg || this.poseImage(p, P), false, visualPose, filter, p.dead ? null : WYD.data.map.rim.player, sprite);
+    this.drawPlayerCastFx(ctx, p, sprite, visualPose, true);
     // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
     if (p.buff && !p.dead) {
       const size = P.radius * WYD.data.map.spriteScale * 1.3;

@@ -168,6 +168,7 @@ WYD.ui = {
         if (e.key === 'Escape' && childModal.id === 'gamble') { e.preventDefault(); this.closeGamble(); }
         else if (e.key === 'Escape' && childModal.id === 'sheet') { e.preventDefault(); this.sheetAction('close'); }
         else if (e.key === 'Escape' && childModal.id === 'gemvault') { e.preventDefault(); WYD.gemVault.close(); }
+        else if (e.key === 'Escape' && childModal.id === 'optimizer') { e.preventDefault(); WYD.optimizer.close(); }
         else if (e.key === 'Escape' && childModal.id === 'equipscreen') { e.preventDefault(); WYD.equipScreen.close(); }
         return;
       }
@@ -246,8 +247,8 @@ WYD.ui = {
     };
     const C = WYD.data.crafting;
     this.$("discard-all").onclick = () => {
-      const targets = s.inventory.filter((it) => !it.locked);
-      if (!targets.length) return;
+      const targets = WYD.inventory.discardTargets(s);
+      if (!targets.length) { this.log("捨てる設定の決まりに当たる装備がありません", "#c9b48a"); return; }
       const valuable = targets.filter((it) => it.rarity === "unique" || it.rarity === "set" || it.plus > 0 || it.forged > 0 || it.legacyRuneBonus).length;
       const gained = targets.reduce((n, it) => n + WYD.inventory.salvageValue(s, it), 0);
       const warning = valuable ? `\nユニーク・セット・強化・鍛造・継承効果の装備を${valuable}個含みます。` : "";
@@ -361,12 +362,29 @@ WYD.ui = {
       this.$("filter-body").innerHTML = this.filterHtml();
       this.$("filter").hidden = false;
     };
+    this.$("discard-open").onclick = () => this.openDiscard();
+    this.$("discard-close").onclick = () => { this.$("discard").hidden = true; };
+    this.$("discard-body").onchange = (e) => {
+      const d = s.settings.discard;
+      const t = e.target;
+      if (t.dataset.discardRarity) d.rarities[t.dataset.discardRarity] = t.checked;
+      else if (t.dataset.discardSlot) d.slots[t.dataset.discardSlot] = t.checked;
+      else if (t.dataset.discardFlag) d[t.dataset.discardFlag] = t.checked;
+      else if (t.dataset.discardNum) d[t.dataset.discardNum] = Number(t.value);
+      this.changed();
+      this.openDiscard();
+    };
+    this.$("discard-body").onclick = (e) => {
+      if (e.target.closest("[data-discard-run]")) { this.$("discard-all").click(); this.openDiscard(); }
+      else if (e.target.closest("[data-discard-filter]")) this.$("filter-open").click();
+    };
     this.$("filter-close").onclick = () => { this.$("filter").hidden = true; };
     this.$("filter-body").onchange = (e) => {
       const f = s.settings.filter;
       const t = e.target;
       if (t.dataset.filterSlot) f.slots[t.dataset.filterSlot] = t.value;
       else if (t.dataset.filterFlag) f[t.dataset.filterFlag] = t.checked;
+      else if (t.dataset.filterNum) f[t.dataset.filterNum] = Number(t.value);
       this.changed();
     };
     this.$("forge-close").onclick = () => { this.$("forge").hidden = true; this.forgeItem = null; };
@@ -759,11 +777,55 @@ WYD.ui = {
     const slots = WYD.data.items.slots;
     const opts = (cur) => C.filterLevels.map((l) => `<option value="${l.id}" ${l.id === cur ? "selected" : ""}>${l.label}</option>`).join("");
     const flag = (id, label) => `<label class="filter-flag"><input type="checkbox" data-filter-flag="${id}" ${f[id] ? "checked" : ""}> ${label}</label>`;
+    const num = (id) => C.filterRules[id].map((o) => `<option value="${o.v}" ${o.v === (f[id] || 0) ? "selected" : ""}>${o.label}</option>`).join("");
     return `${flag("on", "<b>フィルターを使う</b>（ONの間は上の「自動分解」のかわりにこちらが使われる）")}
       <div class="filter-grid">${Object.keys(slots).map((k) => `<span>${slots[k]}</span><select data-filter-slot="${k}">${opts(f.slots[k] || "normal")}</select>`).join("")}</div>
       ${flag("keepUpgrades", "今の装備より強いものは、上の決まりに関係なく拾う")}
+      <h3 class="filter-sub">細かい決まり <small class="muted">（上の部位ごとのレア度より先に見る）</small></h3>
+      <div class="filter-grid">
+        <span>ソケット</span><select data-filter-num="minSockets">${num("minSockets")}</select>
+        <span>特殊効果</span><select data-filter-num="minEffects">${num("minEffects")}</select>
+      </div>
+      <p class="muted">ソケット・特殊効果が選んだ数以上なら、レア度に関係なく拾う。</p>
+      ${flag("noSocketDrop", "ソケットのない装備は拾わない（今より強いもの・上の数に当たるものは拾う）")}
+      ${flag("keepAncient", "太古・原初の装備は、レア度に関係なく拾う")}
 
       <p class="muted">ユニークとセットはいつも拾います。拾わない装備はその場で素材になります。</p>`;
+  },
+
+  // 捨てる設定の画面（「全て捨てる」で何を捨てるか）
+  openDiscard() {
+    this.$("discard-body").innerHTML = this.discardHtml();
+    this.$("discard").hidden = false;
+  },
+
+  discardHtml() {
+    const s = this.state, d = s.settings.discard;
+    const C = WYD.data.crafting, I = WYD.data.items;
+    const box = (attr, key, on, label) => `<label class="filter-flag discard-chip"><input type="checkbox" ${attr}="${key}" ${on ? "checked" : ""}> ${label}</label>`;
+    const flag = (id, label) => box("data-discard-flag", id, d[id], label);
+    const num = (id) => C.discardRules[id].map((o) => `<option value="${o.v}" ${o.v === (d[id] || 0) ? "selected" : ""}>${o.label}</option>`).join("");
+    const targets = WYD.inventory.discardTargets(s);
+    const gained = targets.reduce((n, it) => n + WYD.inventory.salvageValue(s, it), 0);
+    return `<p class="muted">「全て捨てる」は、チェックの入ったレア度・部位のうち、下の「残す」に当たらないものだけを捨てます。ロックした装備はいつも残ります。</p>
+      <h3 class="filter-sub">捨てるレア度</h3>
+      <div class="discard-row">${I.rarities.map((r) => box("data-discard-rarity", r.id, d.rarities[r.id] !== false, `<span style="color:${r.color}">${r.name}</span>`)).join("")}</div>
+      <h3 class="filter-sub">捨てる部位</h3>
+      <div class="discard-row">${Object.keys(I.slots).map((k) => box("data-discard-slot", k, d.slots[k] !== false, I.slots[k])).join("")}</div>
+      <h3 class="filter-sub">残す決まり</h3>
+      <div class="filter-grid">
+        <span>ソケット</span><select data-discard-num="keepSockets">${num("keepSockets")}</select>
+        <span>特殊効果</span><select data-discard-num="keepEffects">${num("keepEffects")}</select>
+      </div>
+      ${flag("keepGems", "宝石・ルーンが入っている装備は残す")}
+      ${flag("keepWorked", "強化（+1以上）・鍛造した装備は残す")}
+      ${flag("keepAncient", "太古・原初の装備は残す")}
+      ${flag("keepUpgrades", "今の装備より強いものは残す")}
+      ${flag("keepBuild", "保存ビルドで使う装備は残す")}
+      ${flag("keepGrow", "「★育てる」タブにいる装備は残す")}
+      <div class="discard-foot"><span>今の決まりで捨てるもの：<b>${targets.length}個</b>（${C.materialName} +${gained}）</span>
+        <button data-discard-run ${targets.length ? "" : "disabled"}>この決まりで捨てる</button></div>
+      <p class="muted">拾うときの決まりは <button data-discard-filter>戦利品フィルター（拾う設定）</button> で決めます。</p>`;
   },
 
   // 鍛造の画面
@@ -830,7 +892,7 @@ WYD.ui = {
       return `<div class="cube-row"><span class="cube-name">${C.slots[cs]}</span>
         <select data-cube-slot="${cs}" ${list.length ? "" : "disabled"}>${opts}</select>
         <div class="cube-desc">${curDef ? WYD.loot.uniqueDesc(curDef) : list.length ? "" : "まだ覚えた力がない"}</div></div>`;
-    }).join("") + `<p class="muted">「入れるモード」をONにしてユニーク装備をクリックすると、分解して力を覚える（${WYD.data.crafting.materialName} ${C.extractCost}個）</p>`;
+    }).join("") + `<p class="muted">新しい力を覚えるには、装備画面（Status）でユニーク装備を選び「カナイの箱に入れる」を押します（装備は分解・${WYD.data.crafting.materialName} ${C.extractCost}個）。上の3枠では習得済みの力をいつでも付け替えられます。</p>`;
   },
 
   // ロック：捨てられない・まとめて捨てない・自動装備で外れない
@@ -1181,11 +1243,12 @@ WYD.ui = {
     this.putHtml("inventory", this.cellsHtml(s.inventory, size));
     WYD.gemVault.refresh();   // 宝石の画面（開いていれば描きなおす）
     WYD.equipScreen.refresh();   // 装備画面（試作。開いていれば描きなおす）
+    WYD.optimizer.refresh();     // おすすめ装備（開いていれば描きなおす）
     this.putHtml("builds", this.buildsHtml());
     this.$("maps-panel").hidden = !s.cleared && !s.maps.length;
     // 序盤は使えないものを出さない（使えるようになったら出る）
     const all = s.inventory.concat(s.stash, Object.values(s.equipment)).filter(Boolean);
-    this.unlock("cube-panel", s.records.uniquesFound > 0 || Object.keys(s.cube.learned).length > 0);
+    this.unlock("cube-panel", s.records.uniquesFound > 0 || Object.keys(s.cube.learned).length > 0 || all.some((it) => !!WYD.loot.uniqueInfo(it)));
     this.unlock("merc-open", s.player.level >= WYD.data.mercenary.minLevel || !!s.mercenary.type);
     this.unlock("gamble-open", s.player.level >= WYD.data.gamble.minLevel);
     this.unlock("lgem-open", Object.keys(s.lgems.owned).length > 0);
@@ -1364,7 +1427,10 @@ WYD.ui = {
     const list = WYD.loot.setBonuses(info.set);
     const bon = Object.keys(list).map((need) =>
       `<div style="color:${have >= Number(need) ? C : "#777"}">（${need}つ）${this.bonusText(list[need])}</div>`).join("");
-    return `<div class="unique-power"><span style="color:${C}">■ ${info.set.name}（装備中 ${have}/${info.set.pieces.length}）</span><br><small>${pieces}</small><small>${bon}</small></div>`;
+    const SC = WYD.data.sets.complete || {}, cm = (SC.attackMult || {})[info.set.id], sm = (SC.statMult || {})[info.set.id] || {};
+    const fullParts = [cm && cm !== 1 ? `攻撃力 ×${cm}` : "", ...Object.entries(sm).map(([k, v]) => `${WYD.data.items.stats[k].name} ×${v}`)].filter(Boolean);
+    const full = fullParts.length ? `<div style="color:${have >= info.set.pieces.length ? C : "#777"}">（${info.set.pieces.length}つ・完成の力）${fullParts.join("・")}</div>` : "";
+    return `<div class="unique-power"><span style="color:${C}">■ ${info.set.name}（装備中 ${have}/${info.set.pieces.length}）</span><br><small>${pieces}</small><small>${bon}${full}</small></div>`;
   },
 
   // スキルの型（ルーン）を選ぶ欄。覚えていないスキルには出さない
