@@ -1629,3 +1629,15 @@ html.m-ui #equipscreen .modal-box.equipscreen-box { min-height: 0; }
 @media (max-width:600px) {
   .gv-card { grid-template-columns:minmax(0,1fr); }
 }
+
+/* 装備判断は説明だけをスクロールし、装備・戻る・閉じるを常設する。 */
+.sheet-box #sheet-body { overflow:hidden; max-height:calc(100dvh - 32px); }
+.sheet-box .sheet-heading { flex:none; align-items:center; }
+.sheet-box .sheet-heading button { min-height:44px; }
+.sheet-box .sheet-details { min-height:0; overflow-y:auto; flex:1 1 auto; overflow-wrap:anywhere; }
+.sheet-box .sheet-main,.sheet-box .sheet-work { flex:none; }
+.sheet-box summary { cursor:pointer; padding:10px 0; color:#ecd4a3; }
+.sheet-box .sheet-other { margin-top:8px; }
+.sheet-box .sheet-main button { flex:1 1 140px; width:auto; }
+.tip-summary .set-change { margin-top:8px; padding:6px; border:1px solid #675339; }
+.tip-summary .unique-power small { display:block; }

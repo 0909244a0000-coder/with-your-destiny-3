@@ -426,7 +426,7 @@ WYD.ui = {
     // 装備の窓（どこから選んでも同じ窓：装備する・外す・強化・つけ直し・鍛造・宝石・箱・ロック・捨てる）
     this.$("sheet-body").onclick = (e) => {
       const b = e.target.closest("[data-sheet]");
-      if (b) this.sheetAction(b.dataset.sheet);
+      if (b && b.isConnected && !b.disabled) this.sheetAction(b.dataset.sheet);
     };
     this.$("sheet").onclick = (e) => { if (e.target.id === "sheet") this.sheetAction("close"); };
 
@@ -1298,10 +1298,11 @@ WYD.ui = {
   // 装備を変えたときの点数の変わり方（％）
   scoreChangeText(item, cur) {
     const a = WYD.inventory.itemScore(item), b = WYD.inventory.itemScore(cur);
-    if (!cur || b <= 0) return `<div class="up">総合の目安：この部位が空いているので強くなる</div>`;
+    if (!cur) return `<div class="tip-sub">自動装備の点数：比較先なし（空き部位）</div>`;
+    if (b <= 0) return `<div class="tip-sub">自動装備の点数：比較先が0以下のため割合は算出しません</div>`;
     const pct = Math.round((a - b) / b * 100);
-    if (pct === 0) return `<div class="tip-sub">総合の目安：ほぼ同じ</div>`;
-    return `<div class="${pct > 0 ? "up" : "down"}">総合の目安：${pct > 0 ? "▲" : "▼"} ${pct > 0 ? "+" : ""}${pct}%</div>`;
+    if (pct === 0) return `<div class="tip-sub">自動装備の点数（参考）：ほぼ同じ</div>`;
+    return `<div class="${pct > 0 ? "up" : "down"}">自動装備の点数（参考）：${pct > 0 ? "▲" : "▼"} ${pct > 0 ? "+" : ""}${pct}%</div>`;
   },
 
   // セットのボーナスの説明文
@@ -1525,7 +1526,7 @@ WYD.ui = {
   },
 
   // ---------- 装備の説明（マウスを乗せたとき） ----------
-  itemHtml(item, title) {
+  itemHtml(item, title, compact = false) {
     const r = WYD.loot.rarityInfo(item.rarity);
     const lines = item.stats.map((l) =>
       `<div class="${l.main ? "main" : "affix"}">${WYD.util.formatStat(l.stat, WYD.loot.lineValue(item, l))}</div>`
@@ -1542,14 +1543,14 @@ WYD.ui = {
     ).join("");
     return `<div class="tip-item">
       ${title ? `<div class="tip-title">${title}</div>` : ""}
-      <div style="color:${WYD.gems.runeword(item) ? WYD.data.gems.runewordColor : r.color};font-weight:bold">${item.plus > 0 ? `<span style="color:${WYD.data.crafting.enhance.color}">+${item.plus}</span> ` : ""}${WYD.gems.runeword(item) ? `「${WYD.gems.runeword(item).name}」` : ""}${item.name}</div>
+      <div style="color:${WYD.gems.runeword(item) ? WYD.data.gems.runewordColor : r.color};font-weight:bold">${compact || item.plus > 0 ? `<span style="color:${WYD.data.crafting.enhance.color}">+${item.plus || 0}</span> ` : ""}${WYD.gems.runeword(item) ? `「${WYD.gems.runeword(item).name}」` : ""}${item.name}</div>
       <div class="tip-sub">${item.ancient ? `<b style="color:${WYD.data.items.ancient.colors[item.ancient]}">${WYD.data.items.ancient.names[item.ancient].replace("の", "")}</b>・` : ""}${r.name}・${WYD.data.items.slots[item.slot]}・アイテムLv ${item.level}</div>
       ${keep ? `<div class="tip-sub">自動保護：${WYD.data.story.keepNote.reasons[keep]}ため${item.locked ? "（分解不可）" : "（手動の分解・全て捨てるは対象。残すならロック）"}</div>` : ""}
-      ${lines}
-      ${uniqueLine}
-      ${fxLines}
-      ${this.socketsHtml(item)}
-      ${this.runewordHtml(item)}
+      ${compact ? "" : lines}
+      ${compact ? "" : uniqueLine}
+      ${compact ? "" : fxLines}
+      ${compact ? "" : this.socketsHtml(item)}
+      ${compact ? "" : this.runewordHtml(item)}
     </div>`;
   },
 
@@ -1564,7 +1565,7 @@ WYD.ui = {
   },
 
   // 今の装備と取り替えたら、何がどれだけ変わるか
-  compareHtml(item, cur) {
+  compareHtml(item, cur, expanded = true) {
     const sum = (it) => {
       const total = { stats: {}, effects: {} };
       if (!it) return total;
@@ -1591,9 +1592,51 @@ WYD.ui = {
     }
     return `<div class="tip-item tip-compare">
       <div class="tip-title">装備するとこう変わる</div>
-      ${this.scoreChangeText(item, cur)}
-      ${rows.length ? rows.join("") : `<div class="tip-sub">変化なし</div>`}
+      <div class="tip-summary">${this.comparisonSummary(item, cur)}</div>
+      <details class="comparison-details" ${expanded ? "open" : ""}><summary>詳細な能力を見る</summary>
+      ${this.scoreChangeText(item, cur)}<p class="tip-sub">点数は固有能力・セット効果を正確に評価しません。</p>
+      <div class="tip-title">装備そのものの全差分（強化・宝石込み）</div>
+      ${rows.length ? rows.join("") : `<div class="tip-sub">変化なし</div>`}</details>
     </div>`;
+  },
+
+  // 戦闘計算を作り直さず、現在の条件で装備だけを差し替えた能力を比較する。
+  comparisonSummary(item, cur) {
+    const s = this.state, esc = WYD.results.escape;
+    const next = { ...s, equipment: { ...s.equipment, [item.slot]: item } };
+    const before = WYD.stats.compute(s), after = WYD.stats.compute(next);
+    let html = `<div class="tip-sub">キャラクター全体（現在の変身・祠などを含む）</div>`;
+    for (const k of ["attack", "defense", "maxHp"]) {
+      const oldValue = Math.round(before[k]), newValue = Math.round(after[k]);
+      const diff = newValue - oldValue;
+      html += `<div class="${diff > 0 ? "up" : diff < 0 ? "down" : "tip-sub"}">${WYD.data.items.stats[k].name} ${oldValue} → ${newValue}（${diff > 0 ? "+" : ""}${diff}）</div>`;
+    }
+    const a = WYD.loot.uniqueInfo(item), b = WYD.loot.uniqueInfo(cur);
+    if (a || b) html += `<div class="unique-power">固有能力（自動評価対象外）<br>いま：${b ? esc(WYD.loot.uniqueDesc(b)) : "なし"}<br>候補：${a ? esc(WYD.loot.uniqueDesc(a)) : "なし"}<small>箱・他の装備と同じ能力は重複しない場合があります。</small></div>`;
+    const bc = WYD.stats.setCounts(s), ac = WYD.stats.setCounts(next);
+    for (const set of WYD.data.sets.list) {
+      const n = bc[set.id] || 0, m = ac[set.id] || 0;
+      if (n === m) continue;
+      html += `<div class="set-change">${esc(set.name)}：${n} → ${m}部位</div>`;
+      const bonuses = WYD.loot.setBonuses(set, s.classId || WYD.classes.id);
+      for (const need in bonuses) if ((n >= Number(need)) !== (m >= Number(need)))
+        html += `<div class="set-change ${m > n ? "up" : "down"}"><b>${need}部位効果 ${m > n ? "成立" : "解除"}</b>：${this.bonusText(bonuses[need])}</div>`;
+      if ((n >= set.pieces.length) !== (m >= set.pieces.length))
+        html += `<div class="set-change ${m > n ? "up" : "down"}"><b>完成の力 ${m > n ? "成立" : "解除"}</b>（上の全体能力に反映）</div>`;
+    }
+    return html;
+  },
+
+  // 位置が変わってもIDで照合。同じ保管場所の並べ替えは追従し、移動・消失は閉じる。
+  resolveSheet(sh) {
+    if (!sh || sh.id == null) return null;
+    const s = this.state;
+    const list = sh.where === "inv" ? s.inventory : sh.where === "stash" ? s.stash : null;
+    const key = list ? list.findIndex(it => it.id === sh.id) : sh.key;
+    const item = list ? list[key] : s.equipment[key];
+    if (!item || item.id !== sh.id) return null;
+    sh.key = key;
+    return item;
   },
 
   // 隠していたものを出す。はじめて出たときは「使えるようになった」と知らせる
@@ -1750,20 +1793,26 @@ WYD.ui = {
   },
 
   // 装備の窓（持ち物・装備欄・倉庫のどこから選んでも同じ）：説明・比べ・宝石と、装備する／外す・強化・つけ直し・鍛造・宝石・箱・ロック・捨てる
-  touchSheet(where, key) {
+  touchSheet(where, key, mode = "compare") {
     const s = this.state, C = WYD.data.crafting, esc = WYD.results.escape;
     const item = where === "inv" ? s.inventory[key] : where === "stash" ? s.stash[key] : s.equipment[key];
     if (!item) return false;
     this.hideTooltip();
     delete item.isNew;   // 見たので NEW の印を消す
-    this.sheet = { where, key };
+    this.sheet = { where, key, id: item.id, mode, lastAction: this.sheet && this.sheet.id === item.id ? this.sheet.lastAction : 0 };
     const mat = C.materialName;
-    let html = this.itemHtml(item);
-    if (where !== "eq") {
-      const cur = s.equipment[item.slot];
-      html += cur ? this.itemHtml(cur, "いま装備中") : `<div class="tip-item tip-sub">この部位は何も装備していない</div>`;
-      html += this.compareHtml(item, cur);
-    }
+    const cur = s.equipment[item.slot];
+    let html = this.itemHtml(item, mode === "work" ? "強化・加工" : "選択した装備", mode !== "work");
+    if (mode !== "work") {
+      html += `<div class="tip-sub">いま装備中：${cur ? esc(WYD.loot.label(cur)) : "なし（空き部位）"}</div>`;
+      if (where !== "eq") html += this.compareHtml(item, cur, false);
+      else {
+        const unique = WYD.loot.uniqueInfo(item);
+        if (unique) html += `<div class="unique-power">固有能力（自動評価対象外）<br>${esc(WYD.loot.uniqueDesc(unique))}</div>`;
+        html += this.setHtml(item);
+      }
+      html += `<details><summary>装備の詳しい説明</summary>${this.itemHtml(item)}${where !== "eq" && cur ? this.itemHtml(cur, "いま装備中") : ""}</details>`;
+    } else html = `<p class="tip-sub">現在 +${item.plus || 0} ／ ${mat} 所持 ${s.materials}</p>` + html;
     const btn = (act, label, cls, off, title) => `<button data-sheet="${act}"${cls ? ` class="${cls}"` : ""}${off ? " disabled" : ""}${title ? ` title="${title}"` : ""}>${label}</button>`;
     // 宝石：1つずつ外す・空きがあれば宝石の画面ではめる
     const sockets = (item.sockets || []).map((k, n) => {
@@ -1773,22 +1822,27 @@ WYD.ui = {
     const free = WYD.gems.freeSocket(item) >= 0;
     const gemRow = (item.sockets || []).length ? `<div class="sheet-gems"><b>宝石（ソケット${item.sockets.length}）</b>${sockets}${free ? btn("gems", "空いたソケットに宝石をはめる（宝石の画面）") : ""}</div>` : "";
     const main = where === "inv" ? [btn("equip", "装備する", "primary")]
-      : where === "stash" ? [btn("back", "持ち物へ戻す")] : [btn("unequip", "外す")];
+      : where === "stash" ? [btn("back", "持ち物へ戻す", "primary", WYD.inventory.isFull(s), "持ち物がいっぱいの場合は戻せません")] : [btn("unequip", "外す", "primary", WYD.inventory.isFull(s), "持ち物がいっぱいの場合は外せません")];
     const ec = WYD.inventory.enhanceCost(item), rc = WYD.inventory.rerollCost(item);
     const work = [
       btn("enhance", ec == null ? `強化（最大 +${C.enhance.max}）` : `強化 +${(item.plus || 0) + 1}（${mat}${ec}）`, "", ec == null || s.materials < ec, `能力が${Math.round(C.enhance.statPerLevel * 100)}%ぶん上がる。持っている数 ${s.materials}`),
       btn("reroll", rc > 0 ? `特殊効果をつけ直す（${mat}${rc}）` : "つけ直し（ノーマルは不可）", "", rc <= 0 || s.materials < rc, `持っている数 ${s.materials}`),
       btn("forge", "鍛造…", "", false, "能力を1つずつ狙って鍛える"),
     ];
-    if (WYD.loot.uniqueInfo(item) && where !== "eq") work.push(btn("cube", "カナイの箱に入れる（分解して力を覚える）"));
+
     const misc = [btn("lock", item.locked ? "ロックを外す" : "ロックする")];
-    if (where !== "eq") misc.push(btn("discard", `捨てる（${mat} +${WYD.inventory.salvageValue(s, item)}）`, "danger"));
-    misc.push(btn("close", "閉じる"));
+    if (where !== "eq") misc.push(btn("discard", `捨てる（${mat} +${WYD.inventory.salvageValue(s, item)}）`, "danger", item.locked));
+    if (WYD.loot.uniqueInfo(item) && where !== "eq") misc.push(btn("cube", "カナイの箱に入れる（分解して力を覚える）", "", item.locked));
     const location = where === "eq" ? "装備中" : where === "stash" ? "倉庫" : "持ち物";
-    this.$("sheet-body").innerHTML = `<div class="sheet-heading"><span class="sheet-eyebrow">EQUIPMENT · ${location}</span><strong>${esc(WYD.data.items.slots[item.slot])}</strong></div>` +
-      `<div class="sheet-details">${html}</div>${gemRow}<div class="sheet-btns sheet-main">${main.join("")}</div>` +
-      `<div class="sheet-btns sheet-work"><span class="sheet-section-label">強化と加工</span>${work.join("")}</div>` +
-      `<div class="sheet-btns sheet-misc"><span class="sheet-section-label">その他</span>${misc.join("")}</div>`;
+    this.$("sheet-body").innerHTML = `<div class="sheet-heading"><span class="sheet-eyebrow">${location} · ${mode === "work" ? "強化・加工" : "装備比較"}</span>${btn("close", "閉じる")}</div>` +
+      `<div class="sheet-details">${html}${mode === "work" ?
+        `<p class="tip-sub">強化：宝石を除く装備能力が、元の値の${Math.round(C.enhance.statPerLevel * 100)}%ぶん上昇。${ec == null ? "最大強化です" : `必要 ${ec} ／ 所持 ${s.materials}${s.materials < ec ? "（素材不足）" : ""}`}</p>
+         <p class="tip-sub">つけ直し：特殊効果を再抽選。固有能力・セット・能力値は維持。必要 ${rc} ／ 所持 ${s.materials}${rc <= 0 ? "（対象外）" : s.materials < rc ? "（素材不足）" : ""}</p>
+         <p class="tip-sub">鍛造：余地 ${item.forgePotential == null ? C.forge.potential[item.rarity] || 0 : item.forgePotential}。能力を上げる ${WYD.inventory.forgeCost(item, "improve")} ／ 足す ${WYD.inventory.forgeCost(item, "add")}。所持 ${s.materials}</p>
+         ${gemRow || '<p class="tip-sub">ソケットなし</p>'}` :
+        `<details class="sheet-other"><summary>その他（ロック・分解・箱）</summary><div class="sheet-btns sheet-misc">${misc.join("")}</div></details>`}</div>` +
+      (mode === "work" ? `<div class="sheet-btns sheet-work">${work.join("")}${btn("compare", "戻る：装備比較")}</div>` :
+        `<div class="sheet-btns sheet-main">${main.join("")}${btn("work", "強化・加工")}</div>`);
     this.$("sheet").hidden = false;
     return true;
   },
@@ -1798,13 +1852,21 @@ WYD.ui = {
     const s = this.state;
     const sh = this.sheet;
     if (!sh || act === "close") { this.$("sheet").hidden = true; this.sheet = null; return; }
-    const item = sh.where === "inv" ? s.inventory[sh.key] : sh.where === "stash" ? s.stash[sh.key] : s.equipment[sh.key];
+    const item = this.resolveSheet(sh);
     if (!item) { this.$("sheet").hidden = true; this.sheet = null; return; }
+    if (act === "work" || act === "compare") { this.touchSheet(sh.where, sh.key, act); return; }
+    const consumes = ["enhance", "reroll", "discard", "cube"].includes(act) || act.startsWith("unsocket:");
+    if (consumes && Date.now() - (sh.lastAction || 0) < 350) return;
+    if (consumes) sh.lastAction = Date.now();
     const C = WYD.data.crafting;
     let keep = false;
-    if (act === "equip") WYD.inventory.equip(s, sh.key);
-    else if (act === "back" && !WYD.inventory.fromStash(s, sh.key)) this.log("持ち物がいっぱいで戻せない", "#ff6b6b");
-    else if (act === "unequip" && !WYD.inventory.unequip(s, sh.key)) this.log("持ち物がいっぱいで外せない", "#ff6b6b");
+    if (act === "equip" && sh.where === "inv") WYD.inventory.equip(s, sh.key);
+    else if (act === "back" && sh.where === "stash") {
+      if (!WYD.inventory.fromStash(s, sh.key)) { this.log("持ち物がいっぱいで戻せない", "#ff6b6b"); keep = true; }
+    }
+    else if (act === "unequip" && sh.where === "eq") {
+      if (!WYD.inventory.unequip(s, sh.key)) { this.log("持ち物がいっぱいで外せない", "#ff6b6b"); keep = true; }
+    }
     else if (act === "lock") { this.toggleLock(item); keep = true; }
     else if (act === "enhance") { this.enhanceItem(item); keep = true; }
     else if (act === "reroll") { this.rerollItem(item); keep = true; }
@@ -1816,13 +1878,13 @@ WYD.ui = {
     else if (act === "forge") this.openForge(item);
     else if (act === "cube") this.cubeItem(item);
     else if (act === "gems") WYD.gemVault.open();
-    else if (act === "discard") {
+    else if (act === "discard" && sh.where !== "eq") {
       const gained = sh.where === "inv" ? WYD.inventory.discard(s, sh.key) : WYD.inventory.discardFromStash(s, sh.key);
       if (gained < 0) this.log(`${WYD.loot.label(item)}はロックしているので捨てられない`, "#ff6b6b");
       else this.log(`${WYD.loot.label(item)}を捨てた（${C.materialName} +${gained}）`);
     }
     this.changed();
-    if (keep) this.touchSheet(sh.where, sh.key);
+    if (keep && this.resolveSheet(sh)) this.touchSheet(sh.where, sh.key, sh.mode);
     else { this.$("sheet").hidden = true; this.sheet = null; }
   },
 
