@@ -33,8 +33,8 @@ WYD.data.classes.puppeteer = {
     pup_bind: { kind:"puppet",mode:"bind",name:"絡め糸",desc:"人形の周囲の敵を縛る。ボスへの拘束は短い。",startLevel:0,maxLevel:10,cooldown:10,hpCost:4,radius:120,bindBase:1.5,bindPerLevel:0.15,bossBindMult:0.3,damageBase:0.8,damagePerLevel:0.12,color:"#be6f7e" },
     pup_swap: { kind:"puppet",mode:"swap",name:"身代わり縫い",desc:"本体のHPが減ると少し回復し、本体と人形の防御力を上げる。",startLevel:0,maxLevel:10,cooldown:12,hpCost:2,triggerHpPercent:55,duration:4,defenseMult:1.2,puppetDefenseMult:1.5,healPercentBase:20,healPercentPerLevel:2,color:"#e1b791" },
     pup_stitch: { kind:"puppet",mode:"stitch",name:"血の縫合",desc:"一定時間、人形の攻撃が当たると本体のHPを回復する。",startLevel:0,maxLevel:10,cooldown:13,hpCost:3,duration:6,healPercentBase:9,healPercentPerLevel:0.7,healInterval:0.8,color:"#d26771" },
-    pup_cut: { kind:"puppet",mode:"cut",name:"赤糸の裁断",desc:"本体のHPを大きく使い、人形で敵を強く切り裂く。",startLevel:0,maxLevel:10,cooldown:8,hpCost:9,range:260,damageBase:3.2,damagePerLevel:0.48,color:"#ff6680" },
-    pup_finale: { kind:"puppet",mode:"finale",name:"終幕",desc:"人形のHPが40%以下のとき、人形を壊して周囲の敵へ大きなダメージを与える。",startLevel:0,maxLevel:10,cooldown:15,hpCost:7,triggerPuppetHpPercent:40,radius:140,damageBase:6,damagePerLevel:0.9,color:"#f0ad8b" },
+    pup_cut: { kind:"puppet",mode:"cut",name:"赤糸の裁断",desc:"本体のHPを大きく使い、人形で敵を強く切り裂く。",startLevel:0,maxLevel:10,cooldown:8,hpCost:9,range:260,damageBase:3.8,damagePerLevel:0.56,color:"#ff6680" },
+    pup_finale: { kind:"puppet",mode:"finale",name:"終幕",desc:"人形のHPが40%以下のとき、人形を壊して周囲の敵へ大きなダメージを与える。",startLevel:0,maxLevel:10,cooldown:15,hpCost:7,triggerPuppetHpPercent:40,radius:140,damageBase:8,damagePerLevel:1.2,color:"#f0ad8b" },
   },
   autoBuild: ["pup_thread","pup_pierce","pup_stitch"],
   skillOrder: ["pup_finale","pup_thread","pup_swap","pup_guard","pup_stitch","pup_bind","pup_needles","pup_pierce","pup_cut"],
@@ -53,7 +53,7 @@ WYD.data.puppeteer = {
   //   PvP だけ：damageTakenScale/hitHpCap/windowHpCap … 人形が受けるダメージの規則（data/arena.js の combat と同じ意味。
   //   ふつうの召喚は summonDamageScale などで脆いが、傀儡師の人形は本体と同じ主戦力なので別にする）
   modes: {
-    pve: { hpMult: 1.2, attackMult: 1.65, defenseMult: 1, costMult: 1, lowHpReserve: 0.2, summonHpReserve: 0.15, respawnCooldown: 6, guardSharePercent: 20 },
+    pve: { hpMult: 1.2, attackMult: 2, defenseMult: 1, costMult: 1, lowHpReserve: 0.2, summonHpReserve: 0.15, respawnCooldown: 6, guardSharePercent: 20 },
     pvp: { hpMult: 1.3, attackMult: 1.6, defenseMult: 1, costMult: 0.75, lowHpReserve: 0.2, summonHpReserve: 0.15, respawnCooldown: 6, guardSharePercent: 45,
            damageTakenScale: 0.25, hitHpCap: 0.2, windowHpCap: 0.3 },
   },
