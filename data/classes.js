@@ -156,7 +156,7 @@ WYD.data.classes = {
         startLevel: 1, maxLevel: 10, cooldown: 3,
         countBase: 2, countPerLevel: 0.35,     // 呼べる数（レベルごとに足して、小数は切り捨て）
         hpRatio: 0.45,                         // 手下のHP（主人公の最大HPの何倍か）
-        attackBase: 0.45, attackPerLevel: 0.06, // 手下の攻撃力（主人公の攻撃力×これ）
+        attackBase: 0.6, attackPerLevel: 0.08, // 手下の攻撃力（主人公の攻撃力×これ）
         defenseRatio: 0.6,                     // 手下の防御力（主人公の防御力×これ）
         duration: 20,                          // 手下がいられる秒数
         moveSpeed: 115, attackSpeed: 1.0, range: 26, radius: 12,
@@ -172,7 +172,7 @@ WYD.data.classes = {
         desc: "遠くから魔法を撃つ骸骨を呼び出す。戦士より打たれ弱いが、離れたところから攻撃する。",
         startLevel: 0, maxLevel: 10, cooldown: 4,
         countBase: 1, countPerLevel: 0.25,
-        hpRatio: 0.25, attackBase: 0.55, attackPerLevel: 0.07, defenseRatio: 0.3,
+        hpRatio: 0.25, attackBase: 0.75, attackPerLevel: 0.09, defenseRatio: 0.3,
         duration: 18, moveSpeed: 100, attackSpeed: 0.8, range: 26, radius: 11,
         rangedRange: 220,                      // この距離から撃つ
         keepDistance: 120,                     // 敵とこの距離を保つ
@@ -186,7 +186,7 @@ WYD.data.classes = {
         kind: "whirl", name: "骨の嵐",
         desc: "周りに骨の破片をまき散らし、敵すべてにダメージ。",
         startLevel: 0, maxLevel: 10, cooldown: 5,
-        radius: 100, damageBase: 1.6, damagePerLevel: 0.36, minTargets: 2, color: "#e8e2c8",
+        radius: 100, damageBase: 2.4, damagePerLevel: 0.52, minTargets: 2, color: "#e8e2c8",
       },
       nec_armor: {
         kind: "vajra", name: "骨の鎧",
@@ -200,13 +200,13 @@ WYD.data.classes = {
         desc: "骨の槍が敵から敵へ飛び移り、何体もまとめて貫く。",
         startLevel: 0, maxLevel: 10, cooldown: 4,
         range: 280, jumpRange: 170, targetsBase: 3, targetsPerLevel: 0.5,
-        damageBase: 1.3, damagePerLevel: 0.24, color: "#f0ead0",
+        damageBase: 1.7, damagePerLevel: 0.3, color: "#f0ead0",
       },
       nec_plague: {
         kind: "agni", name: "疫病の霧",
         desc: "敵の多い場所に毒の霧を広げ、中の敵をむしばみ続ける。",
         startLevel: 0, maxLevel: 10, cooldown: 7,
-        range: 260, radius: 95, duration: 5, tick: 0.5, damageBase: 0.5, damagePerLevel: 0.1, color: "#7dff6a",
+        range: 260, radius: 95, duration: 5, tick: 0.5, damageBase: 0.65, damagePerLevel: 0.13, color: "#7dff6a",
       },
       nec_pact: {
         kind: "hanuman", name: "血の契約",
@@ -225,7 +225,7 @@ WYD.data.classes = {
         kind: "aura", auraType: "damage", name: "腐敗の気",
         desc: "オーラ：まわりに死の気配をまとい、近くの敵を腐らせ続ける。攻撃力×倍率のダメージ。",
         startLevel: 0, maxLevel: 10, cooldown: 1,
-        radius: 130, damageBase: 0.3, damagePerLevel: 0.06, color: "#9adf7a",
+        radius: 130, damageBase: 0.4, damagePerLevel: 0.08, color: "#9adf7a",
       },
     },
     autoBuild: ["nec_raise", "nec_mage", "nec_nova"],   // 「おまかせ」で先に覚えてONにするスキル
@@ -357,13 +357,13 @@ WYD.data.classes = {
         kind: "whirl", name: "刃の舞",
         desc: "回転しながら周りの敵すべてを切り裂く。",
         startLevel: 1, maxLevel: 10, cooldown: 3.5,
-        radius: 85, damageBase: 1.3, damagePerLevel: 0.27, minTargets: 1, color: "#d8b0ff",
+        radius: 85, damageBase: 1.5, damagePerLevel: 0.31, minTargets: 1, color: "#d8b0ff",
       },
       asn_cloak: {
         kind: "vajra", name: "影の外套",
         desc: "HPが減ると発動。影に身を包んで防御力アップし、HPを回復。",
         startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6,
-        defenseBase: 60, defensePerLevel: 9, healPercentBase: 11, healPercentPerLevel: 2,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
+        defenseBase: 60, defensePerLevel: 9, healPercentBase: 15, healPercentPerLevel: 3,   // 2026-10-10：防御は防御力の%（前は+固定値）・効く時間 5→6秒・クールダウン 12→10
         triggerHpPercent: 60, color: "#7a5aa8",
       },
       asn_shuriken: {
@@ -371,13 +371,13 @@ WYD.data.classes = {
         desc: "手裏剣が敵から敵へ飛び移り、何体もまとめて切る。",
         startLevel: 0, maxLevel: 10, cooldown: 4,
         range: 260, jumpRange: 170, targetsBase: 4, targetsPerLevel: 0.5,
-        damageBase: 1.3, damagePerLevel: 0.23, color: "#e0e0f0",
+        damageBase: 1.5, damagePerLevel: 0.27, color: "#e0e0f0",
       },
       asn_fire: {
         kind: "agni", name: "爆炎の罠",
         desc: "敵の多い場所に炎の罠をしかけ、燃える地面で焼き続ける。",
         startLevel: 0, maxLevel: 10, cooldown: 7,
-        range: 240, radius: 85, duration: 4, tick: 0.5, damageBase: 0.55, damagePerLevel: 0.11, color: "#ff7a3a",
+        range: 240, radius: 85, duration: 4, tick: 0.5, damageBase: 0.65, damagePerLevel: 0.13, color: "#ff7a3a",
       },
       asn_burst: {
         kind: "hanuman", name: "疾風の構え",
@@ -397,7 +397,7 @@ WYD.data.classes = {
         desc: "自分そっくりの影を1体呼び出す。影は敵を切り、敵の攻撃も引きつける。",
         startLevel: 0, maxLevel: 10, cooldown: 4,
         countBase: 1, countPerLevel: 0,
-        hpRatio: 0.6, attackBase: 0.6, attackPerLevel: 0.08, defenseRatio: 0.8,
+        hpRatio: 0.6, attackBase: 0.8, attackPerLevel: 0.1, defenseRatio: 0.8,
         duration: 25, moveSpeed: 130, attackSpeed: 1.2, range: 28, radius: 13,
         spawnSpread: 30, followDistance: 50, firstAttackDelay: 0.4,
         color: "#5a3a7a",
@@ -413,7 +413,7 @@ WYD.data.classes = {
         placeAt: 0.4,           // 主人公と敵のあいだのどこに置くか（0＝主人公、1＝敵）
         maxTrapsBase: 2, maxTrapsPerLevel: 0.2,   // 同時に置ける数（小数は切り捨て）
         duration: 10, fireInterval: 0.6, range: 230, targetsBase: 1, trapRadius: 9,
-        damageBase: 0.4, damagePerLevel: 0.065, color: "#9ad0ff",
+        damageBase: 0.5, damagePerLevel: 0.08, color: "#9ad0ff",
       },
       asn_death: {
         kind: "trap", name: "死の歩哨",
@@ -422,7 +422,7 @@ WYD.data.classes = {
         triggerRange: 240, placeAt: 0.4,
         maxTrapsBase: 1, maxTrapsPerLevel: 0.15,
         duration: 12, fireInterval: 1.5, range: 220, targetsBase: 3, trapRadius: 11,
-        damageBase: 0.72, damagePerLevel: 0.1, color: "#ff5a8a",
+        damageBase: 0.85, damagePerLevel: 0.12, color: "#ff5a8a",
       },
     },
     autoBuild: ["asn_blade", "asn_cloak", "asn_shuriken"],   // 「おまかせ」で先に覚えてONにするスキル
