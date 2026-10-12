@@ -89,6 +89,20 @@ const path = require('node:path');
       assert(g.feetBest, '宝石ぬきで強い装備を選ぶ（弱い装備の良い宝石にだまされない）'); assert.deepEqual(g.feetGems, ['topaz:4'], '良い宝石は選んだ装備へ移す');
       assert(g.waistOnly, '装備はそのまま・宝石だけ付け替え'); assert.deepEqual(g.waistNow, ['topaz:0']); assert.deepEqual(g.waistGems, ['topaz:3'], '手元の強い宝石と入れ替える'); assert(g.gemDiff);
       assert.match(g.text, /宝石だけ付け替え/); assert.match(g.text, /宝石：/); assert(g.same, 'ボタンを押すまでは宝石を動かさない');
+      // ソケットのない装備には、はめている宝石のぶんまで強くなければ替えない（宝石が行き場をなくして合計が下がるため）
+      const ns = await page.evaluate(() => {
+        const s = WYD.state, O = WYD.optimizer;
+        const make = (stats, sockets) => { const it = WYD.loot.create(s, 10, 0, { slot: 'feet', rarity: 'magic' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = sockets; it.plus = 0; return it; };
+        s.equipment = {}; s.stash = []; s.gems = {};
+        const socketed = make({ defense: 10 }, ['topaz:4', 'topaz:4']), bare = make({ defense: 14 }, []), better = make({ defense: 400 }, []);
+        s.equipment.feet = socketed; s.inventory = [bare];
+        const p1 = O.plan(s, 'defense'), r1 = p1.rows.find((x) => x.slot === 'feet');
+        s.inventory = [bare, better];
+        const p2 = O.plan(s, 'defense'), r2 = p2.rows.find((x) => x.slot === 'feet');
+        return { keep: r1.keep, diff1: p1.diff, swap: r2.best === better, diff2: p2.diff > 0 };
+      });
+      assert(ns.keep, '宝石のぶん弱くなるなら、ソケットのない装備に替えない'); assert(ns.diff1 >= 0, 'おすすめで合計が下がらない');
+      assert(ns.swap && ns.diff2, '宝石のぶんより強ければ替える');
       // 着替える：おすすめのとおりに装備と宝石を入れかえる。ロックした装備も外す（ロックは残る）。倉庫の装備は倉庫の中で入れかえる
       const a = await page.evaluate(() => {
         const s = WYD.state, O = WYD.optimizer;
