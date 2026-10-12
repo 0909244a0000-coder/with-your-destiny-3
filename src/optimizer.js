@@ -1,7 +1,7 @@
 // おすすめ装備の窓（装備画面の「おすすめ装備」から開く）。目的（火力・防御・対人）ごとに、
 // 手持ち（持ち物・今の装備・倉庫）から部位ごとに点数のいちばん高い装備を選んで「今 → おすすめ」と点数の差を出す。
 // 「このおすすめに着替える」「着替えてビルドに保存（枠1〜8）」で、おすすめのとおりに着替える（apply）。点数は能力×重み（data/optimizer.js）＋特殊効果・ユニーク・セットの加点（data/items.js の autoEquip）。
-// 宝石は外すのが無料なので、装備は宝石ぬきで選び、宝石は手元＋はめている全部を選んだ装備に配りなおす（plan）。
+// 宝石は外すのが無料なので、装備は宝石ぬきの点数＋ソケットの数（持っている宝石で埋めた点数）で選び、宝石は手元＋はめている全部を選んだ装備に配りなおす（plan）。
 window.WYD = window.WYD || {};
 WYD.optimizer = {
   opened: false,
@@ -70,7 +70,8 @@ WYD.optimizer = {
   },
 
   // 部位ごとのおすすめ。
-  // ① 宝石ぬきの点数で、部位ごとにいちばん高い装備を選ぶ（今の装備が同点以上なら今の装備）
+  // ① 宝石ぬきの点数＋ソケットを持っている宝石で埋めた点数（gemFill）で、部位ごとにいちばん高い装備を選ぶ（今の装備が同点以上なら今の装備）。
+  //    ソケットのない装備に替えると、はめていた宝石のぶん弱くなるので、それも比べる
   // ② 手元の宝石と、持っている装備にはまっている宝石（外すのは無料）を集め、選んだ装備のソケットへ点数の高い順に配る。
   //    神の宝石は身につけた装備に1つまで（data/gems.js の決まりと同じ）
   plan(state, goalId) {
@@ -80,14 +81,15 @@ WYD.optimizer = {
       ...(state.inventory || []).map((item) => ({ item, from: "inv" })),
       ...(state.stash || []).map((item) => ({ item, from: "stash" })),
     ];
-    const pick = {}, held = this.completeSlots(state);
+    const pick = {}, held = this.completeSlots(state), gemPool = this.gemPool(state);
+    const base = (item) => item ? this.score(item, goalId, []).total + this.gemFill(gemPool, item.slot, this.capacity(item), W) : 0;
     for (const slot of slots) {
       const cur = state.equipment[slot] || null;
-      let best = cur, bestBase = this.score(cur, goalId, []).total, from = "eq";
+      let best = cur, bestBase = base(cur), from = "eq";
       const locked = held.has(slot);   // 全部そろったセットの部位は、同じセットの同じ部位にだけ替える（完成の力が消えないように）
       for (const c of pool) {
         if (c.item.slot !== slot || c.item === cur || (locked && !this.samePiece(c.item, cur))) continue;
-        const b = this.score(c.item, goalId, []).total;
+        const b = base(c.item);
         if (b > bestBase) { best = c.item; bestBase = b; from = c.from; }
       }
       pick[slot] = { best, from, setHeld: locked && best === cur };
