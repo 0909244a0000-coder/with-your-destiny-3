@@ -20,11 +20,14 @@ const path=require('node:path');
  assert.equal(await page.locator('#upgrade-open').count(),0);
  await page.evaluate(()=>{const s=WYD.state;s.materials=1e6;s.inventory=[WYD.loot.create(s,10,1,{rarity:'rare',slot:'ring'})];WYD.ui.changed();});
  await page.locator('#character-open').click();await page.locator('#equipscreen .es-grid [data-es="item"][data-index="0"]').click();assert(await page.locator('#sheet').isVisible());
- const acts=await page.evaluate(()=>[...document.querySelectorAll('#sheet [data-sheet]')].map(b=>b.dataset.sheet));for(const a of ['equip','enhance','reroll','forge','lock','discard','close'])assert(acts.includes(a),a);
+ const acts=await page.evaluate(()=>[...document.querySelectorAll('#sheet [data-sheet]')].map(b=>b.dataset.sheet));for(const a of ['equip','work','lock','discard','close'])assert(acts.includes(a),a);
+ await page.locator('#sheet [data-sheet="work"]').click();
+ const workActs=await page.evaluate(()=>[...document.querySelectorAll('#sheet [data-sheet]')].map(b=>b.dataset.sheet));for(const a of ['enhance','reroll','forge','compare','close'])assert(workActs.includes(a),a);
  await page.locator('#sheet [data-sheet="enhance"]').click();assert(await page.locator('#sheet').isVisible(),'強化のあとも窓は開いたまま');assert.equal(await page.evaluate(()=>WYD.state.inventory[0].plus),1);
+ await page.waitForTimeout(360);await page.locator('#sheet [data-sheet="compare"]').click();
  await page.locator('#sheet [data-sheet="equip"]').click();assert(!await page.locator('#sheet').isVisible());assert.equal(await page.evaluate(()=>WYD.state.equipment.ring&&WYD.state.equipment.ring.plus),1);
  await page.locator('#equipscreen [data-es="slot"][data-slot="ring"]').click();assert(await page.locator('#sheet [data-sheet="unequip"]').isVisible());
- await page.locator('#sheet [data-sheet="forge"]').click();assert(await page.locator('#forge').isVisible());await page.locator('#forge-close').click();await page.keyboard.press('Escape');assert(!await page.locator('#equipscreen').isVisible());
+ await page.locator('#sheet [data-sheet="work"]').click();await page.locator('#sheet [data-sheet="forge"]').click();assert(await page.locator('#forge').isVisible());await page.locator('#forge-close').click();await page.keyboard.press('Escape');assert(!await page.locator('#equipscreen').isVisible());
  assert(await page.locator('#home-panel #dps-open').isVisible());await page.locator('#dps-open').click();assert(await page.locator('#dps-test').isVisible());await page.keyboard.press('Escape');
  await page.locator('#home-depart').click();await page.locator('#home-panel').waitFor({state:'hidden'});await page.locator('#town-btn').click();assert(await page.locator('#home-panel').isVisible());
  for(const [width,height] of [[1920,1080],[1366,768],[1024,768],[844,390],[768,1024],[390,844]]){
