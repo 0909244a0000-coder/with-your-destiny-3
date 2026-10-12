@@ -27,8 +27,9 @@
 - `node tools/equipment-comparison-state-test.js`：成功。実計算との一致、強化と宝石込みの差分、比較の状態不変、二層操作、IDの並べ替え追従/移動/消失/装備交換、連打抑止、ロック保護、強化/つけ直し/宝石返却、上限/素材不足、鍛造/宝石への遷移、装備/外す/旧倉庫/満杯、セット成立解除/固有能力、自動装備保護・ビルド参照・保存復元を検証。
 - `node --check`：変更したJavaScriptすべて成功。`git diff --check`：成功。
 - `node tools/run-tests.js`：実行。Chromium未導入の初回は既存47件すべて起動前に停止。
-- Chromeを取得して `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/tmp/wyd3-chrome/opt/google/chrome/chrome node tools/run-tests.js` を実行。ブラウザ起動時に `socket() failed: Operation not permitted` で停止。この実行環境の制約であり、ブラウザのテスト本体は未実行。
-- 実ブラウザでのPC/スマホ表示・タッチ・ホバー・Esc・レイアウト、既存の全体回帰は未確認。スクリーンショットなし。Node VMの成功をブラウザ確認の代わりには扱わない。
+- Chromeを取得して `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/tmp/wyd3-chrome/opt/google/chrome/chrome node tools/run-tests.js` を実行。結果は **1 / 49 成功**（Node VMのみ）。残り48件はブラウザ起動時に `socket() failed: Operation not permitted` で停止。この実行環境の制約であり、ブラウザのテスト本体は未実行。
+- 別のクラウドChromeで試用版を起動し、新規の検証用セーブをゲームの「読み込む」から取り込んでPC表示を手動確認。初期サマリー（攻撃53→67）、強化+2→+3/素材10000→9975と加工画面維持、つけ直し/素材9975→9915、戻る、全差分の展開、装備交換と窓の終了、交換後の実能力（攻撃68）と旧装備の持ち物への返却を確認。ゲーム由来のコンソールエラーなし（ブラウザ拡張由来のエラーを除く）。
+- 比較画面のキャプチャ：`2026-10-13-equipment-comparison.jpg`。スマホ実機/タッチ・390px/横画面・ホバー・Escなどの包括的表示検証と既存の全体回帰は未確認。Node VMやPC手動確認の成功を全回帰の代わりには扱わない。
 
 ## 未完了・既存の注意点
 
@@ -40,3 +41,5 @@
 試し用：https://raw.githack.com/0909244a0000-coder/with-your-destiny-3/improve-equipment-ui/index.html
 
 本番：https://0909244a0000-coder.github.io/with-your-destiny-3/
+
+![比較画面](2026-10-13-equipment-comparison.jpg)
