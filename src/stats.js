@@ -27,6 +27,18 @@ WYD.stats = {
     return out;
   },
 
+  // 完成の力：全部そろえたセットの能力の倍率 { attack, maxHp, defense }（data/sets.js の complete。複数そろえたらかけ合わせ）
+  setCompleteMult(state) {
+    const counts = this.setCounts(state), C = WYD.data.sets.complete || {}, out = { attack: 1, maxHp: 1, defense: 1 };
+    for (const set of WYD.data.sets.list) {
+      if ((counts[set.id] || 0) < set.pieces.length) continue;
+      out.attack *= (C.attackMult || {})[set.id] || 1;
+      const m = (C.statMult || {})[set.id] || {};
+      for (const k in m) if (k in out) out[k] *= m[k];
+    }
+    return out;
+  },
+
   // 今効いているセットのボーナスの一覧 [{ set, need, bonus }]
   activeSetBonuses(state) {
     const counts = this.setCounts(state);
@@ -172,8 +184,10 @@ WYD.stats = {
     // 混沌の宝石：割合で上がる能力・神の能力
     const pct = this.socketPct(state);
     out.attack *= 1 + pct.attack / 100;
-    out.defense *= 1 + pct.defense / 100;
-    out.maxHp = Math.round(out.maxHp * (1 + pct.maxHp / 100));
+    const full = this.setCompleteMult(state);   // 完成の力（セットを全部そろえたとき）
+    out.attack *= full.attack;
+    out.defense *= (1 + pct.defense / 100) * full.defense;
+    out.maxHp = Math.round(out.maxHp * (1 + pct.maxHp / 100) * full.maxHp);
     out.god = this.godPower(state);
     if (P.maxHpMult != null) out.maxHp = Math.max(1, Math.round(out.maxHp * P.maxHpMult));
     WYD.forms.apply(out);   // 変身（src/forms.js）

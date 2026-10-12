@@ -8,6 +8,7 @@ WYD.inventory = {
 
   add(state, item) {
     if (this.isFull(state)) return false;
+    item.isNew = true;   // 新しく手に入れた印（マウスを乗せる・装備の窓を開くと消える）
     state.inventory.push(item);
     return true;
   },
@@ -123,6 +124,14 @@ WYD.inventory = {
     return true;
   },
 
+  // 持ち物の中から、部位ごとに点数のいちばん高いものを着る（自分で選んだ装備は外さない。autoEquip と同じ決まり）。着替えた数
+  autoEquipAll(state) {
+    let n = 0;
+    const best = [...state.inventory].sort((a, b) => this.itemScore(b) - this.itemScore(a));
+    for (const item of best) if (this.autoEquip(state, item)) n++;
+    return n;
+  },
+
   unequip(state, slot) {
     const item = state.equipment[slot];
     if (!item || this.isFull(state)) return false;
@@ -200,6 +209,33 @@ WYD.inventory = {
     return { count, gained };
   },
 
+  // 「全て捨てる」で捨てるもの（ロック以外で、捨てる設定の決まりに当たらないもの）
+  discardTargets(state) {
+    const d = state.settings.discard || {};
+    // 「★育てる」タブにいる装備（おすすめ装備で選んだ目的の育てる候補。持ち物だけ）
+    const grow = d.keepGrow ? new Set(WYD.optimizer.growCandidates(state, WYD.optimizer.goal).filter((c) => c.where === "inv").map((c) => c.item)) : null;
+    return state.inventory.filter((it) => !it.locked && this.discardMatches(state, it, grow));
+  },
+
+  discardMatches(state, item, grow) {
+    const d = state.settings.discard || {};
+    if (grow && grow.has(item)) return false;
+    if (d.rarities && d.rarities[item.rarity] === false) return false;
+    if (d.slots && d.slots[item.slot] === false) return false;
+    const sockets = item.sockets || [];
+    if (d.keepSockets > 0 && sockets.length >= d.keepSockets) return false;
+    if (d.keepEffects > 0 && (item.effects || []).length >= d.keepEffects) return false;
+    if (d.keepAncient && item.ancient > 0) return false;
+    if (d.keepWorked && (item.plus > 0 || item.forged > 0)) return false;
+    if (d.keepGems && (sockets.some((x) => x) || item.legacyRuneBonus)) return false;
+    if (d.keepBuild && this.keepReason(item, state) === "build") return false;
+    if (d.keepUpgrades) {
+      const cur = state.equipment[item.slot];
+      if (!cur || this.itemScore(item) > this.itemScore(cur) * (1 + WYD.data.items.autoEquip.minGain)) return false;
+    }
+    return true;
+  },
+
   // 自動分解の対象か（設定で選んだレア度以下。レジェンドとユニークは対象外）
   shouldAutoSalvage(state, item) {
     if (this.keepReason(item, state)) return false;
@@ -213,7 +249,7 @@ WYD.inventory = {
     return order.indexOf(item.rarity) <= order.indexOf(opt.upTo);
   },
 
-  // 戦利品フィルターで拾うか
+  // 戦利品フィルターで拾うか。残す決まり（強い・ソケット・特殊効果・太古）→ 捨てる決まり（ソケットなし）→ 部位ごとのレア度 の順に見る
   filterKeeps(state, item) {
     const f = state.settings.filter;
     if (this.keepReason(item, state)) return true;
@@ -221,6 +257,11 @@ WYD.inventory = {
       const cur = state.equipment[item.slot];
       if (!cur || this.itemScore(item) > this.itemScore(cur) * (1 + WYD.data.items.autoEquip.minGain)) return true;
     }
+    const sockets = (item.sockets || []).length;
+    if (f.minSockets > 0 && sockets >= f.minSockets) return true;
+    if (f.minEffects > 0 && (item.effects || []).length >= f.minEffects) return true;
+    if (f.keepAncient && item.ancient > 0) return true;
+    if (f.noSocketDrop && sockets === 0) return false;
     const min = f.slots[item.slot] || "normal";
     if (min === "none") return false;
     const order = WYD.data.items.rarities.map((r) => r.id);

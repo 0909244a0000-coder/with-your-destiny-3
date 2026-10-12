@@ -18,7 +18,7 @@ const path = require('node:path');
       const forged = make('rare'); forged.forged = 1;
       const unique = WYD.loot.createUnique(s, 10), set = WYD.loot.createSetPiece(s, 10);
       const kept = [base, build, forged, unique, set];
-      s.inventory = kept.concat(Array.from({ length: 55 }, () => { const it = make('rare'); it.locked = true; return it; }));
+      s.inventory = kept.concat(Array.from({ length: WYD.data.items.inventorySize - kept.length }, () => { const it = make('rare'); it.locked = true; return it; }));   /* 持ち物いっぱい（数は data/items.js） */
       s.settings.autoSalvage = 'magic';
       const noSalvage = kept.every(it => !I.shouldAutoSalvage(s, it));
       const noRoom = I.makeRoomFor(s, make('legend')) === null;
@@ -52,7 +52,7 @@ const path = require('node:path');
       // 受取待ちが多い間は敵・時間を進めず、空きができれば再開できる。
       clean.pendingLoot = Array.from({ length: WYD.data.items.pendingLootLimit }, () => WYD.loot.createUnique(clean, 10));
       const time = w.time; WYD.world.update(w, clean, 1); const stopped = w.time === time;
-      clean.inventory = []; const claimed = I.claimPending(clean); const resumed = clean.pendingLoot.length === 0 && claimed === 60;
+      clean.inventory = []; const claimed = I.claimPending(clean); const room = Math.min(WYD.data.items.pendingLootLimit, WYD.data.items.inventorySize), resumed = clean.pendingLoot.length === Math.max(0, WYD.data.items.pendingLootLimit - room) && claimed === room;
       const claimAgain = I.claimPending(clean) === 0;
       // 空の土台を装備していても育成の自動交換は続き、土台は持ち物へ戻る。
       const raw = WYD.loot.create(clean, 1, 1, { rarity: 'normal', slot: 'weapon' }); raw.sockets = [null, null];
@@ -60,7 +60,7 @@ const path = require('node:path');
       const temp = WYD.save.newState(); temp.equipment.weapon = raw; temp.inventory = [upgrade];
       const baseUpgrade = I.autoEquip(temp, upgrade) && temp.inventory.includes(raw) && !I.keepRunewordBase(temp, raw);
       // 全て捨てるは従来どおり、明示操作なら未ロック品を対象にする。
-      const manual = I.discardAll(clean).count === 60;
+      const manual = I.discardAll(clean).count === room;
       // 旧セーブに項目がなくても読み込める。
       const old = WYD.save.newState(); delete old.pendingLoot; localStorage.setItem(WYD.save.KEY, JSON.stringify(old));
       const migration = WYD.save.load().pendingLoot.length === 0;

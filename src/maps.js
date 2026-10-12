@@ -60,6 +60,7 @@ WYD.maps = {
   use(w, state, index) {
     const map = state.maps[index];
     if (!map || WYD.trial.active(state)) return;
+    if (WYD.world.battleStopped(state)) return WYD.trial.stoppedNotice();
     state.maps.splice(index, 1);
     WYD.trial.start(w, state, this.stage(map), null, map);
   },
@@ -93,7 +94,7 @@ WYD.maps = {
     }
     const mats = Math.round((M.rewardMaterials + M.rewardMaterialsPerTier * map.tier) * q);
     state.materials += mats;
-    for (let i = 0; i < M.rewardGems; i++) WYD.gems.add(state, WYD.gems.key(WYD.util.pick(WYD.data.gems.gems).id, WYD.gems.dropTier(state)));
+    for (let i = 0; i < M.rewardGems; i++) WYD.gems.gain(state, WYD.gems.key(WYD.util.pick(WYD.data.gems.gems).id, WYD.gems.dropTier(state)));
     // 次の地図
     const D = M.drop;
     const count = D.guardianDrops + (Math.random() < D.guardianExtraChance ? 1 : 0);

@@ -32,8 +32,9 @@ WYD.data.effects = {
     },
     {
       id: "lifesteal", name: "吸血",
-      desc: "与えたダメージの {v}% をHPとして吸収",
+      desc: "与えたダメージの {v}% をHPとして吸収（吸血の回復は合わせて1秒に最大HPの{perSecond}%まで）",
       range: [2, 5], decimals: 1, weight: 10, cap: 20,
+      perSecond: 20,   // 吸血（装備・宝石・スキルの型）で回復できる量は、合わせて1秒に最大HPのこの%まで（2026-10-10。範囲攻撃で何倍にもならないように）
     },
     {
       id: "cooldown", name: "刻の加速",

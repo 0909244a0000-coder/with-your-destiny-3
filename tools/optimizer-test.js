@@ -1,0 +1,166 @@
+// おすすめ装備：目的（火力・防御・対人）ごとに、持ち物・今の装備・倉庫から部位ごとに点数のいちばん高い装備を選ぶ。
+// 今の装備のほうが強い部位は「そのまま」。見るだけで着替えない。装備画面のボタンで開き、Escで閉じる。
+// node tools/optimizer-test.js
+const { chromium } = require('playwright');
+const assert = require('node:assert/strict');
+const path = require('node:path');
+(async () => {
+  const exe = require('fs').existsSync('/opt/pw-browsers/chromium') ? { executablePath: '/opt/pw-browsers/chromium' } : {};
+  const browser = await chromium.launch(exe);
+  try {
+    for (const viewport of [{ width: 1366, height: 900 }, { width: 390, height: 844 }]) {
+      const page = await browser.newPage({ viewport }); const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await page.goto('file://' + path.resolve(__dirname, '../index.html'));
+      await page.evaluate(() => { WYD.resetting = true; localStorage.clear(); });
+      await page.reload(); await page.click('#modal-ok');
+      const r = await page.evaluate(() => {
+        const s = WYD.state, O = WYD.optimizer;
+        s.settings.speed = 0; s.equipment = {}; s.stash = [];
+        // 決まった能力の装備を作る（ランダムをなくす）
+        const make = (slot, stats) => { const it = WYD.loot.create(s, 10, 0, { slot, rarity: 'magic' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = []; it.plus = 0; return it; };
+        const atkWeapon = make('weapon', { attack: 30 }), critWeapon = make('weapon', { attack: 10, critChance: 50 });
+        const curHead = make('head', { defense: 10 }), defHead = make('head', { defense: 40, maxHp: 60 }), atkHead = make('head', { attack: 15 });
+        const stashRing = make('ring', { maxHp: 200 }), curNeck = make('neck', { attack: 50, defense: 50 }), weakNeck = make('neck', { attack: 1 });
+        s.equipment.weapon = critWeapon; s.equipment.head = curHead; s.equipment.neck = curNeck;
+        s.inventory = [atkWeapon, defHead, atkHead, weakNeck]; s.stash = [stashRing];
+        const before = JSON.stringify([Object.values(s.equipment).map((i) => i.id), s.inventory.map((i) => i.id), s.stash.map((i) => i.id)]);
+        const plans = Object.fromEntries(WYD.data.optimizer.goals.map((g) => [g.id, O.plan(s, g.id)]));
+        const row = (goal, slot) => plans[goal].rows.find((x) => x.slot === slot);
+        // 手で計算した点数と同じか（能力×重み）
+        const W = (goal) => O.weightsFor(goal);   /* 職業と型の実測の重み（data/optimizer.js の byClass） */
+        const manual = (goal, it) => WYD.loot.statTotals(it) && Object.entries(WYD.loot.statTotals(it)).reduce((n, [k, v]) => n + v * (W(goal)[k] || 0), 0);
+        // 型の切りかえ：攻撃速度アップのスキル（猛攻）をONにすると、攻撃速度を重く見る重みになる
+        const profN = O.profile(s), spdN = O.weightsFor('damage').attackSpeed;
+        s.player.skills.hanuman = 1; s.player.skillEnabled.hanuman = true;
+        const profF = O.profile(s), spdF = O.weightsFor('damage').attackSpeed;
+        s.player.skills.hanuman = 0; s.player.skillEnabled.hanuman = false;
+        // 装備画面のボタンから開く
+        WYD.ui.changed(); WYD.equipScreen.open();
+        document.querySelector('#equipscreen [data-es="optimizer"]').click();
+        const shown = !document.getElementById('optimizer').hidden;
+        const tabCount = document.querySelectorAll('#optimizer [data-opt-goal]').length;
+        document.querySelector('#optimizer [data-opt-goal="defense"]').click();
+        const html = document.getElementById('optimizer-body').textContent;
+        const neckKeep = document.querySelector('#optimizer [data-opt-slot="neck"]').classList.contains('opt-keep');
+        const overflow = document.documentElement.scrollWidth > innerWidth;
+        const after = JSON.stringify([Object.values(s.equipment).map((i) => i.id), s.inventory.map((i) => i.id), s.stash.map((i) => i.id)]);
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        const closed = document.getElementById('optimizer').hidden, esStill = !document.getElementById('equipscreen').hidden;
+        return {
+          dmgWeapon: row('damage', 'weapon').best === critWeapon && row('damage', 'weapon').keep,
+          dmgHead: row('damage', 'head').best === atkHead, defHead: row('defense', 'head').best === defHead,
+          ring: row('defense', 'ring').best === stashRing && row('defense', 'ring').from === 'stash',
+          neckKeep: row('damage', 'neck').keep && row('defense', 'neck').keep && row('pvp', 'neck').keep,
+          scoreOk: Math.abs(O.score(defHead, 'defense').total - manual('defense', defHead)) < 1e-9,
+          diffOk: Math.abs(row('defense', 'head').diff - (manual('defense', defHead) - manual('defense', curHead))) < 1e-9,
+          totalOk: Math.abs(plans.defense.diff - plans.defense.rows.reduce((n, x) => n + x.diff, 0)) < 1e-9 && plans.defense.diff > 0,
+          reason: row('defense', 'head').reasons.map((x) => x.name), pvpHeadIsDef: row('pvp', 'head').best === defHead,
+          emptySlot: row('damage', 'feet').keep && !row('damage', 'feet').cur,
+          profN, profF, spdUp: spdF > spdN,
+          shown, tabCount, html, neckKeep, overflow, same: before === after, closed, esStill,
+        };
+      });
+      assert(r.dmgWeapon, '火力：会心つき武器（今の装備）のほうが強いのでそのまま');
+      assert(r.dmgHead, '火力：頭は攻撃つきを選ぶ'); assert(r.defHead, '防御：頭は防御・HPつきを選ぶ'); assert(r.pvpHeadIsDef, '対人：HP・防御を重めに見る');
+      assert(r.ring, '倉庫の装備も候補'); assert(r.neckKeep, '今の装備が強い部位はそのまま'); assert(r.emptySlot, '候補がない部位');
+      assert(r.scoreOk, '点数＝能力×重み'); assert(r.diffOk, '部位の点数の差'); assert(r.totalOk, '合計の差＝部位の差の合計');
+      assert.deepEqual(r.reason.slice(0, 2).sort(), ['最大HP', '防御力'].sort(), '理由に能力の名前');
+      assert.equal(r.profN, 'normal'); assert.equal(r.profF, 'frenzy', '猛攻をONにすると型が変わる'); assert(r.spdUp, '猛攻の型は攻撃速度を重く見る');
+      assert(r.shown, '装備画面のボタンで開く'); assert.equal(r.tabCount, 3, '目的のタブ3つ');
+      assert.match(r.html, /そのまま/); assert.match(r.html, /防御力 \+\d+点/); assert.match(r.html, /倉庫/); assert(r.neckKeep);
+      assert(r.same, 'ボタンを押すまでは着替えない'); assert(r.closed, 'Escで閉じる'); assert(r.esStill, '装備画面は閉じない');
+      assert(!r.overflow, '横にはみ出さない');
+      // 宝石：装備は宝石ぬきで選び、宝石（手元＋はめている全部）は選んだ装備へ配りなおす
+      const g = await page.evaluate(() => {
+        const s = WYD.state, O = WYD.optimizer;
+        const make = (slot, stats, sockets) => { const it = WYD.loot.create(s, 10, 0, { slot, rarity: 'magic' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = sockets; it.plus = 0; return it; };
+        s.equipment = {}; s.inventory = []; s.stash = []; s.gems = {};
+        const weakFeet = make('feet', { defense: 5 }, ['topaz:4']), strongFeet = make('feet', { defense: 20 }, [null]);
+        const waist = make('waist', { defense: 10 }, ['topaz:0']);
+        s.equipment.feet = weakFeet; s.equipment.waist = waist; s.inventory = [strongFeet]; s.gems = { 'topaz:3': 1 };
+        const before = JSON.stringify([weakFeet.sockets, waist.sockets, s.gems]);
+        const p = O.plan(s, 'defense'), row = (slot) => p.rows.find((x) => x.slot === slot);
+        WYD.ui.changed(); WYD.optimizer.open(); WYD.optimizer.goal = 'defense'; WYD.optimizer.render();
+        const text = document.getElementById('optimizer-body').textContent; WYD.optimizer.close();
+        return { feetBest: row('feet').best === strongFeet, feetGems: row('feet').gemsNew, waistOnly: row('waist').gemsOnly, waistGems: row('waist').gemsNew, waistNow: row('waist').gemsNow,
+          gemDiff: row('waist').gemDiff > 0, text, same: before === JSON.stringify([weakFeet.sockets, waist.sockets, s.gems]) };
+      });
+      assert(g.feetBest, '宝石ぬきで強い装備を選ぶ（弱い装備の良い宝石にだまされない）'); assert.deepEqual(g.feetGems, ['topaz:4'], '良い宝石は選んだ装備へ移す');
+      assert(g.waistOnly, '装備はそのまま・宝石だけ付け替え'); assert.deepEqual(g.waistNow, ['topaz:0']); assert.deepEqual(g.waistGems, ['topaz:3'], '手元の強い宝石と入れ替える'); assert(g.gemDiff);
+      assert.match(g.text, /宝石だけ付け替え/); assert.match(g.text, /宝石：/); assert(g.same, 'ボタンを押すまでは宝石を動かさない');
+      // ソケットのない装備には、はめている宝石のぶんまで強くなければ替えない（宝石が行き場をなくして合計が下がるため）
+      const ns = await page.evaluate(() => {
+        const s = WYD.state, O = WYD.optimizer;
+        const make = (stats, sockets) => { const it = WYD.loot.create(s, 10, 0, { slot: 'feet', rarity: 'magic' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = sockets; it.plus = 0; return it; };
+        s.equipment = {}; s.stash = []; s.gems = {};
+        const socketed = make({ defense: 10 }, ['topaz:4', 'topaz:4']), bare = make({ defense: 14 }, []), better = make({ defense: 400 }, []);
+        s.equipment.feet = socketed; s.inventory = [bare];
+        const p1 = O.plan(s, 'defense'), r1 = p1.rows.find((x) => x.slot === 'feet');
+        s.inventory = [bare, better];
+        const p2 = O.plan(s, 'defense'), r2 = p2.rows.find((x) => x.slot === 'feet');
+        return { keep: r1.keep, diff1: p1.diff, swap: r2.best === better, diff2: p2.diff > 0 };
+      });
+      assert(ns.keep, '宝石のぶん弱くなるなら、ソケットのない装備に替えない'); assert(ns.diff1 >= 0, 'おすすめで合計が下がらない');
+      assert(ns.swap && ns.diff2, '宝石のぶんより強ければ替える');
+      // 着替える：おすすめのとおりに装備と宝石を入れかえる。ロックした装備も外す（ロックは残る）。倉庫の装備は倉庫の中で入れかえる
+      const a = await page.evaluate(() => {
+        const s = WYD.state, O = WYD.optimizer;
+        const make = (slot, stats, sockets) => { const it = WYD.loot.create(s, 10, 0, { slot, rarity: 'magic' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = sockets; it.plus = 0; return it; };
+        s.equipment = {}; s.inventory = []; s.stash = []; s.gems = {};
+        const weakFeet = make('feet', { defense: 5 }, ['topaz:4']), strongFeet = make('feet', { defense: 20 }, [null]);
+        const waist = make('waist', { defense: 10 }, ['topaz:0']), stashHead = make('head', { defense: 30 }, []), weakHead = make('head', { defense: 1 }, []);
+        weakFeet.locked = true;
+        s.equipment = { feet: weakFeet, waist, head: weakHead }; s.inventory = [strongFeet]; s.stash = [stashHead]; s.gems = { 'topaz:3': 1 };
+        while (s.inventory.length < WYD.data.items.inventorySize) s.inventory.push(make('ring', {}, []));   /* 持ち物は満杯（能力なしの指輪。おすすめには選ばれない） */
+        const r = O.apply(s, 'defense'), after = O.plan(s, 'defense');
+        return { r, feet: s.equipment.feet === strongFeet, feetGems: strongFeet.sockets, waistGems: waist.sockets, head: s.equipment.head === stashHead,
+          lockedBack: s.inventory.includes(weakFeet) && weakFeet.locked, weakFeetGems: weakFeet.sockets, stashSwap: s.stash[0] === weakHead,
+          allLocked: [weakFeet, waist, weakHead, strongFeet, stashHead].every((it) => it.locked),
+          hand: s.gems['topaz:0'] || 0, hand3: s.gems['topaz:3'] || 0, invCount: s.inventory.length, changes: after.changes };
+      });
+      assert(a.feet && a.head, '装備を着替える（倉庫の装備も）'); assert(a.lockedBack, 'ロックした装備も外し、ロックは残る'); assert(a.stashSwap, '倉庫の装備は倉庫の中で入れかえる');
+      assert(a.allLocked, '着替える前の装備と着替えた後の装備は全部ロック');
+      assert.deepEqual(a.feetGems, ['topaz:4'], '良い宝石は新しい装備へ'); assert.deepEqual(a.weakFeetGems, [null]); assert.deepEqual(a.waistGems, ['topaz:3'], '手元の強い宝石と入れかえ');
+      assert.equal(a.hand, 1, '外した宝石は手元へ'); assert.equal(a.hand3, 0); assert.equal(a.invCount, 180, '持ち物の数は変わらない'); assert.equal(a.changes, 0, '着替えたあとは全部そのまま');
+      // 窓のボタン：着替えてビルドの枠に保存（保存枠は8つ）
+      page.on('dialog', (d) => d.accept(d.type() === 'prompt' ? 'テスト用' : undefined));
+      const b = await page.evaluate(() => {
+        const s = WYD.state, make = (slot, stats) => { const it = WYD.loot.create(s, 10, 0, { slot, rarity: 'magic' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = []; return it; };
+        s.equipment = { weapon: make('weapon', { attack: 1 }) }; const better = make('weapon', { attack: 99 }); s.inventory = [better]; s.stash = []; s.gems = {}; s.builds = [];
+        WYD.ui.changed(); WYD.optimizer.open(); WYD.optimizer.goal = 'damage'; WYD.optimizer.render();
+        const buttons = document.querySelectorAll('#optimizer [data-opt-act="build"]').length;
+        document.querySelector('#optimizer [data-opt-act="build"][data-build="6"]').click();
+        const saved = s.builds[6], ok = s.equipment.weapon === better;
+        WYD.optimizer.close();
+        return { buttons, slots: WYD.data.items.buildSlots, name: saved && saved.name, savedWeapon: saved && saved.equipment.weapon === better.id, ok };
+      });
+      assert.equal(b.slots, 8); assert.equal(b.buttons, 8, '保存枠のボタン8つ'); assert(b.ok, 'ボタンで着替える'); assert.equal(b.name, 'テスト用'); assert(b.savedWeapon, '着替えた装備をビルドに保存');
+      // 育てる候補（下限）：強化 +10・鍛造（毎回いちばん多く余地を使う・会心なし）・ソケットは持っている宝石で埋める
+      const gr = await page.evaluate(() => {
+        const s = WYD.state, O = WYD.optimizer, E = WYD.data.crafting.enhance, F = WYD.data.crafting.forge;
+        const make = (stats, opts) => { const it = WYD.loot.create(s, 30, 0, { slot: 'weapon', rarity: 'legend' }); it.stats = Object.entries(stats).map(([stat, value]) => ({ stat, value })); it.effects = []; it.sockets = []; it.plus = 0; it.forgePotential = 0; return Object.assign(it, opts); };
+        const cur = make({ skillDamage: 20 }, { plus: 10 }), raw = make({ skillDamage: 20 }, { forgePotential: 22 }), weak = make({ skillDamage: 5 }), holes = make({ skillDamage: 20 }, { sockets: [null, null] });
+        s.equipment = { weapon: cur }; s.inventory = [raw, weak, holes]; s.stash = []; s.gems = {};
+        const W = O.weightsFor('damage').skillDamage, mult = 1 + E.max * E.statPerLevel;
+        const noGems = O.growCandidates(s, 'damage');
+        s.gems = { 'topaz:4': 2 };
+        const withGems = O.growCandidates(s, 'damage'), rawC = withGems.find((c) => c.item === raw);
+        O.goal = 'damage'; WYD.ui.changed(); WYD.equipScreen.open(); WYD.equipScreen.tab = 'grow'; WYD.equipScreen.render();
+        const tabItems = [...document.querySelectorAll('#equipscreen .es-grid [data-es="item"]')].map((el) => Number(el.dataset.index));
+        const tabCount = Number(document.querySelector('[data-es="tab"][data-tab="grow"] b').textContent);
+        WYD.equipScreen.tab = 'all'; WYD.equipScreen.close();
+        return { noGems: noGems.map((c) => s.inventory.indexOf(c.item)), withGems: withGems.map((c) => s.inventory.indexOf(c.item)),
+          improves: rawC && rawC.improves, plus: rawC && rawC.plus, gainOk: rawC && Math.abs(rawC.gain - Math.ceil(22 / F.improvePotential[1]) * 20 * F.improvePercent / 100 * mult * W) < 1e-6,
+          costOk: rawC && rawC.cost > 0, tabItems, tabCount };
+      });
+      assert.deepEqual(gr.noGems, [0], '宝石がなければ、育てて伸びる装備（鍛造の余地あり）だけ'); assert.equal(gr.improves, 6, '鍛造は 余地22 ÷ 4 を切り上げて6回（下限）'); assert.equal(gr.plus, 10);
+      assert(gr.gainOk, '伸び = 鍛造の回数 × 元の値の8% × 強化1.8倍 × 重み'); assert(gr.costOk, '素材の目安');
+      assert(gr.withGems.includes(2), '持っている宝石で埋めると、ソケットのある装備も候補'); assert(!gr.withGems.includes(1), '弱い装備は出ない');
+      assert.deepEqual(gr.tabItems, gr.withGems, '「★育てる」タブは伸びの大きい順'); assert.equal(gr.tabCount, gr.withGems.length);
+      assert.deepEqual(errors, []);
+      await page.close();
+    }
+    console.log('おすすめ装備のテスト：成功');
+  } finally { await browser.close(); }
+})().catch((e) => { console.error(e); process.exit(1); });

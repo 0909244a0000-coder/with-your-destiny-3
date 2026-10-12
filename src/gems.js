@@ -219,7 +219,7 @@ WYD.gems = {
     state.materials -= R.cost;
     for (const k in need) this.add(state, k, -need[k]);
     const key = this.rollFused();
-    this.add(state, key);
+    this.gain(state, key);
     return key;
   },
 
@@ -230,7 +230,7 @@ WYD.gems = {
     state.materials -= WYD.data.gems.fusion.cost;
     for (const k in plan.use) this.add(state, k, -plan.use[k]);
     const key = this.rollFused();
-    this.add(state, key);
+    this.gain(state, key);
     return key;
   },
 
@@ -246,6 +246,18 @@ WYD.gems = {
     item.sockets = new Array(n).fill(null);
     return item;
   },
+
+  // 手に入れた（落とした・ごほうび・合成でできた）：数を足して NEW の印をつける。外して戻すときは add を使う
+  gain(state, key, n) {
+    this.add(state, key, n);
+    if (state.gems[key] > 0) (state.gemNew = state.gemNew || {})[key] = true;
+  },
+  // NEW の印を消す（key なし = すべて）
+  seen(state, key) {
+    if (!state.gemNew) return;
+    if (key == null) state.gemNew = {}; else delete state.gemNew[key];
+  },
+  isNew(state, key) { return !!(state.gemNew && state.gemNew[key] && state.gems[key] > 0); },
 
   add(state, key, n) {
     state.gems[key] = (state.gems[key] || 0) + (n == null ? 1 : n);
@@ -267,7 +279,7 @@ WYD.gems = {
     const count = e.boss ? D.bossCount : Math.random() < (e.elite ? D.chanceElite : D.chanceNormal) * WYD.season.mult(state, "gemMult") ? 1 : 0;
     for (let i = 0; i < count; i++) {
       const key = this.key(WYD.util.pick(WYD.data.gems.gems).id, this.dropTier(state));
-      this.add(state, key);
+      this.gain(state, key);
       WYD.offline.record("gems", 1);
       WYD.world.addText(w, e.x, e.y - 40 - i * 14, `◆${this.name(key)}`, this.color(key));
       WYD.ui.log(`宝石「${this.name(key)}」を手に入れた`, this.color(key));
@@ -332,7 +344,7 @@ WYD.gems = {
     if (cost == null || (state.gems[key] || 0) < G.combineCount || state.materials < cost) return false;
     state.materials -= cost;
     this.add(state, key, -G.combineCount);
-    this.add(state, this.nextKey(key));
+    this.gain(state, this.nextKey(key));
     return true;
   },
 };

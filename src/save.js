@@ -45,7 +45,9 @@ WYD.save = {
       floor: 1,                                 // 今いる階（ふつうの階の数+1 がボスの間）
       bossProgress: 0,                          // 次の階へ降りるまでに倒した数
       settings: { speed: 1, autoSalvage: "none", autoDifficulty: false, sound: true, autoEquip: true, fullReplace: true, season: "none", music: true, quietFx: false,
-        filter: { on: false, slots: {}, keepUpgrades: true } },
+        filter: { on: false, slots: {}, keepUpgrades: true },
+        // 「全て捨てる」の決まり。rarities・slots は false で「捨てない」。最初は全部捨てる（前と同じ）
+        discard: { rarities: {}, slots: {}, keepSockets: 0, keepEffects: 0, keepAncient: false, keepWorked: false, keepGems: false, keepBuild: false, keepUpgrades: false, keepGrow: false } },
       seenHelp: false, // 遊び方を見たか（最初の1回だけ自動で出す）
       cleared: false,  // 最後のボスを倒したか
       trial: { best: 0, level: 1, autoNext: true, runs: 0 },   // 終わりのない試練の記録
@@ -56,6 +58,7 @@ WYD.save = {
       achievements: {},   // 達成した実績の id
       runeSkills: WYD.runeSkills.initial(),
       gems: {},        // 持っている宝石（"種類:段階" → 数）
+      gemNew: {},      // 新しく手に入れた宝石の印（key → true）
       [WYD.data.gems.fusion.rollback.flag]: true,   // 新しいセーブは、宝石合成の巻き戻しをしない
       maps: [],        // 持っている地図（src/maps.js）
       runHistory: [],  // 成功した挑戦の記録（新しい順）
@@ -108,6 +111,7 @@ WYD.save = {
       this.limitSkills(state);
       state.settings = Object.assign(this.newState().settings, saved.settings);
       state.settings.filter = Object.assign(this.newState().settings.filter, saved.settings && saved.settings.filter);
+      state.settings.discard = Object.assign(this.newState().settings.discard, saved.settings && saved.settings.discard);
       // エリアがなかった頃のセーブや、消えたエリアにいた場合は最初のエリアにする
       const areaIds = WYD.data.areas.map((a) => a.id);
       if (!Array.isArray(state.unlockedAreas)) state.unlockedAreas = [areaIds[0]];
@@ -150,7 +154,7 @@ WYD.save = {
         state.nextItemId = Math.max(state.nextItemId, it.id + 1);
         return true;
       });
-      // 倉庫廃止：旧アイテムは60枠のかばんへ、超過分は未受取に残す。
+      // 倉庫廃止：旧アイテムは180枠のかばんへ、超過分は未受取に残す。
       while (state.stash.length) {
         const item = state.stash.shift();
         if (state.inventory.length < WYD.data.items.inventorySize) state.inventory.push(item);

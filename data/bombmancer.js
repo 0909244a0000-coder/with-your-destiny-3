@@ -5,21 +5,31 @@ WYD.data.classes.bombmancer = {
   player: {
     className: "冥爆術師", weaponName: "触媒", color: "#d29cff", image: "assets/player_bombmancer.png", imageFilter: null,
     poses: { attack: "assets/player_bombmancer_attack.png" },
-    preloadImages: ["assets/player_bombmancer_attack.png", "assets/bomb_hunter.png", "assets/vfx/bombOrb.png", "assets/vfx/bombBurst.png", "assets/vfx/bombSmoke.png", "assets/vfx/bombCloudBurst.webp", "assets/vfx/bombRingBurst.webp"],
+    // 同じ人物の歩行・仕込み・指鳴らし。数値は描画専用で戦闘には使わない。
+    spriteAnimation: {
+      width: 256, height: 256, anchorX: 128, anchorY: 234, scale: 1.3,
+      idle: { image: "assets/bombmancer/idle.webp", frames: 1, frameTime: 1 },
+      walk: { image: "assets/bombmancer/walk.webp", frames: 8, frameTime: 0.075 },
+      cast: { image: "assets/bombmancer/cast.webp", frames: 8, frameTime: 0.08, fx: { staff: "bombOrb", staffSize: 15, staffAlpha: 0.6, staffPoints: [[174, 94], [147, 96], [140, 96], [179, 94], [181, 85], [170, 83], [155, 97], [177, 90]], ground: "bombSmoke", groundSize: 96, groundFlatten: 0.42, groundAlpha: 0.38, groundFrom: 0.3, groundTo: 1.1, groundStart: 0, quietAlpha: 0.35 } },
+      plant: { image: "assets/bombmancer/cast.webp", frames: 8, frameTime: 0.08, fx: { staff: "bombOrb", staffSize: 15, staffAlpha: 0.6, staffPoints: [[174, 94], [147, 96], [140, 96], [179, 94], [181, 85], [170, 83], [155, 97], [177, 90]], ground: "bombSmoke", groundSize: 96, groundFlatten: 0.42, groundAlpha: 0.38, groundFrom: 0.3, groundTo: 1.1, groundStart: 0, quietAlpha: 0.35 } },
+      finale: { image: "assets/bombmancer/finale.webp", frames: 8, frameTime: 0.075, fx: { staff: "hitShadow", staffSize: 12, staffAlpha: 0.5, staffPoints: [[163, 101], [168, 81], [164, 87], [160, 89], [171, 82], [178, 82], [165, 102], [166, 105]], ground: "bombRingBurst", groundSize: 124, groundFlatten: 0.42, groundAlpha: 0.5, groundFrom: 0.3, groundTo: 1.1, groundStart: 0.375, quietAlpha: 0.35 } },
+      skills: { bomb_brand: "plant", bomb_hunter: "plant", bomb_mine: "plant", bomb_finale: "finale", bomb_cinders: "plant", bomb_smoke: "plant" },
+    },
+    preloadImages: ["assets/bombmancer/idle.webp", "assets/bombmancer/walk.webp", "assets/bombmancer/cast.webp", "assets/bombmancer/finale.webp", "assets/vfx/bombAshBurstAtlas.webp", "assets/vfx/hitShadow.png","assets/player_bombmancer_attack.png", "assets/bomb_hunter.png", "assets/vfx/bombOrb.png", "assets/vfx/bombBurst.png", "assets/vfx/bombSmoke.png", "assets/vfx/bombCloudBurst.webp", "assets/vfx/bombRingBurst.webp"],
     base: { maxHp: 105, attack: 10, defense: 1.5, attackSpeed: 1, critChance: 7, hpRegen: 1.1, moveSpeed: 125 },
     perLevel: { maxHp: 12, attack: 2.1, defense: 0.8 },
     rangedAttack: { range: 250, keepDistance: 155, speed: 430, size: 5, color: "#dda2ff", texture: "bombOrb" },
   },
   skills: {
     bomb_brand: { kind: "bomb", mode: "brand", name: "死の種", desc: "近い敵から時限爆弾を仕込む。1.2秒後、または宿主が倒れると周囲を爆破。ボスにも仕込める。", startLevel: 1, maxLevel: 10, cooldown: 4, range: 290, targetsBase: 2, targetsPerLevel: 0.3, radius: 70, fuse: 1.2, damageBase: 1.98, damagePerLevel: 0.37, color: "#db9aff" },
-    bomb_cloak: { kind: "vajra", name: "灰の外套", desc: "HP60%以下で灰の外套をまとう。防御を上げ、HPを回復。", startLevel: 0, maxLevel: 10, cooldown: 12, duration: 5, defenseBase: 6, defensePerLevel: 3, healPercentBase: 12, healPercentPerLevel: 2, triggerHpPercent: 60, color: "#b7a5d8" },
+    bomb_cloak: { kind: "vajra", name: "灰の外套", desc: "HP60%以下で灰の外套をまとう。防御を上げ、HPを回復。", startLevel: 0, maxLevel: 10, cooldown: 10, duration: 6, defenseBase: 60, defensePerLevel: 9, healPercentBase: 12, healPercentPerLevel: 2, triggerHpPercent: 60, color: "#b7a5d8" },
     bomb_hunter: { kind: "bomb", mode: "hunter", name: "追葬の使い魔", desc: "仮面の使い魔が敵を追い、接触で爆発。標的が倒れたら別の敵へ向かう。", startLevel: 0, maxLevel: 10, cooldown: 5, range: 310, radius: 90, speed: 230, lifetime: 5, damageBase: 2.64, damagePerLevel: 0.462, color: "#ffc47b" },
     bomb_finale: { kind: "bomb", mode: "finale", name: "終幕の指鳴らし", desc: "仕込んだ爆弾を一斉起爆。爆弾がない時は敵1体へ仕込んで即起爆。仕込済みの爆弾は威力1.35倍で誘爆する。", startLevel: 0, maxLevel: 10, cooldown: 8, range: 300, radius: 105, chainBoost: 1.35, damageBase: 2.38, damagePerLevel: 0.422, color: "#ffba70" },
     bomb_mine: { kind: "bomb", mode: "mine", name: "葬送の地雷", desc: "敵の進路に地雷を置く。敵が近づくか3秒後に爆発。同時に3個まで。", startLevel: 0, maxLevel: 10, cooldown: 3, range: 280, placeAt: 0.6, radius: 90, triggerRadius: 40, fuse: 3, armTime: 0.35, maxBombs: 3, damageBase: 2.38, damagePerLevel: 0.396, color: "#ffa76a" },
     bomb_smoke: { kind: "nagapasha", name: "黒煙の檻", desc: "近づく敵を黒煙で縛り、ダメージを与える。ボスへの拘束は短い。", startLevel: 0, maxLevel: 10, cooldown: 10, radius: 160, minTargets: 1, bindBase: 1.8, bindPerLevel: 0.2, bossBindMult: 0.3, damageBase: 1.58, damagePerLevel: 0.343, color: "#b69acb" },
-    bomb_haste: { kind: "hanuman", name: "静かな殺意", desc: "敵が近いと攻撃速度を上げる。通常攻撃の爆弾を次々と投げる。", startLevel: 0, maxLevel: 10, cooldown: 14, duration: 6, hasteBase: 45, hastePerLevel: 6, triggerRange: 260, color: "#d49aff" },
+    bomb_haste: { kind: "hanuman", name: "静かな殺意", desc: "敵が近いと攻撃速度を上げる。通常攻撃の爆弾を次々と投げ、強くなった爆弾は周りの敵も巻きこむ（猛攻）。", startLevel: 0, maxLevel: 10, cooldown: 10, duration: 8, hasteBase: 65, hastePerLevel: 10, triggerRange: 260, color: "#d49aff" },
     bomb_cinders: { kind: "agni", name: "残火の庭", desc: "敵の集まる場所を紫の残火で焼き続ける。", startLevel: 0, maxLevel: 10, cooldown: 7, range: 280, radius: 90, duration: 4, tick: 0.5, damageBase: 0.66, damagePerLevel: 0.132, color: "#be85f4" },
-    bomb_repose: { kind: "aura", auraType: "heal", name: "灰燼の安息", desc: "オーラ：自分と周囲の味方のHPを毎秒回復する。", startLevel: 0, maxLevel: 10, cooldown: 1, radius: 140, healPercentBase: 1.1, healPercentPerLevel: 0.22, color: "#d1b4de" },
+    bomb_repose: { kind: "aura", auraType: "heal", name: "灰燼の安息", desc: "オーラ：自分と周囲の味方のHPを毎秒回復する。", startLevel: 0, maxLevel: 10, cooldown: 1, radius: 140, healPercentBase: 3.3, healPercentPerLevel: 0.66, color: "#d1b4de" },
   },
   autoBuild: ["bomb_brand", "bomb_cloak", "bomb_hunter"],
   skillOrder: ["bomb_cloak", "bomb_repose", "bomb_haste", "bomb_smoke", "bomb_brand", "bomb_hunter", "bomb_mine", "bomb_finale", "bomb_cinders"],
@@ -60,7 +70,11 @@ Object.assign(WYD.data.runes.skills, {
 // 爆発の絵：ふつうの爆弾は紫と橙の爆炎、終幕の一斉起爆（終幕で起爆した爆弾も）と地雷は輪の爆発（data/vfx.js の bombTexture／bombTextureBySkill）
 Object.assign(WYD.data.vfx.textures, { bombCloudBurst: "assets/vfx/bombCloudBurst.webp", bombRingBurst: "assets/vfx/bombRingBurst.webp" });
 Object.assign(WYD.data.vfx.anim, { bombCloudBurst: { duration: 0.5, scaleFrom: 0.35, scaleTo: 1.15, spin: 0.3, additive: true }, bombRingBurst: { duration: 0.6, scaleFrom: 0.3, scaleTo: 1.2, spin: 0.5, additive: true } });
-WYD.data.vfx.bombTexture = "bombCloudBurst";
+// 時限・追尾の爆炎は専用4コマ。終幕/地雷の輪は別の絵を維持する。
+WYD.data.vfx.textures.bombAshBurst = "assets/vfx/bombAshBurstAtlas.webp";
+WYD.data.vfx.atlases.bombAshBurst = { columns: 2, rows: 2, frames: 4, alpha: 0.85, anchorY: 0.5, maxSize: 240 };
+WYD.data.vfx.anim.bombAshBurst = { duration: 0.5, scaleFrom: 0.65, scaleTo: 1.15, additive: false };
+WYD.data.vfx.bombTexture = "bombAshBurst";
 WYD.data.vfx.bombTextureBySkill = { bomb_finale: "bombRingBurst", bomb_mine: "bombRingBurst" };
 Object.assign(WYD.data.vfx.textures, { bombOrb: "assets/vfx/bombOrb.png", bombBurst: "assets/vfx/bombBurst.png", bombSmoke: "assets/vfx/bombSmoke.png", bombHunter: "assets/bomb_hunter.png" });
 Object.assign(WYD.data.vfx.anim, { bombOrb: { duration: 0.34, size: 34, additive: true }, bombBurst: { duration: 0.48, scaleFrom: 0.35, scaleTo: 1.15, additive: true }, bombSmoke: { duration: 0.65, scaleFrom: 0.6, scaleTo: 1.1, additive: true } });

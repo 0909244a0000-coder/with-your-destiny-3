@@ -22,10 +22,10 @@ WYD.data.skills = {
     desc: "HPが減ると発動。しばらく防御力アップし、HPを回復。",
     startLevel: 0,        // 0 = 最初は覚えていない（スキルポイントで覚える）
     maxLevel: 10,
-    cooldown: 12,
-    duration: 5,          // 効果が続く秒数
-    defenseBase: 5,
-    defensePerLevel: 3,
+    cooldown: 10,         // 2026-10-10 に 12→10
+    duration: 6,          // 効果が続く秒数（2026-10-10 に 5→6）
+    defenseBase: 60,      // 防御力の何%上がるか（2026-10-10 に「+固定値 5+3/Lv」から変更）
+    defensePerLevel: 9,
     healPercentBase: 10,  // 最大HPの何%回復するか
     healPercentPerLevel: 2,
     triggerHpPercent: 60, // HPがこの%以下になったら使う
@@ -61,16 +61,16 @@ WYD.data.skills = {
     damagePerLevel: 0.12,
     color: "#ff7a2a",
   },
-  // 強化スキル：攻撃速度アップ
+  // 強化スキル：攻撃速度アップ。効いている間は「猛攻」（WYD.data.frenzy）：通常攻撃の威力アップ＋周りの敵にも当たる
   hanuman: {
     name: "狂戦士の怒り",
-    desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がる。",
+    desc: "近くに敵がいると発動。しばらく攻撃速度が大きく上がり、通常攻撃が強くなって周りの敵にも当たる（猛攻）。",
     startLevel: 0,
     maxLevel: 10,
-    cooldown: 14,
-    duration: 6,
-    hasteBase: 40,        // 攻撃速度 +%
-    hastePerLevel: 6,
+    cooldown: 10,         // 2026-10-10 に 14→10（効いている時間を8割に）
+    duration: 8,          // 2026-10-10 に 6→8
+    hasteBase: 60,        // 攻撃速度 +%（2026-10-10 に 40+6/Lv から上げた）
+    hastePerLevel: 10,
     triggerRange: 120,    // この距離に敵がいたら使う
     color: "#ff9a5e",
   },
@@ -115,7 +115,7 @@ WYD.data.skills = {
     kind: "aura", auraType: "heal", name: "鼓舞の叫び",
     desc: "オーラ：叫びで自分と仲間を奮い立たせ、HPが回復し続ける。最大HPの何%か。",
     startLevel: 0, maxLevel: 10, cooldown: 1,
-    radius: 140, healPercentBase: 1.0, healPercentPerLevel: 0.22, color: "#9fffb0",
+    radius: 140, healPercentBase: 3.0, healPercentPerLevel: 0.66, color: "#9fffb0",   // 2026-10-10 に回復を3倍
   },
 };
 
@@ -141,3 +141,9 @@ WYD.data.autoBuild = ["whirl", "vajra", "sudarshana"];
 
 // AIがスキルを試す順番
 WYD.data.skillOrder = ["vajra", "bar_orders", "bar_cry", "hanuman", "bar_ancients", "nagapasha", "whirl", "sudarshana", "agni"];
+
+// 猛攻（2026-10-10）：攻撃速度アップのスキル（しくみ hanuman）と狼変化（frenzy: true の変身）が効いている間、通常攻撃が強くなる。
+// 通常攻撃の威力 +(damagePctBase + damagePctPerLevel×(Lv-1))%、当てた敵の周り radius の敵にも cleaveMult 倍で当たる（遠くから撃つ職業は着弾の周り）。
+// 通常攻撃で戦うビルド（攻撃速度を集める）を成り立たせるため。src/world.js の frenzy
+WYD.data.frenzy = { damagePctBase: 30, damagePctPerLevel: 5, radius: 70, cleaveMult: 0.6, color: "#ffb36a" };
+

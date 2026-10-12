@@ -98,7 +98,7 @@ const path = require('node:path');
     assert.match(out.godText, /【神・雷霆】通常攻撃に 100% で 0\.5秒スタン/); assert.equal(out.godName, '神の混沌石'); assert.equal(out.twoGods, null); assert.equal(out.bad, null); assert.equal(out.badFx, null);
     // 宝石の画面（独立した窓）：合成・絞り込み・検索・並べ替え・はめる（はめ先を選ぶ）・外す
     await page.evaluate(() => { const s = WYD.state; for (const it of Object.values(s.equipment)) if (it) it.sockets = []; s.inventory = []; s.gems = { 'emerald:4': 10 }; WYD.ui.changed(); });
-    await page.evaluate(() => document.getElementById('gems-open').click());
+    await page.evaluate(() => WYD.gemVault.open());   /* 入口は装備画面の宝石のタブ（アイコンはなくした） */
     page.once('dialog', d => d.accept());
     await page.evaluate(() => document.querySelector('[data-gv-act="fuse"]').click());
     const ui = await page.evaluate(() => Object.keys(WYD.state.gems));
@@ -126,7 +126,7 @@ const path = require('node:path');
       const godTargets = document.querySelectorAll('[data-gv-act="place"][data-where="eq"]').length;
       document.querySelector('[data-gv-act="remove"]').click();
       const removed = w.sockets[0] === null && s.gems['fused:god.stun=chance~3|sec~0.5'] === 1;
-      const unlocked = !document.getElementById('gems-open').hidden, bagPanel = !!document.getElementById('gems-panel');
+      const unlocked = document.getElementById('gems-open').hidden,   /* 宝石のアイコンは出さない */ bagPanel = !!document.getElementById('gems-panel');
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); const closed = document.getElementById('gemvault').hidden;
       // 宝石を全部外す（src/gems.js の unsocket。ルーンは残す）
       const w2 = WYD.loot.create(s, 10, 0, { slot: 'ring' }); w2.sockets = ['fused:attack=3', 'ruby:2', 'rune:el']; s.gems = {};

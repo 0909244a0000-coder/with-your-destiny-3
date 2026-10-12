@@ -33,7 +33,7 @@ WYD.data.player = {
   critMultiplier: 1.5,    // 会心のときのダメージ倍率
   critChanceCap: 75,      // 会心率の上限（%）
   minAttackSpeed: 0.3,    // 攻撃速度の下限
-  maxAttackSpeed: 4,      // 攻撃速度の上限（回/秒）
+  maxAttackSpeed: 6,      // 攻撃速度の上限（回/秒。2026-10-10 に 4→6）
   maxMoveSpeedMult: 2,    // 移動速度の上限（はじめの何倍まで）
   maxMagicFind: 300,      // レア発見の上限（%）
 

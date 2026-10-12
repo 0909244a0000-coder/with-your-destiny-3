@@ -96,7 +96,7 @@ WYD.daily = {
     }
     for (let i = 0; i < D.rewardGems; i++) {
       const key = WYD.gems.key(WYD.util.pick(WYD.data.gems.gems).id, WYD.gems.dropTier(state));
-      WYD.gems.add(state, key);
+      WYD.gems.gain(state, key);
     }
     WYD.ui.notice(`日替わりの試練 成功！ 連続${rec.streak}日 ${WYD.data.crafting.materialName} +${mats}・ユニーク装備・宝石${D.rewardGems}個`, D.color);
     WYD.sound.play("achievement");

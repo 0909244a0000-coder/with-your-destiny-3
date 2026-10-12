@@ -23,6 +23,13 @@
 - 絵の場所を `data/` に書く方法は `assets/README.md`
 
 ## 受け取り済み（ゲームに入っている）
+- 2026-10-12 傀儡師の `assets/puppeteer/{idle,walk,cast,finale}.webp`（待機1・歩行8・操糸8・裁断8、256pxセル、足元128/234）。黒革・赤い裏地・金の留め具を継承。終幕の赤糸は `assets/vfx/puppetThreadBurstAtlas.webp`（2×2、384pxセル）。手元と床の演出をコマに追従。人形の攻撃は既存ポーズを継続。
+- 2026-10-12 冥爆術師の `assets/bombmancer/{idle,walk,cast,finale}.webp`（待機1・歩行8・仕込み8・指鳴らし8、セル256px、共通足元128/234）。仮面・黒髪・白羽・紫黒金の外套を継承。専用4コマ爆炎 `assets/vfx/bombAshBurstAtlas.webp`（2×2、セル384px、紫橙と灰煙）。手元/床の演出は既存絵も活用。
+- 2026-10-12 ソーサレス専用技の透過8コマ `assets/sorceress/meteor.webp`（杖を掲げる）、`nova.webp`（杖を突く）。各2048×256、足元(128,234)。杖先/床の炎と氷は既存VFXを別レイヤーで追従。
+- 2026-10-11 ソーサレス painted-v4 の透過WebP `assets/sorceress/{idle,walk,cast}.webp`。待機1・歩行8・詠唱8コマ、セル256×256、共通の足元(128,234)。モーションはセル別の余白切りを行わない。赤黒金の衣装・茶黒髪・炎の杖。既存の静止画2枚は未読込時の代替として保持。
+- 2026-10-09 新バッグのキャラクター背面 `assets/ui/armory-altar.webp`。暗い石造の祭壇の壁画と曼荼羅。人物と装備枠が主役になるよう中央を暗く、左右をグラデーションで抑えて表示する。
+- 2026-10-09 新バッグの描き込んだUI素材 `assets/ui/armory-frame.webp`（窓の9分割枠）、`armory-slot.webp`（装備・宝石マスの透過枠）、`armory-button.webp`（タブと操作ボタンの9分割背景）。黒鉄、古い青銅、鈍い金、角の小さな赤い石で統一。文字を乗せる中央は暗く保ち、絵は外周を主役にする。
+- 2026-10-09 新しいバッグの宝石枠用に6枚の透過WebP `assets/ui/gem-{ruby,amethyst,topaz,emerald,chaos,divine}.webp`。通常4種はそれぞれ異なるカット、混沌は桃色の荒い結晶、神は白金と桃色の結晶。2行×3列の生成シートを分割し192pxに縮小。宝石の段階は従来どおり枠の左上のI〜Vで表示する。
 - 2026-10-09 固有能力の付け替え欄に古い金属の箱 `assets/ui/power-cube.webp`、宝石の合成工房に紫の火と宝石の坩堝 `assets/ui/gem-crucible.webp`。どちらも透過WebPで、暗い窓内の小さな見出しやカードで読めるシルエットにした。
 - 2026-10-09 宝石画面用の専用アイコン `assets/ui/nav-gems.webp`。赤・青・緑の宝石を古い青銅の台座にまとめた透過256px。従来の伝説の宝石アイコンと区別して、上部のGems入口と宝石画面の見出しに使用。
 - 2026-10-08 蒐集者4枚（持ち主の生成・透過）：立ち絵 `player_collector.png`・詠唱 `player_collector_attack.png`（2枚を同じ縮尺・同じ足元で256pxに）、技の発動・召喚の目印 `vfx/collectorRing.webp`（ページの輪）、命中の目印 `vfx/collectorHit.webp`（墨とページの閃光）。墨黒を残すため加算しないで重ねる

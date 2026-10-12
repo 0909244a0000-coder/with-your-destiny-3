@@ -46,12 +46,15 @@ WYD.arenaEngine = {
       for (const k in mods) if (copy[k]) copy[k] = { ...copy[k], mods: mods[k] };
       return copy;
     };
-    const heal = W.healPlayer;
+    const heal = W.healPlayer, leech = W.leech;
+    // 吸血は軽減後に実際に奪ったHPを基準にする（超過ダメージでも回復しない）。1秒あたりの上限（W.leech）より先にかける。
+    W.leech = function(w, stats, amount, source) {
+      const hit = E.hitContext;
+      if (hit && (source === "effect:lifesteal" || (source === hit.source && hit.extraLifesteal))) amount *= hit.raw > 0 ? hit.actual / hit.raw : 0;
+      return leech.call(this, w, stats, amount, source);
+    };
     W.healPlayer = function(w, maxHp, amount, source) {
       if (w.player.dead) return;
-      const hit = E.hitContext;
-      // 吸血は軽減後に実際に奪ったHPを基準にする（超過ダメージでも回復しない）。
-      if (hit && (source === "effect:lifesteal" || (source === hit.source && hit.extraLifesteal))) amount *= hit.raw > 0 ? hit.actual / hit.raw : 0;
       const id = source && source.startsWith("skill:") ? source.slice(6) : null;
       const scale = WYD.data.arena.combat.skillHealScale[id] ?? 1;
       return heal.call(this, w, maxHp, amount * E.healFactor() * scale, source);

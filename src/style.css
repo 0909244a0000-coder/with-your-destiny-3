@@ -1169,7 +1169,7 @@ html.m-ui .combat-skills > span { display: none; }
 html.m-ui .combat-panel { grid-template-columns: minmax(0, 1fr) 176px; }
 html.m-ui #hud-skills { width: 176px; height: auto; display: block; }
 /* いちばん下のタブ */
-html.m-ui #m-tabs { display: grid; grid-template-columns: repeat(6, 1fr); position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; height: var(--m-tabs);
+html.m-ui #m-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; height: var(--m-tabs);
   padding-bottom: env(safe-area-inset-bottom, 0px); background: #0b0a09; border-top: 1px solid #5c4a2c; }
 html.m-ui #m-tabs button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 0; padding: 2px 0;
   border: 0; border-radius: 0; background: none; color: #a99c80; font-size: 11px; }
@@ -1271,6 +1271,324 @@ html.m-ui #m-notices p { margin: 0 0 4px; font-size: 13px; font-weight: bold; li
 html.m-ui .desktop-camera { display:none; }
 html.m-ui .combat-panel { row-gap:4px; }
 
+/* 装備画面（試作・リネレボ風。src/equipscreen.js） */
+.modal-box.equipscreen-box { width: min(1200px, 98vw); max-width: 1200px; max-height: 94dvh; overflow-y: auto; padding: 0; box-sizing: border-box; background: linear-gradient(#1c2230, #10141c); border: 1px solid #4a5670; }
+.es-head { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #141a26f2; border-bottom: 1px solid #3b4660; }
+.es-head h2 { margin: 0; font-size: 20px; color: #e8ecf5; }
+#equipscreen-body { padding: 10px 16px 14px; }
+.es-top { display: flex; justify-content: flex-end; gap: 18px; font-size: 13px; color: #cfd6e6; margin-bottom: 6px; }
+.es-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 14px; }
+.es-hero { display: grid; grid-template-columns: 78px minmax(0, 1fr) 78px; gap: 8px; align-items: center; min-height: 440px; background: radial-gradient(ellipse at 50% 45%, #3a4458 0%, #1a1f2b 70%); border: 1px solid #39435a; border-radius: 6px; padding: 10px; }
+.es-col { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.es-slot { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.es-slot > small { font-size: 10px; color: #9aa6bd; }
+.es-figure { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-height: 400px; }
+.es-figure img { max-height: 340px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 8px 14px #000b); }
+.es-plate { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 6px; color: #e8ecf5; font-size: 13px; text-shadow: 0 1px 2px #000; }
+.es-plate b { font-size: 16px; }
+.es-power { color: #cfd6e6; }
+.es-power b { color: #9cff6a; font-size: 18px; }
+.es-cell { position: relative; width: 64px; height: 64px; min-height: 0; padding: 0; border: 2px solid var(--c, #4a5670); border-radius: 5px; background: radial-gradient(circle at 50% 40%, var(--g, transparent), #151a24 75%); display: grid; place-items: center; overflow: hidden; cursor: pointer; }
+.es-cell.empty { border-style: dashed; border-color: #4a5670; background: #151a24; }
+.es-cell.blank { border: 1px solid #2a3244; background: #121620; cursor: default; }
+.es-cell img.item-icon { width: 46px; height: 46px; object-fit: contain; position: static; }
+.es-empty { font-size: 11px; color: #6c7790; }
+.es-name { font-size: 10px; line-height: 1.2; color: var(--c); padding: 2px; text-align: center; }
+.es-rarity { position: absolute; left: 3px; top: 1px; font-size: 11px; color: var(--c); text-shadow: 0 1px 2px #000; }
+.es-plus { position: absolute; right: 3px; top: 1px; font-size: 11px; color: #ffe08a; text-shadow: 0 1px 2px #000; }
+.es-lv { position: absolute; left: 3px; bottom: 1px; font-size: 10px; color: #dfe5f1; text-shadow: 0 1px 2px #000; }
+.es-lock { position: absolute; right: 2px; bottom: 1px; font-size: 10px; font-style: normal; }
+.es-gem { position: absolute; right: 3px; bottom: 1px; font-size: 10px; font-style: normal; color: #ff7ad9; }
+.es-cell .es-up { position: absolute; right: 3px; top: 14px; color: #9cff6a; font-size: 12px; }
+.es-bag { display: flex; flex-direction: column; min-width: 0; }
+.es-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.es-tabs button { min-height: 36px; padding: 4px 10px; font-size: 12px; background: #1d2433; border: 1px solid #3b4660; color: #cfd6e6; border-radius: 4px; }
+.es-tabs button.on { background: #36507a; border-color: #7aa2e0; color: #fff; }
+.es-tabs b { margin-left: 5px; color: #9cc2ff; }
+.es-grid { display: grid; grid-template-columns: repeat(auto-fill, 64px); gap: 6px; max-height: 420px; overflow-y: auto; align-content: start; padding-right: 4px; }
+.es-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #3b4660; }
+.es-stats { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.es-stats span { display: flex; flex-direction: column; min-width: 70px; }
+.es-stats small { font-size: 11px; color: #9aa6bd; }
+.es-stats b { font-size: 16px; color: #e8ecf5; }
+.es-actions { display: flex; align-items: center; gap: 8px; }
+.es-count { color: #cfd6e6; font-size: 14px; margin-right: 6px; }
+.es-actions button { min-height: 44px; padding: 6px 14px; background: #2a3448; border: 1px solid #4a5670; color: #e8ecf5; border-radius: 4px; }
+.es-actions button.es-auto { background: #2f7a3a; border-color: #6fd27c; }
+@media (max-width: 820px) {
+  .es-main { grid-template-columns: 1fr; }
+  .es-hero { grid-template-columns: 70px minmax(0, 1fr) 70px; min-height: 0; }
+  .es-figure { min-height: 300px; }
+  .es-figure img { max-height: 230px; }
+  .es-cell { width: 58px; height: 58px; }
+  .es-grid { grid-template-columns: repeat(auto-fill, 58px); max-height: none; }
+  .es-actions { width: 100%; }
+  .es-actions button { flex: 1; min-height: 48px; }
+}
+
+/* 持ち物の説明：この装備｜いま装備中｜変わり方 を横並び（src/ui.js の showTooltipFor） */
+#tooltip.wide { max-width: min(820px, calc(100vw - 16px)); }
+#tooltip .tip-cols { display: flex; align-items: flex-start; gap: 0; }
+#tooltip .tip-col { flex: 0 1 250px; min-width: 0; }
+#tooltip .tip-col + .tip-col { margin-left: 12px; padding-left: 12px; border-left: 1px dashed var(--line); }
+#tooltip .tip-col .tip-item + .tip-item, #tooltip .tip-col > .tip-item { margin-top: 0; padding-top: 0; border-top: 0; }
+
+/* 新しく手に入れた装備・宝石の印（NEW） */
+.new-badge { display: inline-block; padding: 0 4px; border-radius: 3px; background: #e2433b; color: #fff; font: bold 9px/14px sans-serif; font-style: normal; letter-spacing: .04em; vertical-align: middle; box-shadow: 0 0 6px #e2433b99; }
+.es-cell .es-new { position: absolute; left: 50%; top: 1px; transform: translateX(-50%); z-index: 1; }
+.gv-card .new-badge { margin-right: 5px; }
+.gv-overview .new-count { color: #ff7066; }
+/* 宝石の画面の右の合成欄（aside）：本編の aside { width:400px } が効いて列（282px）からはみ出していたので打ち消す */
+#gemvault aside.gv-workshop { width: auto; min-width: 0; max-height: none; overflow: visible; padding-bottom: 0; }
+/* 装備画面の宝石のマス */
+.es-gemcell .es-gem-shape { font-size: 34px; line-height: 1; color: var(--c); text-shadow: 0 0 10px var(--c), 0 2px 3px #000; }
+.es-actions button.es-auto small { display: block; font-size: 10px; line-height: 1.1; opacity: .85; }
+.es-actions button.es-auto:disabled { background: #2a3448; border-color: #4a5670; }
+
+/* 装備画面のページ（下のタブで切りかえ。src/equipscreen.js）と、元のかばん・Status から移した部品 */
+#equipscreen .es-page[hidden] { display: none; }
+#equipscreen .es-pagetabs { position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 4px; margin: 12px -16px -14px; padding: 8px 16px; background: #141a26f7; border-top: 1px solid #3b4660; }
+#equipscreen .es-pagetabs button { flex: 1 1 110px; min-height: 44px; padding: 6px 10px; background: #1d2433; border: 1px solid #3b4660; color: #cfd6e6; border-radius: 4px; font-size: 13px; }
+#equipscreen .es-pagetabs button.on { background: #36507a; border-color: #7aa2e0; color: #fff; }
+#equipscreen .es-pagetabs button[hidden] { display: none; }
+#equipscreen #status-content { display: block; }
+#equipscreen .es-page > .panel, #equipscreen #status-content > .panel { margin: 0 0 10px; }
+#equipscreen .es-page[data-page="sort"] { padding: 4px 0 16px; }
+#equipscreen .inv-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+#equipscreen .inv-buttons button { min-height: 48px; padding: 6px 14px; background: #2a3448; border: 1px solid #4a5670; color: #e8ecf5; border-radius: 4px; }
+#equipscreen #pending-loot-panel { margin-bottom: 8px; }
+@media (max-width: 820px) {
+  #equipscreen .inv-buttons { width: 100%; }
+  #equipscreen .inv-buttons button { flex: 1; }
+  #equipscreen .es-pagetabs button { flex: 1 1 30%; font-size: 12px; }
+}
+#equipscreen .combat-results { position: relative; inset: auto; width: auto; max-height: none; margin: 0 0 10px; box-shadow: none; z-index: auto; }
+#equipscreen .modal-box.equipscreen-box { display: flex; flex-direction: column; min-height: min(760px, 94dvh); }
+#equipscreen #equipscreen-body { flex: 1; display: flex; flex-direction: column; }
+#equipscreen .es-pagetabs { margin-top: auto; }
+html.m-ui #equipscreen .modal-box.equipscreen-box { min-height: 0; }
+
+/* バッグの素材を暗鉄・古金・革に揃える。宝石の色だけを強いアクセントにする。 */
+.modal-box.equipscreen-box { border-color:#8b7046; border-radius:9px; background:radial-gradient(ellipse at 48% 25%,#57402924,transparent 58%),linear-gradient(150deg,#1a1b1c,#0e1012 76%); box-shadow:0 20px 65px #000e,inset 0 0 0 2px #090a0b; }
+.es-head { padding:10px 18px; border-bottom-color:#765d3b; background:linear-gradient(105deg,#211e1a,#111316f5); }
+.es-title { display:flex; align-items:center; gap:10px; }
+.es-title img { width:36px; height:36px; object-fit:contain; filter:drop-shadow(0 3px 5px #000b); }
+.es-title span { color:#a99071; font:9px Georgia,serif; letter-spacing:.19em; }
+.es-head h2 { padding:0; border:0; color:#ead19a; font:20px Georgia,"Yu Gothic",serif; }
+.es-head button { min-height:40px; border-color:#806441; background:#2a241d; color:#e9d7b4; }
+#equipscreen-body { padding:12px 16px 14px; }
+.es-top { align-items:center; gap:8px; margin-bottom:10px; color:#d7c5a7; }
+.es-money { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border:1px solid #5c4a34; border-radius:4px; background:#191916; }
+.es-money:last-child::before { content:""; width:18px; height:18px; background:url('../assets/ui/nav-gems.webp') center/contain no-repeat; }
+.es-hero { position:relative; isolation:isolate; overflow:hidden; border-color:#6e593c; background:linear-gradient(90deg,#0b0c0bc9,transparent 25%,#07080921 72%,#0b0c0bc9),linear-gradient(#10111155,#0c0d0d42),url('../assets/ui/armory-altar.webp') center 48%/cover no-repeat; box-shadow:inset 0 1px #d5ae7020,inset 0 0 35px #0009; }
+.es-slot > small { color:#c0aa89; }
+.es-figure img { filter:drop-shadow(0 10px 12px #000d) drop-shadow(0 0 18px #aa7a3928); }
+.es-plate { width:min(100%,210px); padding:7px 4px; border-top:1px solid #8b6b42; background:linear-gradient(90deg,transparent,#0b0c0bbb,transparent); color:#e8d5b5; }
+.es-plate b { color:#f0d79d; }
+.es-power { color:#c5ae89; }
+.es-power b { color:#d6b46e; text-shadow:0 0 8px #d6a04b55; }
+.es-cell { border-radius:5px; background:radial-gradient(circle at 50% 37%,var(--g,transparent),#211c18 70%,#111214); box-shadow:inset 0 1px #ffffff20,0 2px 5px #0009; transition:transform .14s,border-color .14s,filter .14s; }
+.es-cell:not(.blank):hover { transform:translateY(-2px); filter:brightness(1.18); }
+.es-cell.empty { border-color:#6b5439; background:radial-gradient(circle,#282018,#121415); }
+.es-cell.blank { border-color:#3a342b; background:#111315; box-shadow:inset 0 0 7px #0008; }
+.es-empty { color:#a08b6c; }
+.es-lv { color:#eee0c7; }
+.es-bag { min-width:0; padding:10px; border:1px solid #554631; border-radius:6px; background:linear-gradient(140deg,#1b1b1a,#111418); box-shadow:inset 0 1px #ffffff0b; }
+.es-tabs { gap:5px; border-bottom:1px solid #5b4932; padding-bottom:9px; }
+.es-tabs button { border-color:#66533b; background:linear-gradient(#2a251f,#18191a); color:#d6c4a7; font-weight:600; }
+.es-tabs button.on { border-color:#c39857; background:linear-gradient(#68492c,#382719); color:#fff1d0; box-shadow:inset 0 1px #f2d7a35c,0 0 0 1px #88623845; }
+.es-tabs b { color:#e6c286; font-weight:700; }
+.es-tabs [data-tab="gems"]::before { content:""; display:inline-block; width:18px; height:18px; margin-right:3px; vertical-align:middle; background:url('../assets/ui/nav-gems.webp') center/contain no-repeat; }
+.es-grid { scrollbar-color:#856b48 #171717; }
+.es-gemcell .es-gem-art { width:49px; height:49px; max-width:none; object-fit:contain; pointer-events:none; filter:drop-shadow(0 2px 4px #000e) drop-shadow(0 0 5px var(--g)); }
+.es-gemcell .es-rarity,.es-gemcell .es-lv { z-index:1; }
+.es-bottom { border-top-color:#806541; margin-top:12px; }
+.es-stats { gap:4px 12px; }
+.es-stats span { min-width:74px; padding-left:8px; border-left:1px solid #775a38; }
+.es-stats small { color:#bda986; }
+.es-stats b { color:#f0dfbf; }
+.es-count { color:#cbb794; }
+.es-actions { flex-wrap:wrap; }
+.es-actions button { border-color:#806648; background:linear-gradient(#3a3227,#201d1a); color:#e6d2ad; }
+.es-actions button.es-auto:not(:disabled) { border-color:#ba8b5b; background:linear-gradient(#725136,#3f2d23); color:#f5deb0; }
+.es-actions button.es-auto:disabled { border-color:#514333; background:#25211d; color:#958a79; }
+.es-cell:focus-visible,.es-tabs button:focus-visible,.es-actions button:focus-visible { outline:2px solid #efd18b; outline-offset:2px; }
+@media (max-width:820px) {
+  .es-hero { background-position:center,center,center 43%; }
+  .es-gemcell .es-gem-art { width:45px; height:45px; }
+  .es-bottom { align-items:flex-start; }
+}
+@media (max-width:520px) {
+  #equipscreen-body { padding:10px; }
+  .es-hero { grid-template-columns:58px minmax(0,1fr) 58px; padding:7px 4px; gap:4px; }
+  .es-cell { width:52px; height:52px; }
+  .es-grid { grid-template-columns:repeat(auto-fill,52px); }
+  .es-gemcell .es-gem-art { width:42px; height:42px; }
+  .es-actions { gap:5px; }
+  .es-actions button { min-width:0; padding:6px 8px; }
+}
+
+/* 描き込んだUI素材。四隅は9分割で保ち、幅が変わっても中央の文字を圧迫しない。 */
+.modal-box.equipscreen-box {
+  border:18px solid transparent;
+  border-image-source:url('../assets/ui/armory-frame.webp');
+  border-image-slice:130 fill;
+  border-image-width:18px;
+  border-image-repeat:stretch;
+  border-radius:0;
+}
+.es-cell:not(.blank)::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  background:url('../assets/ui/armory-slot.webp') center/100% 100% no-repeat;
+  opacity:.76;
+  pointer-events:none;
+}
+.es-cell:not(.blank) > * { z-index:2; }
+.es-cell img.item-icon { position:relative; }
+.es-tabs button,.es-actions button,.es-head button {
+  box-sizing:border-box;
+  border:8px solid transparent;
+  border-image-source:url('../assets/ui/armory-button.webp');
+  border-image-slice:55 90 fill;
+  border-image-width:8px 12px;
+  border-image-repeat:stretch;
+  border-radius:0;
+  background:none;
+  box-shadow:none;
+  color:#f3dfba;
+  text-shadow:0 1px 2px #000;
+}
+.es-tabs button.on { background:none; box-shadow:0 0 0 1px #d7a356,0 0 9px #c2863255; filter:brightness(1.18); }
+.es-tabs button:hover:not(:disabled),.es-actions button:hover:not(:disabled),.es-head button:hover:not(:disabled) { filter:brightness(1.25); }
+.es-actions button.es-auto:not(:disabled) { background:none; box-shadow:0 0 0 1px #ad7741,0 0 9px #9d592744; }
+.es-actions button.es-auto:disabled { background:none; box-shadow:none; opacity:.5; }
+@media (max-width:820px) {
+  .modal-box.equipscreen-box { border-width:12px; border-image-width:12px; }
+}
+
+/* Status 統合後のページ切替と移動した持ち物ボタンにも同じ素材を使う。 */
+#equipscreen .es-pagetabs { background:linear-gradient(#211e1a,#111315f7); border-top-color:#806541; }
+#equipscreen .es-pagetabs button,#equipscreen .inv-buttons button {
+  box-sizing:border-box; border:8px solid transparent;
+  border-image-source:url('../assets/ui/armory-button.webp');
+  border-image-slice:55 90 fill; border-image-width:8px 12px;
+  border-image-repeat:stretch; border-radius:0; background:none;
+  color:#f3dfba; text-shadow:0 1px 2px #000;
+}
+#equipscreen .es-pagetabs button.on { background:none; border-color:transparent; box-shadow:0 0 0 1px #d7a356,0 0 9px #c2863255; filter:brightness(1.18); }
+#equipscreen .es-pagetabs button:hover,#equipscreen .inv-buttons button:hover { filter:brightness(1.25); }
+#equipscreen .es-pagetabs button:focus-visible,#equipscreen .inv-buttons button:focus-visible { outline:2px solid #efd18b; outline-offset:2px; }
+
+/* 持ち物のページ切替。タブと同じ石枠の操作面。 */
+#equipscreen .es-pager { display:flex; align-items:center; justify-content:center; gap:10px; margin:0 0 8px; color:#eacb93; font-weight:700; font-variant-numeric:tabular-nums; }
+#equipscreen .es-pager button { box-sizing:border-box; min-width:48px; min-height:40px; border:8px solid transparent; border-image-source:url('../assets/ui/armory-button.webp'); border-image-slice:55 90 fill; border-image-width:8px 12px; border-image-repeat:stretch; background:none; color:#f3dfba; cursor:pointer; }
+#equipscreen .es-pager button:disabled { opacity:.42; cursor:default; }
+#equipscreen .es-pager button:hover:not(:disabled) { filter:brightness(1.25); }
+#equipscreen .es-pager span { min-width:48px; text-align:center; }
+
+/* 装備画面のソートページ */
+#equipscreen .es-sort-intro { padding:16px 18px; margin-bottom:14px; border:1px solid #725739; background:linear-gradient(110deg,#2a211a,#15191dbf),url('../assets/ui/armory-altar.webp') center/cover; color:#ead6b2; }
+#equipscreen .es-sort-intro span,#equipscreen .es-sort-heading small { color:#c39353; font:10px Georgia,serif; letter-spacing:.16em; }
+#equipscreen .es-sort-intro h3 { margin:5px 0; color:#f7e5c3; font-size:22px; }
+#equipscreen .es-sort-intro p { margin:0; color:#cdbb9e; font-size:13px; }
+#equipscreen .es-sort-layout { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+#equipscreen .es-sort-card { min-width:0; padding:16px; border:1px solid #765738; background:linear-gradient(150deg,#22201e,#11171b); box-shadow:inset 0 0 0 1px #130e08,0 7px 16px #0006; }
+#equipscreen .es-sort-heading { display:flex; align-items:center; gap:12px; border-bottom:1px solid #715235; padding-bottom:12px; margin-bottom:12px; }
+#equipscreen .es-sort-heading img { width:46px; height:46px; object-fit:contain; }
+#equipscreen .es-sort-heading h4 { margin:2px 0 0; color:#f5dec1; font-size:19px; }
+#equipscreen .es-sort-heading em { font-style:normal; color:#b99d72; font-size:13px; }
+#equipscreen .es-sort-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+#equipscreen .es-sort-options button { min-height:68px; padding:9px 12px; text-align:left; color:#d9c6aa; border:1px solid #59452f; border-radius:5px; background:linear-gradient(#29221b,#191b1c); cursor:pointer; }
+#equipscreen .es-sort-options button b { display:block; color:#efd6ad; font-size:14px; }
+#equipscreen .es-sort-options button small { display:block; margin-top:3px; color:#aa9a83; font-size:11px; line-height:1.3; }
+#equipscreen .es-sort-options button.on { border-color:#d9aa62; background:linear-gradient(#493520,#24221c); box-shadow:inset 0 0 0 1px #a0743e,0 0 10px #a96d2e55; }
+#equipscreen .es-sort-options button:focus-visible,#equipscreen .es-sort-jump:focus-visible,#equipscreen #sort-inv:focus-visible { outline:2px solid #f1d18f; outline-offset:2px; }
+#equipscreen .es-sort-preview { display:flex; flex-wrap:wrap; gap:6px; min-height:70px; margin:16px 0 12px; }
+#equipscreen .es-sort-preview .es-cell { flex:none; }
+#equipscreen .es-sort-jump,#equipscreen #sort-inv { min-height:44px; padding:8px 18px; border:8px solid transparent; border-image-source:url('../assets/ui/armory-button.webp'); border-image-slice:55 90 fill; border-image-width:8px 12px; border-image-repeat:stretch; background:none; color:#f6e1bd; cursor:pointer; }
+#equipscreen .es-sort-manual { margin-top:14px; padding:14px 16px; border:1px solid #665035; background:#191a1bdc; color:#dbc6a8; }
+#equipscreen .es-sort-manual h4 { margin:0 0 4px; }
+#equipscreen .es-sort-manual p { margin:0 0 10px; font-size:12px; }
+#equipscreen .es-builds-wrap { margin-top:16px; padding:12px; border:1px solid #5a4935; background:#1b1a19; }
+#equipscreen .es-builds-wrap h3 { margin:0 0 4px; color:#e5cb9c; }
+@media (max-width:700px) {
+  #equipscreen .es-sort-layout { grid-template-columns:1fr; }
+  #equipscreen .es-sort-options { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #equipscreen .es-sort-card { padding:12px; }
+  #equipscreen .es-sort-preview .es-cell { width:56px; height:56px; }
+}
+
+/* 装備のOP指定ソート。能力選択と結果の数値を暗鉄のカード内にまとめる。 */
+#equipscreen .es-sort-op-picker { display:flex; align-items:center; gap:12px; margin-top:12px; color:#efd6ad; font-size:13px; }
+#equipscreen .es-sort-op-picker b { flex:none; }
+#equipscreen .es-sort-op-picker select { flex:1; min-width:0; min-height:44px; padding:7px 10px; border:1px solid #b78a4f; border-radius:4px; background:#201b17; color:#f4e1bd; font:inherit; }
+#equipscreen .es-sort-op-picker select:focus-visible { outline:2px solid #f1d18f; outline-offset:2px; }
+#equipscreen .es-sort-op-help { margin:6px 0 0; color:#ab9980; font-size:11px; }
+#equipscreen .es-sort-op-item { width:76px; min-width:0; display:flex; align-items:center; flex-direction:column; gap:4px; }
+#equipscreen .es-sort-op-item small { max-width:100%; color:#edca88; font-size:10px; line-height:1.3; text-align:center; overflow-wrap:anywhere; }
+@media (max-width:700px) { #equipscreen .es-sort-op-picker { align-items:stretch; flex-direction:column; gap:5px; } }
+
+/* OP指定（複数）：押して選ぶボタンと、絞り込み中の表示（src/equipscreen.js） */
+#equipscreen .es-sort-op-picker { display: block; }
+#equipscreen .es-sort-op-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+#equipscreen .es-sort-op-head button, #equipscreen .es-op-note button { min-height: 32px; padding: 4px 10px; font-size: 12px; border: 1px solid #b78a4f; border-radius: 4px; background: #2b2219; color: #f4e1bd; }
+#equipscreen .es-op-group { margin: 4px 0 8px; }
+#equipscreen .es-op-group > small { display: block; margin-bottom: 4px; color: #aa9a83; font-size: 11px; }
+#equipscreen .es-op-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+#equipscreen .es-op-chips button { min-height: 34px; padding: 4px 10px; font-size: 12px; border: 1px solid #59452f; border-radius: 16px; background: #1f1a15; color: #d9c6aa; }
+#equipscreen .es-op-chips button.on { border-color: #e2b56a; background: #5a3f1e; color: #fff1d0; box-shadow: 0 0 8px #a96d2e66; }
+#equipscreen .es-op-note { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; padding: 6px 10px; border: 1px solid #a07a44; border-radius: 4px; background: #2a2116; color: #f0d9b0; font-size: 12px; }
+#equipscreen .es-op-note button { margin-left: auto; }
+.filter-sub { margin: 14px 0 2px; font-size: 14px; }
+.discard-row { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.discard-row .discard-chip { margin: 2px 0; }
+.discard-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 6px; padding-top: 10px; border-top: 1px solid rgba(201,180,138,.25); }
+
+/* おすすめ装備（src/optimizer.js）：目的のタブ、部位ごとの「今 → おすすめ」と点数の差・理由 */
+.modal-box.optimizer-box { width: min(980px, 96vw); max-height: 92dvh; overflow-y: auto; padding: 0; box-sizing: border-box; background: linear-gradient(#1c2230, #10141c); border: 1px solid #4a5670; }
+#optimizer-body { padding: 10px 16px 16px; }
+.opt-goals { display: flex; gap: 6px; }
+.opt-goals button { flex: 1; min-height: 44px; background: #1d2433; border: 1px solid #3b4660; color: #cfd6e6; border-radius: 4px; font-size: 15px; }
+.opt-goals button.on { background: #36507a; border-color: #7aa2e0; color: #fff; }
+.opt-total { margin: 6px 0 10px; padding: 8px 10px; background: #141a26; border: 1px solid #3b4660; border-radius: 4px; }
+.opt-scroll { overflow-x: auto; }
+.opt-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.opt-table th, .opt-table td { padding: 6px; border-bottom: 1px solid #2c3548; text-align: left; vertical-align: top; }
+.opt-table td small { display: block; color: #9aa4b8; font-size: 11px; }
+.opt-table tr.opt-keep td { opacity: .7; }
+.opt-same { color: #9aa4b8; }
+.opt-up { color: #7dff8a; }
+.opt-down { color: #ff8a7a; }
+.opt-why { display: flex; flex-wrap: wrap; gap: 2px 8px; font-size: 11px; }
+@media (max-width: 600px) {
+  .opt-table thead { display: none; }
+  .opt-table tr { display: grid; grid-template-columns: 52px 1fr; border-bottom: 1px solid #2c3548; padding: 4px 0; }
+  .opt-table th, .opt-table td { border: 0; padding: 2px 4px; }
+  .opt-table th { grid-row: span 3; }
+  .opt-table td:empty { display: none; }
+}
+.opt-gems { margin-top: 3px; font-size: 11px; color: #c8cfdd; }
+
+/* 装備画面の下の操作ボタン：キャダラの賭け〜捨てる設定（.inv-buttons）と おすすめ装備・宝石合成（#es-fuse-host）の高さと縦の位置をそろえる（2026-10-10） */
+#es-fuse-host { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#equipscreen #es-actions button { height: 48px; min-height: 48px; box-sizing: border-box; padding-top: 4px; padding-bottom: 4px; margin: 0; vertical-align: middle; }
+#equipscreen #es-actions button.es-auto small { line-height: 1; }
+@media (max-width: 900px) { #es-fuse-host { width: 100%; } #es-fuse-host button { flex: 1; } }
+
+.opt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; }
+.opt-actions button { min-height: 44px; padding: 6px 14px; background: #2a3448; border: 1px solid #4a5670; color: #e8ecf5; border-radius: 4px; }
+.opt-actions button.opt-apply:not(:disabled) { background: #2f7a3a; border-color: #6fd27c; }
+.opt-actions button:disabled { opacity: .5; }
+.opt-builds { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.opt-builds button { min-width: 44px; padding: 6px 8px; }
+.opt-grow { margin: 0 0 10px; padding: 6px 10px; background: #141a26; border: 1px solid #3b4660; border-radius: 4px; }
+.opt-grow summary { cursor: pointer; font-weight: bold; }
+.opt-grow ul { margin: 6px 0 0; padding-left: 18px; font-size: 12px; }
+.opt-grow li { margin: 3px 0; }
+.opt-grow li small { display: block; color: #9aa4b8; }
 /* Status: 左の詳細を読み進めても、装備と固有能力の付け替えを右に残す。 */
 @media (min-width:901px) {
   #bag[data-view="status"] .bag-box { width:min(1400px,96vw); }
