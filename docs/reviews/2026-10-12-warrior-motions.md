@@ -153,3 +153,9 @@
 元画像 `exec-1e5cc6e8-d120-41e2-a4b0-902a95addcdb.png`。参照なしの新規生成。
 
 > Use case: stylized-concept. Asset type: transparent dark fantasy game VFX animation atlas. Exactly FOUR temporal phases in a precise TWO columns by TWO rows equal square grid, reading order. Each effect centered in its own cell with generous20percent transparent margins, absolutely NO overlap or clipping. Same fixed camera, slightly overhead. Painterly magical effects readable at70px, textured but clear silhouettes, hollow transparent centers rather than solid white discs. True alpha transparent background, no scenic ground, no figures, weapons, letters, numbers, labels, grid lines or checkerboard. PRIMAL NATURE ROAR pulse: emerald green spirit wind with brown leaf fragments and restrained antique gold glints.1 small green curling breath knot,2 expanding hollow organic ring of thin green wind and a few leaves,3 wide broken arcs of nature mist and flying leaf fragments,4 faint scattered leaves and curling wisps dissolving. Distinct organic wisps, not a green floral mandala, no trunk, no character, no animal.
+
+## 検証の最終状況
+
+`node tools/run-tests.js` の初回は45/46成功。失敗は `arena-test.js` の依存ファイル一覧の比較で、新しい設定のアリーナ側の読み込みが抜けていたため。`arena-engine.html` と `dps-engine.html` に同じ設定を追加して修正。
+
+修正後に全46本を再実行し、`arena-test.js`（157秒）とアリーナ規則/チーム/シミュレーター、バッグ、冥爆、職業装備/特性、蒐集者、戦闘の視認性/集計の成功まで確認した。その後、実行環境の接続が切れて `environment_offline: Environment is not connected` となり、最終集計を読み出せなかった。修正後の46/46成功は未確認。新規 `warrior-motion-test.js` は単独で成功（パラディン・バーバリアン・ドルイド・蒐集者の4ケース）。完成画像の全23枚の透明背景・破損・寸法、および5つの姿・15動作の共通描画も確認済み。
