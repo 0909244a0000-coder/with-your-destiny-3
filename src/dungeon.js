@@ -59,6 +59,7 @@ WYD.dungeon = {
     if (w.bossDone && w.dungeonReward) {
       // 新規スポーンは止めるが、ボスの手下が残れば通常の戦闘で倒してから帰る。
       if (w.enemies.length || w.breach) return false;
+      WYD.world.updateEntrance(w, dt);
       const seconds = s.settings.quietFx ? WYD.data.dungeon.quietRewardSeconds : WYD.data.dungeon.rewardSeconds;
       if (w.dungeonReward.time >= seconds) {
         this.settleDrops(w, s);
@@ -72,7 +73,7 @@ WYD.dungeon = {
       }
       return true;
     }
-    if (WYD.world.isBossRoom(s) || w.breach || w.enemies.length) return false;
+    if (WYD.world.isBossRoom(s) || w.breach || w.enemies.length || w.player.stunTimer > 0) return false;
     const to = this.target(s);
     if (to <= r.stage) return false;
     this.settleDrops(w, s);
@@ -97,8 +98,12 @@ WYD.dungeon = {
   frontPosition(w) {
     const M = WYD.data.map, p = w.player;
     // 右上（奥）から接近。距離を確保できないときは既存の出現位置を使う。
-    const pos = { x: M.width - WYD.data.dungeon.walk.padding - (w.nextId % 3) * 24, y: WYD.data.dungeon.walk.padding + (w.nextId % 5) * 28 };
+    const D = WYD.data.dungeon;
+    const pos = { x: M.width - D.walk.padding - (w.nextId % D.front.columns) * D.front.spreadX, y: D.walk.padding + (w.nextId % D.front.rows) * D.front.spreadY };
     return WYD.util.dist(p, pos) >= M.spawnMinDistance ? pos : WYD.world.farPosition(w);
+  },
+  resourceCounts(s) {
+    return { gems: Object.values(s.gems).reduce((n, v) => n + v, 0), essence: s.runeSkills?.essence || 0, maps: s.maps.length, keys: s.uber.keys };
   },
   beginReward(w, s, e) {
     if (!this.enabled(w, s) || !e.boss) return null;
@@ -150,7 +155,7 @@ WYD.dungeon = {
     const at = (floor, stage) => {
       const v = base(floor);
       if (floor > WYD.world.area(s).floors) return { ...v, zoom: v.zoom * D.sceneZoom };
-      return { zoom: v.zoom * D.sceneZoom, x: WYD.util.clamp(v.x + (D.pan.x[stage] - 0.5) * 0.7, 0, 1), y: WYD.util.clamp(v.y + (D.pan.y[stage] - 0.5) * 0.7, 0, 1) };
+      return { zoom: v.zoom * D.sceneZoom, x: WYD.util.clamp(v.x + (D.pan.x[stage] - 0.5) * D.panStrength, 0, 1), y: WYD.util.clamp(v.y + (D.pan.y[stage] - 0.5) * D.panStrength, 0, 1) };
     };
     const r = w.dungeon;
     const stage = r && r.floor === s.floor ? r.stage : Math.min(2, this.target(s));
@@ -179,12 +184,15 @@ WYD.dungeon = {
       const size = D.props.size * (0.75 + rnd() * 0.5);
       ctx.fillStyle = profile.color; ctx.strokeStyle = profile.light; ctx.lineWidth = 2;
       if (profile.kind === 'tree') {
-        ctx.fillRect(x - 4, y, 8, size);
-        ctx.beginPath(); ctx.ellipse(x, y - size / 3, size / 2, size / 3, -0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#4a4034';ctx.fillRect(x - 4, y - size/2, 8, size*1.5);
+        ctx.fillStyle = profile.color;
+        for (let leaf=0;leaf<3;leaf++) { ctx.beginPath();ctx.ellipse(x+(leaf-1)*size/4,y-size/3-leaf*size/6,size/3,size/3,-0.3,0,Math.PI*2);ctx.fill(); }
+        ctx.strokeStyle=profile.light;ctx.beginPath();ctx.moveTo(x,y+size);ctx.lineTo(x,y-size/2);ctx.stroke();
       } else if (profile.kind === 'crystal' || profile.kind === 'ice') {
         ctx.beginPath();ctx.moveTo(x, y-size);ctx.lineTo(x+size/3,y);ctx.lineTo(x-size/3,y);ctx.closePath();ctx.fill();ctx.stroke();
       } else {
         ctx.fillRect(x-size/4,y-size,size/2,size); ctx.strokeRect(x-size/4,y-size,size/2,size);
+        if (profile.kind === 'column') { ctx.fillRect(x-size/3,y-size,size*2/3,5);ctx.fillRect(x-size/3,y-5,size*2/3,5); }
         if (profile.kind === 'lava') { ctx.beginPath();ctx.ellipse(x,y,size,size/3,0,0,Math.PI*2);ctx.fill(); }
       }
     }
@@ -196,14 +204,17 @@ WYD.dungeon = {
     const shown = ctx.canvas.clientWidth / M.width || 1, font = Math.max(D.font, D.minShownPx / shown);
     const width = Math.min(M.width - 32, D.width * Math.max(1, font / D.font)), x = (M.width-width)/2;
     const line = Math.max(D.rowHeight, font*1.4), items = r.items.slice(0,D.maxItems), top = D.top;
-    ctx.save(); ctx.fillStyle='rgba(8,8,12,0.92)';ctx.fillRect(x,top,width,(items.length+3)*line+20);
-    ctx.strokeStyle='#a88751';ctx.strokeRect(x,top,width,(items.length+3)*line+20);
+    const extra = Object.entries(r.extra || {}).filter(([,n]) => n > 0).map(([key,n]) => `${({gems:'宝石',essence:'ルーン欠片',maps:'地図',keys:'奈落の鍵'})[key]} +${n}`).join(' · ');
+    const height = (items.length + (extra ? 4 : 3)) * line + 20;
+    ctx.save(); ctx.fillStyle='rgba(8,8,12,0.92)';ctx.fillRect(x,top,width,height);
+    ctx.strokeStyle='#a88751';ctx.strokeRect(x,top,width,height);
     ctx.textAlign='left';ctx.font=`bold ${font}px sans-serif`;ctx.fillStyle='#efd49a';
     const text = (label,y) => ctx.fillText(label,x+12,y,width-24);
     text(`${r.areaName} · ${r.boss} 討伐`,top+line);
     ctx.font=`${font}px sans-serif`;
     items.forEach((it,n)=>{ctx.fillStyle=WYD.loot.rarityInfo(it.rarity).color;text(`${it.label} — ${it.status}${it.materials?' +'+it.materials+'素材':''}`,top+(n+2)*line);});
-    ctx.fillStyle='#c9a0ff';text(`素材 +${r.materials} · 自動回収後、帰還して再周回`,top+(items.length+2)*line);
+    ctx.fillStyle='#c9a0ff';text(`分解素材 +${r.materials} · 自動回収後、帰還して再周回`,top+(items.length+2)*line);
+    if (extra) { ctx.fillStyle='#b8d9eb';text(extra,top+(items.length+3)*line); }
     ctx.restore();
   },
 };

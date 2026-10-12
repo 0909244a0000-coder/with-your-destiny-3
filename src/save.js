@@ -33,6 +33,7 @@ WYD.save = {
         paragon: { level: 0, exp: 0, points: 0, board: {}, training: { owned: {}, active: null } },   // 修練（レベル上限のあと）。board = 取ったマス（"行,列" → true）
         runes: {} },   // スキルの型（スキル名 → 型の名前）
       equipment: {},   // slot -> item
+      dungeonReturn: null, // 通常ボス撃破後の帰還・未取得品チェックポイント（旧セーブはnull）
       pendingLoot: [], // 満杯で受け取れなかった重要装備（職業別に保存）
       inventory: [],   // item の配列
       stash: [],       // 倉庫（item の配列）
@@ -156,6 +157,12 @@ WYD.save = {
       });
       const checkpoint = state.dungeonReturn;
       if (checkpoint && checkpoint.area === state.area && WYD.data.dungeon.areas[checkpoint.area]) {
+        checkpoint.returned = checkpoint.returned === true;
+        const reward = checkpoint.reward;
+        if (reward && Array.isArray(reward.items)) {
+          reward.items = reward.items.filter(it => it && Number.isFinite(it.id) && typeof it.label === "string" && WYD.data.items.rarities.some(r => r.id === it.rarity)).slice(0, WYD.data.dungeon.summary.maxItems);
+          reward.materials = Number.isFinite(reward.materials) ? Math.max(0, reward.materials) : 0;
+        } else checkpoint.reward = null;
         checkpoint.drops = (Array.isArray(checkpoint.drops) ? checkpoint.drops : []).filter(d => {
           const it = d && d.item;
           if (!it || !Number.isFinite(it.id) || ownedIds.has(it.id) || !Array.isArray(it.stats) || !WYD.data.items.slots[it.slot]) return false;

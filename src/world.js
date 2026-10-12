@@ -1509,9 +1509,14 @@ WYD.world = {
       WYD.dungeon.rewardItem(w, reward, item);
     }
     if (def.treasure) this.goblinTreasure(w, state, e);
+    const rewardsBefore = reward && WYD.dungeon.resourceCounts(state);
     WYD.gems.onKill(w, state, e);
     WYD.maps.onKill(w, state, e);
     WYD.uber.onKill(w, state, e);
+    if (reward) {
+      const after = WYD.dungeon.resourceCounts(state);
+      reward.extra = Object.fromEntries(Object.keys(after).map(key => [key, Math.max(0, after[key] - rewardsBefore[key])]));
+    }
     WYD.breach.onKill(w, state, e);
     WYD.records.check(state);
     WYD.dungeon.finishReward(w, state, reward);
