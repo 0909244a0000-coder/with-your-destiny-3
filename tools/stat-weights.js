@@ -2,6 +2,7 @@
 // おすすめ装備の重み（data/optimizer.js）を決める裏どり用。ゲームのデータやセーブは変えない。
 // node tools/stat-weights.js [職業,...|all] [秒数=40] [乱数の数=2] [組み合わせの上限=0(全部)]  → 結果は標準出力に JSON
 // 環境変数 AREA・DIFFICULTY でエリアと危険度を変えられる（はじめは inferno・5）
+// 環境変数 BASE_ONLY=1 なら、能力を足したときの差は測らず、ビルドごとの火力・生存だけを測る（職業の強さ比べ用）
 // 環境変数 OUT_DIR を指定すると、職業ごとに <OUT_DIR>/<職業>.json へ保存し、もうあるものは飛ばす（途中で止まっても続きから）
 //
 // 測り方
@@ -28,7 +29,7 @@ const [classArg = 'all', secArg = '40', seedArg = '2', limitArg = '0'] = process
     await page.goto('file://' + path.resolve(__dirname, '../index.html'));
     const all = await page.evaluate(() => Object.keys(WYD.data.classes).filter((id) => id !== 'collector'));
     const classes = classArg === 'all' ? all : classArg.split(',');
-    const out = { config: { seconds: Number(secArg), seeds: Number(seedArg), area: process.env.AREA || 'inferno', difficulty: Number(process.env.DIFFICULTY || 5), level: 50, skillLevel: 10, stacks: 4, dieTarget: 20, hpCeil: 0.7, hpFloor: 0.2, debug: !!process.env.DEBUG }, classes: [] };
+    const out = { config: { seconds: Number(secArg), seeds: Number(seedArg), area: process.env.AREA || 'inferno', difficulty: Number(process.env.DIFFICULTY || 5), level: 50, skillLevel: 10, stacks: 4, dieTarget: 20, hpCeil: 0.7, hpFloor: 0.2, debug: !!process.env.DEBUG, baseOnly: !!process.env.BASE_ONLY }, classes: [] };
     const outDir = process.env.OUT_DIR, fs = require('node:fs');
     if (outDir) fs.mkdirSync(outDir, { recursive: true });
     for (const classId of classes) {
@@ -97,7 +98,7 @@ const [classArg = 'all', secArg = '40', seedArg = '2', limitArg = '0'] = process
           };
           // 耐えられる敵の強さ = dieTarget 秒もつ敵の攻撃の倍率 =（最大HP ÷ dieTarget ＋ 回復/秒）÷ 被ダメージ/秒
           const survive = (x) => x.taken > 0 ? (x.maxHp / cfg.dieTarget + x.heal) / x.taken : 1e6;
-          const statKeys = Object.keys(roll);
+          const statKeys = cfg.baseOnly ? [] : Object.keys(roll);   // BASE_ONLY=1 なら能力ごとの差は測らない（職業・ビルドの強さの比べだけ。速い）
           const acc = { dps: {}, surv: {} }, per = { dps: {}, surv: {} }; let baseDps = 0, baseTaken = 0, baseHeal = 0, baseHp = 0, deaths = 0;
           for (let k = 0; k < cfg.seeds; k++) {
             const gear = gearFor(k + 1), seed = 1000 + k;
