@@ -56,7 +56,7 @@ WYD.equipScreen = {
   },
 
   close() {
-    this.opened = false;
+    this.opened = false; this.scrollView = null;   // 開き直したら一番上から
     this.$("equipscreen").hidden = true;
     WYD.ui.hideTooltip();
     const nav = this.$("character-open"); if (nav) { nav.classList.remove("active"); nav.setAttribute("aria-pressed", "false"); }
@@ -325,6 +325,11 @@ WYD.equipScreen = {
     this.$("es-stats-host").innerHTML = D.stats.map(([k, name, kind]) => `<span><small>${name}</small><b>${fmt(stats[k] || 0, kind)}</b></span>`).join("");
     this.$("es-count").textContent = `${s.inventory.length} / ${size}`;
     this.$("es-fuse-host").innerHTML = `<button data-es="optimizer" title="手持ちから目的別（火力・防御・対人）におすすめの組み合わせを見る（着替えない）">おすすめ装備</button>` + this.fuseButton();
+    // 描き直しても、持ち物の欄と画面のスクロール位置はそのまま（タブ・ページを変えたときだけ一番上へ）
+    const oldGrid = document.querySelector("#es-main-host .es-grid"), box = document.querySelector("#equipscreen .modal-box");
+    const view = `${this.tab}|${this.page}|${this.bagPage}`, keep = view === this.scrollView;
+    const gridTop = keep && oldGrid ? oldGrid.scrollTop : 0, boxTop = box ? box.scrollTop : 0;
+    this.scrollView = view;
     this.$("es-main-host").innerHTML =
       `<div class="es-top"><span class="es-money" style="color:${C.materialColor}">${C.materialName} ${WYD.results.number(s.materials)}</span><span class="es-money">宝石 ${Object.values(s.gems).reduce((n, v) => n + v, 0)}</span></div>` +
       `<div class="es-main">` +
@@ -333,5 +338,8 @@ WYD.equipScreen = {
           `<div class="es-col">${col(D.rightSlots)}</div></section>` +
         `<section class="es-bag"><nav class="es-tabs">${tabs}</nav>${this.opNote(onGems)}${growTab ? `<div class="es-op-note">強化 +10・鍛造（いちばん運が悪いとき）まで育てると、今の装備（同じだけ育てた下限）より強くなる装備。伸びの大きい順。目的：${(WYD.optimizer.goalDef(WYD.optimizer.goal) || {}).label}（おすすめ装備で選んだもの）</div>` : ""}${pager}<div class="es-grid">${grid || `<p class="muted">${onGems ? "手元に宝石がない" : "このタブに入る装備はない"}</p>`}</div></section>` +
       `</div>`;
+    const newGrid = document.querySelector("#es-main-host .es-grid");
+    if (newGrid) newGrid.scrollTop = gridTop;
+    if (box) box.scrollTop = boxTop;
   },
 };
