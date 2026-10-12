@@ -16,3 +16,8 @@
 
 試し用：https://raw.githack.com/0909244a0000-coder/with-your-destiny-3/equipment-gem-picker/index.html
 本番：https://0909244a0000-coder.github.io/with-your-destiny-3/
+
+
+PC実ブラウザ：クラウドChromeで試用版に検証用セーブを読み込み、持ち物の「+2 嵐の双剣」から加工→宝石セットへ。武器用の効果/所持数と対象固定、エメラルドの直接装着（空き1→0、所持3→2）、満杯での無効化、取り外し（空き0→1、所持2→3）、同じ装備の加工画面への戻りを確認。スクリーンショットを保存。スマホ実機/小画面/全回帰は未確認。
+
+![個別装備の宝石選択](2026-10-13-equipment-gem-picker.jpg)
