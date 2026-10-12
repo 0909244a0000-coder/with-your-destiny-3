@@ -23,6 +23,7 @@
 - 絵の場所を `data/` に書く方法は `assets/README.md`
 
 ## 受け取り済み（ゲームに入っている）
+- 2026-10-12 パラディン `assets/paladin/`（歩行・鎚攻撃・聖なる発動）、バーバリアン `assets/barbarian/`（歩行・双剣・回転・雄叫び）、ドルイド `assets/druid/`（人間の歩行・詠唱、熊/狼の歩行・爪・咆哮）。各動作透過8コマ、256pxセル・足元128/234。待機は各1コマ。専用4コマVFXは `paladinHammerImpactAtlas.webp`・`barbarianBladeWindAtlas.webp`・`druidPrimalPulseAtlas.webp`。23画像計約2.43MiB。人物/武器/爪に追従し、変身中も共通描画を使用。生成指示は `docs/reviews/2026-10-12-warrior-motions.md`。
 - 2026-10-12 傀儡師の `assets/puppeteer/{idle,walk,cast,finale}.webp`（待機1・歩行8・操糸8・裁断8、256pxセル、足元128/234）。黒革・赤い裏地・金の留め具を継承。終幕の赤糸は `assets/vfx/puppetThreadBurstAtlas.webp`（2×2、384pxセル）。手元と床の演出をコマに追従。人形の攻撃は既存ポーズを継続。
 - 2026-10-12 冥爆術師の `assets/bombmancer/{idle,walk,cast,finale}.webp`（待機1・歩行8・仕込み8・指鳴らし8、セル256px、共通足元128/234）。仮面・黒髪・白羽・紫黒金の外套を継承。専用4コマ爆炎 `assets/vfx/bombAshBurstAtlas.webp`（2×2、セル384px、紫橙と灰煙）。手元/床の演出は既存絵も活用。
 - 2026-10-12 ソーサレス専用技の透過8コマ `assets/sorceress/meteor.webp`（杖を掲げる）、`nova.webp`（杖を突く）。各2048×256、足元(128,234)。杖先/床の炎と氷は既存VFXを別レイヤーで追従。

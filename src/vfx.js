@@ -10,10 +10,37 @@ WYD.vfx = {
     return !!this.img(key);
   },
 
+  // シートの光がセル境界で四角く切れないよう、指定された絵の端だけ描画時に減衰。
+  // 元画像は保ち、加工用キャンバスは絵ごとに一度だけ作る。
+  softAtlas(key, image, def) {
+    this.softAtlases = this.softAtlases || {};
+    if (this.softAtlases[key]) return this.softAtlases[key];
+    const canvas = document.createElement("canvas");
+    canvas.width = image.width; canvas.height = image.height;
+    const ctx = canvas.getContext("2d"), width = image.width / def.columns, height = image.height / def.rows;
+    ctx.drawImage(image, 0, 0); ctx.globalCompositeOperation = "destination-in";
+    for (let row = 0; row < def.rows; row++) for (let col = 0; col < def.columns; col++) {
+      const x = col * width, y = row * height;
+      ctx.save(); ctx.beginPath(); ctx.rect(x, y, width, height); ctx.clip();
+      for (const gradient of [ctx.createLinearGradient(x, y, x + width, y), ctx.createLinearGradient(x, y, x, y + height)]) {
+        gradient.addColorStop(0, "rgba(255,255,255,0)");
+        gradient.addColorStop(def.edgeInset, "rgba(255,255,255,0)");
+        gradient.addColorStop(def.edgeFade, "white"); gradient.addColorStop(1 - def.edgeFade, "white");
+        gradient.addColorStop(1 - def.edgeInset, "rgba(255,255,255,0)");
+        gradient.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = gradient; ctx.fillRect(x, y, width, height);
+      }
+      ctx.restore();
+    }
+    this.softAtlases[key] = canvas;
+    return canvas;
+  },
+
   // 1セルだけを切り出す。隣の時点と補間して4コマの切替を滑らかにする。
   frame(ctx, key, image, x, y, width, height, progress, loop = false) {
     const a = WYD.data.vfx.atlases[key];
     if (!a) { ctx.drawImage(image, x, y, width, height); return; }
+    if (a.edgeFade) image = this.softAtlas(key, image, a);
     const frames = loop ? a.loopFrames || Array.from({ length: a.frames }, (_, i) => i) : null;
     const position = loop ? ((progress % 1 + 1) % 1) * frames.length : WYD.util.clamp(progress, 0, 1) * (a.frames - 1);
     const index = Math.floor(position), mix = position - index;

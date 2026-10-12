@@ -523,22 +523,22 @@ WYD.render = {
 
   // セルごとの足元をそろえて描く。輪郭光はセル単位で一度だけ作る。
   playerSprite(o, def) {
-    const D = def.spriteAnimation;
-    if (!D || o.form) return null;
+    const D = WYD.world.spriteDefinition(o, def);
+    if (!D) return null;
     const t = this.clock || 0, cast = o.spriteCast;
-    const casting = !o.dead && !(o.stunTimer > 0) && cast && t >= cast.start && t < cast.start + cast.duration;
+    const casting = !o.dead && !(o.stunTimer > 0) && cast && (cast.appearance || null) === (o.form?.id || null) && t >= cast.start && t < cast.start + cast.duration;
     const action = casting ? cast.action || "cast" : !o.dead && !(o.stunTimer > 0) && o.moving ? "walk" : "idle";
-    const A = D[action], img = this.getImage(A.image);
+    const A = D[action] || D.idle, img = this.getImage(A.image);
     if (!img) return null;
     const frame = casting ? Math.min(A.frames - 1, Math.floor((t - cast.start) / cast.duration * A.frames)) : Math.floor(t / A.frameTime) % A.frames;
-    return { ...D, image: A.image, frame, action, fx: casting ? A.fx : null, progress: casting ? (t - cast.start) / cast.duration : 0 };
+    return { ...D, appearanceScale: o.form?.scale || 1, image: A.image, frame, action, fx: casting ? A.fx : null, progress: casting ? (t - cast.start) / cast.duration : 0 };
   },
 
   // 杖や手元の光はセル内の位置に追従。床の絵は足元、人物の後ろへ描く。
   drawPlayerCastFx(ctx, p, sprite, pose, foreground) {
     const F = sprite?.fx;
     if (!F || p.dead || p.stunTimer > 0) return;
-    const t = sprite.progress, size = WYD.data.player.radius * WYD.data.map.spriteScale;
+    const t = sprite.progress, size = WYD.data.player.radius * WYD.data.map.spriteScale * (sprite.appearanceScale || 1);
     const key = foreground ? F.staff : F.ground, img = WYD.vfx.img(key);
     if (!img) return;
     const quiet = WYD.state?.settings.quietFx ? F.quietAlpha : 1;
@@ -550,7 +550,7 @@ WYD.render = {
       const r = F.staffSize * Math.sin(Math.PI * t);
       ctx.globalAlpha *= F.staffAlpha * Math.sin(Math.PI * t) * quiet;
       const x = (point[0] - sprite.anchorX) * ratio, y = (point[1] - sprite.anchorY) * ratio;
-      ctx.drawImage(img, x - r / 2, y - r / 2, r, r);
+      WYD.vfx.frame(ctx, key, img, x - r / 2, y - r / 2, r, r, t);
     } else if (t >= F.groundStart) {
       const phase = (t - F.groundStart) / (1 - F.groundStart);
       const r = F.groundSize * (F.groundFrom + (F.groundTo - F.groundFrom) * phase);
@@ -816,7 +816,7 @@ WYD.render = {
     if (sprite && sprite.action !== "idle") { visualPose.sx = 1; visualPose.sy = 1; }
     this.drawPlayerCastFx(ctx, p, sprite, visualPose, false);
     this.drawCircleOrImage(ctx, p.x, p.y, P.radius * (form ? form.scale : 1), p.dead ? "#555" : form ? form.color : P.color,
-      formImg || sprite?.image || this.poseImage(p, P), false, visualPose, filter, p.dead ? null : WYD.data.map.rim.player, sprite);
+      sprite?.image || formImg || this.poseImage(p, P), false, visualPose, filter, p.dead ? null : WYD.data.map.rim.player, sprite);
     this.drawPlayerCastFx(ctx, p, sprite, visualPose, true);
     // 鉄の皮膚・マナシールドの間：体を包む光（絵があるとき）
     if (p.buff && !p.dead) {

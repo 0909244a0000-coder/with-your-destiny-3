@@ -117,6 +117,7 @@ WYD.world = {
   // 絵の動きのために、動いた量・向き・攻撃してからの時間を覚えておく
   trackMotion(w, dt) {
     const p = w.player;
+    this.syncSpriteAppearance(p);
     if (p.dead) { p.spriteCast = null; p.spriteCastNext = null; }
     else if (!(p.stunTimer > 0) && p.spriteCastNext && (w.time || 0) >= p.spriteCast.start + p.spriteCast.duration) {
       p.spriteCast = { ...p.spriteCastNext, start: w.time || 0 }; p.spriteCastNext = null;
@@ -134,12 +135,27 @@ WYD.world = {
     }
   },
 
-  // 描画専用の詠唱。連射中も再生途中を巻き戻さず、戦闘の発動時刻は変えない。
+  // 描画専用の動作。連射中も再生途中を巻き戻さず、戦闘の発動時刻は変えない。
+  spriteDefinition(p, def = WYD.data.player) {
+    return p.form ? WYD.data.classes.druid.player.spriteForms?.[p.form.id] : def.spriteAnimation;
+  },
+
+  // 変身/解除で前の姿の動きや予約を持ち越さない。能力値と変身時間は触らない。
+  syncSpriteAppearance(p) {
+    if (p.spriteCast && (p.spriteCast.appearance || null) !== (p.form?.id || null)) {
+      p.spriteCast = null; p.spriteCastNext = null;
+    }
+  },
+
   startSpriteCast(w, interval, skillId) {
-    const D = WYD.data.player.spriteAnimation, action = D?.skills?.[skillId] || "cast", cast = D?.[action];
+    const p = w.player;
+    this.syncSpriteAppearance(p);
+    const D = this.spriteDefinition(p);
+    if (skillId && D?.skills?.[skillId] === false) return; // 持続オーラは動作を中断しない
+    const action = D?.skills?.[skillId] || "cast", cast = D?.[action];
     if (!cast || w.player.dead) return;
-    const now = w.time || 0, p = w.player;
-    const next = { action, duration: Math.min(cast.frames * cast.frameTime, action === "cast" ? interval || Infinity : Infinity) };
+    const now = w.time || 0;
+    const next = { action, appearance: p.form?.id || null, duration: Math.min(cast.frames * cast.frameTime, action === "cast" ? interval || Infinity : Infinity) };
     if (p.spriteCast && now < p.spriteCast.start + p.spriteCast.duration) {
       // 専用技は通常詠唱より優先。同時に別の専用技が発動したら1件だけ続けて描く。
       if (action === "cast" || action === p.spriteCast.action) return;
