@@ -179,7 +179,7 @@ WYD.world = {
       w.bossTimer = (w.bossTimer == null ? WYD.data.boss.bossAppearDelay : w.bossTimer) - dt;
       if (w.bossTimer <= 0) {
         w.bossTimer = null;
-        const boss = this.spawnEnemy(w, state, area.boss, WYD.dungeon.enabled(w, state) ? WYD.dungeon.frontPosition(w) : this.farPosition(w));
+        const boss = this.spawnEnemy(w, state, area.boss, WYD.dungeon.enabled(w, state) ? WYD.dungeon.bossPosition(w) : this.farPosition(w));
         boss.boss = true;
         // 何度も倒されていたら、すこし弱くする
         const B = WYD.data.boss;

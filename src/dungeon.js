@@ -102,6 +102,14 @@ WYD.dungeon = {
     const pos = { x: M.width - D.walk.padding - (w.nextId % D.front.columns) * D.front.spreadX, y: D.walk.padding + (w.nextId % D.front.rows) * D.front.spreadY };
     return WYD.util.dist(p, pos) >= M.spawnMinDistance ? pos : WYD.world.farPosition(w);
   },
+  bossPosition(w) {
+    const M = WYD.data.map;
+    for (const point of WYD.data.dungeon.bossPositions) {
+      const pos = {x:point.x*M.width,y:point.y*M.height};
+      if (WYD.util.dist(w.player,pos) >= M.spawnMinDistance) return pos;
+    }
+    return this.frontPosition(w); // 距離を確保できなければ従来の出現処理へ戻す。
+  },
   resourceCounts(s) {
     return { gems: Object.values(s.gems).reduce((n, v) => n + v, 0), essence: s.runeSkills?.essence || 0, maps: s.maps.length, keys: s.uber.keys };
   },

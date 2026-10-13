@@ -246,3 +246,27 @@ console.log('ok 復元後の地面/取得状態・重複なし / 320px・390px�
  W.ui.paused=false;
 }
 console.log('ok 戦利品中の一時停止/未受取上限表示が装備行を覆わない・通常時の停止表示維持');
+
+// 通常ボスは中央寄りに登場。最低距離と能力を維持し、雑魚の前方位置は変えない。
+for (const area of W.data.areas) {
+ const {s,w}=setup(area.id);s.floor=area.floors+1;w.bossTimer=0;w.spawnTimer=1e9;
+ w.player.x=W.data.map.width/2;w.player.y=W.data.map.height/2;
+ W.world.updateSpawns(w,s,.05);
+ const boss=w.enemies.find(e=>e.boss);assert(boss);assert.equal(boss.kind,area.boss);
+ assert(W.util.dist(w.player,boss)>=W.data.map.spawnMinDistance);
+ for (const zoom of W.data.map.camera.levels) {
+  s.settings.cameraZoom=zoom;w.bossIntro.time=W.data.boss.intro.time/2;
+  const cam=W.render.cameraFor({canvas:{id:'game'}},w,s);
+  const right=(boss.x-cam.x+W.data.enemies[boss.kind].radius*W.data.map.spriteScale/2)*cam.zoom;
+  assert(right<W.data.map.width*0.75,'通常入場のボスが右上メニュー領域へ入る');
+ }
+ const control=W.world.spawnEnemy(W.world.create(),s,area.boss,{x:400,y:300});
+ assert.equal(boss.maxHp,control.maxHp);assert.equal(boss.attack,control.attack);
+}
+{
+ const {w}=setup();w.player.x=850;w.player.y=100;
+ const pos=W.dungeon.bossPosition(w);assert(W.util.dist(w.player,pos)>=W.data.map.spawnMinDistance);
+ w.player.x=W.data.map.width/2;w.player.y=W.data.map.height/2;
+ const normal=W.dungeon.frontPosition(w);assert(normal.x>W.data.map.width*0.8);
+}
+console.log('ok 6エリアのボス登場位置・最低距離・カメラ倍率・能力維持 / 雑魚の前方位置維持');
