@@ -241,6 +241,37 @@ WYD.dungeon = {
   // 森以外でも足元の道と目印が通り過ぎる。静止画のパンだけに依存しない。
   // 入口は明るい開けた空間、道中は薄霧、奥地は濃い影と光源。
   // 画像を置き換えず、ステージ遷移に合わせて背景の空気感を連続補間する。
+  // 画面の外縁を通過する近景。遠景のパンより速く動くことで奥行きを作る。
+  drawForegroundParallax(ctx, w, s) {
+    if(!this.enabled(w,s)||WYD.world.isBossRoom(s))return false;
+    const M=WYD.data.map, D=WYD.data.dungeon, profile=D.areas[s.area];
+    if(!profile)return false;
+    const offset=this.routeDistance(w,s)*1.65;
+    const gap=175,first=Math.floor((offset-M.height)/gap),last=Math.ceil(offset/gap);
+    ctx.save();
+    for(let n=first;n<=last;n++){
+      const y=offset-n*gap, depth=WYD.util.clamp(y/M.height,0,1);
+      const rnd=WYD.util.seededRandom(M.decorationSeed+s.floor*59+n*137);
+      const size=28+depth*105;
+      ctx.globalAlpha=.12+depth*.34;
+      for(const side of [-1,1]){
+        const x=side<0?-size*.25+rnd()*size*.22:M.width+size*.25-rnd()*size*.22;
+        ctx.fillStyle=profile.color;ctx.strokeStyle=profile.light;ctx.lineWidth=2;
+        if(profile.kind==='tree'){
+          ctx.fillStyle='#27351f';ctx.fillRect(x-size*.09,y-size*.45,size*.18,size);
+          ctx.beginPath();ctx.ellipse(x,y-size*.65,size*.6,size*.65,0,0,Math.PI*2);ctx.fill();
+        }else if(profile.kind==='column'||profile.kind==='grave'){
+          ctx.fillRect(x-size*.25,y-size*.7,size*.5,size*1.25);
+          ctx.strokeRect(x-size*.25,y-size*.7,size*.5,size*1.25);
+        }else{
+          ctx.beginPath();ctx.moveTo(x,y-size);ctx.lineTo(x+size*.5,y+size*.1);
+          ctx.lineTo(x+size*.15,y+size*.6);ctx.lineTo(x-size*.5,y+size*.35);
+          ctx.closePath();ctx.fill();ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();return true;
+  },
   drawStageAtmosphere(ctx, w, s) {
     if (!this.enabled(w,s) || WYD.world.isBossRoom(s)) return false;
     const M=WYD.data.map, r=w.dungeon;
