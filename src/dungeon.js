@@ -239,6 +239,35 @@ WYD.dungeon = {
     ctx.restore();return true;
   },
   // 森以外でも足元の道と目印が通り過ぎる。静止画のパンだけに依存しない。
+  // 入口は明るい開けた空間、道中は薄霧、奥地は濃い影と光源。
+  // 画像を置き換えず、ステージ遷移に合わせて背景の空気感を連続補間する。
+  drawStageAtmosphere(ctx, w, s) {
+    if (!this.enabled(w,s) || WYD.world.isBossRoom(s)) return false;
+    const M=WYD.data.map, r=w.dungeon;
+    const stage=r&&r.floor===s.floor?r.stage:Math.min(2,this.target(s));
+    const m=r&&r.move, t=m?WYD.util.clamp(m.time/m.duration,0,1):0;
+    const smooth=t*t*(3-2*t);
+    const depth=stage+(m?((m.floor?0:m.to)-stage)*smooth:0);
+    const darkness=WYD.util.clamp(depth/2,0,1);
+    ctx.save();
+    const shadow=ctx.createLinearGradient(0,0,0,M.height);
+    shadow.addColorStop(0,'rgba(7,12,22,'+(darkness*.34).toFixed(3)+')');
+    shadow.addColorStop(.6,'rgba(8,11,19,'+(darkness*.12).toFixed(3)+')');
+    shadow.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=shadow;ctx.fillRect(0,0,M.width,M.height);
+    const fog=ctx.createLinearGradient(0,M.height*.12,0,M.height*.83);
+    fog.addColorStop(0,'rgba(205,213,206,0)');
+    fog.addColorStop(.55,'rgba(205,213,206,'+(.05+Math.sin(Math.PI*depth/2)*.13).toFixed(3)+')');
+    fog.addColorStop(1,'rgba(205,213,206,0)');
+    ctx.fillStyle=fog;ctx.fillRect(0,0,M.width,M.height);
+    if(depth>1){
+      const glow=ctx.createRadialGradient(M.width*.5,M.height*.2,5,M.width*.5,M.height*.2,M.width*.55);
+      glow.addColorStop(0,'rgba(242,214,165,'+((depth-1)*.12).toFixed(3)+')');
+      glow.addColorStop(1,'rgba(242,214,165,0)');
+      ctx.fillStyle=glow;ctx.fillRect(0,0,M.width,M.height);
+    }
+    ctx.restore();return true;
+  },
   drawBiomeRoute(ctx, w, s) {
     if (!this.enabled(w,s) || s.area==='forest' || WYD.world.isBossRoom(s)) return false;
     const D=WYD.data.dungeon, M=WYD.data.map, profile=D.areas[s.area];
