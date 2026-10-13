@@ -106,6 +106,22 @@ for(const width of [1440,390]) {
  W.dungeon.drawReward(ctx,w,s);
 }
 console.log('ok PC/390px相当の描画・sceneパン・描画乱数0・状態不変');
+// 全6MAPの区間別ランドマーク描画が例外なく動き、状態を変更しないことを検証。
+for (const area of W.data.areas) {
+ const {s,w}=setup(area.id);
+ const ctx=new Proxy({canvas:{id:'biome',clientWidth:960,width:960,height:600}},{
+  get:(obj,key)=>key in obj?obj[key]:key==='measureText'?()=>({width:100}):key==='createRadialGradient'||key==='createLinearGradient'?()=>({addColorStop(){}}):()=>{},
+  set:(obj,key,value)=>(obj[key]=value,true)
+ });
+ const snapshot=JSON.stringify(s);
+ for (const stage of [0,1,2]) {
+  w.dungeon.stage=stage;
+  W.dungeon.drawProps(ctx,w,s);
+  assert.equal(JSON.stringify(s),snapshot,area.id+' stage '+stage);
+ }
+}
+console.log('ok 全6MAP・3区間の固有ランドマーク描画と状態不変');
+
 
 // 全6エリアで既存の3階分の討伐数と正しいボス/報酬/帰還。共通処理だけを使う。
 for(const area of W.data.areas) {
