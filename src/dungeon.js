@@ -200,8 +200,11 @@ WYD.dungeon = {
     }
     ctx.restore();
   },
+  rewardVisible(w, s) {
+    return this.enabled(w, s) && !!w.dungeonReward && !w.town && (w.dungeonReward.time >= WYD.data.boss.defeat.slowTime || WYD.world.battleStopped(s));
+  },
   drawReward(ctx, w, s) {
-    if (!this.enabled(w, s) || !w.dungeonReward || w.town || w.dungeonReward.time < WYD.data.boss.defeat.slowTime && !WYD.world.battleStopped(s)) return;
+    if (!this.rewardVisible(w, s)) return;
     const r = w.dungeonReward, D = WYD.data.dungeon.summary, M = WYD.data.map;
     const shown = ctx.canvas.clientWidth / M.width || 1, items = r.items.slice(0,D.maxItems);
     const extra = Object.entries(r.extra || {}).filter(([,n]) => n > 0).map(([key,n]) => `${({gems:'宝石',essence:'ルーン欠片',maps:'地図',keys:'奈落の鍵'})[key]} +${n}`).join(' · ');

@@ -286,10 +286,11 @@ WYD.render = {
       ctx.textAlign = "center";
       ctx.font = "bold 26px serif";
       ctx.fillStyle = "#ff8a6a";
-      ctx.fillText(`戦闘停止中：未受取が ${state.pendingLoot.length}個（上限 ${WYD.data.items.pendingLootLimit}）`, map.width / 2, map.height / 2 - 110);
+      const reward = WYD.dungeon.rewardVisible(w, state), summary = WYD.data.dungeon.summary;
+      ctx.fillText(`戦闘停止中：未受取が ${state.pendingLoot.length}個（上限 ${WYD.data.items.pendingLootLimit}）`, map.width / 2, reward ? summary.stoppedY : map.height / 2 - 110);
       ctx.font = "18px sans-serif";
       ctx.fillStyle = "#e8d8a8";
-      ctx.fillText("Status の「未受取を受け取る」で再開（持ち物に空きが必要）", map.width / 2, map.height / 2 - 78);
+      ctx.fillText("Status の「未受取を受け取る」で再開（持ち物に空きが必要）", map.width / 2, reward ? summary.resumeY : map.height / 2 - 78);
     }
     if (WYD.ui.paused) {
       // 一時停止中の表示
@@ -299,7 +300,7 @@ WYD.render = {
       ctx.textAlign = "center";
       ctx.font = "bold 28px serif";
       ctx.fillStyle = "#e8d8a8";
-      ctx.fillText("一時停止中（スペースで再開）", map.width / 2, map.height / 2);
+      ctx.fillText("一時停止中（スペースで再開）", map.width / 2, WYD.dungeon.rewardVisible(w, state) ? WYD.data.dungeon.summary.pauseY : map.height / 2);
     }
     this.drawBanner(ctx, w);
 

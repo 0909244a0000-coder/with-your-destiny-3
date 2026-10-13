@@ -225,3 +225,22 @@ for (const width of [1440,390,320]) {
  assert.equal(texts.length,9);assert(texts.every(t=>t[2]>=y&&t[2]<=y+bh));
 }
 console.log('ok 復元後の地面/取得状態・重複なし / 320px・390px・PCの全報酬が描画範囲内');
+
+// 戦利品を止めて読むとき、停止案内が装備の行を覆わない。
+{
+ const {s,w}=setup(),texts=[];
+ const ctx=new Proxy({canvas:{id:'test',clientWidth:320,width:960,height:600},fillText:(...args)=>texts.push(args)}, {
+  get:(o,k)=>k in o?o[k]:k==='measureText'?()=>({width:100}):k==='createRadialGradient'||k==='createLinearGradient'?()=>({addColorStop(){}}):()=>{},
+  set:(o,k,v)=>(o[k]=v,true)
+ });
+ w.dungeonReward={areaName:'森',boss:'羅刹王',time:2,materials:0,extra:{gems:2},items:Array.from({length:6},()=>({rarity:'legend',label:'試験',status:'獲得済み'}))};
+ s.pendingLoot=Array.from({length:W.data.items.pendingLootLimit},(_,id)=>({id}));W.ui.paused=true;
+ W.render.draw(ctx,w,s);
+ const rows=texts.filter(t=>t[0].includes(' — '));assert.equal(rows.length,6);
+ const notes=texts.filter(t=>t[0].includes('停止中')||t[0].includes('Status の'));
+ assert.equal(notes.length,3);assert(notes.every(n=>n[2]<rows[0][2]-W.data.dungeon.summary.rowHeight));
+ w.dungeonReward=null;texts.length=0;W.render.draw(ctx,w,s);
+ assert.equal(texts.find(t=>t[0].includes('一時停止中'))[2],W.data.map.height/2);
+ W.ui.paused=false;
+}
+console.log('ok 戦利品中の一時停止/未受取上限表示が装備行を覆わない・通常時の停止表示維持');

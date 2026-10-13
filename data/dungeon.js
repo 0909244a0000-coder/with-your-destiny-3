@@ -10,7 +10,8 @@ WYD.data.dungeon = {
   introZoom: 0.06, panStrength: 0.7,
   front: { columns: 3, rows: 5, spreadX: 24, spreadY: 28 },
   props: { count: 12, size: 32, travelX: 125, travelY: 65, alpha: 0.7 },
-  summary: { width: 570, top: 170, padding: 16, rowHeight: 23, font: 16, minShownPx: 11, maxItems: 6 },
+  summary: { width: 570, top: 170, padding: 16, rowHeight: 23, font: 16, minShownPx: 11, maxItems: 6,
+    pauseY: 40, stoppedY: 70, resumeY: 96 },
   // 森の縦切り検証後、戦闘コードを複製せず設定だけで展開。
   areas: {
     forest: { kind: 'tree', color: '#334e35', light: '#79925b' },
