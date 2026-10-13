@@ -241,7 +241,10 @@ WYD.dungeon = {
   drawProps(ctx, w, s) {
     if (!this.enabled(w, s)) return;
     const D = WYD.data.dungeon, M = WYD.data.map, profile = D.areas[s.area], v = this.view(s, w);
-    const rnd = WYD.util.seededRandom(M.decorationSeed + s.floor);
+    // 区間ごとに装飾の配置を変え、同じ背景のパンだけに見えないようにする。
+    // 固定シードなので描画フレームごとに揺れず、戦闘乱数にも影響しない。
+    const stage = w.dungeon && w.dungeon.floor === s.floor ? w.dungeon.stage : Math.min(2, this.target(s));
+    const rnd = WYD.util.seededRandom(M.decorationSeed + s.floor * 101 + stage * 1009);
     ctx.save(); ctx.globalAlpha = D.props.alpha;
     for (let i = 0; i < D.props.count; i++) {
       const x = (i % 2 ? 0.9 : 0.08) * M.width + rnd() * 35 - (v.x - 0.5) * D.props.travelX;
