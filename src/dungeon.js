@@ -212,8 +212,15 @@ WYD.dungeon = {
     const section=Math.min(2,Math.floor(offset/D.travel)%3);
     ctx.fillStyle=D.edge;ctx.beginPath();ctx.moveTo(M.width*.38,0);ctx.lineTo(M.width*.62,0);
     ctx.lineTo(M.width*.94,M.height);ctx.lineTo(M.width*.06,M.height);ctx.closePath();ctx.fill();
-    ctx.fillStyle=D.road[section];ctx.beginPath();ctx.moveTo(M.width*.4,0);ctx.lineTo(M.width*.6,0);
-    ctx.lineTo(M.width*.88,M.height);ctx.lineTo(M.width*.12,M.height);ctx.closePath();ctx.fill();
+    ctx.save();ctx.beginPath();ctx.moveTo(M.width*.4,0);ctx.lineTo(M.width*.6,0);
+    ctx.lineTo(M.width*.88,M.height);ctx.lineTo(M.width*.12,M.height);ctx.closePath();ctx.clip();
+    if(tile){
+      ctx.filter='sepia(.8) saturate(.5) brightness(1.7)';
+      for(let y=offset%D.tileSize-D.tileSize;y<M.height;y+=D.tileSize)
+        for(let x=0;x<M.width;x+=D.tileSize)ctx.drawImage(tile,x,y,D.tileSize,D.tileSize);
+      ctx.filter='none';
+    }
+    ctx.globalAlpha=.3;ctx.fillStyle=D.road[section];ctx.fillRect(0,0,M.width,M.height);ctx.restore();
     // 同じ石・木を下へ送り、移動後も通過した距離を保持。描画用乱数は戦闘抽選から独立。
     const first=Math.floor((offset-M.height)/90),last=Math.ceil(offset/90);
     for(let n=first;n<=last;n++){
