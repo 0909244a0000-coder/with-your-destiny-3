@@ -138,6 +138,7 @@ WYD.render = {
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
     if (scene) this.drawScene(ctx, scene, state, w);
+    const forestRoute = WYD.dungeon.drawForestRoute(ctx, w, state, scene);
     if (ground || scene) {
       ctx.fillStyle = `rgba(0,0,0,${scene ? map.scene.dim : map.groundDim})`;
       ctx.fillRect(0, 0, map.width, map.height);
@@ -154,7 +155,7 @@ WYD.render = {
       ctx.fill();
     }
 
-    WYD.dungeon.drawProps(ctx, w, state);
+    if (!forestRoute) WYD.dungeon.drawProps(ctx, w, state);
     // 明かり：地面はしっかり暗くし、キャラは下でうすく暗くする（遠くの敵も見分けられるように）
     this.drawLight(ctx, w.player, state, scene ? "scene" : "ground");
     for (const f of w.fields) this.drawField(ctx, f);

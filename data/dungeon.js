@@ -12,6 +12,8 @@ WYD.data.dungeon = {
   // 大きなボスを右上メニューの下へ置かない。距離が足りる候補を順に使う。
   bossPositions: [{x:0.46,y:0.55},{x:0.25,y:0.55},{x:0.46,y:0.25},{x:0.25,y:0.25},{x:0.46,y:0.8},{x:0.25,y:0.8}],
   props: { count: 12, size: 32, travelX: 125, travelY: 65, alpha: 0.7 },
+  forestRoute: { travel: 260, tileSize: 384, horizon: 100,
+    road: ['#76664c', '#61533e', '#4e5042'], edge: '#303925', treeSize: 95 },
   summary: { width: 570, top: 170, padding: 16, rowHeight: 23, font: 16, minShownPx: 11, maxItems: 6,
     minTop: 166, pauseY: 100, stoppedY: 130, resumeY: 152 },
   // 森の縦切り検証後、戦闘コードを複製せず設定だけで展開。

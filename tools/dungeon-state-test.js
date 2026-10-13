@@ -27,15 +27,19 @@ const advance=(w,s,seconds)=>{for(let n=0;n<Math.ceil(seconds/.05);n++)W.world.u
  const ally={x:300,y:300,hp:20,timeLeft:30,source:'test'};w.allies=[ally];
  const item=W.loot.create(s,1,1,{rarity:'magic'});w.drops=[{item,x:300,y:300,age:0}];
  s.bossProgress=9;w.projectiles=[{x:0,y:0}];w.fields=[{}];
- const before=W.dungeon.view(s,w);assert(W.dungeon.update(w,s,.05));assert(w.dungeon.move);
+ const before=W.dungeon.view(s,w);assert.equal(W.dungeon.routeDistance(w,s),0);
+ assert(W.dungeon.update(w,s,.05));assert(w.dungeon.move);
  assert.equal(w.projectiles.length,0);assert.equal(w.fields.length,0);assert(s.inventory.includes(item));
  const move=w.dungeon.move;W.dungeon.update(w,s,.55);assert.notEqual(W.dungeon.view(s,w).x,before.x);assert(w.player.moving);
+ assert(W.dungeon.routeDistance(w,s)>0&&W.dungeon.routeDistance(w,s)<W.data.dungeon.forestRoute.travel);
  W.world.updateSpawns(w,s,10);assert.equal(w.enemies.length,0);assert.equal(w.dungeon.move,move);
  advance(w,s,1);assert.equal(w.dungeon.stage,1);assert(w.allies.includes(ally));
+ assert.equal(W.dungeon.routeDistance(w,s),W.data.dungeon.forestRoute.travel);
  s.bossProgress=18;w.enemies=[];W.dungeon.update(w,s,.05);advance(w,s,1.2);assert.equal(w.dungeon.stage,2);
  s.bossProgress=27;w.enemies=[];W.dungeon.update(w,s,.05);W.save.write(s);
  const reload=W.save.load();assert.equal(reload.bossProgress,27);assert.equal(reload.floor,1);
  advance(w,s,1.2);assert.equal(s.floor,2);assert.equal(s.bossProgress,0);
+ assert.equal(W.dungeon.routeDistance(w,s),W.data.dungeon.forestRoute.travel*3);
 }
 // 死亡・裂け目・未受取上限では前進しない。試練/対人/訓練には混入しない。
 {
