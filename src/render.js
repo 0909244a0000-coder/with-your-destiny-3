@@ -132,7 +132,11 @@ WYD.render = {
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-camera.x, -camera.y);
 
-    const scene = this.getImage(area.sceneImage);
+    // 森は入口・道中・奥地それぞれの描き下ろし背景を優先。未読込時は従来画像へフォールバック。
+    const dungeonStage = w.dungeon && w.dungeon.floor === state.floor ? w.dungeon.stage : null;
+    const paintedForest = state.area === "forest" && WYD.dungeon.enabled(w, state) && dungeonStage !== null
+      ? this.getImage("assets/scenes/forest-stage-" + Math.max(0, Math.min(2, dungeonStage)) + ".svg") : null;
+    const scene = paintedForest || this.getImage(area.sceneImage);
     // 完成した景色は一枚で表示。読み込み中・画像欠損時は従来の地面に戻す。
     const ground = scene ? null : this.getImage(area.groundImage);
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
