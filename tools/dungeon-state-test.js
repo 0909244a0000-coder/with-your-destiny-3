@@ -175,10 +175,13 @@ vm.runInContext('let naturalRng=9;Math.random=()=>{naturalRng=(1664525*naturalRn
  const item=W.loot.create(s,1,1,{rarity:'legend'});assert(!W.inventory.protectDrop(s,item));
  w.drops=[{item,x:300,y:300,age:0}];s.bossProgress=27;W.world.changeFloor(w,s,1);
  assert.equal(w.drops.length,1);assert.equal(w.drops[0].item.id,item.id);assert.equal(s.floor,2);
- s.dungeonReturn={area:s.area,returned:true,reward:null,drops:[]};W.save.write(s);
+ s.dungeonReturn={area:s.area,returned:true,reward:{items:[{id:item.id,label:W.loot.label(item),rarity:item.rarity,status:'獲得済み'}],materials:0},drops:[]};W.save.write(s);
  const restored=W.save.load(),ww=W.world.create();W.state=restored;W.currentWorld=ww;W.ui.state=restored;W.ui.world=ww;W.dungeon.restore(ww,restored);
  assert.equal(restored.floor,2);assert.equal(ww.drops.length,1);assert.equal(ww.drops[0].item.id,item.id);
+ assert.equal(ww.lastDungeonReward.items[0].status,'地面にドロップ');
+ W.dungeon.restore(ww,restored);assert.equal(ww.drops.length,1);assert.equal(ww.lastDungeonReward.items[0].status,'地面にドロップ');
  restored.inventory=[];W.world.updateDrops(ww,restored,1);assert.equal(restored.inventory.filter(it=>it.id===item.id).length,1);
+ assert.equal(ww.lastDungeonReward.items[0].status,'獲得済み');
  W.world.updateDrops(ww,restored,1);assert.equal(restored.inventory.filter(it=>it.id===item.id).length,1);
 }
 console.log('ok 自動分解1回 / 未取得レジェンドの階移動保持・返却後保存・ID復元・取得重複なし');
@@ -207,3 +210,18 @@ console.log('ok 自動分解1回 / 未取得レジェンドの階移動保持・
  W.dungeon.restore(w,s);assert.equal(s.inventory.filter(it=>it.id===item.id).length,1);
 }
 console.log('ok オフライン報酬後の帰還・装備重複なし');
+
+// 全6件＋素材のサマリーが狭い画面でもCanvas内に収まる。
+for (const width of [1440,390,320]) {
+ const {s,w}=setup();
+ w.dungeonReward={areaName:'森',boss:'羅刹王',time:2,materials:4,extra:{gems:2,essence:1,maps:1,keys:1},
+  items:Array.from({length:6},()=>({rarity:'unique',label:'試験装備',status:'地面にドロップ',materials:0}))};
+ const boxes=[],texts=[];
+ const ctx=new Proxy({canvas:{clientWidth:width},fillRect:(...args)=>boxes.push(args),fillText:(...args)=>texts.push(args)},
+  {get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>(o[k]=v,true)});
+ W.dungeon.drawReward(ctx,w,s);
+ assert.equal(boxes.length,1);const [x,y,bw,bh]=boxes[0];
+ assert(x>=0&&y>=0&&x+bw<=W.data.map.width&&y+bh<=W.data.map.height);
+ assert.equal(texts.length,9);assert(texts.every(t=>t[2]>=y&&t[2]<=y+bh));
+}
+console.log('ok 復元後の地面/取得状態・重複なし / 320px・390px・PCの全報酬が描画範囲内');

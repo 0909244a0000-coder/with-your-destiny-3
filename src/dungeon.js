@@ -136,12 +136,14 @@ WYD.dungeon = {
   restore(w, s) {
     const c = s.dungeonReturn;
     if (!c || c.area !== s.area || !this.enabled(w, s)) { s.dungeonReturn = null; return; }
-    const owned = new Set([...s.inventory, ...s.pendingLoot, ...Object.values(s.equipment)].filter(Boolean).map(i => i.id));
-    for (const d of c.drops || []) if (d.item && !owned.has(d.item.id)) { w.drops.push(d); owned.add(d.item.id); }
+    const owned = new Set([...s.inventory, ...s.stash, ...s.pendingLoot, ...Object.values(s.equipment)].filter(Boolean).map(i => i.id));
+    const ground = new Set(w.drops.filter(d => !d.picked && d.item).map(d => d.item.id));
+    for (const d of c.drops || []) if (d.item && !owned.has(d.item.id) && !ground.has(d.item.id)) { w.drops.push(d); ground.add(d.item.id); }
     w.lastDungeonReward = c.reward || null;
     for (const row of w.lastDungeonReward?.items || []) {
       if (s.pendingLoot.some(it => it.id === row.id)) row.status = '未受取に保管';
       else if (owned.has(row.id)) row.status = '獲得済み';
+      else if (ground.has(row.id)) row.status = '地面にドロップ';
     }
     this.settleDrops(w, s);
     if (!c.returned) { s.floor = 1; s.bossProgress = 0; }
@@ -201,11 +203,13 @@ WYD.dungeon = {
   drawReward(ctx, w, s) {
     if (!this.enabled(w, s) || !w.dungeonReward || w.town || w.dungeonReward.time < WYD.data.boss.defeat.slowTime && !WYD.world.battleStopped(s)) return;
     const r = w.dungeonReward, D = WYD.data.dungeon.summary, M = WYD.data.map;
-    const shown = ctx.canvas.clientWidth / M.width || 1, font = Math.max(D.font, D.minShownPx / shown);
-    const width = Math.min(M.width - 32, D.width * Math.max(1, font / D.font)), x = (M.width-width)/2;
-    const line = Math.max(D.rowHeight, font*1.4), items = r.items.slice(0,D.maxItems), top = D.top;
+    const shown = ctx.canvas.clientWidth / M.width || 1, items = r.items.slice(0,D.maxItems);
     const extra = Object.entries(r.extra || {}).filter(([,n]) => n > 0).map(([key,n]) => `${({gems:'宝石',essence:'ルーン欠片',maps:'地図',keys:'奈落の鍵'})[key]} +${n}`).join(' · ');
-    const height = (items.length + (extra ? 4 : 3)) * line + 20;
+    const rows = items.length + (extra ? 4 : 3);
+    const font = Math.min(Math.max(D.font, D.minShownPx / shown), (M.height - D.padding*2 - 20) / rows / 1.4);
+    const width = Math.min(M.width - D.padding*2, D.width * Math.max(1, font / D.font)), x = (M.width-width)/2;
+    const line = Math.max(D.rowHeight, font*1.4), height = rows * line + 20;
+    const top = Math.max(D.padding, Math.min(D.top, M.height - D.padding - height));
     ctx.save(); ctx.fillStyle='rgba(8,8,12,0.92)';ctx.fillRect(x,top,width,height);
     ctx.strokeStyle='#a88751';ctx.strokeRect(x,top,width,height);
     ctx.textAlign='left';ctx.font=`bold ${font}px sans-serif`;ctx.fillStyle='#efd49a';
