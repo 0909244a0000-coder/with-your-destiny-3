@@ -272,6 +272,46 @@ WYD.dungeon = {
     }
     ctx.restore();return true;
   },
+  // 入口・道中・奥地で遠景の構図を切り替える。中央の戦闘エリアを避けて描く。
+  drawStageVista(ctx, w, s) {
+    if(!this.enabled(w,s)||WYD.world.isBossRoom(s))return false;
+    const M=WYD.data.map, D=WYD.data.dungeon, profile=D.areas[s.area];
+    if(!profile)return false;
+    const r=w.dungeon, stage=r&&r.floor===s.floor?r.stage:Math.min(2,this.target(s));
+    const move=r&&r.move, t=move?WYD.util.clamp(move.time/move.duration,0,1):0;
+    const k=t*t*(3-2*t), next=move&&!move.floor?move.to:stage;
+    const draw=(part,alpha)=>{
+      if(alpha<=0)return;
+      ctx.save();ctx.globalAlpha=alpha*.55;
+      const y=M.height*.15, size=M.height*(part===2?.36:part===1?.24:.14);
+      const rnd=WYD.util.seededRandom(M.decorationSeed+s.floor*127+part*991);
+      ctx.fillStyle=profile.color;ctx.strokeStyle=profile.light;ctx.lineWidth=3;
+      for(const side of [-1,1]){
+        const x=M.width*(side<0?.13:.87);
+        if(part===0){
+          // 入口: 低い地平線と左右に開いた門柱。
+          ctx.fillRect(x-size*.12,y-size*.35,size*.24,size*.8);
+          ctx.strokeRect(x-size*.12,y-size*.35,size*.24,size*.8);
+        }else if(part===1){
+          // 道中: 道を挟んで立ち並ぶ障害物。
+          for(let i=0;i<3;i++){
+            const dx=(side<0?-1:1)*i*size*.32, h=size*(.5+rnd()*.45);
+            ctx.fillRect(x+dx-size*.12,y-h*.6,size*.24,h);
+          }
+        }else{
+          // 奥地: 巨大な門と高い尖塔。最奥へ近づいた印象を強める。
+          ctx.beginPath();ctx.moveTo(x-size*.35,y+size*.55);
+          ctx.lineTo(x-size*.25,y-size*.7);ctx.lineTo(x,y-size*1.25);
+          ctx.lineTo(x+size*.25,y-size*.7);ctx.lineTo(x+size*.35,y+size*.55);
+          ctx.closePath();ctx.fill();ctx.stroke();
+          ctx.fillRect(x-size*.5,y+size*.3,size,size*.15);
+        }
+      }
+      ctx.restore();
+    };
+    draw(stage,1-k);if(next!==stage)draw(next,k);
+    return true;
+  },
   drawStageAtmosphere(ctx, w, s) {
     if (!this.enabled(w,s) || WYD.world.isBossRoom(s)) return false;
     const M=WYD.data.map, r=w.dungeon;
