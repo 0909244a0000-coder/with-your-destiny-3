@@ -132,13 +132,17 @@ WYD.render = {
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-camera.x, -camera.y);
 
-    const scene = this.getImage(area.sceneImage);
+    // 森は入口・道中・奥地それぞれの描き下ろし背景を優先。未読込時は従来画像へフォールバック。
+    const dungeonStage = w.dungeon && w.dungeon.floor === state.floor ? w.dungeon.stage : null;
+    const paintedForest = state.area === "forest" && WYD.dungeon.enabled(w, state) && dungeonStage !== null
+      ? this.getImage("assets/scenes/forest-stage-" + Math.max(0, Math.min(2, dungeonStage)) + ".svg") : null;
+    const scene = paintedForest || this.getImage(area.sceneImage);
     // 完成した景色は一枚で表示。読み込み中・画像欠損時は従来の地面に戻す。
     const ground = scene ? null : this.getImage(area.groundImage);
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
     if (scene) this.drawScene(ctx, scene, state, w);
-    const forestRoute = WYD.dungeon.drawForestRoute(ctx, w, state, scene);
+    const forestRoute = paintedForest ? true : WYD.dungeon.drawForestRoute(ctx, w, state, scene);
     if (ground || scene) {
       ctx.fillStyle = `rgba(0,0,0,${scene ? map.scene.dim : map.groundDim})`;
       ctx.fillRect(0, 0, map.width, map.height);
@@ -156,9 +160,9 @@ WYD.render = {
     }
 
     if (!forestRoute) { WYD.dungeon.drawBiomeRoute(ctx, w, state); WYD.dungeon.drawProps(ctx, w, state); }
-    WYD.dungeon.drawStageVista(ctx, w, state);
+    if (!paintedForest) WYD.dungeon.drawStageVista(ctx, w, state);
     WYD.dungeon.drawStageAtmosphere(ctx, w, state);
-    WYD.dungeon.drawForegroundParallax(ctx, w, state);
+    if (!paintedForest) WYD.dungeon.drawForegroundParallax(ctx, w, state);
     // 明かり：地面はしっかり暗くし、キャラは下でうすく暗くする（遠くの敵も見分けられるように）
     this.drawLight(ctx, w.player, state, scene ? "scene" : "ground");
     for (const f of w.fields) this.drawField(ctx, f);
