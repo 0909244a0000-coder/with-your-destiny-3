@@ -16,7 +16,12 @@ for (const file of tests) {
   else {
     failed.push(file);
     const lines = (r.stdout + r.stderr).split('\n').filter(l => l.trim() && !/^\s+at /.test(l));
-    console.log(`失敗 ${file} (${secs}秒)\n     ${lines.slice(-6).map(l => l.slice(0, 300)).join('\n     ')}`);
+    // 末尾のactual/expectedだけでは、どの検証が落ちたか分からない。
+    const error = lines.findIndex(l => /AssertionError|TimeoutError|Error:|browserType\.launch/.test(l));
+    const context = error < 0 ? lines.slice(0, 6) : lines.slice(error, error + 6);
+    const output = r.stdout.split('\n').filter(l => l.trim()).slice(-3);
+    const detail = [...new Set([...output, ...context, ...lines.slice(-6)])];
+    console.log(`失敗 ${file} (${secs}秒)\n     ${detail.map(l => l.slice(0, 300)).join('\n     ')}`);
   }
 }
 console.log(`\n${tests.length - failed.length} / ${tests.length} 成功` + (failed.length ? `\n失敗：${failed.join(', ')}` : ''));
