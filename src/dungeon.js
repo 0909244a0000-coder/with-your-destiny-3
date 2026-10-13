@@ -209,10 +209,10 @@ WYD.dungeon = {
     const shown = ctx.canvas.clientWidth / M.width || 1, items = r.items.slice(0,D.maxItems);
     const extra = Object.entries(r.extra || {}).filter(([,n]) => n > 0).map(([key,n]) => `${({gems:'宝石',essence:'ルーン欠片',maps:'地図',keys:'奈落の鍵'})[key]} +${n}`).join(' · ');
     const rows = items.length + (extra ? 4 : 3);
-    const font = Math.min(Math.max(D.font, D.minShownPx / shown), (M.height - D.padding*2 - 20) / rows / 1.4);
+    const font = Math.min(Math.max(D.font, D.minShownPx / shown), (M.height - D.minTop - D.padding - 20) / rows / 1.4);
     const width = Math.min(M.width - D.padding*2, D.width * Math.max(1, font / D.font)), x = (M.width-width)/2;
     const line = Math.max(D.rowHeight, font*1.4), height = rows * line + 20;
-    const top = Math.max(D.padding, Math.min(D.top, M.height - D.padding - height));
+    const top = Math.max(D.minTop, Math.min(D.top, M.height - D.padding - height));
     ctx.save(); ctx.fillStyle='rgba(8,8,12,0.92)';ctx.fillRect(x,top,width,height);
     ctx.strokeStyle='#a88751';ctx.strokeRect(x,top,width,height);
     ctx.textAlign='left';ctx.font=`bold ${font}px sans-serif`;ctx.fillStyle='#efd49a';

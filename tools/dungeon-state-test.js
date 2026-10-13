@@ -239,6 +239,8 @@ console.log('ok 復元後の地面/取得状態・重複なし / 320px・390px�
  const rows=texts.filter(t=>t[0].includes(' — '));assert.equal(rows.length,6);
  const notes=texts.filter(t=>t[0].includes('停止中')||t[0].includes('Status の'));
  assert.equal(notes.length,3);assert(notes.every(n=>n[2]<rows[0][2]-W.data.dungeon.summary.rowHeight));
+ assert(notes.every(n=>n[2]>=W.data.dungeon.summary.pauseY));
+ assert(notes.every(n=>n[2]<W.data.dungeon.summary.minTop));
  w.dungeonReward=null;texts.length=0;W.render.draw(ctx,w,s);
  assert.equal(texts.find(t=>t[0].includes('一時停止中'))[2],W.data.map.height/2);
  W.ui.paused=false;
