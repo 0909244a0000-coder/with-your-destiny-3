@@ -250,18 +250,21 @@ WYD.dungeon = {
       const x = (i % 2 ? 0.9 : 0.08) * M.width + rnd() * 35 - (v.x - 0.5) * D.props.travelX;
       const y = rnd() * M.height + (v.y - 0.5) * D.props.travelY;
       const size = D.props.size * (0.75 + rnd() * 0.5);
+      // 区間を象徴する大きな目印。外周に限定し戦闘の視認性を守る。
+      const landmark = i === (stage * 3 + 1) % D.props.count;
+      const propSize = landmark ? size * 1.85 : size;
       ctx.fillStyle = profile.color; ctx.strokeStyle = profile.light; ctx.lineWidth = 2;
       if (profile.kind === 'tree') {
-        ctx.fillStyle = '#4a4034';ctx.fillRect(x - 4, y - size/2, 8, size*1.5);
+        ctx.fillStyle = '#4a4034';ctx.fillRect(x - 4, y - propSize/2, 8, propSize*1.5);
         ctx.fillStyle = profile.color;
-        for (let leaf=0;leaf<3;leaf++) { ctx.beginPath();ctx.ellipse(x+(leaf-1)*size/4,y-size/3-leaf*size/6,size/3,size/3,-0.3,0,Math.PI*2);ctx.fill(); }
-        ctx.strokeStyle=profile.light;ctx.beginPath();ctx.moveTo(x,y+size);ctx.lineTo(x,y-size/2);ctx.stroke();
+        for (let leaf=0;leaf<3;leaf++) { ctx.beginPath();ctx.ellipse(x+(leaf-1)*propSize/4,y-propSize/3-leaf*propSize/6,propSize/3,propSize/3,-0.3,0,Math.PI*2);ctx.fill(); }
+        ctx.strokeStyle=profile.light;ctx.beginPath();ctx.moveTo(x,y+propSize);ctx.lineTo(x,y-propSize/2);ctx.stroke();
       } else if (profile.kind === 'crystal' || profile.kind === 'ice') {
-        ctx.beginPath();ctx.moveTo(x, y-size);ctx.lineTo(x+size/3,y);ctx.lineTo(x-size/3,y);ctx.closePath();ctx.fill();ctx.stroke();
+        ctx.beginPath();ctx.moveTo(x, y-propSize);ctx.lineTo(x+propSize/3,y);ctx.lineTo(x-propSize/3,y);ctx.closePath();ctx.fill();ctx.stroke();
       } else {
-        ctx.fillRect(x-size/4,y-size,size/2,size); ctx.strokeRect(x-size/4,y-size,size/2,size);
-        if (profile.kind === 'column') { ctx.fillRect(x-size/3,y-size,size*2/3,5);ctx.fillRect(x-size/3,y-5,size*2/3,5); }
-        if (profile.kind === 'lava') { ctx.beginPath();ctx.ellipse(x,y,size,size/3,0,0,Math.PI*2);ctx.fill(); }
+        ctx.fillRect(x-propSize/4,y-propSize,propSize/2,propSize); ctx.strokeRect(x-propSize/4,y-propSize,propSize/2,propSize);
+        if (profile.kind === 'column') { ctx.fillRect(x-propSize/3,y-propSize,propSize*2/3,5);ctx.fillRect(x-propSize/3,y-5,propSize*2/3,5); }
+        if (profile.kind === 'lava') { ctx.beginPath();ctx.ellipse(x,y,propSize,propSize/3,0,0,Math.PI*2);ctx.fill(); }
       }
     }
     ctx.restore();
