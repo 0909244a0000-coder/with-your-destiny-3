@@ -238,6 +238,49 @@ WYD.dungeon = {
     }
     ctx.restore();return true;
   },
+  // 森以外でも足元の道と目印が通り過ぎる。静止画のパンだけに依存しない。
+  drawBiomeRoute(ctx, w, s) {
+    if (!this.enabled(w,s) || s.area==='forest' || WYD.world.isBossRoom(s)) return false;
+    const D=WYD.data.dungeon, M=WYD.data.map, profile=D.areas[s.area];
+    if (!profile) return false;
+    const offset=this.routeDistance(w,s), section=Math.min(2,Math.floor(offset/D.forestRoute.travel)%3);
+    const tint=profile.color, light=profile.light, center=M.width*.5;
+    ctx.save();
+    // 奥に細く手前に広がる道。地形色を透過させ、既存背景を残す。
+    ctx.globalAlpha=.3;
+    ctx.fillStyle=tint;
+    ctx.beginPath();ctx.moveTo(center-M.width*.09,0);ctx.lineTo(center+M.width*.09,0);
+    ctx.lineTo(center+M.width*.34,M.height);ctx.lineTo(center-M.width*.34,M.height);
+    ctx.closePath();ctx.fill();
+    ctx.globalAlpha=.22;ctx.strokeStyle=light;ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(center-M.width*.09,0);ctx.lineTo(center-M.width*.34,M.height);
+    ctx.moveTo(center+M.width*.09,0);ctx.lineTo(center+M.width*.34,M.height);ctx.stroke();
+    // 世界座標で固定された道標が、移動に合わせて画面下へ流れる。
+    const gap=115,first=Math.floor((offset-M.height)/gap),last=Math.ceil(offset/gap);
+    for(let n=first;n<=last;n++){
+      const y=offset-n*gap, depth=WYD.util.clamp(y/M.height,0,1);
+      const rnd=WYD.util.seededRandom(M.decorationSeed+s.floor*191+n*73);
+      const half=M.width*(.11+.27*depth), size=9+depth*28;
+      ctx.globalAlpha=.35+depth*.35;
+      for(const side of [-1,1]){
+        const x=center+side*(half+20+rnd()*32);
+        ctx.fillStyle=tint;ctx.strokeStyle=light;ctx.lineWidth=1.5+depth;
+        if(profile.kind==='grave'){
+          ctx.beginPath();ctx.arc(x,y-size*.3,size*.38,Math.PI,0);ctx.lineTo(x+size*.38,y+size*.5);ctx.lineTo(x-size*.38,y+size*.5);ctx.closePath();ctx.fill();ctx.stroke();
+        }else if(profile.kind==='crystal'||profile.kind==='ice'){
+          ctx.beginPath();ctx.moveTo(x,y-size);ctx.lineTo(x+size*.4,y+size*.3);ctx.lineTo(x,y+size*.55);ctx.lineTo(x-size*.4,y+size*.3);ctx.closePath();ctx.fill();ctx.stroke();
+        }else if(profile.kind==='column'){
+          ctx.fillRect(x-size*.25,y-size,size*.5,size*1.7);ctx.strokeRect(x-size*.25,y-size,size*.5,size*1.7);
+        }else if(profile.kind==='lava'){
+          ctx.beginPath();ctx.ellipse(x,y,size*.7,size*.28,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+        }
+      }
+      // 道の中心にある石目地も同じ速度で流す。
+      ctx.globalAlpha=.17;ctx.strokeStyle=light;ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(center-size*.7,y);ctx.lineTo(center+size*.7,y);ctx.stroke();
+    }
+    ctx.restore();return true;
+  },
   drawProps(ctx, w, s) {
     if (!this.enabled(w, s)) return;
     const D = WYD.data.dungeon, M = WYD.data.map, profile = D.areas[s.area], v = this.view(s, w);

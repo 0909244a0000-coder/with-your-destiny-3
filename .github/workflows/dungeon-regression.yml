@@ -2,7 +2,7 @@ name: MAP改修の全体回帰テスト
 
 on:
   push:
-    branches: [auto-forward-dungeon, map-next-iteration-20261014, map-biome-landmarks-20261014, map-biome-render-coverage-20261014, map-lap-timing-v2-20261014]
+    branches: [auto-forward-dungeon, map-next-iteration-20261014, map-biome-landmarks-20261014, map-biome-render-coverage-20261014, map-lap-timing-v2-20261014, map-all-biomes-moving-path-20261014]
   workflow_dispatch:
 
 permissions:
