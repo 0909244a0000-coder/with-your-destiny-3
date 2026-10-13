@@ -156,6 +156,7 @@ WYD.render = {
     }
 
     if (!forestRoute) { WYD.dungeon.drawBiomeRoute(ctx, w, state); WYD.dungeon.drawProps(ctx, w, state); }
+    WYD.dungeon.drawStageVista(ctx, w, state);
     WYD.dungeon.drawStageAtmosphere(ctx, w, state);
     // 明かり：地面はしっかり暗くし、キャラは下でうすく暗くする（遠くの敵も見分けられるように）
     this.drawLight(ctx, w.player, state, scene ? "scene" : "ground");
