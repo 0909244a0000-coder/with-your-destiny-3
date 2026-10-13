@@ -54,3 +54,31 @@ jobs:
             regression.log
             results/
           retention-days: 7
+
+  render-soak:
+    name: Chromium描画を含む森5周
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: 検証用PlaywrightとChromiumを用意
+        run: |
+          npm install --prefix "$RUNNER_TEMP/wyd3-tests" --no-audit --no-fund playwright@1.62.1
+          "$RUNNER_TEMP/wyd3-tests/node_modules/.bin/playwright" install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/wyd3-tests/node_modules" >> "$GITHUB_ENV"
+      - name: 自然戦闘・描画・メモリ・キャッシュを確認
+        run: |
+          set -o pipefail
+          node --require ./tools/test-preload.cjs tools/dungeon-render-soak.js 5 | tee render-soak.log
+      - name: 検証結果を保存
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: dungeon-render-soak
+          path: |
+            render-soak.log
+            results/
+          retention-days: 7
