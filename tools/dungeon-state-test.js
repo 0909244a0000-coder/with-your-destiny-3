@@ -270,3 +270,24 @@ for (const area of W.data.areas) {
  const normal=W.dungeon.frontPosition(w);assert(normal.x>W.data.map.width*0.8);
 }
 console.log('ok 6エリアのボス登場位置・最低距離・カメラ倍率・能力維持 / 雑魚の前方位置維持');
+
+// 前進開始の回収で自動装備しても、既存の人形能力が古い本体能力のまま残らない。
+{
+ const previous=W.classes.id;W.classes.id='puppeteer';
+ try {
+  const {s,w}=setup();s.settings.autoEquip=true;s.bossProgress=9;
+  const before=W.stats.compute(s);w.player.hp=before.maxHp;
+  assert(W.puppeteer.spawn(w,before,0));const puppet=W.puppeteer.active(w),count=w.allies.length;
+  const item=W.loot.create(s,1,1,{rarity:'magic',slot:'body'});
+  item.stats=[{stat:'maxHp',value:300,main:true},{stat:'defense',value:20}];
+  w.drops=[{item,x:300,y:300,age:0}];W.world.update(w,s,.05);
+  assert(w.dungeon.move);assert.equal(s.equipment.body?.id,item.id);
+  const after=W.stats.compute(s),expected=W.puppeteer.values(after);
+  assert.notEqual(after.maxHp,before.maxHp);assert.equal(puppet.maxHp,expected.maxHp);
+  assert.equal(w.allies.length,count);assert.equal(w.enemies.length,0);
+  s.equipment.body=null;W.world.update(w,s,.05);
+  assert.equal(puppet.maxHp,W.puppeteer.values(W.stats.compute(s)).maxHp);
+  assert.equal(w.allies.length,count);assert.equal(w.enemies.length,0);
+ }finally{W.classes.id=previous;}
+}
+console.log('ok 前進中の取得/自動装備・装備変更で人形能力を同期・攻撃/再召喚なし');

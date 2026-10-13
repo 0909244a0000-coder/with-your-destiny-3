@@ -9,6 +9,8 @@ const {chromium}=require('playwright'), assert=require('node:assert/strict'),pat
   const [a,b]=A.fighters, E=a.engine,F=b.engine,D=a.frame.contentWindow.WYD,C=D.data.arena.combat,p=E.world.player,q=F.world.player;
   E.setEnemies(F.units());F.setEnemies(E.units());E.stats.powers={};F.stats.powers={};E.stats.effects.thorns=0;F.stats.effects.thorns=0;
   const near=(a,b)=>Math.abs(a-b)<1e-7,reset=()=>{E.incoming=new WeakMap();F.incoming=new WeakMap();p.hp=p.maxHp;q.hp=q.maxHp;A.time=0;};
+  // engine.statsは開始時の能力。後の盾の装備変更と混ぜず、その時点の状態と比較する。
+  const chase=near(E.stats.moveSpeed,D.stats.compute(E.state).moveSpeed*C.chaseSpeed.barbarian);
   reset();const initial=q.hp;D.world.damageEnemy(E.world,E.state,q,10,false,'attack');const normalDamage=initial-q.hp;
     // 自分の職業に罠がないため、汎用的に定義を注入して補正経路を確認。
   D.data.skills.test_trap={kind:'trap'};reset();const tt=q.hp;D.world.damageEnemy(E.world,E.state,q,10,false,'skill:test_trap');const trapScale=near(tt-q.hp,normalDamage*C.trapDamageScale);delete D.data.skills.test_trap;
@@ -34,7 +36,6 @@ const {chromium}=require('playwright'), assert=require('node:assert/strict'),pat
   const aegisDef=D.data.uniques.list.find(u=>u.power==='skillBoostVajraAlways');E.state.equipment.offhand=null;const shield=D.loot.createUnique(E.state,20,aegisDef);E.state.equipment[shield.slot]=shield;
   const pvpMods=D.stats.powers(E.state).skillBoostVajraAlways?.mods,aegisPvp=JSON.stringify(pvpMods)===JSON.stringify(C.powerMods.skillBoostVajraAlways)&&JSON.stringify(WYD.stats.powers({...E.state,classId:'barbarian'}).skillBoostVajraAlways?.mods)===JSON.stringify(aegisDef.params.mods);
   const unchanged=JSON.stringify(WYD.state)===original;A.close();
-  const chase=near(E.stats.moveSpeed,D.stats.compute(E.state).moveSpeed*C.chaseSpeed.barbarian);
   return{cloakHeal,chase,trapScale,single,sharedWindow,sliding,expires,reflection,lifesteal,healing,pressureHeal,pressureDamage,bind,noExtend,immune,recovery,summon,classSummon,aegisPvp,unchanged};
  });for(const[k,v]of Object.entries(checks)){assert.equal(v,true,k);console.log('ok',k);}assert.deepEqual(errors,[]);console.log('errors 0');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

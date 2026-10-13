@@ -74,7 +74,7 @@ WYD.world = {
       return;
     }
 
-    if (WYD.dungeon.update(w, state, dt)) { this.updateDrops(w, state, dt); return; }
+    if (WYD.dungeon.update(w, state, dt)) { this.updateDrops(w, state, dt); this.syncPuppetAfterLoot(w, state); return; }
     this.healPlayer(w, stats.maxHp, stats.hpRegen * dt, "regen");
     this.refillLeech(w, stats, dt);
     if (p.buff) {
@@ -113,6 +113,12 @@ WYD.world = {
     this.updateEnemies(w, state, stats, dt);
     if (!p.dead) this.updateProjectiles(w, state, stats, dt);
     this.updateDrops(w, state, dt);
+    this.syncPuppetAfterLoot(w, state);
+  },
+
+  // 取得時の自動装備を反映。前進中も既存の人形だけ再計算し、攻撃や再召喚はしない。
+  syncPuppetAfterLoot(w, state) {
+    if (WYD.puppeteer.active(w)) WYD.puppeteer.update(w, state, WYD.stats.compute(state));
   },
 
   // 絵の動きのために、動いた量・向き・攻撃してからの時間を覚えておく
