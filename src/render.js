@@ -147,6 +147,7 @@ WYD.render = {
     if (scene) {
       if (paintedForest && w.dungeon?.move && !w.dungeon.move.floor)
         this.drawForestTravel(ctx, paintedForest, state, w);
+      else if (paintedForest) this.drawForestCruise(ctx, paintedForest, state, w);
       else this.drawScene(ctx, scene, state, w);
     }
     const forestRoute = isPaintedForest ? true : WYD.dungeon.drawForestRoute(ctx, w, state, scene);
@@ -461,6 +462,22 @@ WYD.render = {
     const sw = map.width / scale, sh = map.height / scale;
     ctx.drawImage(img, (img.width - sw) * view.x, (img.height - sh) * view.y,
       sw, sh, 0, 0, map.width, map.height);
+  },
+
+  // 戦闘中も止まらない緩やかな前進。絵を周期的にパン・ズームし、急なループを避ける。
+  // 戦闘座標やゲーム進行は変更せず、描画時刻のみで動く。
+  drawForestCruise(ctx, img, state, w) {
+    const map = WYD.data.map;
+    const time = (typeof performance !== "undefined" && performance.now ? performance.now() : Date.now()) * .001;
+    const cycle = (time % 24) / 24;
+    // 1周の終わりで画角が自然に戻るよう、往復する視差を使用。
+    const advance = .5 - .5 * Math.cos(cycle * Math.PI * 2);
+    const base = Math.max(map.width / img.width, map.height / img.height);
+    const zoom = 1.08 + .16 * advance;
+    const sw = map.width / (base * zoom), sh = map.height / (base * zoom);
+    const sx = WYD.util.clamp((img.width - sw) * (.48 + .035 * Math.sin(time * .13)), 0, Math.max(0, img.width - sw));
+    const sy = WYD.util.clamp((img.height - sh) * (.48 - .12 * advance), 0, Math.max(0, img.height - sh));
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, map.width, map.height);
   },
 
   // 2枚の描き込み背景を使ったカメラ前進。旧式の台形や丸木は描かない。
