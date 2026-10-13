@@ -253,6 +253,29 @@ WYD.dungeon = {
       // 区間を象徴する大きな目印。外周に限定し戦闘の視認性を守る。
       const landmark = i === (stage * 3 + 1) % D.props.count;
       const propSize = landmark ? size * 1.85 : size;
+      // 大きな目印は地形固有のシルエットを追加。敵やドロップには干渉しない。
+      if (landmark && profile.kind !== 'tree') {
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, D.props.alpha + 0.2);
+        ctx.strokeStyle = profile.light; ctx.fillStyle = profile.color; ctx.lineWidth = 3;
+        if (profile.kind === 'grave') {
+          ctx.beginPath();ctx.arc(x,y-propSize*.7,propSize*.55,Math.PI,0);ctx.lineTo(x+propSize*.55,y+propSize*.5);ctx.lineTo(x-propSize*.55,y+propSize*.5);ctx.closePath();ctx.fill();ctx.stroke();
+          ctx.beginPath();ctx.moveTo(x,y-propSize*.9);ctx.lineTo(x,y+propSize*.1);ctx.moveTo(x-propSize*.2,y-propSize*.4);ctx.lineTo(x+propSize*.2,y-propSize*.4);ctx.stroke();
+        } else if (profile.kind === 'crystal' || profile.kind === 'ice') {
+          for (const [shift,scale] of [[-0.55,.65],[0,1.3],[.55,.8]]) {
+            ctx.beginPath();ctx.moveTo(x+shift*propSize,y-scale*propSize*1.3);ctx.lineTo(x+(shift+.3)*propSize,y);ctx.lineTo(x+(shift-.3)*propSize,y);ctx.closePath();ctx.fill();ctx.stroke();
+          }
+        } else if (profile.kind === 'column') {
+          ctx.fillRect(x-propSize*.75,y-propSize*1.4,propSize*1.5,propSize*.22);
+          ctx.fillRect(x-propSize*.6,y-propSize*1.18,propSize*.2,propSize*1.7);
+          ctx.fillRect(x+propSize*.4,y-propSize*1.18,propSize*.2,propSize*1.7);
+          ctx.strokeRect(x-propSize*.75,y-propSize*1.4,propSize*1.5,propSize*.22);
+        } else if (profile.kind === 'lava') {
+          ctx.beginPath();ctx.ellipse(x,y,propSize*1.1,propSize*.36,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+          for (const shift of [-.55,0,.55]) {ctx.beginPath();ctx.moveTo(x+shift*propSize,y);ctx.lineTo(x+(shift+.2)*propSize,y-propSize*(.6+Math.abs(shift)));ctx.stroke();}
+        }
+        ctx.restore();
+      }
       ctx.fillStyle = profile.color; ctx.strokeStyle = profile.light; ctx.lineWidth = 2;
       if (profile.kind === 'tree') {
         ctx.fillStyle = '#4a4034';ctx.fillRect(x - 4, y - propSize/2, 8, propSize*1.5);
