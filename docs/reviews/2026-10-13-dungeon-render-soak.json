@@ -1,0 +1,130 @@
+{
+  "source": "66d53584452b8b81a623028b706f430cf7cb0c17",
+  "run": "https://github.com/0909244a0000-coder/with-your-destiny-3/actions/runs/38340435942",
+  "completed": true,
+  "loops": 5,
+  "paints": 12576,
+  "pageErrors": 0,
+  "samples": [
+    {
+      "loops": 0,
+      "gameSeconds": 0.16269999999999707,
+      "inventory": 0,
+      "pending": 0,
+      "images": 16,
+      "loadedImages": 15,
+      "rims": 1,
+      "patterns": 1,
+      "logRows": 6,
+      "rewardRows": 0,
+      "deaths": 0,
+      "heapBytes": 2644888,
+      "dom": {
+        "documents": 1,
+        "nodes": 3626,
+        "jsEventListeners": 216
+      }
+    },
+    {
+      "loops": 1,
+      "gameSeconds": 135.1626999999965,
+      "inventory": 0,
+      "pending": 0,
+      "images": 35,
+      "loadedImages": 22,
+      "rims": 20,
+      "patterns": 1,
+      "logRows": 26,
+      "rewardRows": 4,
+      "bossKills": 1,
+      "deaths": 0,
+      "heapBytes": 4245488,
+      "dom": {
+        "documents": 1,
+        "nodes": 3172,
+        "jsEventListeners": 207
+      }
+    },
+    {
+      "loops": 2,
+      "gameSeconds": 257.3627000000243,
+      "inventory": 18,
+      "pending": 0,
+      "images": 51,
+      "loadedImages": 38,
+      "rims": 22,
+      "patterns": 1,
+      "logRows": 60,
+      "rewardRows": 5,
+      "bossKills": 2,
+      "deaths": 0,
+      "heapBytes": 4498900,
+      "dom": {
+        "documents": 1,
+        "nodes": 3508,
+        "jsEventListeners": 225
+      }
+    },
+    {
+      "loops": 3,
+      "gameSeconds": 383.41270000005295,
+      "inventory": 28,
+      "pending": 0,
+      "images": 55,
+      "loadedImages": 41,
+      "rims": 23,
+      "patterns": 1,
+      "logRows": 60,
+      "rewardRows": 5,
+      "bossKills": 3,
+      "deaths": 0,
+      "heapBytes": 4602796,
+      "dom": {
+        "documents": 1,
+        "nodes": 3643,
+        "jsEventListeners": 235
+      }
+    },
+    {
+      "loops": 4,
+      "gameSeconds": 511.31270000008203,
+      "inventory": 30,
+      "pending": 0,
+      "images": 55,
+      "loadedImages": 41,
+      "rims": 23,
+      "patterns": 1,
+      "logRows": 60,
+      "rewardRows": 4,
+      "bossKills": 4,
+      "deaths": 0,
+      "heapBytes": 4737572,
+      "dom": {
+        "documents": 1,
+        "nodes": 3671,
+        "jsEventListeners": 237
+      }
+    },
+    {
+      "loops": 5,
+      "gameSeconds": 628.9626999999758,
+      "inventory": 35,
+      "pending": 0,
+      "images": 55,
+      "loadedImages": 41,
+      "rims": 24,
+      "patterns": 1,
+      "logRows": 60,
+      "rewardRows": 4,
+      "bossKills": 5,
+      "deaths": 0,
+      "heapBytes": 4764756,
+      "dom": {
+        "documents": 1,
+        "nodes": 3745,
+        "jsEventListeners": 242
+      }
+    }
+  ],
+  "limitations": "強い検証装備・スキルOFF・PC1440x900・加速検証。Chromium JS heapとDOMと描画キャッシュのみ。GPUメモリ・実機FPS・通常育成のテンポ・長期リーク不在は保証しない。"
+}

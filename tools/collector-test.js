@@ -36,7 +36,10 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),path
   C.setVerify(s,false,w);const restored=JSON.stringify({sk:s.player.skills,en:s.player.skillEnabled})===keep&&!C.blocksAttack(s);
   // 構成の保存と呼び出し
   C.savePreset(s,0,'三つ');for(const id of C.activeIds(s))C.setEnabled(s,id,false,w);const loaded=C.loadPreset(s,0,w)&&C.activeIds(s).length===3&&s.collector.presets[0].name==='三つ';
-  return{all,count:Object.keys(D.skills).length,sameObjects,learned,defaults,most,pupHp:pup&&pup.maxHp===pv.maxHp,rows,had,skelGone,wolfStays,pupGone,leftovers,three,many,blocks,restored,loaded,key:WYD.save.KEY};});
+  return{all,count:Object.keys(D.skills).length,sameObjects,learned,defaults,most,pupHp:pup&&pup.maxHp===pv.maxHp,
+   puppetSnapshot:{actual:pup?.maxHp,expected:pv?.maxHp,moving:!!w.dungeon?.move,town:!!w.town,dead:w.player.dead},
+   rows,had,skelGone,wolfStays,pupGone,leftovers,three,many,blocks,restored,loaded,key:WYD.save.KEY};});
+ if(!core.pupHp)console.log('人形能力の検証状態',JSON.stringify(core.puppetSnapshot));
  assert.equal(core.count,core.all,'全職業の技の数');assert(core.sameObjects,'元の職業と同じデータを使う');assert(core.learned,'全部の技を最初から選べる');
  assert.deepEqual(core.defaults,['dru_wolves','nec_raise','pup_thread']);
  assert.equal(core.most.puppet,1,'人形');assert(core.most.nec_raise>=2,'骸骨');assert(core.most.dru_wolves>=2,'狼');assert(core.pupHp,'人形の能力は本体のHP・防御から');

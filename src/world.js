@@ -66,7 +66,7 @@ WYD.world = {
     WYD.trial.tick(w, state, dt);
     WYD.records.add(state, "playSeconds", dt);
     if (w.town && WYD.trial.active(state)) WYD.town.leave(w, state);   // 拠点から試練などを始めたら戦場へ
-    if (w.town) return WYD.town.update(w, state, stats);   // 拠点（野営地）にいる間は戦わない
+    if (w.town) { WYD.dungeon.updateCamp(w, state, dt); return WYD.town.update(w, state, stats); }   // 拠点（野営地）にいる間は戦わない
 
     if (p.dead) {
       p.respawnTimer -= dt;
@@ -74,6 +74,7 @@ WYD.world = {
       return;
     }
 
+    if (WYD.dungeon.update(w, state, dt)) { this.updateDrops(w, state, dt); this.syncPuppetAfterLoot(w, state); return; }
     this.healPlayer(w, stats.maxHp, stats.hpRegen * dt, "regen");
     this.refillLeech(w, stats, dt);
     if (p.buff) {
@@ -112,6 +113,12 @@ WYD.world = {
     this.updateEnemies(w, state, stats, dt);
     if (!p.dead) this.updateProjectiles(w, state, stats, dt);
     this.updateDrops(w, state, dt);
+    this.syncPuppetAfterLoot(w, state);
+  },
+
+  // 取得時の自動装備を反映。前進中も既存の人形だけ再計算し、攻撃や再召喚はしない。
+  syncPuppetAfterLoot(w, state) {
+    if (WYD.puppeteer.active(w)) WYD.puppeteer.update(w, state, WYD.stats.compute(state));
   },
 
   // 絵の動きのために、動いた量・向き・攻撃してからの時間を覚えておく
@@ -169,6 +176,7 @@ WYD.world = {
     const map = WYD.data.map;
     if (WYD.trial.active(state)) return WYD.trial.updateSpawns(w, state, dt);
     const area = this.area(state);
+    if (WYD.dungeon.holdSpawns(w, state)) return;
     w.spawnTimer -= dt;
 
     const bossRoom = this.isBossRoom(state);
@@ -177,7 +185,7 @@ WYD.world = {
       w.bossTimer = (w.bossTimer == null ? WYD.data.boss.bossAppearDelay : w.bossTimer) - dt;
       if (w.bossTimer <= 0) {
         w.bossTimer = null;
-        const boss = this.spawnEnemy(w, state, area.boss, this.farPosition(w));
+        const boss = this.spawnEnemy(w, state, area.boss, WYD.dungeon.enabled(w, state) ? WYD.dungeon.bossPosition(w) : this.farPosition(w));
         boss.boss = true;
         // 何度も倒されていたら、すこし弱くする
         const B = WYD.data.boss;
@@ -211,7 +219,7 @@ WYD.world = {
       return;
     }
     const pick = WYD.util.pickWeighted(area.enemies, (x) => x.weight);
-    const e = this.spawnEnemy(w, state, pick.kind, this.farPosition(w));
+    const e = this.spawnEnemy(w, state, pick.kind, WYD.dungeon.enabled(w, state) ? WYD.dungeon.frontPosition(w) : this.farPosition(w));
     if (Math.random() < WYD.data.elites.chance * WYD.season.mult(state, "eliteMult")) this.makeElite(e);
   },
 
@@ -267,6 +275,7 @@ WYD.world = {
 
   updateFloors(w, state, dt) {
     this.updateEntrance(w, dt);
+    if (WYD.dungeon.enabled(w, state)) return;
     if (w.descendNext && !w.breach) {   // 裂け目が開いている間は、閉じてから降りる
       w.descendNext = false;
       this.changeFloor(w, state, 1);
@@ -283,6 +292,8 @@ WYD.world = {
   // 次の階へ降りる（delta = -1 なら上がる）
   changeFloor(w, state, delta) {
     const area = this.area(state);
+    const dungeon = WYD.dungeon.enabled(w, state);
+    if (dungeon) WYD.dungeon.settleDrops(w, state);
     state.floor = WYD.util.clamp(state.floor + delta, 1, area.floors + 1);
     w.enemies = [];
     WYD.bombs.clear(w); WYD.runeSkills.clear(w);
@@ -292,11 +303,14 @@ WYD.world = {
     w.corpses = [];
     w.hazards = [];
     w.pools = [];
-    w.drops = w.drops.filter((d) => ["unique", "set", "legend"].includes(d.item.rarity));
+    if (dungeon) {
+      state.bossProgress = 0; w.descendNext = false; w.dungeon = null;
+    } else w.drops = w.drops.filter((d) => ["unique", "set", "legend"].includes(d.item.rarity));
     w.spawnTimer = 1;
     w.bossTimer = null;
     w.bossDone = false;
     w.banner = { text: `${area.name}　${this.floorName(state)}`, time: 0 };
+    if (dungeon && delta > 0) WYD.save.write(state);
     WYD.ui.log(`${this.floorName(state)}へ${delta > 0 ? "降りた" : "もどった"}`, "#c9b48a");
     WYD.ui.markDirty();
   },
@@ -1117,9 +1131,11 @@ WYD.world = {
       drop.age += dt;
       if (drop.age < D.pickupDelay || drop.picked) continue;
       const room = !WYD.inventory.isFull(state) || !state.settings.fullReplace ? null : WYD.inventory.makeRoomFor(state, drop.item);
+      if (room) WYD.dungeon.acquired(w, room.item, "満杯で入替分解", room.gained);
       if (room) WYD.ui.log(`持ち物がいっぱいなので、${WYD.loot.label(room.item)}を素材にして入れ替えた（${WYD.data.crafting.materialName} +${room.gained}）`, "#9aa0a6");
       if (WYD.inventory.add(state, drop.item)) {
         drop.picked = true;
+        WYD.dungeon.acquired(w, drop.item, "獲得済み");
         WYD.records.found(state, drop.item);
         if (state.settings.autoEquip && WYD.inventory.autoEquip(state, drop.item)) {
           WYD.ui.log(`${WYD.loot.label(drop.item)}のほうが強いので、自動で装備した`, "#7dff8a");
@@ -1133,6 +1149,7 @@ WYD.world = {
         // 持ち物がいっぱい：ユニーク・セットは倉庫へ送る
         drop.picked = true;
         state.stash.push(drop.item);
+        WYD.dungeon.acquired(w, drop.item, "倉庫へ保管");
         WYD.records.found(state, drop.item);
         WYD.records.check(state);
         WYD.ui.log(`持ち物がいっぱいなので、${WYD.loot.label(drop.item)}を倉庫へ送った`, WYD.loot.rarityInfo(drop.item.rarity).color);
@@ -1141,12 +1158,14 @@ WYD.world = {
         state.pendingLoot = state.pendingLoot || [];
         if (!state.pendingLoot.some((it) => it.id === drop.item.id)) state.pendingLoot.push(drop.item);
         drop.picked = true;
+        WYD.dungeon.acquired(w, drop.item, "未受取に保管");
         this.fullWarning(w, "重要装備を未受取に保管しました。持ち物の『未受取を受け取る』で回収できます。");
         WYD.ui.markDirty();
       } else if (D.fullSalvage.includes(drop.item.rarity)) {
         // 持ち物がいっぱい：ノーマル・マジックは拾ったその場で素材にする
         drop.picked = true;
         const n = WYD.inventory.salvage(state, drop.item);
+        WYD.dungeon.acquired(w, drop.item, "満杯で素材化", n);
         if (n > 0) this.addText(w, drop.x, drop.y - 10, `+${n}`, WYD.data.crafting.materialColor);
         this.fullWarning(w, `持ち物がいっぱいなので、ノーマル・マジックは素材にしています（いらない装備を捨てるか、「拾う・装備」で自動分解をONに）`);
         WYD.ui.markDirty();
@@ -1156,6 +1175,7 @@ WYD.world = {
         else this.fullWarning(w, "持ち物がいっぱいで拾えない！");
       }
     }
+    for (const d of w.drops) if (!d.picked && d.age >= D.groundLifetime && !WYD.inventory.protectDrop(state, d.item)) WYD.dungeon.acquired(w, d.item, "拾えず期限切れ");
     w.drops = w.drops.filter((d) => !d.picked && (d.age < D.groundLifetime || WYD.inventory.protectDrop(state, d.item)));
     if (pendingBefore < D.pendingLootLimit && (state.pendingLoot || []).length >= D.pendingLootLimit) {
       WYD.ui.notice("未受取がいっぱい：戦闘を停止しました。持ち物から受け取ると再開します。", "#ff8a6a");
@@ -1359,6 +1379,8 @@ WYD.world = {
   },
 
   enemyDied(w, state, e) {
+    if (e.boss && WYD.dungeon.enabled(w, state) && !w.enemies.includes(e)) return;
+    const reward = WYD.dungeon.beginReward(w, state, e);
     const def = WYD.data.enemies[e.kind];
     if (e.clone) {
       // 分身：消えるだけ
@@ -1395,10 +1417,10 @@ WYD.world = {
       w.bossDefeat = { name: def.name, time: 0 };
       // ボスを倒したら、すこしして地下1階にもどる（もう一度もぐって集められる）
       w.returnTimer = WYD.data.boss.bossAppearDelay * 2;
-    } else if (!this.isBossRoom(state)) {
+    } else if (!this.isBossRoom(state) && !(WYD.dungeon.enabled(w, state) && w.descendNext)) {
       state.bossProgress = Math.min(area.killsPerFloor, state.bossProgress + 1);
       if (state.bossProgress >= area.killsPerFloor) {
-        state.bossProgress = 0;
+        if (!WYD.dungeon.enabled(w, state)) state.bossProgress = 0;
         w.descendNext = true;   // 倒した敵の処理が終わってから降りる
       }
     }
@@ -1462,6 +1484,7 @@ WYD.world = {
     if (Math.random() < uniqueChance) {
       const item = WYD.loot.createUnique(state, this.rareItemLevel(state));
       w.drops.push({ x: e.x, y: e.y, item, age: 0 });
+      WYD.dungeon.rewardItem(w, reward, item);
       WYD.ui.notice(`ユニーク装備「${item.name}」が落ちた！`, U.color);
       WYD.sound.play("uniqueDrop");
     }
@@ -1471,6 +1494,7 @@ WYD.world = {
     if (Math.random() < setChance) {
       const item = WYD.loot.createSetPiece(state, this.rareItemLevel(state));
       w.drops.push({ x: e.x + 12, y: e.y + 8, item, age: 0 });
+      WYD.dungeon.rewardItem(w, reward, item);
       WYD.ui.notice(`セット装備「${item.name}」が落ちた！`, SE.color);
       WYD.sound.play("uniqueDrop");
     }
@@ -1479,6 +1503,7 @@ WYD.world = {
       // 自動分解：拾わずにその場で素材にする
       if (WYD.inventory.shouldAutoSalvage(state, item)) {
         const n = WYD.inventory.salvage(state, item);
+        WYD.dungeon.rewardItem(w, reward, item, n);
         WYD.offline.record("mats", n);
         if (n > 0) this.addText(w, e.x, e.y - 30, `+${n}`, WYD.data.crafting.materialColor);
         WYD.ui.markDirty();
@@ -1487,13 +1512,20 @@ WYD.world = {
       if (item.rarity === "legend") WYD.sound.play("rareDrop");
       const spread = count > 1 ? 10 + count * 4 : 0;
       w.drops.push({ x: e.x + WYD.util.rand(-spread, spread), y: e.y + WYD.util.rand(-spread, spread), item, age: 0 });
+      WYD.dungeon.rewardItem(w, reward, item);
     }
     if (def.treasure) this.goblinTreasure(w, state, e);
+    const rewardsBefore = reward && WYD.dungeon.resourceCounts(state);
     WYD.gems.onKill(w, state, e);
     WYD.maps.onKill(w, state, e);
     WYD.uber.onKill(w, state, e);
+    if (reward) {
+      const after = WYD.dungeon.resourceCounts(state);
+      reward.extra = Object.fromEntries(Object.keys(after).map(key => [key, Math.max(0, after[key] - rewardsBefore[key])]));
+    }
     WYD.breach.onKill(w, state, e);
     WYD.records.check(state);
+    WYD.dungeon.finishReward(w, state, reward);
   },
 
   // 宝物ゴブリンを倒したときのごほうび
@@ -1577,6 +1609,7 @@ WYD.world = {
     if (p.dead) return;
     WYD.results.add(w, null, { deaths: 1 });
     p.dead = true;
+    WYD.dungeon.cancel(w);
     WYD.bombs.clear(w); WYD.runeSkills.clear(w);
     p.hp = 0;
     p.respawnTimer = WYD.data.player.respawnSeconds;
@@ -1611,7 +1644,7 @@ WYD.world = {
     }
     WYD.trial.onDeath(w, state);
     // ボスの間で倒れたら、1つ上の階にもどる（すこし倒せばまた降りられる）
-    if (this.isBossRoom(state)) {
+    if (this.isBossRoom(state) && !(WYD.dungeon.enabled(w, state) && w.bossDone)) {
       const area = this.area(state);
       state.bossDeaths[area.id] = (state.bossDeaths[area.id] || 0) + 1;
       this.changeFloor(w, state, -1);
@@ -1641,6 +1674,8 @@ WYD.world = {
   // 危険度を変えたら敵を入れ替える
   // keepBoss = true のときは、いたボスがすぐまた出てくる（エリアを変えたときは false）
   resetEnemies(w, state, keepBoss) {
+    WYD.dungeon.cancel(w);
+    if (WYD.trial.active(state) || state.dungeonReturn && state.dungeonReturn.area !== state.area) { state.dungeonReturn = null; w.dungeonReward = null; }
     if (keepBoss) this.keepBoss(w, state);
     w.enemies = [];
     WYD.bombs.clear(w); WYD.runeSkills.clear(w);

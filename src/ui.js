@@ -1104,6 +1104,8 @@ WYD.ui = {
     this.$("floor-plaque").textContent = atCamp ? "野営地" : WYD.trial.active(s) ? `試練・段階${s.trialRun.level}` : WYD.world.floorName(s);
     this.$("area-down").disabled = ai <= 0;
     this.$("area-up").disabled = ai >= opened.length - 1;
+    const routeLabel = WYD.dungeon.label(this.world, s);
+    this.$("floor-plaque").textContent += routeLabel && (!atCamp || this.world.dungeonCamp) ? ` · ${routeLabel}` : "";
     this.$("boss-progress").textContent = atCamp ? `（出発先：${area.name}・${WYD.world.floorName(s)}）` : WYD.trial.active(s) ? "" : WYD.world.isBossRoom(s)
       ? `（${WYD.world.floorName(s)}）`
       : `（${WYD.world.floorName(s)}・次の階まで ${s.bossProgress}/${area.killsPerFloor}体）`;

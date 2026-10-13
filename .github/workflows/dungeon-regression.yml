@@ -1,0 +1,84 @@
+name: MAP改修の全体回帰テスト
+
+on:
+  push:
+    branches: [auto-forward-dungeon]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dungeon-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    name: 全体テスト ${{ matrix.shard }} / 4
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: 検証用PlaywrightとChromiumを用意
+        run: |
+          npm install --prefix "$RUNNER_TEMP/wyd3-tests" --no-audit --no-fund playwright@1.62.1
+          "$RUNNER_TEMP/wyd3-tests/node_modules/.bin/playwright" install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/wyd3-tests/node_modules" >> "$GITHUB_ENV"
+      - name: 既存テストを重複なく4組に分けて実行
+        env:
+          TEST_SHARD: ${{ matrix.shard }}
+        run: |
+          set -o pipefail
+          node <<'NODE' | tee regression.log
+          const fs = require('node:fs');
+          const {spawnSync} = require('node:child_process');
+          const tests = fs.readdirSync('tools').filter(f => f.endsWith('-test.js')).sort();
+          const selected = tests.filter((_, i) => i % 4 === Number(process.env.TEST_SHARD));
+          console.log(`Shard ${process.env.TEST_SHARD}: ${selected.length} / ${tests.length} files`);
+          const result = spawnSync(process.execPath, ['tools/run-tests.js', ...selected], {stdio:'inherit'});
+          process.exit(result.status ?? 1);
+          NODE
+      - name: 検証ログとテスト画像を保存
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: dungeon-regression-${{ matrix.shard }}
+          path: |
+            regression.log
+            results/
+          retention-days: 7
+
+  render-soak:
+    name: Chromium描画を含む森5周
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: 検証用PlaywrightとChromiumを用意
+        run: |
+          npm install --prefix "$RUNNER_TEMP/wyd3-tests" --no-audit --no-fund playwright@1.62.1
+          "$RUNNER_TEMP/wyd3-tests/node_modules/.bin/playwright" install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/wyd3-tests/node_modules" >> "$GITHUB_ENV"
+      - name: 自然戦闘・描画・メモリ・キャッシュを確認
+        run: |
+          set -o pipefail
+          node --require ./tools/test-preload.cjs tools/dungeon-render-soak.js 5 | tee render-soak.log
+      - name: 検証結果を保存
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: dungeon-render-soak
+          path: |
+            render-soak.log
+            results/
+          retention-days: 7
