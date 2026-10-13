@@ -176,9 +176,10 @@ vm.runInContext('let naturalRng=9;Math.random=()=>{naturalRng=(1664525*naturalRn
  const {s,w}=setup();s.player.level=80;w.breachTimer=1e9;for(const key in s.player.skillEnabled)s.player.skillEnabled[key]=false;
  const item=W.loot.create(s,10,1,{rarity:'legend',slot:'weapon'});item.locked=true;
  item.stats=[{stat:'attack',value:6000,main:true},{stat:'defense',value:5000},{stat:'maxHp',value:100000},{stat:'attackSpeed',value:500}];s.equipment.weapon=item;
- let seen=false,loops=0;for(let f=0;f<16000&&loops<2;f++){W.world.update(w,s,.05);if(w.town)seen=true;if(seen&&!w.town){loops++;seen=false;}}
+ let seen=false,loops=0;const lapSeconds=[];let lapFrames=0;for(let f=0;f<16000&&loops<2;f++){W.world.update(w,s,.05);lapFrames++;if(w.town)seen=true;if(seen&&!w.town){loops++;seen=false;lapSeconds.push(Number((lapFrames*.05).toFixed(1)));lapFrames=0;}}
  assert.equal(loops,2);assert.equal(s.records.bossKills,2);assert.equal(s.floor,1);
- console.log(`ok 自然戦闘AIの森2周（強い検証装備・${w.time.toFixed(1)}ゲーム秒）`);
+ assert.equal(lapSeconds.length,2);assert(lapSeconds.every(seconds=>seconds>0));
+ console.log(`ok 自然戦闘AIの森2周（強い検証装備・各周${lapSeconds.join(' / ')}ゲーム秒、計${lapSeconds.reduce((a,b)=>a+b,0).toFixed(1)}ゲーム秒）`);
 }
 
 // 自動分解は生成時に1回だけ観測。通常の未取得レジェンドは階移動で消さない。
