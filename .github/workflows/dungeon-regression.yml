@@ -2,7 +2,7 @@ name: MAP改修の全体回帰テスト
 
 on:
   push:
-    branches: [auto-forward-dungeon]
+    branches: [auto-forward-dungeon, forest-scene-art]
   workflow_dispatch:
 
 permissions:

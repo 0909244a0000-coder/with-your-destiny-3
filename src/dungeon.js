@@ -190,53 +190,26 @@ WYD.dungeon = {
     if(m){const t=WYD.util.clamp(m.time/m.duration,0,1),k=t*t*(3-2*t);distance+=((m.floor?3:m.to)-stage)*k;}
     return distance*WYD.data.dungeon.forestRoute.travel;
   },
-  drawForestRoute(ctx, w, s, scene) {
-    if(!this.enabled(w,s)||s.area!=='forest'||WYD.world.isBossRoom(s))return false;
-    const D=WYD.data.dungeon.forestRoute,M=WYD.data.map,offset=this.routeDistance(w,s);
-    const tile=WYD.render.getImage(WYD.world.area(s).groundImage);
+  drawForestRoute(ctx, w, s) {
+    if(!this.enabled(w,s)||s.area!=='forest')return false;
+    const D=WYD.data.dungeon.forestRoute,r=w.dungeon,m=r&&r.move;
+    // 3枚を先読みし、保存データや戦闘状態には画像参照を持たない。
+    const images=D.images.map(src=>WYD.render.getImage(src));
+    const boss=WYD.world.isBossRoom(s);
+    const stage=boss?2:r&&r.floor===s.floor?r.stage:Math.min(2,this.target(s));
+    const next=m?(m.floor?(s.floor+1>WYD.world.area(s).floors?2:0):m.to):stage;
+    const view={...this.view(s,w)};view.zoom=view.zoom/WYD.data.dungeon.sceneZoom*D.sceneZoom;
+    const current=images[stage],incoming=images[next];
     ctx.save();
-    // 遠景は既存の森。足元は実際に流れる地面で、同じ一枚絵のパンと分離する。
-    ctx.fillStyle='#33402c';ctx.fillRect(0,D.horizon,M.width,M.height-D.horizon);
-    if(tile){
-      const y0=offset%D.tileSize;
-      for(let y=y0-D.tileSize;y<M.height;y+=D.tileSize)
-        for(let x=0;x<M.width;x+=D.tileSize)ctx.drawImage(tile,x,y,D.tileSize,D.tileSize);
-    }
-    if(scene){
-      const mist=ctx.createLinearGradient(0,0,0,D.horizon*2);
-      mist.addColorStop(0,'rgba(37,48,33,0)');mist.addColorStop(1,'#33402c');
-      // 遠景の帯を残し、地面との継ぎ目を霧でぼかす。
-      ctx.drawImage(scene,0,0,scene.width,scene.height*.3,0,0,M.width,D.horizon);
-      ctx.fillStyle=mist;ctx.fillRect(0,0,M.width,D.horizon*2);
-    }
-    const section=Math.min(2,Math.floor(offset/D.travel)%3);
-    ctx.fillStyle=D.edge;ctx.beginPath();ctx.moveTo(M.width*.38,0);ctx.lineTo(M.width*.62,0);
-    ctx.lineTo(M.width*.94,M.height);ctx.lineTo(M.width*.06,M.height);ctx.closePath();ctx.fill();
-    ctx.save();ctx.beginPath();ctx.moveTo(M.width*.4,0);ctx.lineTo(M.width*.6,0);
-    ctx.lineTo(M.width*.88,M.height);ctx.lineTo(M.width*.12,M.height);ctx.closePath();ctx.clip();
-    if(tile){
-      ctx.filter='sepia(.8) saturate(.5) brightness(1.7)';
-      for(let y=offset%D.tileSize-D.tileSize;y<M.height;y+=D.tileSize)
-        for(let x=0;x<M.width;x+=D.tileSize)ctx.drawImage(tile,x,y,D.tileSize,D.tileSize);
-      ctx.filter='none';
-    }
-    ctx.globalAlpha=.3;ctx.fillStyle=D.road[section];ctx.fillRect(0,0,M.width,M.height);ctx.restore();
-    // 同じ石・木を下へ送り、移動後も通過した距離を保持。描画用乱数は戦闘抽選から独立。
-    const first=Math.floor((offset-M.height)/90),last=Math.ceil(offset/90);
-    for(let n=first;n<=last;n++){
-      const rnd=WYD.util.seededRandom(127+n*31),y=offset-n*90;
-      const depth=WYD.util.clamp(y/M.height,0,1),half=M.width*(.1+.28*depth),center=M.width/2;
-      ctx.fillStyle='#a59b79';ctx.globalAlpha=.28;
-      for(let i=0;i<3;i++){const x=center+(rnd()-.5)*half*1.6;ctx.beginPath();ctx.ellipse(x,y+rnd()*30,3+depth*5,2+depth*3,.3,0,Math.PI*2);ctx.fill();}
-      ctx.globalAlpha=1;
-      for(const side of [-1,1]){
-        const x=center+side*(half+55+rnd()*45),size=D.treeSize*(.5+depth*.7);
-        ctx.fillStyle='#302b21';ctx.fillRect(x-size*.07,y-size*.25,size*.14,size*.65);
-        ctx.fillStyle=['#354629','#293e29','#25392b'][section];
-        for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(x+(i-1)*size*.23,y-size*.45-i*size*.12,size*.38,size*.32,.2,0,Math.PI*2);ctx.fill();}
-      }
-    }
-    ctx.restore();return true;
+    if(current)WYD.render.drawScene(ctx,current,s,w,view);
+    if(m&&incoming&&incoming!==current){
+      const t=WYD.util.clamp(m.time/m.duration,0,1);
+      ctx.globalAlpha=current?t*t*(3-2*t):1;
+      WYD.render.drawScene(ctx,incoming,s,w,view);
+    }else if(!current&&incoming)WYD.render.drawScene(ctx,incoming,s,w,view);
+    ctx.restore();
+    // 読込前は既存sceneImageを使い、仮の図形の道や木は重ねない。
+    return true;
   },
   drawProps(ctx, w, s) {
     if (!this.enabled(w, s)) return;

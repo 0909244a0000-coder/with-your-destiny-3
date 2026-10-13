@@ -107,6 +107,24 @@ for(const width of [1440,390]) {
 }
 console.log('ok PC/390px相当の描画・sceneパン・描画乱数0・状態不変');
 
+// 新しい森画像：区間の切替・最奥・読込待ち・試練の分離。描画だけでは進行しない。
+{
+ const {s,w}=setup(),D=W.data.dungeon.forestRoute,original=W.render.getImage;
+ const images=D.images.map(src=>{assert(fs.existsSync(path.join(root,src)));return {src,width:1536,height:1024};});
+ W.render.getImage=src=>images.find(im=>im.src===src)||null;
+ const drawn=[],ctx={save(){},restore(){},drawImage(im){drawn.push({src:im.src,alpha:this.globalAlpha});},globalAlpha:1};
+ const before=JSON.stringify(s);assert(W.dungeon.drawForestRoute(ctx,w,s));assert.equal(drawn.at(-1).src,D.images[0]);
+ w.dungeon.move={to:1,time:.55,duration:1.1};drawn.length=0;W.dungeon.drawForestRoute(ctx,w,s);
+ assert.deepEqual(drawn.map(x=>x.src),[D.images[0],D.images[1]]);assert.equal(drawn[1].alpha,.5);
+ assert.equal(JSON.stringify(s),before);w.dungeon.move=null;w.dungeon.stage=2;drawn.length=0;
+ W.dungeon.drawForestRoute(ctx,w,s);assert.equal(drawn.at(-1).src,D.images[2]);
+ s.floor=4;drawn.length=0;W.dungeon.drawForestRoute(ctx,w,s);assert.equal(drawn.at(-1).src,D.images[2]);
+ W.render.getImage=()=>null;drawn.length=0;assert(W.dungeon.drawForestRoute(ctx,w,s));assert.equal(drawn.length,0);
+ s.area='frost';assert.equal(W.dungeon.drawForestRoute(ctx,w,s),false);
+ W.render.getImage=original;
+}
+console.log('ok 森3画像・前進クロスフェード・奥地/ボス・読込前代替・他エリア分離');
+
 // 全6エリアで既存の3階分の討伐数と正しいボス/報酬/帰還。共通処理だけを使う。
 for(const area of W.data.areas) {
  vm.runInContext('Math.random=()=>0.5',context);

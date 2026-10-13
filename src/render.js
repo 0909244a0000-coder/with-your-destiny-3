@@ -138,7 +138,7 @@ WYD.render = {
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
     if (scene) this.drawScene(ctx, scene, state, w);
-    const forestRoute = WYD.dungeon.drawForestRoute(ctx, w, state, scene);
+    const forestRoute = WYD.dungeon.drawForestRoute(ctx, w, state);
     if (ground || scene) {
       ctx.fillStyle = `rgba(0,0,0,${scene ? map.scene.dim : map.groundDim})`;
       ctx.fillRect(0, 0, map.width, map.height);
@@ -438,11 +438,11 @@ WYD.render = {
   },
 
   // 比率を保って一枚の景色を画面いっぱいに表示。切り取りは階ごとに固定で、戦闘乱数は使わない。
-  drawScene(ctx, img, state, w) {
+  drawScene(ctx, img, state, w, viewOverride) {
     const map = WYD.data.map;
     const views = map.scene.views;
     const floor = WYD.trial.active(state) ? 1 : (state.floor || 1);
-    const view = w && WYD.dungeon.enabled(w, state) ? WYD.dungeon.view(state, w) : views[Math.max(0, Math.min(views.length - 1, floor - 1))];
+    const view = viewOverride || (w && WYD.dungeon.enabled(w, state) ? WYD.dungeon.view(state, w) : views[Math.max(0, Math.min(views.length - 1, floor - 1))]);
     const scale = Math.max(map.width / img.width, map.height / img.height) * view.zoom;
     const sw = map.width / scale, sh = map.height / scale;
     ctx.drawImage(img, (img.width - sw) * view.x, (img.height - sh) * view.y,
