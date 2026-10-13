@@ -144,7 +144,11 @@ WYD.render = {
     const ground = scene ? null : this.getImage(area.groundImage);
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
     ctx.fillRect(0, 0, map.width, map.height);
-    if (scene) this.drawScene(ctx, scene, state, w);
+    if (scene) {
+      if (paintedForest && w.dungeon?.move && !w.dungeon.move.floor)
+        this.drawForestTravel(ctx, paintedForest, state, w);
+      else this.drawScene(ctx, scene, state, w);
+    }
     const forestRoute = isPaintedForest ? true : WYD.dungeon.drawForestRoute(ctx, w, state, scene);
     if (ground || scene) {
       ctx.fillStyle = `rgba(0,0,0,${scene ? map.scene.dim : map.groundDim})`;
@@ -457,6 +461,47 @@ WYD.render = {
     const sw = map.width / scale, sh = map.height / scale;
     ctx.drawImage(img, (img.width - sw) * view.x, (img.height - sh) * view.y,
       sw, sh, 0, 0, map.width, map.height);
+  },
+
+  // 2枚の描き込み背景を使ったカメラ前進。旧式の台形や丸木は描かない。
+  // 奥の景色を拡大しながら近景が速く通過し、区間の終わりで次の景色に繋ぐ。
+  drawForestTravel(ctx, img, state, w) {
+    const map = WYD.data.map, move = w.dungeon.move;
+    const t = WYD.util.clamp(move.time / move.duration, 0, 1);
+    const smooth = t * t * (3 - 2 * t);
+    const nextStage = Math.max(0, Math.min(2, move.to));
+    const next = this.getImage("assets/scenes/forest-stage-" + nextStage + ".svg");
+    const paint = (image, progress, alpha) => {
+      if (!image || alpha <= 0) return;
+      const base = Math.max(map.width / image.width, map.height / image.height);
+      const zoom = 1.04 + progress * .52;
+      const cropW = map.width / (base * zoom), cropH = map.height / (base * zoom);
+      const centerX = image.width * .5, centerY = image.height * (.49 - progress * .12);
+      const sx = WYD.util.clamp(centerX - cropW * .5, 0, Math.max(0, image.width - cropW));
+      const sy = WYD.util.clamp(centerY - cropH * .5, 0, Math.max(0, image.height - cropH));
+      ctx.save(); ctx.globalAlpha = alpha;
+      ctx.drawImage(image, sx, sy, cropW, cropH, 0, 0, map.width, map.height);
+      ctx.restore();
+    };
+    paint(img, smooth, 1);
+    // 新しい景色は接近の終盤で現れ、移動終了後に同じ構図へ着地する。
+    if (next && next !== img) {
+      const fade = WYD.util.clamp((t - .65) / .35, 0, 1);
+      paint(next, 0, fade * fade * (3 - 2 * fade));
+    }
+    // 手前の左右だけ別速度でスライド。元絵の森を切り出すので単純な図形にならない。
+    const slide = smooth * map.height * .28;
+    const band = Math.floor(img.width * .17);
+    const srcH = Math.floor(img.height * .7);
+    ctx.save();
+    ctx.globalAlpha = Math.sin(Math.PI * t) * .48;
+    if (ctx.globalAlpha > 0) {
+      const dstW = map.width * .18, dstH = map.height * .9;
+      ctx.drawImage(img, 0, img.height - srcH, band, srcH, -dstW * .18, map.height * .14 + slide, dstW, dstH);
+      ctx.drawImage(img, img.width - band, img.height - srcH, band, srcH,
+        map.width - dstW * .82, map.height * .14 + slide, dstW, dstH);
+    }
+    ctx.restore();
   },
 
   // ボスがいるときは、画面の上にボスのHPを大きく出す
