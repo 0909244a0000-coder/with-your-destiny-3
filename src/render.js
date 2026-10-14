@@ -137,9 +137,16 @@ WYD.render = {
     const dungeonStage = w.dungeon && w.dungeon.floor === state.floor ? w.dungeon.stage : 0;
     const bossForest = state.area === "forest" && WYD.world.isBossRoom(state)
       ? this.getImage("assets/scenes/forest-boss.svg") : null;
+    // 高精細の背景画が存在する場合はSVGの仮背景より優先する。
+    // 画像未配置・読込失敗時は従来の区間別SVGに安全に戻す。
+    const forestStage = Math.max(0, Math.min(2, dungeonStage));
+    const rasterForest = isPaintedForest
+      ? this.getImage("assets/scenes/forest-stage-" + forestStage + ".webp") : null;
     const paintedForest = isPaintedForest
-      ? this.getImage("assets/scenes/forest-stage-" + Math.max(0, Math.min(2, dungeonStage)) + ".svg") : null;
-    const scene = bossForest || paintedForest || this.getImage(area.sceneImage);
+      ? (rasterForest || this.getImage("assets/scenes/forest-stage-" + forestStage + ".svg")) : null;
+    const rasterBoss = state.area === "forest" && WYD.world.isBossRoom(state)
+      ? this.getImage("assets/scenes/forest-boss.webp") : null;
+    const scene = rasterBoss || bossForest || paintedForest || this.getImage(area.sceneImage);
     // 完成した景色は一枚で表示。読み込み中・画像欠損時は従来の地面に戻す。
     const ground = scene ? null : this.getImage(area.groundImage);
     ctx.fillStyle = ground ? (this.patternFor(ctx, ground) || area.bgColor) : area.bgColor;
@@ -487,7 +494,7 @@ WYD.render = {
     const t = WYD.util.clamp(move.time / move.duration, 0, 1);
     const smooth = t * t * (3 - 2 * t);
     const nextStage = Math.max(0, Math.min(2, move.to));
-    const next = this.getImage("assets/scenes/forest-stage-" + nextStage + ".svg");
+    const next = this.getImage("assets/scenes/forest-stage-" + nextStage + ".webp") || this.getImage("assets/scenes/forest-stage-" + nextStage + ".svg");
     const paint = (image, progress, alpha) => {
       if (!image || alpha <= 0) return;
       const base = Math.max(map.width / image.width, map.height / image.height);
