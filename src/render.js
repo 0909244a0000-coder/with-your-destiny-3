@@ -494,7 +494,7 @@ WYD.render = {
     const t = WYD.util.clamp(move.time / move.duration, 0, 1);
     const smooth = t * t * (3 - 2 * t);
     const nextStage = Math.max(0, Math.min(2, move.to));
-    const next = this.getImage("assets/scenes/forest-stage-" + nextStage + ".svg");
+    const next = this.getImage("assets/scenes/forest-stage-" + nextStage + ".webp") || this.getImage("assets/scenes/forest-stage-" + nextStage + ".svg");
     const paint = (image, progress, alpha) => {
       if (!image || alpha <= 0) return;
       const base = Math.max(map.width / image.width, map.height / image.height);
