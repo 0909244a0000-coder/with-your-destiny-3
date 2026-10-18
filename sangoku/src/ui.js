@@ -319,15 +319,23 @@
       const d = s.cities[to];
       const list = SG.officersIn(s, c.id, s.player).filter(o => !o.acted).sort((a, b) => b.lead - a.lead);
       const chosen = list.slice(0, Math.min(R.maxUnits, list.length)).map(o => o.id);
+      // 兵種（武将ごと）。最初は能力でおまかせ
+      const TY = SG.data.tactics.types, types = {};
+      for (const o of list) types[o.id] = SG.tactics.autoType(o);
       const defOffs = SG.officersIn(s, to, d.owner);
       modal(`<h2>${esc(c.id)} → ${esc(to)} 出陣</h2>
         <p class="sub">相手：${esc(SG.forceName(s, d.owner))}　兵${d.troops}・城壁${d.def}・訓練${d.training}・武将${defOffs.length}人（${defOffs.slice(0, 5).map(o => esc(o.id)).join('・')}）</p>
-        <p class="sub">出陣する武将（最大${R.maxUnits}人、クリックで選ぶ）。兵は統率の比で分ける</p>${statsTable(list, { pick: true, hi: 'lead', on: chosen })}
+        <p class="sub">出陣する武将（最大${R.maxUnits}人、クリックで選ぶ）。兵は統率の比で分ける。兵種は右の欄で選ぶ</p>${statsTable(list, { pick: true, hi: 'lead', on: chosen, extraHead: '兵種', extra: o => `<select class="type" data-o="${esc(o.id)}">${Object.entries(TY).map(([k, v]) => `<option value="${k}" ${types[o.id] === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select>` })}
+        <p class="sub">歩兵：守りが固く城門に強い／騎兵：移動+2、移動してからの攻撃は突撃（森・山は苦手、弓なし）／弓兵：弓が3マス先まで強い（近くの戦いは弱い）</p>
         <div class="row"><label>兵</label><input type="range" id="tr" min="0" max="${c.troops}" step="100" value="${Math.floor(c.troops * 0.8 / 100) * 100}"><span id="trv"></span></div>
         <div class="sub" id="split"></div><div class="msg" id="msg"></div><div class="actions"><button data-close>やめる</button><button id="go-auto">自動で出陣</button><button id="go" class="primary">指揮して出陣</button></div>
         <p class="sub">指揮：マスの戦場で部隊を動かして戦う／自動：AIが戦うのを見る（途中で「指揮に戻る」もできる）</p>`, box => {
-        const units = () => { const sum = chosen.reduce((a, id) => a + s.officers[id].lead, 0); const n = +$('tr').value; return chosen.map(id => ({ officer: id, troops: Math.floor(n * s.officers[id].lead / sum / 100) * 100 })); };
-        const upd = () => { $('trv').textContent = $('tr').value + '人　兵糧' + Math.ceil($('tr').value * R.foodPerTroop * R.march.foodMonths) + 'を使う'; $('split').textContent = units().map(u => `${u.officer} ${u.troops}`).join('　'); };
+        const units = () => { const sum = chosen.reduce((a, id) => a + s.officers[id].lead, 0); const n = +$('tr').value; return chosen.map(id => ({ officer: id, troops: Math.floor(n * s.officers[id].lead / sum / 100) * 100, type: types[id] })); };
+        const upd = () => { $('trv').textContent = $('tr').value + '人　兵糧' + Math.ceil($('tr').value * R.foodPerTroop * R.march.foodMonths) + 'を使う'; $('split').textContent = units().map(u => `${u.officer}（${TY[u.type].name}） ${u.troops}`).join('　'); };
+        for (const sel of box.querySelectorAll('select.type')) {
+          sel.addEventListener('click', e => e.stopPropagation());
+          sel.addEventListener('change', () => { types[sel.dataset.o] = sel.value; upd(); });
+        }
         for (const tr of box.querySelectorAll('tr.pick')) tr.addEventListener('click', () => {
           const i = chosen.indexOf(tr.dataset.id);
           if (i >= 0) chosen.splice(i, 1); else if (chosen.length < R.maxUnits) chosen.push(tr.dataset.id); else return;

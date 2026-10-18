@@ -239,7 +239,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   function prepareBattle(s, fromId, toId, orders) {
     const r = R(), from = s.cities[fromId], to = s.cities[toId];
     const atkForce = from.owner, defForce = to.owner;
-    const atk = orders.map(u => ({ officer: u.officer, troops: u.troops, start: u.troops, side: 'atk' }));
+    const atk = orders.map(u => ({ officer: u.officer, troops: u.troops, start: u.troops, side: 'atk', type: u.type }));
     from.troops -= atk.reduce((a, u) => a + u.troops, 0);
     for (const u of atk) s.officers[u.officer].acted = true;
     // 守備側：統率の高い順に最大5人で兵を分ける（君主がいれば総大将として先頭）

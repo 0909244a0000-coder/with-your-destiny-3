@@ -28,6 +28,15 @@ SG.data.tactics = {
   // 戦場を作る：山の多い州、森・山の多さ（[ふつう, 山の多い州]）、川のそばの都市には川（経度・緯度の度数で、この近さまで）
   hilly: ['益州', '涼州', '并州'],
   forestRate: [0.12, 0.16], mountainRate: [0.05, 0.13], riverDist: 0.6,
+  // 兵種：move＝移動力の増減、atk・def＝攻撃・守りの掛け算、bow＝弓の射程と強さ（null は撃てない）、
+  // charge＝その日に移動してから攻撃すると掛かる（騎兵の突撃）、gate＝城門攻め、rough＝森・山に入る移動力の追加
+  types: {
+    foot: { name: '歩兵', move: 0, atk: 1, def: 1.2, bow: { range: 2, k: 0.5 }, gate: 1.3, rough: 0 },
+    horse: { name: '騎兵', move: 2, atk: 1.2, def: 0.9, bow: null, charge: 1.3, gate: 0.8, rough: 1 },
+    bow: { name: '弓兵', move: 0, atk: 0.8, def: 0.9, bow: { range: 3, k: 0.9 }, gate: 0.8, rough: 0 },
+  },
+  // 兵種のおまかせ：知力が武力より高ければ弓兵、武力がこれ以上なら騎兵、ほかは歩兵
+  autoHorseWar: 80,
   // AI の手を見せる速さ：1手の間（ミリ秒）。speeds は「ゆっくり・ふつう・速い」の倍率
   play: { moveMs: 450, actMs: 800, duelMs: 2200, phaseMs: 300, slideMs: 350, speeds: [0.5, 1, 3] },
   // AI

@@ -28,7 +28,11 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   const byUid = (T, id) => units(T).find(u => uid(u) === id);
   const nameOf = u => u.officer || '守備兵';
   const officer = (s, u) => u.officer ? s.officers[u.officer] : null;
-  const moveOf = (s, u) => D().move.base + ((officer(s, u) || { lead: 0 }).lead >= D().move.bonusLead ? 1 : 0);
+  // 兵種（u.type）。決まっていなければ武将の能力でおまかせ
+  function autoType(o) { return !o ? 'foot' : o.int > o.war ? 'bow' : o.war >= D().autoHorseWar ? 'horse' : 'foot'; }
+  const typeOf = u => D().types[u.type] || D().types.foot;
+  const moveOf = (s, u) => D().move.base + typeOf(u).move + ((officer(s, u) || { lead: 0 }).lead >= D().move.bonusLead ? 1 : 0);
+  const stepCost = (T, u, j) => terr(T, j).cost + (['forest', 'mountain'].includes(T.tiles[j]) ? typeOf(u).rough : 0);
   const say = (T, text) => T.B.lines.push(`${T.day}日目：${text}`);
 
   // ---------- 戦場を作る ----------
@@ -85,6 +89,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   function create(s, B, playerSide) {
     const T = { B, playerSide, cols: D().cols, rows: D().rows, day: 1, phase: 'atk', over: false, win: null, started: false };
     makeField(s, T, B.to);
+    for (const u of B.atk.concat(B.def)) if (!D().types[u.type]) u.type = autoType(u.officer && s.officers[u.officer]);
     B.atk.forEach((u, n) => Object.assign(u, { n, commander: n === 0 }));
     B.def.forEach((u, n) => Object.assign(u, { n, commander: n === 0 }));
     // 攻め手は左の端、中ほどから。守り手は総大将が本陣、ほかは城門に近い城内から
@@ -123,7 +128,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       for (const j of neighbors(T, i)) {
         if (!passable(T, j, u.side)) continue;
         const e = unitAt(T, j); if (e && e.side !== u.side) continue;
-        const cost = best.get(i) + terr(T, j).cost;
+        const cost = best.get(i) + stepCost(T, u, j);
         if (cost > mp || (best.has(j) && best.get(j) <= cost)) continue;
         best.set(j, cost); q.push(j);
       }
@@ -135,7 +140,8 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   // 行動できる相手。kind：attack（隣）・bow（2マス）・fire（2マス）・duel（隣の武将）・gate（隣の城門）
   function targets(s, T, u, kind) {
     if (kind === 'gate') return u.side === 'atk' ? neighbors(T, u.pos).filter(i => T.tiles[i] === 'gate') : [];
-    const range = kind === 'bow' ? D().bow.range : kind === 'fire' ? D().fire.range : 1;
+    if (kind === 'bow' && !typeOf(u).bow) return [];
+    const range = kind === 'bow' ? typeOf(u).bow.range : kind === 'fire' ? D().fire.range : 1;
     if ((kind === 'fire' || kind === 'duel') && !u.officer) return [];
     return alive(T, other(u.side)).filter(e => dist(T, u.pos, e.pos) <= range && (kind !== 'duel' || e.officer)).map(uid);
   }
@@ -164,10 +170,10 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     u.pos = x.from; u.moved = false; T.undo = null;
     return ok('移動を取り消した');
   }
-  const strength = (s, T, u) => SG.unitPower(s, u, u.side === 'atk' ? T.B.atkTrain : T.B.defTrain);
+  const strength = (s, T, u) => SG.unitPower(s, u, u.side === 'atk' ? T.B.atkTrain : T.B.defTrain) * typeOf(u).atk;
   function guard(s, T, u) {
     const t = terr(T, u.pos);
-    return t.def * (t.wall && u.side === 'def' ? 1 + s.cities[T.B.to].def / D().wallDefPer : 1);
+    return t.def * typeOf(u).def * (t.wall && u.side === 'def' ? 1 + s.cities[T.B.to].def / D().wallDefPer : 1);
   }
   // 損害を与える。画面の演出のため、何が起きたかを T.fx に残す
   function hurt(s, T, u, loss, why, kind) {
@@ -186,7 +192,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     if (kind === 'wait') { u.acted = true; u.moved = true; T.undo = null; return ok(`${nameOf(u)}隊は待機`); }
     if (kind === 'gate') {
       if (!targets(s, T, u, 'gate').includes(target)) return ng('城門が隣にない');
-      const dmg = Math.round(strength(s, T, u) * d.attackK * d.gate.k * r(0.85, 1.15));
+      const dmg = Math.round(strength(s, T, u) / typeOf(u).atk * typeOf(u).gate * d.attackK * d.gate.k * r(0.85, 1.15));
       T.gates[target] -= dmg;
       fx.push({ type: 'gate', pos: target, loss: dmg, broken: T.gates[target] <= 0 });
       if (T.gates[target] <= 0) { T.tiles[target] = 'broken'; delete T.gates[target]; say(T, `${nameOf(u)}隊が城門を打ち破った！`); }
@@ -195,12 +201,15 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       if (!targets(s, T, u, kind).includes(target)) return ng('届かない');
       const t = byUid(T, target);
       if (kind === 'attack') {
-        const dmg = hurt(s, T, t, strength(s, T, u) * d.attackK * terr(T, u.pos).atk * r(0.85, 1.15) / guard(s, T, t));
-        let msg = `${nameOf(u)}隊が${nameOf(t)}隊を攻撃 -${dmg}`;
+        // 騎兵の突撃：この日に移動してから攻撃すると強い
+        const charge = typeOf(u).charge && T.undo && T.undo.id === id && T.undo.from !== u.pos ? typeOf(u).charge : 1;
+        if (charge > 1 && T.fx) T.fx.push({ type: 'charge', pos: u.pos });
+        const dmg = hurt(s, T, t, strength(s, T, u) * charge * d.attackK * terr(T, u.pos).atk * r(0.85, 1.15) / guard(s, T, t));
+        let msg = `${nameOf(u)}隊が${charge > 1 ? '突撃！ ' : ''}${nameOf(t)}隊を攻撃 -${dmg}`;
         if (t.troops > 0) msg += `／反撃 -${hurt(s, T, u, strength(s, T, t) * d.attackK * d.counter * r(0.85, 1.15) / guard(s, T, u), null, 'counter')}`;
         say(T, msg);
       } else if (kind === 'bow') {
-        say(T, `${nameOf(u)}隊の弓 → ${nameOf(t)}隊 -${hurt(s, T, t, strength(s, T, u) * d.attackK * d.bow.k * r(0.85, 1.15) / guard(s, T, t))}`);
+        say(T, `${nameOf(u)}隊の弓 → ${nameOf(t)}隊 -${hurt(s, T, t, strength(s, T, u) / typeOf(u).atk * d.attackK * typeOf(u).bow.k * r(0.85, 1.15) / guard(s, T, t))}`);
       } else if (kind === 'fire') {
         const a = officer(s, u), b = officer(s, t), wit = b ? b.int : 30;
         const p = fireChance(s, T, u, t);
@@ -366,6 +375,6 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     act(s, T, id, 'wait');
   }
 
-  SG.tactics = { create, reachable, targets, move, undoMove, act, endTurn, endMyPhase, stepAI, delegate, command, advance, auto, retreat, finish, check, neighbors, dist, unitAt, byUid, uid, units, alive, nameOf, moveOf, fireChance, colOf, rowOf, guard };
+  SG.tactics = { autoType, typeOf, create, reachable, targets, move, undoMove, act, endTurn, endMyPhase, stepAI, delegate, command, advance, auto, retreat, finish, check, neighbors, dist, unitAt, byUid, uid, units, alive, nameOf, moveOf, fireChance, colOf, rowOf, guard };
 })();
 if (typeof module !== 'undefined') module.exports = SG;

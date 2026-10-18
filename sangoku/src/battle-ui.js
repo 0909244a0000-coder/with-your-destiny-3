@@ -16,7 +16,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   const mine = u => u && u.side === T.playerSide;
   const myTurn = () => !T.over && T.playerSide && T.phase === T.playerSide;
   const selected = () => sel && SG.tactics.byUid(T, sel);
-  const unitLook = u => { const o = u.officer && s.officers[u.officer]; return u.commander ? 'general' : !o ? 'foot' : o.int > o.war ? 'bow' : o.war >= 80 ? 'horse' : 'foot'; };
+  const unitLook = u => u.type || 'foot';
   const face = (u, cls) => { const f = u.officer && SG.faceOf && SG.faceOf(s.officers[u.officer]); return f ? `<img class="${cls}" src="${f}" alt="" onerror="this.remove()">` : ''; };
 
   function open(state, options) {
@@ -83,6 +83,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       else if (f.type === 'fire') { pic(f.pos, 'event/fire', 64); burst(f.pos, 'fire'); num(f.pos, '-' + f.loss, 'dmg'); }
       else if (f.type === 'miss') { pic(f.pos, 'event/fire', 40, 500); words(f.pos, '見破られた', 'gray'); }
       else if (f.type === 'refuse') words(f.pos, '応じず', 'gray');
+      else if (f.type === 'charge') words([center(f.pos)[0], center(f.pos)[1] - 40], '突撃！', 'gold', 900);
       else if (f.type === 'duel') {
         const [x1, y1] = center(f.a), [x2, y2] = center(f.b), mid = [(x1 + x2) / 2, (y1 + y2) / 2];
         pic(mid, 'event/duel', 90, 1800);
@@ -191,6 +192,9 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       img.addEventListener('error', () => img.setAttribute('href', SG.data.art.battle + 'unit_' + unitLook(x) + '.webp'));
       el('circle', { cx: c[0], cy, r: 23, class: 'ring', stroke: colorOf(x.side) }, g);
       if (x.commander) el('circle', { cx: c[0], cy, r: 27, class: 'cmdr' }, g);
+      // 兵種の印（右上の小さな丸に 歩・騎・弓）
+      el('circle', { cx: c[0] + 18, cy: cy - 17, r: 9, class: 'tbadge t-' + unitLook(x) }, g);
+      el('text', { x: c[0] + 18, y: cy - 13, class: 'tname' }, g, SG.tactics.typeOf(x).name[0]);
       el('rect', { x: c[0] - 24, y: c[1] + 14, width: 48, height: 15, rx: 3, class: 'uplate' }, g);
       el('text', { x: c[0], y: c[1] + 26, class: 'uname' }, g, SG.tactics.nameOf(x).slice(0, 3));
       el('rect', { x: c[0] - 20, y: c[1] + 29, width: 40, height: 4, fill: '#000' }, g);
@@ -225,10 +229,10 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       const btn = (k, label, extra) => `<button data-k="${k}" class="${mode === k ? 'on' : ''}" ${n(k) ? '' : 'disabled'}>${label}${extra || ''}</button>`;
       const fireTarget = SG.tactics.targets(s, T, u, 'fire')[0];
       h += `<h3>${face(u, 'face-l')}${esc(SG.tactics.nameOf(u))}隊${u.commander ? '（総大将）' : ''}</h3>
-        <div class="sub">兵 ${u.troops}／${u.start}　${o ? `統${o.lead} 武${o.war} 知${o.int}` : ''}<br>地形：${t.name}（守り×${SG.tactics.guard(s, T, u).toFixed(2)}）　移動力 ${SG.tactics.moveOf(s, u)}</div>
+        <div class="sub">${SG.tactics.typeOf(u).name}　兵 ${u.troops}／${u.start}　${o ? `統${o.lead} 武${o.war} 知${o.int}` : ''}<br>地形：${t.name}（守り×${SG.tactics.guard(s, T, u).toFixed(2)}）　移動力 ${SG.tactics.moveOf(s, u)}</div>
         <div class="b-acts">${btn('attack', '攻撃')}${btn('bow', '弓')}${btn('fire', '火計', fireTarget ? ` ${Math.round(SG.tactics.fireChance(s, T, u, SG.tactics.byUid(T, fireTarget)) * 100)}%` : '')}${btn('duel', '一騎打ち')}${btn('gate', '城門')}
         <button data-k="wait">待機</button>${T.undo && T.undo.id === sel ? '<button data-k="undo">移動を戻す</button>' : ''}</div>
-        <div class="sub">攻撃・一騎打ち・城門は隣、弓・火計は2マス先まで。敵をクリックで実行</div>`;
+        <div class="sub">攻撃・一騎打ち・城門は隣、弓は${SG.tactics.typeOf(u).bow ? SG.tactics.typeOf(u).bow.range + 'マス先まで' : '撃てない（騎兵）'}、火計は2マス先まで。敵をクリックで実行${SG.tactics.typeOf(u).charge ? '。移動してから攻撃すると突撃' : ''}</div>`;
     }
     h += `<div class="msg" id="b-msg"></div>`;
     const list = side2 => B[side2].map(x => `<tr class="${x.troops > 0 && mine(x) && !x.acted && myTurn() ? 'pick' : ''} ${SG.tactics.uid(x) === sel ? 'on' : ''}" data-u="${SG.tactics.uid(x)}"><td>${face(x, 'face')}${x.commander ? '★' : ''}${esc(SG.tactics.nameOf(x))}</td><td>${x.troops > 0 ? x.troops : '敗走'}</td><td>${x.troops > 0 && x.side === T.phase && x.acted ? '済' : ''}</td></tr>`).join('');
