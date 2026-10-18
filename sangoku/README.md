@@ -26,6 +26,9 @@
 - 委任：都市ごとにAIに任せられる
 - 勝ち：全都市を取る／負け：滅亡
 
+## 絵
+地図とアイコンの依頼書は `docs/ART-REQUEST.md`（ChatGPT などに貼る用。地図の下絵 `docs/map-guide.png` つき）。
+
 ## 数値
 すべて `data/rules.js`（収入・費用・戦争・AI・災害）。都市は `data/cities.js`、武将は `data/officers.js`、配置は `data/scenarios.js`。
 
