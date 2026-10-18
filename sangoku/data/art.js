@@ -5,6 +5,9 @@ SG.data.art = {
   // 地図の城：人口で大・中・小。持ち主のいない都市は廃城
   castle: { l: 'assets/map/castle_l.webp', m: 'assets/map/castle_m.webp', s: 'assets/map/castle_s.webp', ruin: 'assets/map/ruin.webp' },
   castleTier: { l: 400000, m: 200000 },
+  // 地図の拡大：倍率の範囲、始めの倍率、ホイール1回の倍率。iconGrow は拡大したとき城と地名がどれだけ大きくなるか（0＝画面で同じ大きさ、1＝地図と一緒に大きくなる）
+  view: { minZoom: 1, maxZoom: 4, startZoom: 1.8, wheelStep: 1.15, iconGrow: 0.3 },
+  minimapDot: 30,             // ミニマップの都市の点の大きさ（地図の座標）
   castleSize: 34,             // 地図での城の大きさ（地図の座標 1024 のうち）
   flag: 'assets/map/flag.webp',       // 白い旗。勢力の色を重ねる
   capital: 'assets/map/capital.webp', // 君主のいる都市

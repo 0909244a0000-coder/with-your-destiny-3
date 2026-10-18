@@ -94,6 +94,21 @@ for (const seed of [1, 2, 3]) {
   await pg.reload();
   await pg.click('.force-card[data-f="袁紹"]');
   const closeAll = async () => { while (await pg.isVisible('#modal-box [data-close]')) await pg.click('#modal-box [data-close]'); };
+  // 地図の拡大：ホイールで拡大、ドラッグで動かしても都市は選ばれない、ミニマップで移動、全体に戻す
+  const vb = () => pg.getAttribute('#map', 'viewBox').then(v => v.split(' ').map(Number));
+  const box = await pg.$eval('#map', e => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+  const w0 = (await vb())[2];
+  await pg.mouse.move(box.x, box.y); await pg.mouse.wheel(0, -400); await pg.waitForTimeout(50);
+  assert.ok((await vb())[2] < w0, 'ホイールで拡大する');
+  const selName = await pg.textContent('#city h2');
+  const v1 = await vb();
+  await pg.mouse.move(box.x, box.y); await pg.mouse.down(); await pg.mouse.move(box.x - 120, box.y - 80, { steps: 6 }); await pg.mouse.up();
+  assert.ok((await vb())[0] !== v1[0], 'ドラッグで地図が動く');
+  assert.strictEqual(await pg.textContent('#city h2'), selName, 'ドラッグでは都市を選ばない');
+  const mm = await pg.$eval('#minimap', e => { const r = e.getBoundingClientRect(); return { x: r.x + r.width * 0.8, y: r.y + r.height * 0.2 }; });
+  const v2 = await vb(); await pg.mouse.click(mm.x, mm.y);
+  assert.ok((await vb())[0] !== v2[0], 'ミニマップで移動する');
+  await pg.click('#zoom-all'); assert.ok((await vb())[3] >= 1024, '全体に戻す');
   await pg.click('[data-cmd="comm"]'); await pg.click('tr.pick');
   await pg.click('[data-cmd="attack"]'); await pg.click('[data-to]'); await pg.click('#go'); await closeAll();
   for (let i = 0; i < 12 && await pg.isEnabled('#btn-end'); i++) { await pg.click('#btn-end'); await closeAll(); }

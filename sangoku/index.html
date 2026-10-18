@@ -20,7 +20,11 @@
   <button id="btn-end" class="primary">月を終える</button>
 </header>
 <main>
-  <div id="map-wrap"><svg id="map" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet"></svg></div>
+  <div id="map-wrap">
+    <svg id="map" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="map-ctl"><button id="zoom-in" title="拡大（ホイールでも）">＋</button><button id="zoom-out" title="縮小">－</button><button id="zoom-home" title="君主のいる都市へ">本拠</button><button id="zoom-all" title="全体を見る">全体</button></div>
+    <svg id="minimap" viewBox="0 0 1024 1024"></svg>
+  </div>
   <aside id="side">
     <div id="city"></div>
     <div id="log"></div>
@@ -33,6 +37,7 @@
 <script src="data/scenarios.js"></script>
 <script src="data/art.js"></script>
 <script src="src/game.js"></script>
+<script src="src/mapview.js"></script>
 <script src="src/ui.js"></script>
 </body>
 </html>

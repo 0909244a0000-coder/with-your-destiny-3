@@ -12,7 +12,8 @@
   // アイコン（読み込めなければ alt の文字に置きかわる）
   const icon = (path, cls, alt) => `<img class="${cls || 'ico'}" src="${A[path.split('/')[0]]}${path.split('/')[1]}.webp" alt="${alt || ''}" onerror="this.replaceWith(this.alt)">`;
   const lineIcon = text => { const m = A.logIcons.find(([re]) => re.test(text)); return m ? icon(m[1]) : ''; };
-  let s = null, sel = null, targets = [];
+  let s = null, sel = null, targets = [], view = null;
+  const posOf = {}; // 都市の地図での位置
 
   // ---------- セーブ ----------
   function save() { try { localStorage.setItem(SG.data.rules.saveKey, JSON.stringify(s)); } catch (e) { /* 保存できなくても遊べる */ } }
@@ -32,16 +33,16 @@
     img.addEventListener('error', () => img.remove());
     for (const [name, pts] of Object.entries(g.rivers)) {
       const m = pts[Math.floor(pts.length * 0.3)];
-      const t = el('text', { class: 'rname', x: px(m[0]), y: py(m[1]) - 8 }, svg); t.textContent = name;
+      const t = el('text', { class: 'rname', 'data-x': px(m[0]), 'data-y': py(m[1]) - 8 }, svg); t.textContent = name;
     }
-    const pos = {}; for (const c of SG.data.cities) pos[c.id] = [px(c.lon), py(c.lat)];
+    const pos = posOf; for (const c of SG.data.cities) pos[c.id] = [px(c.lon), py(c.lat)];
     const h = A.castleSize / 2;
     const mask = el('mask', { id: 'flagmask', maskContentUnits: 'userSpaceOnUse' }, el('defs', {}, svg));
     el('image', { href: A.flag, x: h * 0.2, y: -h * 1.3, width: h * 0.8, height: h * 0.8 }, mask);
     const roads = el('g', {}, svg);
     for (const [a, b] of SG.data.roads) el('line', { class: 'road', 'data-a': a, 'data-b': b, x1: pos[a][0], y1: pos[a][1], x2: pos[b][0], y2: pos[b][1] }, roads);
     for (const c of SG.data.cities) {
-      const gr = el('g', { class: 'city', 'data-id': c.id, transform: `translate(${pos[c.id][0]},${pos[c.id][1]})` }, svg);
+      const gr = el('g', { class: 'city', 'data-id': c.id, 'data-x': pos[c.id][0], 'data-y': pos[c.id][1] }, svg);
       const z = A.castleSize, h = z / 2;
       el('circle', { class: 'ring', r: h + 3 }, gr);
       el('ellipse', { class: 'base', cy: h * 0.55, rx: h * 0.95, ry: h * 0.42 }, gr);
@@ -59,7 +60,7 @@
     // 地名の札（暗い札に明るい字）。となりの城に隠れないよう、全部の城より上に描く
     const labels = el('g', { class: 'labels' }, svg);
     for (const c of SG.data.cities) {
-      const lg = el('g', { class: 'label', 'data-id': c.id, transform: `translate(${pos[c.id][0]},${pos[c.id][1]})` }, labels);
+      const lg = el('g', { class: 'label', 'data-id': c.id, 'data-x': pos[c.id][0], 'data-y': pos[c.id][1] }, labels);
       el('rect', { class: 'plate', y: h + 1, height: 29, rx: 4 }, lg);
       el('text', { class: 'name', y: h + 15 }, lg).textContent = c.id;
       el('text', { class: 'small', y: h + 27 }, lg);
@@ -83,7 +84,8 @@
       const label = $('map').querySelector(`.label[data-id="${c.id}"]`);
       label.classList.toggle('sel', c.id === sel);
       const small = label.querySelector('.small');
-      if (small.textContent !== troops) {
+      if (label.dataset.t !== troops) {
+        label.dataset.t = troops;
         small.textContent = troops;
         const w = Math.max(c.id.length * 15, troops.length * 7.5) + 10;
         const plate = label.querySelector('.plate');
@@ -93,8 +95,43 @@
       g.classList.toggle('target', targets.includes(c.id));
     }
     for (const l of $('map').querySelectorAll('.road')) l.classList.toggle('hot', !!sel && (l.dataset.a === sel || l.dataset.b === sel));
+    refreshMinimap();
   }
   function clickCity(id) { sel = id; targets = []; render(); }
+
+  // ---------- 拡大とミニマップ ----------
+  function drawMinimap() {
+    const m = $('minimap'), g = SG.data.geo;
+    el('rect', { width: g.size, height: g.size, fill: '#1d3550' }, m);
+    const img = el('image', { href: g.image, width: g.size, height: g.size, preserveAspectRatio: 'none' }, m);
+    img.addEventListener('error', () => { img.remove(); el('polygon', { points: g.coast.map(([a, b]) => px(a) + ',' + py(b)).join(' '), fill: '#4b5a3a' }, m); });
+    for (const c of SG.data.cities) el('circle', { class: 'dot', 'data-id': c.id, cx: posOf[c.id][0], cy: posOf[c.id][1], r: A.minimapDot / 2 }, m);
+    el('rect', { id: 'mini-view' }, m);
+    // クリック・ドラッグでその場所へ
+    let down = false;
+    const go = e => { const r = m.getBoundingClientRect(); view.centerOn((e.clientX - r.left) / r.width * g.size, (e.clientY - r.top) / r.height * g.size); };
+    m.addEventListener('pointerdown', e => { down = true; m.setPointerCapture(e.pointerId); go(e); });
+    m.addEventListener('pointermove', e => { if (down) go(e); });
+    m.addEventListener('pointerup', () => { down = false; });
+  }
+  function refreshMinimap() {
+    for (const d of $('minimap').querySelectorAll('.dot')) {
+      const c = s.cities[d.dataset.id];
+      d.setAttribute('fill', c.owner ? s.forces[c.owner].color : '#777');
+      d.classList.toggle('sel', c.id === sel);
+    }
+  }
+  function onView(v) {
+    const r = $('mini-view'); if (!r) return;
+    const g = SG.data.geo.size;
+    const x = Math.max(0, v.x), y = Math.max(0, v.y);
+    r.setAttribute('x', x); r.setAttribute('y', y);
+    r.setAttribute('width', Math.min(g, v.x + v.w) - x); r.setAttribute('height', Math.min(g, v.y + v.h) - y);
+    $('map-wrap').classList.toggle('zoomed', view && view.zoom > 1.01);
+  }
+  // その都市が見えるように地図を動かす（拡大していなければ少し拡大）
+  function focusCity(id, zoom) { if (view && posOf[id]) view.centerOn(posOf[id][0], posOf[id][1], zoom || Math.max(view.zoom, A.view.startZoom)); }
+  const capitalOf = () => s.officers[s.forces[s.player].ruler].city;
 
   // ---------- 画面全体 ----------
   function render() {
@@ -328,7 +365,7 @@
   function showOfficers() {
     const list = SG.membersOf(s, s.player).sort((a, b) => (a.city > b.city ? 1 : a.city < b.city ? -1 : 0));
     modal(`<h2>武将一覧（${list.length}人）</h2>${statsTable(list, { pick: true, showActed: true, extraHead: '都市', extra: o => esc(o.city) + (o.acted ? '・済' : '') })}<div class="actions"><button data-close>閉じる</button></div>`, box => {
-      for (const tr of box.querySelectorAll('tr.pick')) tr.addEventListener('click', () => { sel = s.officers[tr.dataset.id].city; closeModal(); });
+      for (const tr of box.querySelectorAll('tr.pick')) tr.addEventListener('click', () => { sel = s.officers[tr.dataset.id].city; closeModal(); focusCity(sel); });
     });
   }
   function showLog() { modal(`<h2>記録</h2><div class="report">${s.log.slice().reverse().map(l => `<div class="l-${l.kind}">${esc(l.date)} ${esc(l.text)}</div>`).join('')}</div><div class="actions"><button data-close>閉じる</button></div>`); }
@@ -356,6 +393,7 @@
       for (const card of box.querySelectorAll('.force-card')) card.addEventListener('click', () => {
         s = SG.newGame(sc.id, card.dataset.f);
         sel = s.officers[card.dataset.f].city;
+        focusCity(sel, A.view.startZoom);
         save(); $('modal').hidden = true; render();
       });
     });
@@ -369,6 +407,13 @@
 
   function init() {
     drawMap();
+    view = SG.mapView($('map'), { ...A.view, size: SG.data.geo.size, onChange: onView });
+    drawMinimap();
+    view.apply();
+    $('zoom-in').addEventListener('click', () => view.zoomBy(1.4));
+    $('zoom-out').addEventListener('click', () => view.zoomBy(1 / 1.4));
+    $('zoom-all').addEventListener('click', () => view.centerOn(SG.data.geo.size / 2, SG.data.geo.size / 2, 1));
+    $('zoom-home').addEventListener('click', () => s && focusCity(capitalOf()));
     $('btn-end').addEventListener('click', endTurn);
     for (const [id, ic] of [['btn-forces', 'cmd/forces'], ['btn-officers', 'cmd/officers']]) $(id).insertAdjacentHTML('afterbegin', icon(ic));
     $('btn-forces').addEventListener('click', () => s && showForces());
@@ -378,7 +423,7 @@
     $('btn-captives').addEventListener('click', () => s && s.captives.length && showCaptives());
     $('modal').addEventListener('click', e => { if (e.target === $('modal') && s) closeModal(); });
     const saved = load();
-    if (saved && saved.version === 1 && saved.forces[saved.player]) { s = saved; sel = s.officers[s.forces[s.player].ruler].city; render(); if (s.captives.length) showCaptives(); }
+    if (saved && saved.version === 1 && saved.forces[saved.player]) { s = saved; sel = capitalOf(); render(); focusCity(sel, A.view.startZoom); if (s.captives.length) showCaptives(); }
     else startScreen();
   }
   SG.ui = { get state() { return s; }, render, endTurn, startScreen };
