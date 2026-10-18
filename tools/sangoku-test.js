@@ -90,9 +90,9 @@ for (let seed = 1; seed <= 12; seed++) {
   const t = SG.newGame('s194', '曹操', 3);
   SG.exec(t, 'attack', { city: '陳留', to: '河内', mode: 'tactics', units: [{ officer: '夏侯惇', troops: 6000, type: 'horse' }, { officer: '郭嘉', troops: 3000, type: 'bow' }, { officer: '于禁', troops: 5000, type: 'foot' }] });
   const T = t.battle, [h, b, f] = T.B.atk;
-  assert.deepStrictEqual([h.type, b.type, f.type], ['horse', 'bow', 'foot']);
+  assert.strictEqual([h.type, b.type, f.type].join(), 'horse,bow,foot');
   assert.ok(SG.tactics.moveOf(t, h) === SG.tactics.moveOf(t, f) + 2, '騎兵は移動+2');
-  assert.deepStrictEqual(SG.tactics.targets(t, T, h, 'bow'), [], '騎兵は弓を撃てない');
+  assert.strictEqual(SG.tactics.targets(t, T, h, 'bow').length, 0, '騎兵は弓を撃てない');
   assert.ok(T.B.def.every(u => SG.data.tactics.types[u.type]), '守り手にも兵種がつく');
   SG.tactics.auto(t, T); SG.tactics.finish(t, T);
 }
