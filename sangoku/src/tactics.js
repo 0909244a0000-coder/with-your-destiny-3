@@ -169,20 +169,26 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     const t = terr(T, u.pos);
     return t.def * (t.wall && u.side === 'def' ? 1 + s.cities[T.B.to].def / D().wallDefPer : 1);
   }
-  function hurt(s, T, u, loss, why) {
-    loss = Math.max(1, Math.round(loss));
+  // 損害を与える。画面の演出のため、何が起きたかを T.fx に残す
+  function hurt(s, T, u, loss, why, kind) {
+    loss = Math.max(1, Math.round(Math.min(loss, u.troops)));
+    const pos = u.pos;
     u.troops -= loss;
-    if (u.troops <= 0) { SG.routUnit(s, T.B, u, why); delete u.pos; }
+    const f = { type: kind || 'hit', id: uid(u), pos, loss };
+    if (u.troops <= 0) { SG.routUnit(s, T.B, u, why); delete u.pos; f.routed = true; f.captured = !!u.captured; }
+    if (T.fx) T.fx.push(f);
     return loss;
   }
   function act(s, T, id, kind, target) {
     const u = byUid(T, id), e = canAct(T, u); if (e) return ng(e);
     const d = D(), r = (a, b) => SG.range(s, a, b);
+    const fx = T.fx = [], fromPos = u.pos;
     if (kind === 'wait') { u.acted = true; u.moved = true; T.undo = null; return ok(`${nameOf(u)}隊は待機`); }
     if (kind === 'gate') {
       if (!targets(s, T, u, 'gate').includes(target)) return ng('城門が隣にない');
       const dmg = Math.round(strength(s, T, u) * d.attackK * d.gate.k * r(0.85, 1.15));
       T.gates[target] -= dmg;
+      fx.push({ type: 'gate', pos: target, loss: dmg, broken: T.gates[target] <= 0 });
       if (T.gates[target] <= 0) { T.tiles[target] = 'broken'; delete T.gates[target]; say(T, `${nameOf(u)}隊が城門を打ち破った！`); }
       else say(T, `${nameOf(u)}隊が城門を攻撃（-${dmg}、残り${Math.round(T.gates[target])}）`);
     } else {
@@ -191,29 +197,31 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       if (kind === 'attack') {
         const dmg = hurt(s, T, t, strength(s, T, u) * d.attackK * terr(T, u.pos).atk * r(0.85, 1.15) / guard(s, T, t));
         let msg = `${nameOf(u)}隊が${nameOf(t)}隊を攻撃 -${dmg}`;
-        if (t.troops > 0) msg += `／反撃 -${hurt(s, T, u, strength(s, T, t) * d.attackK * d.counter * r(0.85, 1.15) / guard(s, T, u))}`;
+        if (t.troops > 0) msg += `／反撃 -${hurt(s, T, u, strength(s, T, t) * d.attackK * d.counter * r(0.85, 1.15) / guard(s, T, u), null, 'counter')}`;
         say(T, msg);
       } else if (kind === 'bow') {
         say(T, `${nameOf(u)}隊の弓 → ${nameOf(t)}隊 -${hurt(s, T, t, strength(s, T, u) * d.attackK * d.bow.k * r(0.85, 1.15) / guard(s, T, t))}`);
       } else if (kind === 'fire') {
         const a = officer(s, u), b = officer(s, t), wit = b ? b.int : 30;
         const p = fireChance(s, T, u, t);
-        if (SG.rand(s) < p) say(T, `${a.id}の火計！ ${nameOf(t)}隊 -${hurt(s, T, t, t.troops * r(d.fire.loss[0], d.fire.loss[1]), '火に包まれ壊滅')}`);
-        else say(T, `${a.id}の火計は${b ? b.id : '守備兵'}に見破られた（知力${a.int}対${wit}）`);
+        if (SG.rand(s) < p) say(T, `${a.id}の火計！ ${nameOf(t)}隊 -${hurt(s, T, t, t.troops * r(d.fire.loss[0], d.fire.loss[1]), '火に包まれ壊滅', 'fire')}`);
+        else fx.push({ type: 'miss', id: uid(t), pos: t.pos }), say(T, `${a.id}の火計は${b ? b.id : '守備兵'}に見破られた（知力${a.int}対${wit}）`);
       } else if (kind === 'duel') {
         const a = officer(s, u), b = officer(s, t);
-        if (b.war < a.war && SG.rand(s) < d.duelRefuse) say(T, `${a.id}が一騎打ちを挑んだが、${b.id}は応じなかった。`);
+        if (b.war < a.war && SG.rand(s) < d.duelRefuse) fx.push({ type: 'refuse', id: uid(t), pos: t.pos }), say(T, `${a.id}が一騎打ちを挑んだが、${b.id}は応じなかった。`);
         else {
           const res = SG.duel(s, a, b);
           say(T, `一騎打ち！ ${a.id}（武力${a.war}） 対 ${b.id}（武力${b.war}）`);
           T.B.lines.push(...res.lines);
+          fx.push({ type: 'duel', a: fromPos, b: t.pos, winner: res.winner ? res.winner.id : null });
           if (res.winner) hurt(s, T, res.winner === a ? t : u, 1e9, '一騎打ちに敗れて総崩れ');
         }
       } else return ng('命令がちがう');
     }
     if (u.troops > 0) { u.acted = true; u.moved = true; }
     T.undo = null;
-    T.lastAct = { kind, target };
+    T.lastAct = { kind, target, from: fromPos, fx };
+    T.fx = null;
     check(s, T);
     return ok('');
   }

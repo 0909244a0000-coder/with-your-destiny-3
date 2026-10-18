@@ -153,6 +153,27 @@ th .ico { width: 15px; height: 15px; margin-right: 1px; }
 @keyframes hit { 0% { stroke: #fff; stroke-width: 10; } 100% { stroke: #b0191e; stroke-width: 6; } }
 .b-play { display: grid; grid-template-columns: repeat(3, 1fr); }
 .b-play button { white-space: nowrap; border-width: 3px 9px; border-image-width: 3px 9px; padding: 3px 0; font-size: 14px; }
+/* マス戦闘の演出 */
+#b-fx { position: absolute; inset: 8px; width: calc(100% - 16px); height: calc(100% - 16px); pointer-events: none; overflow: visible; }
+.fx-num { font-size: 22px; font-weight: bold; text-anchor: middle; paint-order: stroke; stroke: #000; stroke-width: 4px; animation-name: fx-float; animation-timing-function: ease-out; animation-fill-mode: forwards; }
+.fx-num.dmg { fill: #ff5a46; }
+.fx-num.ctr { fill: #ffb347; font-size: 16px; }
+@keyframes fx-float { 0% { transform: translateY(6px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-34px); opacity: 0; } }
+.fx-burst { fill: none; stroke-width: 6; transform-box: fill-box; transform-origin: center; animation-name: fx-burst; animation-timing-function: ease-out; animation-fill-mode: forwards; }
+.fx-burst.white { stroke: #fff; }
+.fx-burst.fire { stroke: #ff8a2a; fill: rgba(255, 120, 30, .35); }
+@keyframes fx-burst { 0% { transform: scale(.4); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+.fx-pic { transform-box: fill-box; transform-origin: center; animation-name: fx-pop; animation-fill-mode: forwards; }
+@keyframes fx-pop { 0% { transform: scale(.3); opacity: 0; } 20% { transform: scale(1.15); opacity: 1; } 75% { transform: scale(1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+.fx-words { font-size: 18px; font-weight: bold; text-anchor: middle; fill: #fff6df; paint-order: stroke; stroke: #000; stroke-width: 4px; animation-name: fx-pop; animation-fill-mode: forwards; transform-box: fill-box; transform-origin: center; }
+.fx-words.gray { fill: #c9c2b2; font-size: 15px; }
+.fx-words.gold { fill: #ffd36a; font-size: 22px; }
+.fx-words.red { fill: #ff7a6a; }
+.fx-words.big { fill: #ffd36a; font-size: 34px; }
+.fx-words.day { fill: #fff6df; font-size: 64px; stroke-width: 6px; }
+.fx-words.phase { fill: #e8dcc0; font-size: 40px; stroke-width: 5px; }
+.fx-arrow { stroke: #f5e6c0; stroke-width: 3; stroke-linecap: round; animation: fx-shoot ease-in forwards; }
+@keyframes fx-shoot { to { stroke-dashoffset: 0; } }
 @media (max-width: 900px) {
   main { flex-direction: column; }
   #map-wrap { flex: none; height: 55vh; }

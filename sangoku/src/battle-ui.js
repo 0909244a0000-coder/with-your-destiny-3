@@ -24,10 +24,11 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     root = document.getElementById('battle');
     root.hidden = false;
     stop();
-    root.innerHTML = `<div id="b-top"></div><div id="b-main"><div id="b-field"><svg id="b-svg"></svg><div id="b-banner" hidden></div></div><aside id="b-side"></aside></div>`;
+    root.innerHTML = `<div id="b-top"></div><div id="b-main"><div id="b-field"><svg id="b-svg"></svg><svg id="b-fx"></svg><div id="b-banner" hidden></div></div><aside id="b-side"></aside></div>`;
     const svg = document.getElementById('b-svg');
     const w = W * (T.cols + 0.5) + 4, h = R * 1.5 * (T.rows - 1) + R * 2 + 4;
     svg.setAttribute('viewBox', `-2 -2 ${w} ${h}`);
+    document.getElementById('b-fx').setAttribute('viewBox', `-2 -2 ${w} ${h}`);
     svg.addEventListener('click', e => { const g = e.target.closest('[data-i]'); if (g) clickHex(+g.dataset.i); });
     if (!T.started && T.playerSide === 'def') return intro();
     draw();
@@ -42,13 +43,63 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     const P = SG.data.tactics.play;
     const r = SG.tactics.stepAI(s, T);
     if (!r) { stop(); last = null; opt.save(); draw(); return; }
-    if (r.phaseEnd) { last = null; opt.save(); draw(); timer = setTimeout(tick, P.phaseMs / speed); return; }
+    if (r.phaseEnd) { last = null; opt.save(); draw(); dayBanner(); timer = setTimeout(tick, P.phaseMs / speed); return; }
     last = r;
     draw();
     animate(r);
+    if (r.act) setTimeout(() => effects(r.act), r.from !== r.to ? P.slideMs / speed : 0);
     const long = r.lines.some(l => /一騎打ち|合目/.test(l));
     timer = setTimeout(tick, (long ? P.duelMs : r.act ? P.actMs : P.moveMs) / speed);
   }
+  // ---------- 演出（数字・火・矢・一騎打ち・敗走） ----------
+  // 戦場の上に重ねた #b-fx に描き、決まった時間で消す。draw() で描き直しても消えない
+  function fxEl(tag, attrs, text, ms) {
+    const layer = document.getElementById('b-fx'); if (!layer) return null;
+    const e = el(tag, attrs, layer, text);
+    const dur = ms / Math.sqrt(speed);
+    e.style.animationDuration = dur + 'ms';
+    setTimeout(() => e.remove(), dur);
+    return e;
+  }
+  const A = () => SG.data.art;
+  function num(pos, text, cls, dy) { if (pos === undefined) return; const [x, y] = center(pos); fxEl('text', { x, y: y - 20 + (dy || 0), class: 'fx-num ' + cls }, text, 1300); }
+  function burst(pos, cls) { if (pos === undefined) return; const [x, y] = center(pos); fxEl('circle', { cx: x, cy: y - 5, r: 24, class: 'fx-burst ' + cls }, undefined, 600); }
+  function pic(pos, path, size, ms) { if (pos === undefined) return; const [x, y] = Array.isArray(pos) ? pos : center(pos); const [d, n] = path.split('/'); fxEl('image', { href: A()[d] + n + '.webp', x: x - size / 2, y: y - size / 2 - 5, width: size, height: size, class: 'fx-pic' }, undefined, ms || 1100); }
+  function words(pos, text, cls, ms) { const [x, y] = Array.isArray(pos) ? pos : center(pos); fxEl('text', { x, y, class: 'fx-words ' + (cls || '') }, text, ms || 1400); }
+  function arrow(from, to) {
+    if (from === undefined || to === undefined) return;
+    const [x1, y1] = center(from), [x2, y2] = center(to);
+    const e = fxEl('line', { x1, y1: y1 - 8, x2, y2: y2 - 8, class: 'fx-arrow' }, undefined, 500);
+    if (e) e.style.strokeDasharray = e.style.strokeDashoffset = Math.hypot(x2 - x1, y2 - y1);
+  }
+  function effects(a) {
+    if (!a || !a.fx) return;
+    const late = (f, ms) => setTimeout(f, ms / Math.sqrt(speed));
+    for (const f of a.fx) {
+      if (f.type === 'hit') {
+        if (a.kind === 'bow') { arrow(a.from, f.pos); late(() => { burst(f.pos, 'white'); num(f.pos, '-' + f.loss, 'dmg'); }, 300); }
+        else { burst(f.pos, 'white'); num(f.pos, '-' + f.loss, 'dmg'); }
+      } else if (f.type === 'counter') late(() => num(f.pos, '反撃 -' + f.loss, 'ctr', 14), 250);
+      else if (f.type === 'fire') { pic(f.pos, 'event/fire', 64); burst(f.pos, 'fire'); num(f.pos, '-' + f.loss, 'dmg'); }
+      else if (f.type === 'miss') { pic(f.pos, 'event/fire', 40, 500); words(f.pos, '見破られた', 'gray'); }
+      else if (f.type === 'refuse') words(f.pos, '応じず', 'gray');
+      else if (f.type === 'duel') {
+        const [x1, y1] = center(f.a), [x2, y2] = center(f.b), mid = [(x1 + x2) / 2, (y1 + y2) / 2];
+        pic(mid, 'event/duel', 90, 1800);
+        late(() => words([mid[0], mid[1] + 50], f.winner ? `${f.winner}の勝ち！` : '勝負つかず', 'gold', 1500), 900);
+      } else if (f.type === 'gate') {
+        burst(f.pos, 'fire'); num(f.pos, '-' + f.loss, 'dmg');
+        if (f.broken) { pic(f.pos, 'event/fall', 80, 1600); words(f.pos, '城門突破！', 'big'); }
+      }
+      if (f.routed) late(() => { pic(f.pos, f.captured ? 'event/capture' : 'event/rout', 56, 1400); words([center(f.pos)[0], center(f.pos)[1] + 34], f.captured ? '捕縛' : '敗走', 'red'); }, 450);
+    }
+  }
+  function dayBanner() {
+    if (T.over) return;
+    const svg = document.getElementById('b-fx'), vb = svg.viewBox.baseVal;
+    words([vb.x + vb.width / 2, vb.y + vb.height / 2], T.phase === 'atk' ? `${T.day}日目` : '守り手の番', T.phase === 'atk' ? 'day' : 'phase', 1000);
+  }
+
   // 結果まで（指揮していればプレイヤーの番まで）一気に進める
   function skip() { stop(); SG.tactics.advance(s, T); last = null; opt.save(); draw(); }
   // 動いた駒を、元のマスからすべらせる
@@ -84,7 +135,8 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       if (target !== null && target !== undefined) r = SG.tactics.act(s, T, sel, mode, target);
     } else if (at && !mine(at) && SG.tactics.targets(s, T, u, 'attack').includes(SG.tactics.uid(at))) r = SG.tactics.act(s, T, sel, 'attack', SG.tactics.uid(at));
     else if (!at && !u.moved) r = SG.tactics.move(s, T, sel, i);
-    if (r) { if (!r.ok) flash(r.msg); else afterAct(); }
+    // act は msg が空で返る（move は「〜が移動」）。行動のときだけ演出を出す
+    if (r) { if (!r.ok) flash(r.msg); else { const acted = r.msg === ''; afterAct(); if (acted) effects(T.lastAct); } }
   }
   function afterAct() {
     const u = selected();
