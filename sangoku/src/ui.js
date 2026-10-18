@@ -3,8 +3,9 @@
   const $ = id => document.getElementById(id);
   const NS = 'http://www.w3.org/2000/svg';
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const px = lon => (lon - 98) * 38;
-  const py = lat => (42.8 - lat) * 38;
+  const G = SG.data.geo, K = G.size / G.bounds.span;
+  const px = lon => (lon - G.bounds.lon0) * K;
+  const py = lat => (G.bounds.lat1 - lat) * K;
   const man = n => n >= 10000 ? (n / 10000).toFixed(1) + '万' : String(n);
   const STAT = { lead: '統率', war: '武力', int: '知力', pol: '政治', cha: '魅力' };
   let s = null, sel = null, targets = [];
@@ -18,9 +19,14 @@
   function drawMap() {
     const svg = $('map'); svg.innerHTML = '';
     const g = SG.data.geo;
+    svg.setAttribute('viewBox', `0 0 ${g.size} ${g.size}`);
+    el('rect', { class: 'sea', width: g.size, height: g.size }, svg);
     el('polygon', { class: 'land', points: g.coast.map(([a, b]) => px(a) + ',' + py(b)).join(' ') }, svg);
+    for (const pts of Object.values(g.rivers)) el('polyline', { class: 'river', points: pts.map(([a, b]) => px(a) + ',' + py(b)).join(' ') }, svg);
+    // 描いた地図の絵（読み込めなければ、下の図形の地図のまま）
+    const img = el('image', { href: g.image, width: g.size, height: g.size, preserveAspectRatio: 'none' }, svg);
+    img.addEventListener('error', () => img.remove());
     for (const [name, pts] of Object.entries(g.rivers)) {
-      el('polyline', { class: 'river', points: pts.map(([a, b]) => px(a) + ',' + py(b)).join(' ') }, svg);
       const m = pts[Math.floor(pts.length * 0.3)];
       const t = el('text', { class: 'rname', x: px(m[0]), y: py(m[1]) - 8 }, svg); t.textContent = name;
     }

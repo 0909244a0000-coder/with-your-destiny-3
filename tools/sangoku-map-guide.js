@@ -1,6 +1,6 @@
 // 天下三分：地図の絵を頼むときの下絵（海岸線・川・都市の位置）を作る
 // 使い方：node tools/sangoku-map-guide.js  → sangoku/docs/map-guide.png（2048×2048）
-// 範囲は 経度98〜125度・緯度16.3〜43.3度 の正方形（sangoku/docs/ART-REQUEST.md の M1 と同じ）
+// 範囲は data/cities.js の geo.bounds（経度98〜125度・緯度16.3〜43.3度 の正方形。ART-REQUEST.md の M1 と同じ）
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
@@ -9,11 +9,12 @@ const root = path.resolve(__dirname, '../sangoku');
 const ctx = {}; vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(root, 'data/cities.js'), 'utf8'), ctx);
 const { cities, geo } = ctx.SG.data;
-const S = 2048, LON0 = 98, LAT1 = 43.3, K = S / 27;
+const { lon0: LON0, lat1: LAT1, span } = geo.bounds;
+const S = 2048, K = S / span;
 const X = lon => ((lon - LON0) * K).toFixed(1), Y = lat => ((LAT1 - lat) * K).toFixed(1);
 const pts = a => a.map(([lo, la]) => X(lo) + ',' + Y(la)).join(' ');
 // 下絵では海岸線を画面の端まで伸ばす（上と左は陸）
-const coast = [[LON0, LAT1], [124.8, LAT1], ...geo.coast.slice(1, -1), [105, 16.3], [LON0, 16.3]];
+const coast = [[LON0, LAT1], [124.8, LAT1], ...geo.coast.slice(1, -1), [105, LAT1 - span], [LON0, LAT1 - span]];
 let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
 <rect width="${S}" height="${S}" fill="#9cc3dd"/><polygon points="${pts(coast)}" fill="#efe6cf" stroke="#555" stroke-width="3"/>`;
 for (const [name, r] of Object.entries(geo.rivers)) svg += `<polyline points="${pts(r)}" fill="none" stroke="#2f78c4" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><text x="${X(r[2][0])}" y="${+Y(r[2][1]) - 18}" font-size="36" fill="#2f78c4">${name}</text>`;

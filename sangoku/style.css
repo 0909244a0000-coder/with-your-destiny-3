@@ -1,6 +1,6 @@
 :root {
   --bg: #11151f; --panel: #1b2130; --panel2: #232b3d; --line: #6b5a32; --gold: #d9b45a; --text: #ece4d0; --dim: #a39a86;
-  --sea: #1d3550; --land: #4b5a3a; --land2: #5d6b45; --river: #5f97c7; --road: rgba(236, 228, 208, .25);
+  --sea: #1d3550; --land: #4b5a3a; --land2: #5d6b45; --river: #5f97c7; --road: rgba(40, 26, 10, .55);
   --good: #7fd18b; --bad: #ef7d6d; --war: #f0b35a;
   font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
 }
@@ -18,11 +18,12 @@ button.primary { background: #6b2a1f; border-color: var(--gold); font-weight: bo
 .spacer { flex: 1; }
 .chip { display: inline-block; width: 12px; height: 12px; border-radius: 2px; border: 1px solid #000; vertical-align: middle; }
 main { flex: 1; display: flex; min-height: 0; }
-#map-wrap { flex: 1; min-width: 0; background: var(--sea); }
+#map-wrap { flex: 1; min-width: 0; background: #1f3a5c; }
 #map { width: 100%; height: 100%; display: block; }
+#map .sea { fill: var(--sea); }
 #map .land { fill: var(--land); stroke: #2b331f; stroke-width: 2; }
 #map .river { fill: none; stroke: var(--river); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
-#map .road { stroke: var(--road); stroke-width: 2; stroke-dasharray: 4 4; }
+#map .road { stroke: var(--road); stroke-width: 2.5; stroke-dasharray: 5 4; }
 #map .road.hot { stroke: var(--gold); stroke-width: 3; stroke-dasharray: none; }
 #map .city { cursor: pointer; }
 #map .city rect { stroke: #000; stroke-width: 2; }
@@ -31,10 +32,10 @@ main { flex: 1; display: flex; min-height: 0; }
 #map .city text { font-size: 15px; fill: #fff; paint-order: stroke; stroke: #000; stroke-width: 3px; text-anchor: middle; pointer-events: none; }
 #map .city text.small { font-size: 11px; fill: #d8d0bc; }
 #map .capital { fill: var(--gold); stroke: #000; stroke-width: 1; pointer-events: none; }
-#map .rname { font-size: 14px; fill: #9fc4e6; opacity: .8; font-style: italic; }
-#side { width: 400px; display: flex; flex-direction: column; background: var(--panel); border-left: 2px solid var(--line); min-height: 0; }
+#map .rname { font-size: 15px; fill: #d8ecff; paint-order: stroke; stroke: #1d3550; stroke-width: 3px; opacity: .85; pointer-events: none; }
+#side { width: 400px; display: flex; flex-direction: column; background: var(--panel) url(assets/ui/silk.webp); border-left: 2px solid var(--line); min-height: 0; }
 #city { flex: 1; overflow: auto; padding: 10px 12px; }
-#log { height: 170px; overflow: auto; border-top: 2px solid var(--line); padding: 6px 10px; font-size: 13px; background: #141925; }
+#log { height: 170px; overflow: auto; border-top: 2px solid var(--line); padding: 6px 10px; font-size: 13px; background: rgba(10, 13, 20, .75); }
 #log div { padding: 1px 0; }
 .l-war { color: var(--war); } .l-bad { color: var(--bad); } .l-good { color: var(--good); }
 h2 { margin: 0 0 6px; font-size: 22px; color: var(--gold); display: flex; align-items: center; gap: 8px; }
@@ -46,7 +47,7 @@ h3 { margin: 12px 0 4px; font-size: 15px; color: var(--gold); border-bottom: 1px
 .cmds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .cmds .group { grid-column: 1 / -1; font-size: 12px; color: var(--dim); margin-top: 4px; }
 table { border-collapse: collapse; width: 100%; font-size: 13px; }
-th { color: var(--dim); font-weight: normal; text-align: right; padding: 2px 4px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+th { color: var(--dim); font-weight: normal; text-align: right; padding: 2px 4px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: #161b27; }
 td { text-align: right; padding: 2px 4px; border-bottom: 1px solid #2c3446; }
 th:first-child, td:first-child { text-align: left; }
 tr.done td { color: var(--dim); }
@@ -57,7 +58,7 @@ td.hi { color: var(--gold); font-weight: bold; }
 .toggle { font-size: 13px; display: flex; align-items: center; gap: 4px; margin-top: 6px; }
 #modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .65); display: flex; align-items: center; justify-content: center; z-index: 10; }
 #modal[hidden] { display: none; }
-#modal-box { background: var(--panel); border: 2px solid var(--gold); border-radius: 6px; padding: 16px 18px; width: min(720px, 94vw); max-height: 90vh; overflow: auto; box-shadow: 0 10px 40px #000; }
+#modal-box { background: var(--panel) url(assets/ui/silk.webp); border: 2px solid var(--gold); border-radius: 6px; padding: 16px 18px; width: min(720px, 94vw); max-height: 90vh; overflow: auto; box-shadow: 0 10px 40px #000; }
 #modal-box h2 { font-size: 20px; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
 .row label { color: var(--dim); font-size: 14px; }

@@ -21,6 +21,9 @@ for (const [a, b] of SG.data.roads) assert.ok(cityIds.has(a) && cityIds.has(b), 
 const seen = new Set([SG.data.cities[0].id]), todo = [SG.data.cities[0].id];
 while (todo.length) for (const n of SG.adj(todo.pop())) if (!seen.has(n)) { seen.add(n); todo.push(n); }
 assert.strictEqual(seen.size, cityIds.size, 'つながっていない都市がある');
+const { bounds, image } = SG.data.geo;
+assert.ok(fs.existsSync(path.join(root, image)), '地図の絵がない');
+for (const c of SG.data.cities) assert.ok(c.lon > bounds.lon0 && c.lon < bounds.lon0 + bounds.span && c.lat < bounds.lat1 && c.lat > bounds.lat1 - bounds.span, `${c.id} が地図の外`);
 for (const o of SG.data.officers) for (const k of ['lead', 'war', 'int', 'pol', 'cha']) assert.ok(o[k] >= 1 && o[k] <= 100, `${o.id} の ${k}`);
 
 // 命令
