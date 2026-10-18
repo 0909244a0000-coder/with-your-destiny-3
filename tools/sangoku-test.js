@@ -28,6 +28,7 @@ const art = SG.data.art;
 for (const f of [...Object.values(art.castle), art.flag, art.capital]) assert.ok(fs.existsSync(path.join(root, f)), `絵がない: ${f}`);
 for (const id of ['agri', 'comm', 'def', 'order', 'recruit', 'train', 'attack', 'move', 'search', 'employ', 'reward', 'trade', 'delegate', 'captives', 'forces', 'officers']) assert.ok(fs.existsSync(path.join(root, art.cmd + id + '.webp')), `命令の絵がない: ${id}`);
 for (const n of art.faces) { assert.ok(SG.data.officers.some(o => o.id === n), `顔の武将がいない: ${n}`); assert.ok(fs.existsSync(path.join(root, art.face + n + '.webp')), `顔の絵がない: ${n}`); }
+if (art.mobFaces) for (const type of ['war', 'int', 'pol']) for (let k = 0; k < 4; k++) assert.ok(fs.existsSync(path.join(root, `${art.face}mob_${type}_${k}.webp`)), `モブの顔がない: ${type}${k}`);
 for (const id of [...art.battleTiles, 'unit_foot', 'unit_horse', 'unit_bow', 'unit_general']) assert.ok(fs.existsSync(path.join(root, art.battle + id + '.webp')), `戦場の絵がない: ${id}`);
 for (const [, p] of art.logIcons) { const [d, n] = p.split('/'); assert.ok(fs.existsSync(path.join(root, art[d] + n + '.webp')), `記録の絵がない: ${p}`); }
 for (const o of SG.data.officers) for (const k of ['lead', 'war', 'int', 'pol', 'cha']) assert.ok(o[k] >= 1 && o[k] <= 100, `${o.id} の ${k}`);
