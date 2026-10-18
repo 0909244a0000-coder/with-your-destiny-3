@@ -28,6 +28,8 @@ SG.data.tactics = {
   // 戦場を作る：山の多い州、森・山の多さ（[ふつう, 山の多い州]）、川のそばの都市には川（経度・緯度の度数で、この近さまで）
   hilly: ['益州', '涼州', '并州'],
   forestRate: [0.12, 0.16], mountainRate: [0.05, 0.13], riverDist: 0.6,
+  // AI の手を見せる速さ：1手の間（ミリ秒）。speeds は「ゆっくり・ふつう・速い」の倍率
+  play: { moveMs: 450, actMs: 800, duelMs: 2200, phaseMs: 300, slideMs: 350, speeds: [0.5, 1, 3] },
   // AI
   ai: { duelGap: 15, duelChance: 0.3, fireInt: 70, fireChance: 0.5, engage: 5 },
 };

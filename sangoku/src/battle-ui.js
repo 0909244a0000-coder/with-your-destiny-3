@@ -6,6 +6,8 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   const R = 32, W = Math.sqrt(3) * R;
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   let s, T, opt, sel = null, mode = 'move', root;
+  // AI の手を1つずつ見せる：playing＝再生中、last＝いま見せている手、speed＝速さ（data/tactics.js の play）
+  let playing = false, timer = null, last = null, speed = SG.data.tactics.play.speeds[1];
 
   const center = i => { const c = SG.tactics.colOf(T, i), r = SG.tactics.rowOf(T, i); return [W * (c + 0.5 * (r & 1)) + W / 2, R * 1.5 * r + R]; };
   const hexPts = ([x, y]) => [0, 1, 2, 3, 4, 5].map(k => { const a = Math.PI / 180 * (60 * k - 30); return `${(x + R * Math.cos(a)).toFixed(1)},${(y + R * Math.sin(a)).toFixed(1)}`; }).join(' ');
@@ -21,14 +23,43 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     s = state; T = s.battle; opt = options; sel = null; mode = 'move';
     root = document.getElementById('battle');
     root.hidden = false;
-    root.innerHTML = `<div id="b-top"></div><div id="b-main"><div id="b-field"><svg id="b-svg"></svg></div><aside id="b-side"></aside></div>`;
+    stop();
+    root.innerHTML = `<div id="b-top"></div><div id="b-main"><div id="b-field"><svg id="b-svg"></svg><div id="b-banner" hidden></div></div><aside id="b-side"></aside></div>`;
     const svg = document.getElementById('b-svg');
     const w = W * (T.cols + 0.5) + 4, h = R * 1.5 * (T.rows - 1) + R * 2 + 4;
     svg.setAttribute('viewBox', `-2 -2 ${w} ${h}`);
     svg.addEventListener('click', e => { const g = e.target.closest('[data-i]'); if (g) clickHex(+g.dataset.i); });
     if (!T.started && T.playerSide === 'def') return intro();
-    if (!T.started) SG.tactics.advance(s, T);
     draw();
+    play();
+  }
+
+  // ---------- 1手ずつ再生 ----------
+  function play() { if (playing || T.over) return; playing = true; tick(); }
+  function stop() { playing = false; clearTimeout(timer); timer = null; }
+  function tick() {
+    if (!playing || !s.battle) return;
+    const P = SG.data.tactics.play;
+    const r = SG.tactics.stepAI(s, T);
+    if (!r) { stop(); last = null; opt.save(); draw(); return; }
+    if (r.phaseEnd) { last = null; opt.save(); draw(); timer = setTimeout(tick, P.phaseMs / speed); return; }
+    last = r;
+    draw();
+    animate(r);
+    const long = r.lines.some(l => /一騎打ち|合目/.test(l));
+    timer = setTimeout(tick, (long ? P.duelMs : r.act ? P.actMs : P.moveMs) / speed);
+  }
+  // 結果まで（指揮していればプレイヤーの番まで）一気に進める
+  function skip() { stop(); SG.tactics.advance(s, T); last = null; opt.save(); draw(); }
+  // 動いた駒を、元のマスからすべらせる
+  function animate(r) {
+    if (r.from === r.to || r.to === undefined) return;
+    const g = document.querySelector(`#b-svg .unit[data-u="${r.id}"]`); if (!g) return;
+    const [fx, fy] = center(r.from), [tx, ty] = center(r.to);
+    g.style.transition = 'none';
+    g.style.transform = `translate(${fx - tx}px,${fy - ty}px)`;
+    g.getBoundingClientRect();
+    requestAnimationFrame(() => { g.style.transition = `transform ${SG.data.tactics.play.slideMs / speed}ms ease-out`; g.style.transform = 'translate(0px,0px)'; });
   }
 
   // 攻められたとき：迎え撃つか、まかせるか
@@ -38,8 +69,8 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     document.getElementById('b-side').innerHTML = `<h2>敵襲！</h2><p>${esc(SG.forceName(s, B.atkForce))}が${esc(B.to)}へ攻めてきた。</p>
       <p class="sub">攻め手：${B.atk.map(u => esc(SG.tactics.nameOf(u))).join('・')}（兵${sum('atk')}）<br>守り手：${B.def.map(u => esc(SG.tactics.nameOf(u))).join('・') || 'なし'}（兵${sum('def')}）</p>
       <div class="b-acts"><button id="b-go" class="primary">迎撃する（指揮）</button><button id="b-auto">委任（自動で戦う）</button></div>`;
-    document.getElementById('b-go').onclick = () => { SG.tactics.advance(s, T); opt.save(); draw(); };
-    document.getElementById('b-auto').onclick = () => { SG.tactics.auto(s, T); opt.save(); draw(); };
+    document.getElementById('b-go').onclick = () => { draw(); play(); };
+    document.getElementById('b-auto').onclick = () => { SG.tactics.delegate(T); draw(); play(); };
   }
 
   function clickHex(i) {
@@ -86,9 +117,17 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       if (reach.has(i) && i !== u.pos) el('polygon', { points: hexPts(c), class: 'reach' }, g);
       if (mode === 'gate' && tg.has(String(i))) el('polygon', { points: hexPts(c), class: 'aim' }, g);
     }
+    // いま見せている手：動いた道筋と、狙った城門
+    if (last) {
+      if (last.to !== undefined && last.from !== last.to) { const [fx, fy] = center(last.from), [tx, ty] = center(last.to); el('line', { x1: fx, y1: fy, x2: tx, y2: ty, class: 'trail' }, svg); }
+      if (last.act && typeof last.act.target === 'number') el('polygon', { points: hexPts(center(last.act.target)), class: 'gatehit' }, svg);
+    }
+    const banner = document.getElementById('b-banner');
+    if (banner) { banner.hidden = !last || !last.lines.length; if (last) banner.innerHTML = last.lines.slice(-4).map(l => `<div>${esc(l.replace(/^\d+日目：/, ''))}</div>`).join(''); }
     for (const x of SG.tactics.alive(T)) {
       const c = center(x.pos), id = SG.tactics.uid(x);
-      const g = el('g', { 'data-i': x.pos, class: 'unit ' + (T.playerSide && x.side !== T.playerSide ? 'foe' : 'ally') + (x.acted && x.side === T.phase ? ' done' : '') + (id === sel ? ' sel' : '') + (tg.has(id) ? ' aim' : '') }, svg);
+      const side0 = T.playerSide || T.mySide;
+      const g = el('g', { 'data-i': x.pos, 'data-u': id, class: 'unit ' + (side0 && x.side !== side0 ? 'foe' : 'ally') + (last && last.id === id ? ' acting' : '') + (last && last.act && last.act.target === id ? ' hit' : '') + (x.acted && x.side === T.phase ? ' done' : '') + (id === sel ? ' sel' : '') + (tg.has(id) ? ' aim' : '') }, svg);
       // 駒：勢力の色の円に兵の絵（総大将・弓・騎兵・歩兵は武将の能力で見た目だけ変える）、下に名前の札と兵の棒
       const cy = c[1] - 5;
       el('circle', { cx: c[0], cy, r: 23, fill: colorOf(x.side), class: 'tok' }, g);
@@ -116,7 +155,14 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     const side = document.getElementById('b-side');
     if (T.over) return result(side);
     const u = selected(), B = T.B;
-    let h = `<div class="b-phase">${myTurn() ? 'あなたの番：部隊をクリック → 青いマスへ移動 → 行動' : '相手の番'}</div>`;
+    const who = side => side === 'atk' ? '攻め手' : '守り手';
+    let h = `<div class="b-phase">${myTurn() ? 'あなたの番：部隊をクリック → 青いマスへ移動 → 行動' : !T.playerSide ? `委任中：${who(T.phase)}の番` : `相手（${who(T.phase)}）の番`}</div>`;
+    if (!myTurn()) {
+      const P = SG.data.tactics.play;
+      h += `<div class="b-acts b-play">${P.speeds.map((v, k) => `<button data-speed="${v}" class="${v === speed ? 'on' : ''}">${['ゆっくり', 'ふつう', '速い'][k] || '×' + v}</button>`).join('')}
+        ${playing ? '<button id="b-pause">一時停止</button>' : '<button id="b-play" class="primary">再生</button>'}<button id="b-skip">${T.playerSide ? '自分の番まで飛ばす' : '結果まで飛ばす'}</button>
+        ${!T.playerSide && T.mySide ? '<button id="b-command">指揮に戻る</button>' : ''}</div>`;
+    }
     if (u) {
       const o = u.officer && s.officers[u.officer], t = SG.data.tactics.terrain[T.tiles[u.pos]];
       const n = k => SG.tactics.targets(s, T, u, k).length;
@@ -132,7 +178,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     const list = side2 => B[side2].map(x => `<tr class="${x.troops > 0 && mine(x) && !x.acted && myTurn() ? 'pick' : ''} ${SG.tactics.uid(x) === sel ? 'on' : ''}" data-u="${SG.tactics.uid(x)}"><td>${face(x, 'face')}${x.commander ? '★' : ''}${esc(SG.tactics.nameOf(x))}</td><td>${x.troops > 0 ? x.troops : '敗走'}</td><td>${x.troops > 0 && x.side === T.phase && x.acted ? '済' : ''}</td></tr>`).join('');
     h += `<h3>攻め手</h3><table>${list('atk')}</table><h3>守り手</h3><table>${list('def')}</table>`;
     h += `<div class="report b-log">${B.lines.slice(-14).map(l => `<div>${esc(l)}</div>`).join('')}</div>`;
-    h += `<div class="b-acts">${myTurn() ? '<button id="b-end" class="primary">ターン終了</button>' : ''}<button id="b-auto">委任（自動）</button>${T.playerSide === 'atk' ? '<button id="b-retreat">撤退</button>' : ''}</div>`;
+    if (myTurn()) h += `<div class="b-acts"><button id="b-end" class="primary">ターン終了</button><button id="b-auto">委任（自動）</button>${T.playerSide === 'atk' ? '<button id="b-retreat">撤退</button>' : ''}</div>`;
     side.innerHTML = h;
     const log = side.querySelector('.b-log'); log.scrollTop = 1e9;
     for (const b of side.querySelectorAll('[data-k]')) b.onclick = () => {
@@ -143,19 +189,27 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     };
     for (const tr of side.querySelectorAll('tr.pick')) tr.onclick = () => { sel = tr.dataset.u; mode = 'move'; draw(); };
     const end = document.getElementById('b-end');
-    if (end) end.onclick = () => { sel = null; mode = 'move'; SG.tactics.endTurn(s, T); opt.save(); draw(); };
-    document.getElementById('b-auto').onclick = () => { if (confirm('残りの戦いをAIにまかせますか？')) { SG.tactics.auto(s, T); opt.save(); draw(); } };
+    if (end) end.onclick = () => { sel = null; mode = 'move'; SG.tactics.endMyPhase(s, T); opt.save(); draw(); play(); };
+    const auto = document.getElementById('b-auto');
+    if (auto) auto.onclick = () => { sel = null; mode = 'move'; SG.tactics.delegate(T); draw(); play(); };
+    const on = (id, f) => { const b = document.getElementById(id); if (b) b.onclick = f; };
+    on('b-play', () => { play(); draw(); });
+    on('b-pause', () => { stop(); draw(); });
+    on('b-skip', skip);
+    on('b-command', () => { SG.tactics.command(T); draw(); });
+    for (const b of side.querySelectorAll('[data-speed]')) b.onclick = () => { speed = +b.dataset.speed; draw(); };
     const ret = document.getElementById('b-retreat');
     if (ret) ret.onclick = () => { if (confirm('兵を引きますか？（この戦いは負けになる）')) { SG.tactics.retreat(s, T); opt.save(); draw(); } };
   }
 
   function result(side) {
-    const B = T.B, mineWin = T.playerSide ? (T.playerSide === 'atk') === T.win : (B.atkForce === s.player) === T.win;
+    const B = T.B, me = T.playerSide || T.mySide, mineWin = me ? (me === 'atk') === T.win : (B.atkForce === s.player) === T.win;
     side.innerHTML = `<div class="result ${mineWin ? 'win' : 'lose'}">${mineWin ? '勝利！' : '敗北……'}</div>
       <p>${T.win ? `${esc(B.to)}は落ちた。` : `${esc(B.to)}は守られた。`}（${T.day}日目）</p>
       <div class="report b-log">${B.lines.slice(-14).map(l => `<div>${esc(l)}</div>`).join('')}</div>
       <div class="b-acts"><button id="b-close" class="primary">戦を終える</button></div>`;
     document.getElementById('b-close').onclick = () => {
+      stop(); last = null;
       const report = SG.tactics.finish(s, T);
       root.hidden = true; root.innerHTML = '';
       opt.save();

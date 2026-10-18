@@ -72,6 +72,11 @@ for (let seed = 1; seed <= 12; seed++) {
   assert.ok(SG.tactics.act(t, T, 'atk:0', 'wait').ok);
   SG.tactics.endTurn(t, T);
   assert.ok(T.over || T.phase === 'atk', '相手の番のあとは自分の番');
+  // 1手ずつ見せる：相手の番を stepAI で進めると、自分の番で止まる
+  SG.tactics.delegate(T); SG.tactics.command(T);
+  let steps = 0;
+  for (let r = SG.tactics.stepAI(t, T); r; r = SG.tactics.stepAI(t, T)) { steps++; if (r.id) assert.ok(r.to === undefined || r.to >= 0, '動いた先がある'); }
+  assert.ok(T.over || T.phase === 'atk', '自分の番で止まる');
   SG.tactics.auto(t, T);
   assert.ok(T.over && T.day <= SG.data.tactics.maxDays, '決着する');
   const rep = SG.tactics.finish(t, T);
@@ -160,16 +165,20 @@ for (const seed of [1, 2, 3]) {
   assert.ok((await vb())[0] !== v2[0], 'ミニマップで移動する');
   await pg.click('#zoom-all'); assert.ok((await vb())[3] >= 1024, '全体に戻す');
   await pg.click('[data-cmd="comm"]'); await pg.click('tr.pick');
-  await pg.click('[data-cmd="attack"]'); await pg.click('[data-to]'); await pg.click('#go');
+  await pg.click('[data-cmd="attack"]'); await pg.click('[data-to]'); await pg.click('#go-auto');
   assert.ok(await pg.isVisible('#battle'), 'マス戦闘の画面が開く');
-  pg.on('dialog', d => d.accept());
-  await pg.click('#b-auto'); await pg.click('#b-close');
+  const posAt = () => pg.evaluate(() => SG.ui.state.battle.B.atk.map(u => u.pos).join());
+  const p0 = await posAt();
+  assert.ok(!(await pg.evaluate(() => SG.ui.state.battle.over)), '自動でも一瞬では決着しない');
+  await pg.waitForTimeout(1500);
+  assert.notStrictEqual(await posAt(), p0, '自動でも1手ずつ進む（部隊が動いていく）');
+  await pg.click('#b-skip'); await pg.click('#b-close');
   assert.ok(!(await pg.isVisible('#battle')), 'マス戦闘の画面が閉じる');
   await closeAll();
   for (let i = 0; i < 12 && await pg.isEnabled('#btn-end'); i++) {
     await pg.click('#btn-end');
     // 同じ月に何度も攻められることがある（決着のたびに次の戦が開く）
-    while (await pg.isVisible('#battle')) { await pg.click('#b-auto'); await pg.click('#b-close'); }
+    while (await pg.isVisible('#battle')) { await pg.click('#b-auto'); await pg.click('#b-skip'); await pg.click('#b-close'); }
     await closeAll();
   }
   const date = await pg.evaluate(() => SG.ui.state.year * 100 + SG.ui.state.month);

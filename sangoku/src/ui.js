@@ -325,7 +325,7 @@
         <p class="sub">出陣する武将（最大${R.maxUnits}人、クリックで選ぶ）。兵は統率の比で分ける</p>${statsTable(list, { pick: true, hi: 'lead', on: chosen })}
         <div class="row"><label>兵</label><input type="range" id="tr" min="0" max="${c.troops}" step="100" value="${Math.floor(c.troops * 0.8 / 100) * 100}"><span id="trv"></span></div>
         <div class="sub" id="split"></div><div class="msg" id="msg"></div><div class="actions"><button data-close>やめる</button><button id="go-auto">自動で出陣</button><button id="go" class="primary">指揮して出陣</button></div>
-        <p class="sub">指揮：マスの戦場で部隊を動かして戦う／自動：計算ですぐ決着</p>`, box => {
+        <p class="sub">指揮：マスの戦場で部隊を動かして戦う／自動：AIが戦うのを見る（途中で「指揮に戻る」もできる）</p>`, box => {
         const units = () => { const sum = chosen.reduce((a, id) => a + s.officers[id].lead, 0); const n = +$('tr').value; return chosen.map(id => ({ officer: id, troops: Math.floor(n * s.officers[id].lead / sum / 100) * 100 })); };
         const upd = () => { $('trv').textContent = $('tr').value + '人　兵糧' + Math.ceil($('tr').value * R.foodPerTroop * R.march.foodMonths) + 'を使う'; $('split').textContent = units().map(u => `${u.officer} ${u.troops}`).join('　'); };
         for (const tr of box.querySelectorAll('tr.pick')) tr.addEventListener('click', () => {
@@ -334,16 +334,18 @@
           tr.classList.toggle('on', i < 0); upd();
         });
         $('tr').addEventListener('input', upd); upd();
-        const go = mode => {
+        const go = (mode, watch) => {
           if (!chosen.length) { $('msg').textContent = '武将を選んでください'; return; }
           // 総大将（崩れたら負け）は選んだ順の1人目
           const r = SG.exec(s, 'attack', { city: c.id, to, units: units(), mode });
           if (!r.ok) { $('msg').textContent = r.msg; return; }
           closeModal();
+          // 自動：マスの戦場で、AI が戦うのを1手ずつ見せる
+          if (r.tactics && watch) SG.tactics.delegate(s.battle);
           if (r.tactics) openBattle(); else afterAction(r);
         };
         $('go').addEventListener('click', () => go('tactics'));
-        $('go-auto').addEventListener('click', () => go(null));
+        $('go-auto').addEventListener('click', () => go('tactics', true));
       });
     });
   }

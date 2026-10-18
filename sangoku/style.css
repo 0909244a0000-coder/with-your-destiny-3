@@ -143,6 +143,16 @@ th .ico { width: 15px; height: 15px; margin-right: 1px; }
 #b-svg .unit.foe .ring { stroke-dasharray: 6 3; }
 #b-svg .uplate { fill: rgba(16, 12, 8, .85); stroke: rgba(217, 180, 90, .5); stroke-width: 1; }
 #b-svg .uname { font-size: 12px; }
+#b-field { position: relative; }
+#b-banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); max-width: 80%; padding: 6px 16px; background: rgba(12, 9, 6, .88); border: 1px solid var(--gold); border-radius: 4px; font-size: 16px; color: #fff6df; text-align: center; pointer-events: none; }
+#b-banner[hidden] { display: none; }
+#b-svg .trail { stroke: #ffd36a; stroke-width: 4; stroke-dasharray: 8 5; pointer-events: none; }
+#b-svg .gatehit { fill: rgba(255, 120, 40, .45); stroke: #ffb347; stroke-width: 3; pointer-events: none; }
+#b-svg .unit.acting .ring { stroke: #ffd36a !important; stroke-width: 6; }
+#b-svg .unit.hit .tok { animation: hit .5s ease-out 2; }
+@keyframes hit { 0% { stroke: #fff; stroke-width: 10; } 100% { stroke: #b0191e; stroke-width: 6; } }
+.b-play { display: grid; grid-template-columns: repeat(3, 1fr); }
+.b-play button { white-space: nowrap; border-width: 3px 9px; border-image-width: 3px 9px; padding: 3px 0; font-size: 14px; }
 @media (max-width: 900px) {
   main { flex-direction: column; }
   #map-wrap { flex: none; height: 55vh; }

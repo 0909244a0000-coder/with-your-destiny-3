@@ -213,6 +213,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     }
     if (u.troops > 0) { u.acted = true; u.moved = true; }
     T.undo = null;
+    T.lastAct = { kind, target };
     check(s, T);
     return ok('');
   }
@@ -243,15 +244,37 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     for (const u of alive(T, T.phase)) { u.moved = false; u.acted = false; }
     T.undo = null;
   }
-  function advance(s, T) {
+  // AI を1部隊ぶんだけ動かす（画面で1手ずつ見せるため）。
+  // 返り値：{ id, from, to, act, lines }（部隊が動いた）／{ phaseEnd: true }（番が終わった）／null（プレイヤーの番か、決着）
+  function stepAI(s, T) {
     T.started = true;
-    let guardLoop = 0;
-    while (!T.over && T.phase !== T.playerSide && guardLoop++ < 1000) { aiPhase(s, T, T.phase); if (!T.over) endPhase(s, T); }
+    if (T.over || (T.playerSide && T.phase === T.playerSide)) return null;
+    if (!T.aiQueue) T.aiQueue = alive(T, T.phase).sort((a, b) => b.troops - a.troops).map(uid);
+    while (T.aiQueue.length) {
+      const u = byUid(T, T.aiQueue.shift());
+      if (!u || u.troops <= 0 || u.acted) continue;
+      const from = u.pos, n = T.B.lines.length;
+      T.lastAct = null;
+      aiUnit(s, T, u);
+      return { id: uid(u), from, to: u.pos, act: T.lastAct, lines: T.B.lines.slice(n) };
+    }
+    T.aiQueue = null;
+    endPhase(s, T);
+    return { phaseEnd: true };
   }
-  // プレイヤーが番を終える
-  function endTurn(s, T) { if (T.over || T.phase !== T.playerSide) return; endPhase(s, T); advance(s, T); }
-  // 残りを全部AIにまかせる
-  function auto(s, T) { T.playerSide = null; advance(s, T); }
+  // AI の番を一気に進める（プレイヤーの番か、決着まで）
+  function advance(s, T) {
+    let guardLoop = 0;
+    T.started = true;
+    while (stepAI(s, T) && guardLoop++ < 100000);
+  }
+  // プレイヤーが番を終える。endTurn は相手の番まで一気に、endMyPhase は番を渡すだけ（あとは stepAI で1手ずつ）
+  function endMyPhase(s, T) { if (T.over || T.phase !== T.playerSide) return; endPhase(s, T); }
+  function endTurn(s, T) { endMyPhase(s, T); advance(s, T); }
+  // AI にまかせる（delegate）／指揮に戻る（command）。auto は決着まで一気に
+  function delegate(T) { if (T.playerSide) T.mySide = T.playerSide; T.playerSide = null; }
+  function command(T) { if (!T.mySide) return; T.playerSide = T.mySide; T.aiQueue = null; }
+  function auto(s, T) { delegate(T); advance(s, T); }
   // 攻め手が兵を引く
   function retreat(s, T) { if (T.over || T.playerSide !== 'atk') return ng('撤退できない'); T.over = true; T.win = false; T.B.lines.push('兵を引いた。'); return ok(''); }
   // 結果を国に反映する
@@ -278,9 +301,6 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       }
     }
     return best;
-  }
-  function aiPhase(s, T, side) {
-    for (const u of alive(T, side).sort((a, b) => b.troops - a.troops)) { if (T.over) return; if (u.troops > 0 && !u.acted) aiUnit(s, T, u); }
   }
   function aiUnit(s, T, u) {
     const d = D(), ai = d.ai, me = officer(s, u), id = uid(u);
@@ -338,6 +358,6 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     act(s, T, id, 'wait');
   }
 
-  SG.tactics = { create, reachable, targets, move, undoMove, act, endTurn, advance, auto, retreat, finish, check, neighbors, dist, unitAt, byUid, uid, units, alive, nameOf, moveOf, fireChance, colOf, rowOf, guard };
+  SG.tactics = { create, reachable, targets, move, undoMove, act, endTurn, endMyPhase, stepAI, delegate, command, advance, auto, retreat, finish, check, neighbors, dist, unitAt, byUid, uid, units, alive, nameOf, moveOf, fireChance, colOf, rowOf, guard };
 })();
 if (typeof module !== 'undefined') module.exports = SG;
