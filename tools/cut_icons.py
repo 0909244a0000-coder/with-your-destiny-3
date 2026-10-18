@@ -1,12 +1,13 @@
 """マスにそろっていないアイコンのシート（透明背景）を、形ごとに切り分ける。
 
 使い方:
-  python3 tools/cut_icons.py シート.png 出力先/ --names a,b,c,... [--cols 4] [--size 256] [--webp] [--grid]
+  python3 tools/cut_icons.py シート.png 出力先/ --names a,b,c,... [--cols 4] [--size 256] [--webp] [--grid | --bands]
 
 - 透明でない部分のかたまりを探し、近い小さなかたまり（火の粉・虫の群れなど）は大きいほうにまとめて、names の数にそろえる
 - 上の行から、各行は左から names の順にファイルにする（1行 cols 個）
 - それぞれ余白を切って正方形にし、size×size の PNG（--webp なら WebP。小さく軽い）にする
 - マスの線をはみ出して描かれたシートでも切れる
+- --bands：透明なすき間で、まず横の帯（行）に分け、それぞれを透明な縦のすき間で分ける。絵どうしがすき間なく並ぶ六角形のシートなど用
 - --grid：マス（cols×cols）で切る。絵どうしがくっついているシート用。マスの端からはみ出してきた、となりの絵の小さな切れ端は捨てる
 必要なもの：Pillow
 """
@@ -49,12 +50,15 @@ def main():
     ap.add_argument("--size", type=int, default=256)
     ap.add_argument("--webp", action="store_true")
     ap.add_argument("--grid", action="store_true")
+    ap.add_argument("--bands", action="store_true")
     a = ap.parse_args()
     names = a.names.split(",")
     im = Image.open(a.src).convert("RGBA")
     W, H = im.size
     if a.grid:
         return cut_grid(im, names, a)
+    if a.bands:
+        return cut_bands(im, names, a)
     S = 4  # 1/4 に縮めてかたまりを探す
     small = im.getchannel("A").resize((W // S, H // S)).point(lambda v: 255 if v > 24 else 0).filter(ImageFilter.MaxFilter(3))
     w, h = small.size
@@ -97,6 +101,32 @@ def cut_grid(im, names, a):
         box = (min(p[0] for p in keep), min(p[1] for p in keep), max(p[2] for p in keep) + 1, max(p[3] for p in keep) + 1)
         save(cut.crop(box), name, a)
         print(name, box)
+
+
+def spans(values):
+    out, start = [], None
+    for i, v in enumerate(values + [0]):
+        if v and start is None: start = i
+        if not v and start is not None: out.append((start, i)); start = None
+    return out
+
+
+def cut_bands(im, names, a):
+    alpha = im.getchannel("A").point(lambda v: 255 if v > 24 else 0)
+    W, H = im.size
+    px = alpha.load()
+    pieces = []
+    for y0, y1 in spans([sum(1 for x in range(0, W, 2) if px[x, y]) for y in range(H)]):
+        if y1 - y0 < 8: continue
+        for x0, x1 in spans([sum(1 for y in range(y0, y1, 2) if px[x, y]) for x in range(W)]):
+            if x1 - x0 >= 8: pieces.append((x0, y0, x1, y1))
+    if len(pieces) != len(names):
+        raise SystemExit(f"絵が {len(pieces)} 個で、names の {len(names)} 個と合わない")
+    os.makedirs(a.out, exist_ok=True)
+    for name, b in zip(names, pieces):
+        crop = im.crop(b)
+        save(crop.crop(crop.getchannel("A").point(lambda v: 255 if v > 8 else 0).getbbox()), name, a)
+        print(name, b)
 
 
 def save(crop, name, a):

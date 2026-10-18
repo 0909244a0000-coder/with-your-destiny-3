@@ -13,6 +13,14 @@ SG.data.art = {
   capital: 'assets/map/capital.webp', // 君主のいる都市
   // アイコン：<dir><id>.webp。id は命令（src/ui.js の data-cmd）・数値・出来事の名前
   cmd: 'assets/cmd/', stat: 'assets/stat/', event: 'assets/event/', map: 'assets/map/',
+  // 武将の顔：assets/face/<武将名>.webp。faces にある武将だけ顔がある。mob は顔のない武将の型の絵（届いたら true）
+  face: 'assets/face/',
+  faces: '曹操 劉備 孫策 袁紹 呂布 関羽 張飛 趙雲 諸葛亮 周瑜 孫権 司馬懿 袁術 劉表 劉璋 馬騰 夏侯惇 夏侯淵 曹仁 典韋 許褚 張遼 荀彧 郭嘉 賈詡 陳宮 黄忠 馬超 龐統 魏延 甘寧 太史慈 呂蒙 陸遜 魯粛 程普 黄蓋 韓当 周泰 張昭 顔良 文醜 張郃 田豊 沮授 公孫瓚 徐晃 龐徳'.split(' '),
+  mobFaces: false,
+  // マス戦闘の絵：地形は assets/battle/<地形>.webp（六角形・透明背景）、駒は unit_<型>.webp
+  battle: 'assets/battle/',
+  battleTiles: ['plain', 'forest', 'mountain', 'river', 'bridge', 'town', 'keep', 'gate', 'broken', 'wall'],
+  flipTiles: ['plain', 'forest', 'mountain'], // 左右をときどき反転して、同じ絵の並びを目立たなくする
   // 記録・戦の報告の行につける絵（上から順に、最初に当てはまったもの）
   logIcons: [
     [/一騎打ち|合目|勝負つかず|の勝ち！/, 'event/duel'], [/火計/, 'event/fire'], [/滅亡/, 'event/destroyed'],

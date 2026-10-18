@@ -121,7 +121,7 @@ th .ico { width: 15px; height: 15px; margin-right: 1px; }
 #b-svg .unit { cursor: pointer; }
 #b-svg .unit .tok { stroke: #000; stroke-width: 2; }
 #b-svg .unit.ally .tok { stroke: #f5f0e0; stroke-width: 2.5; }
-#b-svg .unit.foe .tok { stroke: #b0191e; stroke-width: 4; }
+#b-svg .unit.foe .tok { stroke: #b0191e; stroke-width: 6; }
 #b-svg .unit .cmdr { fill: none; stroke: var(--gold); stroke-width: 3; stroke-dasharray: 5 3; }
 #b-svg .unit.sel .tok { stroke: #fff; stroke-width: 4; }
 #b-svg .unit.aim .tok { stroke: #ff5a3a; stroke-width: 4; }
@@ -133,6 +133,16 @@ th .ico { width: 15px; height: 15px; margin-right: 1px; }
 .b-acts { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
 .b-acts button.on { filter: brightness(1.6); color: #fff; }
 .b-log { max-height: 220px; font-size: 13px; }
+.face { width: 24px; height: 24px; vertical-align: middle; margin-right: 5px; border: 1px solid var(--line); border-radius: 3px; object-fit: cover; }
+.face-l { width: 56px; height: 56px; vertical-align: middle; margin-right: 8px; border: 2px solid var(--gold); border-radius: 4px; object-fit: cover; float: left; }
+.force-card .face-l { width: 52px; height: 52px; }
+.force-card::after { content: ""; display: block; clear: both; }
+#b-side h3::after { content: ""; display: block; clear: both; }
+#b-svg .hex .edge { fill: none; stroke: rgba(0, 0, 0, .25); stroke-width: 1; }
+#b-svg .unit .ring { fill: none; stroke-width: 4; }
+#b-svg .unit.foe .ring { stroke-dasharray: 6 3; }
+#b-svg .uplate { fill: rgba(16, 12, 8, .85); stroke: rgba(217, 180, 90, .5); stroke-width: 1; }
+#b-svg .uname { font-size: 12px; }
 @media (max-width: 900px) {
   main { flex-direction: column; }
   #map-wrap { flex: none; height: 55vh; }

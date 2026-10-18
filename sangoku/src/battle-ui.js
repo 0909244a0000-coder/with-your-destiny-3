@@ -14,6 +14,8 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   const mine = u => u && u.side === T.playerSide;
   const myTurn = () => !T.over && T.playerSide && T.phase === T.playerSide;
   const selected = () => sel && SG.tactics.byUid(T, sel);
+  const unitLook = u => { const o = u.officer && s.officers[u.officer]; return u.commander ? 'general' : !o ? 'foot' : o.int > o.war ? 'bow' : o.war >= 80 ? 'horse' : 'foot'; };
+  const face = (u, cls) => { const f = u.officer && SG.faceOf && SG.faceOf(s.officers[u.officer]); return f ? `<img class="${cls}" src="${f}" alt="" onerror="this.remove()">` : ''; };
 
   function open(state, options) {
     s = state; T = s.battle; opt = options; sel = null; mode = 'move';
@@ -66,10 +68,16 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     const reach = u && myTurn() && !u.moved && mode === 'move' ? SG.tactics.reachable(s, T, u) : new Map();
     const tg = new Set(u && myTurn() ? (mode === 'move' ? SG.tactics.targets(s, T, u, 'attack') : SG.tactics.targets(s, T, u, mode)).map(String) : []);
     for (let i = 0; i < T.tiles.length; i++) {
-      const t = terr[T.tiles[i]], c = center(i);
+      const t = terr[T.tiles[i]], c = center(i), A = SG.data.art;
       const g = el('g', { 'data-i': i, class: 'hex' }, svg);
       el('polygon', { points: hexPts(c), fill: t.color, class: 't-' + T.tiles[i] }, g);
-      if (t.glyph) el('text', { x: c[0], y: c[1] + 7, class: 'glyph' }, g, t.glyph);
+      // 地形の絵（六角形・透明背景の正方形）。読めなければ色と字のまま
+      if (A.battleTiles.includes(T.tiles[i])) {
+        const flip = A.flipTiles.includes(T.tiles[i]) && (i * 7 + (i >> 3)) % 3 === 0;
+        const img = el('image', { href: A.battle + T.tiles[i] + '.webp', x: c[0] - R, y: c[1] - R, width: 2 * R, height: 2 * R, transform: flip ? `translate(${2 * c[0]},0) scale(-1,1)` : '' }, g);
+        img.addEventListener('error', () => img.remove());
+      } else if (t.glyph) el('text', { x: c[0], y: c[1] + 7, class: 'glyph' }, g, t.glyph);
+      el('polygon', { points: hexPts(c), class: 'edge' }, g);
       if (T.gates[i] !== undefined) {
         const max = SG.data.tactics.gate.base + s.cities[T.B.to].def * SG.data.tactics.gate.perDef;
         el('rect', { x: c[0] - 18, y: c[1] + 14, width: 36, height: 4, fill: '#000' }, g);
@@ -81,11 +89,17 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     for (const x of SG.tactics.alive(T)) {
       const c = center(x.pos), id = SG.tactics.uid(x);
       const g = el('g', { 'data-i': x.pos, class: 'unit ' + (T.playerSide && x.side !== T.playerSide ? 'foe' : 'ally') + (x.acted && x.side === T.phase ? ' done' : '') + (id === sel ? ' sel' : '') + (tg.has(id) ? ' aim' : '') }, svg);
-      el('circle', { cx: c[0], cy: c[1], r: 24, fill: colorOf(x.side), class: 'tok' }, g);
-      if (x.commander) el('circle', { cx: c[0], cy: c[1], r: 27, class: 'cmdr' }, g);
-      el('text', { x: c[0], y: c[1] + 2, class: 'uname' }, g, SG.tactics.nameOf(x).slice(0, 3));
-      el('rect', { x: c[0] - 20, y: c[1] + 9, width: 40, height: 5, fill: '#000' }, g);
-      el('rect', { x: c[0] - 20, y: c[1] + 9, width: 40 * Math.min(1, x.troops / x.start), height: 5, fill: x.side === T.playerSide ? '#7fd18b' : '#ef7d6d' }, g);
+      // 駒：勢力の色の円に兵の絵（総大将・弓・騎兵・歩兵は武将の能力で見た目だけ変える）、下に名前の札と兵の棒
+      const cy = c[1] - 5;
+      el('circle', { cx: c[0], cy, r: 23, fill: colorOf(x.side), class: 'tok' }, g);
+      const img = el('image', { href: SG.data.art.battle + 'unit_' + unitLook(x) + '.webp', x: c[0] - 21, y: cy - 21, width: 42, height: 42, class: 'tokimg' }, g);
+      img.addEventListener('error', () => img.remove());
+      el('circle', { cx: c[0], cy, r: 23, class: 'ring', stroke: colorOf(x.side) }, g);
+      if (x.commander) el('circle', { cx: c[0], cy, r: 27, class: 'cmdr' }, g);
+      el('rect', { x: c[0] - 24, y: c[1] + 14, width: 48, height: 15, rx: 3, class: 'uplate' }, g);
+      el('text', { x: c[0], y: c[1] + 26, class: 'uname' }, g, SG.tactics.nameOf(x).slice(0, 3));
+      el('rect', { x: c[0] - 20, y: c[1] + 29, width: 40, height: 4, fill: '#000' }, g);
+      el('rect', { x: c[0] - 20, y: c[1] + 29, width: 40 * Math.min(1, x.troops / x.start), height: 4, fill: x.side === T.playerSide ? '#7fd18b' : '#ef7d6d' }, g);
     }
     drawTop(); drawSide();
   }
@@ -108,14 +122,14 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       const n = k => SG.tactics.targets(s, T, u, k).length;
       const btn = (k, label, extra) => `<button data-k="${k}" class="${mode === k ? 'on' : ''}" ${n(k) ? '' : 'disabled'}>${label}${extra || ''}</button>`;
       const fireTarget = SG.tactics.targets(s, T, u, 'fire')[0];
-      h += `<h3>${esc(SG.tactics.nameOf(u))}隊${u.commander ? '（総大将）' : ''}</h3>
+      h += `<h3>${face(u, 'face-l')}${esc(SG.tactics.nameOf(u))}隊${u.commander ? '（総大将）' : ''}</h3>
         <div class="sub">兵 ${u.troops}／${u.start}　${o ? `統${o.lead} 武${o.war} 知${o.int}` : ''}<br>地形：${t.name}（守り×${SG.tactics.guard(s, T, u).toFixed(2)}）　移動力 ${SG.tactics.moveOf(s, u)}</div>
         <div class="b-acts">${btn('attack', '攻撃')}${btn('bow', '弓')}${btn('fire', '火計', fireTarget ? ` ${Math.round(SG.tactics.fireChance(s, T, u, SG.tactics.byUid(T, fireTarget)) * 100)}%` : '')}${btn('duel', '一騎打ち')}${btn('gate', '城門')}
         <button data-k="wait">待機</button>${T.undo && T.undo.id === sel ? '<button data-k="undo">移動を戻す</button>' : ''}</div>
         <div class="sub">攻撃・一騎打ち・城門は隣、弓・火計は2マス先まで。敵をクリックで実行</div>`;
     }
     h += `<div class="msg" id="b-msg"></div>`;
-    const list = side2 => B[side2].map(x => `<tr class="${x.troops > 0 && mine(x) && !x.acted && myTurn() ? 'pick' : ''} ${SG.tactics.uid(x) === sel ? 'on' : ''}" data-u="${SG.tactics.uid(x)}"><td>${x.commander ? '★' : ''}${esc(SG.tactics.nameOf(x))}</td><td>${x.troops > 0 ? x.troops : '敗走'}</td><td>${x.troops > 0 && x.side === T.phase && x.acted ? '済' : ''}</td></tr>`).join('');
+    const list = side2 => B[side2].map(x => `<tr class="${x.troops > 0 && mine(x) && !x.acted && myTurn() ? 'pick' : ''} ${SG.tactics.uid(x) === sel ? 'on' : ''}" data-u="${SG.tactics.uid(x)}"><td>${face(x, 'face')}${x.commander ? '★' : ''}${esc(SG.tactics.nameOf(x))}</td><td>${x.troops > 0 ? x.troops : '敗走'}</td><td>${x.troops > 0 && x.side === T.phase && x.acted ? '済' : ''}</td></tr>`).join('');
     h += `<h3>攻め手</h3><table>${list('atk')}</table><h3>守り手</h3><table>${list('def')}</table>`;
     h += `<div class="report b-log">${B.lines.slice(-14).map(l => `<div>${esc(l)}</div>`).join('')}</div>`;
     h += `<div class="b-acts">${myTurn() ? '<button id="b-end" class="primary">ターン終了</button>' : ''}<button id="b-auto">委任（自動）</button>${T.playerSide === 'atk' ? '<button id="b-retreat">撤退</button>' : ''}</div>`;

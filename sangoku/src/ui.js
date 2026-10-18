@@ -9,6 +9,17 @@
   const man = n => n >= 10000 ? (n / 10000).toFixed(1) + '万' : String(n);
   const STAT = { lead: '統率', war: '武力', int: '知力', pol: '政治', cha: '魅力' };
   const A = SG.data.art;
+  // 武将の顔の絵の場所（顔がなければ、型の絵。それもなければ null）
+  SG.faceOf = o => {
+    if (!o) return null;
+    if (A.faces.includes(o.id)) return A.face + o.id + '.webp';
+    if (!A.mobFaces) return null;
+    const type = o.war >= 60 && o.war >= o.int ? 'war' : o.int >= o.pol ? 'int' : 'pol';
+    const special = type === 'war' ? o.war >= 90 : type === 'int' ? o.int >= 90 : o.cha < 40;
+    const age = (SG.ui && SG.ui.state ? SG.ui.state.year : 194) - o.born;
+    return `${A.face}mob_${type}_${special ? 3 : age < 25 ? 0 : age < 45 ? 1 : 2}.webp`;
+  };
+  const face = (o, cls) => { const f = SG.faceOf(o); return f ? `<img class="${cls || 'face'}" src="${f}" alt="" onerror="this.remove()">` : ''; };
   // アイコン（読み込めなければ alt の文字に置きかわる）
   const icon = (path, cls, alt) => `<img class="${cls || 'ico'}" src="${A[path.split('/')[0]]}${path.split('/')[1]}.webp" alt="${alt || ''}" onerror="this.replaceWith(this.alt)">`;
   const lineIcon = text => { const m = A.logIcons.find(([re]) => re.test(text)); return m ? icon(m[1]) : ''; };
@@ -155,7 +166,7 @@
     const rows = list.map(o => {
       const isRuler = o.force && s.forces[o.force] && s.forces[o.force].ruler === o.id;
       const cls = [o.acted && opts.showActed ? 'done' : '', opts.pick ? 'pick' : '', opts.on && opts.on.includes(o.id) ? 'on' : ''].join(' ');
-      return `<tr class="${cls}" data-id="${esc(o.id)}"><td class="${isRuler ? 'ruler' : ''}">${esc(o.id)}</td>${['lead', 'war', 'int', 'pol', 'cha'].map(k => `<td class="${opts.hi === k ? 'hi' : ''}">${o[k]}</td>`).join('')}<td>${o.status === 'serve' && !isRuler ? o.loyalty : o.status === 'free' ? '在野' : '－'}</td>${opts.extra ? `<td>${opts.extra(o)}</td>` : ''}</tr>`;
+      return `<tr class="${cls}" data-id="${esc(o.id)}"><td class="${isRuler ? 'ruler' : ''}">${face(o)}${esc(o.id)}</td>${['lead', 'war', 'int', 'pol', 'cha'].map(k => `<td class="${opts.hi === k ? 'hi' : ''}">${o[k]}</td>`).join('')}<td>${o.status === 'serve' && !isRuler ? o.loyalty : o.status === 'free' ? '在野' : '－'}</td>${opts.extra ? `<td>${opts.extra(o)}</td>` : ''}</tr>`;
     }).join('');
     const th = (k, t) => `<th title="${STAT[k] || '忠誠'}">${icon('stat/' + k)}${t}</th>`;
     return `<table><tr><th>武将</th>${th('lead', '統')}${th('war', '武')}${th('int', '知')}${th('pol', '政')}${th('cha', '魅')}${th('loyalty', '忠')}${opts.extraHead ? `<th>${opts.extraHead}</th>` : ''}</tr>${rows || '<tr><td colspan="8" class="sub">いない</td></tr>'}</table>`;
@@ -411,7 +422,7 @@
     const sc = SG.data.scenarios[0];
     const preview = SG.newGame(sc.id, null, 1);
     const fs = Object.values(preview.forces).map(f => ({ f, sum: SG.forceSummary(preview, f.id), r: preview.officers[f.ruler] })).sort((a, b) => b.sum.cities - a.sum.cities || b.sum.officers - a.sum.officers);
-    modal(`<h2>天下三分　${esc(sc.title)}</h2><p>${esc(sc.text)}</p><p class="sub">君主を選んでください。</p><div class="forces">${fs.map(({ f, sum, r }) => `<div class="force-card" data-f="${esc(f.id)}"><span class="chip" style="background:${f.color}"></span> <b>${esc(f.ruler)}</b><div class="sub">統${r.lead} 武${r.war} 知${r.int} 政${r.pol} 魅${r.cha}</div><div class="sub">都市${sum.cities}・武将${sum.officers}・兵${man(sum.troops)}</div></div>`).join('')}</div>
+    modal(`<h2>天下三分　${esc(sc.title)}</h2><p>${esc(sc.text)}</p><p class="sub">君主を選んでください。</p><div class="forces">${fs.map(({ f, sum, r }) => `<div class="force-card" data-f="${esc(f.id)}">${face(r, 'face-l')}<span class="chip" style="background:${f.color}"></span> <b>${esc(f.ruler)}</b><div class="sub">統${r.lead} 武${r.war} 知${r.int} 政${r.pol} 魅${r.cha}</div><div class="sub">都市${sum.cities}・武将${sum.officers}・兵${man(sum.troops)}</div></div>`).join('')}</div>
       <p class="note">歴史シミュレーションの名作をお手本にした、個人で遊ぶためのファン制作ゲームです。人物は史書・演義の人物で、能力値・絵・文章はこのゲーム独自のものです。</p>`, box => {
       for (const card of box.querySelectorAll('.force-card')) card.addEventListener('click', () => {
         s = SG.newGame(sc.id, card.dataset.f);
