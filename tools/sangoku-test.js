@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '../sangoku');
-const files = ['data/rules.js', 'data/cities.js', 'data/officers.js', 'data/scenarios.js', 'src/game.js'];
+const files = ['data/rules.js', 'data/cities.js', 'data/officers.js', 'data/scenarios.js', 'data/art.js', 'src/game.js'];
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 for (const f of files) assert.ok(html.includes(`src="${f}"`), `index.html が ${f} を読み込んでいない`);
 const ctx = {};
@@ -24,6 +24,10 @@ assert.strictEqual(seen.size, cityIds.size, 'つながっていない都市が�
 const { bounds, image } = SG.data.geo;
 assert.ok(fs.existsSync(path.join(root, image)), '地図の絵がない');
 for (const c of SG.data.cities) assert.ok(c.lon > bounds.lon0 && c.lon < bounds.lon0 + bounds.span && c.lat < bounds.lat1 && c.lat > bounds.lat1 - bounds.span, `${c.id} が地図の外`);
+const art = SG.data.art;
+for (const f of [...Object.values(art.castle), art.flag, art.capital]) assert.ok(fs.existsSync(path.join(root, f)), `絵がない: ${f}`);
+for (const id of ['agri', 'comm', 'def', 'order', 'recruit', 'train', 'attack', 'move', 'search', 'employ', 'reward', 'trade', 'delegate', 'captives', 'forces', 'officers']) assert.ok(fs.existsSync(path.join(root, art.cmd + id + '.webp')), `命令の絵がない: ${id}`);
+for (const [, p] of art.logIcons) { const [d, n] = p.split('/'); assert.ok(fs.existsSync(path.join(root, art[d] + n + '.webp')), `記録の絵がない: ${p}`); }
 for (const o of SG.data.officers) for (const k of ['lead', 'war', 'int', 'pol', 'cha']) assert.ok(o[k] >= 1 && o[k] <= 100, `${o.id} の ${k}`);
 
 // 命令
@@ -84,6 +88,7 @@ for (const seed of [1, 2, 3]) {
   const pg = await b.newPage({ viewport: { width: 1400, height: 900 } });
   pg.setDefaultTimeout(5000);
   const errs = []; pg.on('pageerror', e => errs.push(e.message));
+  const badImages = []; pg.on('requestfailed', r => badImages.push(r.url()));
   await pg.goto('file://' + path.join(root, 'index.html'));
   await pg.evaluate(() => localStorage.clear());
   await pg.reload();
@@ -97,5 +102,6 @@ for (const seed of [1, 2, 3]) {
   assert.strictEqual(await pg.evaluate(() => SG.ui.state.year * 100 + SG.ui.state.month), date, '再読み込みでセーブから続く');
   await b.close();
   assert.deepStrictEqual(errs, [], 'ページのエラー');
+  assert.deepStrictEqual(badImages, [], '読み込めない絵');
   console.log('天下三分のテスト：成功');
 })().catch(e => { console.error(e); process.exit(1); });

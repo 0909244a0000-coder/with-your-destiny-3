@@ -26,12 +26,18 @@ main { flex: 1; display: flex; min-height: 0; }
 #map .road { stroke: var(--road); stroke-width: 2.5; stroke-dasharray: 5 4; }
 #map .road.hot { stroke: var(--gold); stroke-width: 3; stroke-dasharray: none; }
 #map .city { cursor: pointer; }
-#map .city rect { stroke: #000; stroke-width: 2; }
-#map .city.sel rect.mark { stroke: #fff; stroke-width: 4; }
-#map .city.target rect.mark { stroke: var(--gold); stroke-width: 4; }
+#map .city rect.mark { stroke: #000; stroke-width: 2; display: none; }
+#map .city.noimg rect.mark { display: inline; }
+#map .city.noimg .castle, #map .city.noimg .flag { display: none; }
+#map .city .ring { fill: rgba(0, 0, 0, .25); stroke: none; visibility: hidden; }
+#map .city.sel .ring { visibility: visible; stroke: #fff; stroke-width: 3; }
+#map .city.target .ring { visibility: visible; stroke: var(--gold); stroke-width: 3; stroke-dasharray: 6 3; }
+#map .city .base { opacity: .9; stroke: rgba(0, 0, 0, .6); stroke-width: 1.5; }
+#map .city .flag image { mix-blend-mode: multiply; }
+#map .city:hover .castle { filter: brightness(1.2); }
 #map .city text { font-size: 15px; fill: #fff; paint-order: stroke; stroke: #000; stroke-width: 3px; text-anchor: middle; pointer-events: none; }
 #map .city text.small { font-size: 11px; fill: #d8d0bc; }
-#map .capital { fill: var(--gold); stroke: #000; stroke-width: 1; pointer-events: none; }
+#map .capital, #map .flag { pointer-events: none; }
 #map .rname { font-size: 15px; fill: #d8ecff; paint-order: stroke; stroke: #1d3550; stroke-width: 3px; opacity: .85; pointer-events: none; }
 #side { width: 400px; display: flex; flex-direction: column; background: var(--panel) url(assets/ui/silk.webp); border-left: 2px solid var(--line); min-height: 0; }
 #city { flex: 1; overflow: auto; padding: 10px 12px; }
@@ -58,7 +64,7 @@ td.hi { color: var(--gold); font-weight: bold; }
 .toggle { font-size: 13px; display: flex; align-items: center; gap: 4px; margin-top: 6px; }
 #modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .65); display: flex; align-items: center; justify-content: center; z-index: 10; }
 #modal[hidden] { display: none; }
-#modal-box { background: var(--panel) url(assets/ui/silk.webp); border: 2px solid var(--gold); border-radius: 6px; padding: 16px 18px; width: min(720px, 94vw); max-height: 90vh; overflow: auto; box-shadow: 0 10px 40px #000; }
+#modal-box { background: var(--panel) url(assets/ui/silk.webp) padding-box; border: 26px solid var(--gold); border-image: url(assets/ui/frame.webp) 74 / 26px round; border-radius: 6px; padding: 16px 18px; width: min(720px, 94vw); max-height: 90vh; overflow: auto; box-shadow: 0 10px 40px #000; }
 #modal-box h2 { font-size: 20px; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
 .row label { color: var(--dim); font-size: 14px; }
@@ -76,6 +82,13 @@ input[type=range] { width: 220px; }
 .force-card b { font-size: 17px; }
 .note { font-size: 12px; color: var(--dim); margin-top: 10px; line-height: 1.5; }
 .msg { min-height: 1.4em; color: var(--war); font-size: 14px; }
+.ico { width: 18px; height: 18px; vertical-align: -4px; margin-right: 3px; }
+.cico { width: 26px; height: 26px; vertical-align: middle; margin-right: 4px; }
+.hico { width: 30px; height: 30px; }
+.big { width: 56px; height: 56px; vertical-align: middle; margin-right: 8px; }
+th .ico { width: 15px; height: 15px; margin-right: 1px; }
+.cmds button { display: flex; align-items: center; justify-content: center; padding: 3px 6px; }
+#log .ico, .report .ico { width: 20px; height: 20px; }
 @media (max-width: 900px) {
   main { flex-direction: column; }
   #map-wrap { flex: none; height: 55vh; }

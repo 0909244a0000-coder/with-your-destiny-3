@@ -8,6 +8,10 @@
   const py = lat => (G.bounds.lat1 - lat) * K;
   const man = n => n >= 10000 ? (n / 10000).toFixed(1) + '万' : String(n);
   const STAT = { lead: '統率', war: '武力', int: '知力', pol: '政治', cha: '魅力' };
+  const A = SG.data.art;
+  // アイコン（読み込めなければ alt の文字に置きかわる）
+  const icon = (path, cls, alt) => `<img class="${cls || 'ico'}" src="${A[path.split('/')[0]]}${path.split('/')[1]}.webp" alt="${alt || ''}" onerror="this.replaceWith(this.alt)">`;
+  const lineIcon = text => { const m = A.logIcons.find(([re]) => re.test(text)); return m ? icon(m[1]) : ''; };
   let s = null, sel = null, targets = [];
 
   // ---------- セーブ ----------
@@ -31,14 +35,27 @@
       const t = el('text', { class: 'rname', x: px(m[0]), y: py(m[1]) - 8 }, svg); t.textContent = name;
     }
     const pos = {}; for (const c of SG.data.cities) pos[c.id] = [px(c.lon), py(c.lat)];
+    const h = A.castleSize / 2;
+    const mask = el('mask', { id: 'flagmask', maskContentUnits: 'userSpaceOnUse' }, el('defs', {}, svg));
+    el('image', { href: A.flag, x: h * 0.2, y: -h * 1.3, width: h * 0.8, height: h * 0.8 }, mask);
     const roads = el('g', {}, svg);
     for (const [a, b] of SG.data.roads) el('line', { class: 'road', 'data-a': a, 'data-b': b, x1: pos[a][0], y1: pos[a][1], x2: pos[b][0], y2: pos[b][1] }, roads);
     for (const c of SG.data.cities) {
       const gr = el('g', { class: 'city', 'data-id': c.id, transform: `translate(${pos[c.id][0]},${pos[c.id][1]})` }, svg);
+      const z = A.castleSize, h = z / 2;
+      el('circle', { class: 'ring', r: h + 3 }, gr);
+      el('ellipse', { class: 'base', cy: h * 0.55, rx: h * 0.95, ry: h * 0.42 }, gr);
+      // 絵がないときの四角
       el('rect', { class: 'mark', x: -11, y: -11, width: 22, height: 22, rx: 3 }, gr);
-      el('polygon', { class: 'capital', points: '0,-7 2,-2 7,-2 3,1 5,6 0,3 -5,6 -3,1 -7,-2 -2,-2', visibility: 'hidden' }, gr);
-      el('text', { y: 28 }, gr).textContent = c.id;
-      el('text', { class: 'small', y: 41 }, gr);
+      const castle = el('image', { class: 'castle', x: -h, y: -h, width: z, height: z }, gr);
+      castle.addEventListener('error', () => gr.classList.add('noimg'));
+      // 旗：白い旗の形で勢力の色を切り抜き、その上に旗の絵を乗算で重ねて陰影を残す
+      const fl = el('g', { class: 'flag' }, gr);
+      el('rect', { class: 'cloth', x: h * 0.2, y: -h * 1.3, width: h * 0.8, height: h * 0.8, mask: 'url(#flagmask)' }, fl);
+      el('image', { href: A.flag, x: h * 0.2, y: -h * 1.3, width: h * 0.8, height: h * 0.8 }, fl);
+      el('image', { class: 'capital', href: A.capital, x: -h * 1.05, y: -h * 1.05, width: h * 0.7, height: h * 0.7, visibility: 'hidden' }, gr);
+      el('text', { y: h + 13 }, gr).textContent = c.id;
+      el('text', { class: 'small', y: h + 25 }, gr);
       gr.addEventListener('click', () => clickCity(c.id));
     }
   }
@@ -46,7 +63,15 @@
     const caps = new Set(Object.values(s.forces).filter(f => f.alive).map(f => s.officers[f.ruler].city));
     for (const g of $('map').querySelectorAll('.city')) {
       const c = s.cities[g.dataset.id];
-      g.querySelector('rect').setAttribute('fill', c.owner ? s.forces[c.owner].color : '#777');
+      const color = c.owner ? s.forces[c.owner].color : '#777';
+      const base = SG.data.cities.find(x => x.id === c.id).pop;
+      const tier = !c.owner ? 'ruin' : base >= A.castleTier.l ? 'l' : base >= A.castleTier.m ? 'm' : 's';
+      const castle = g.querySelector('.castle');
+      if (castle.getAttribute('href') !== A.castle[tier]) castle.setAttribute('href', A.castle[tier]);
+      g.querySelector('rect.mark').setAttribute('fill', color);
+      g.querySelector('.base').setAttribute('fill', color);
+      g.querySelector('.cloth').setAttribute('fill', color);
+      g.querySelector('.flag').setAttribute('visibility', c.owner ? 'visible' : 'hidden');
       g.querySelector('.capital').setAttribute('visibility', caps.has(c.id) ? 'visible' : 'hidden');
       g.querySelector('.small').textContent = c.troops ? '兵' + man(c.troops) : '';
       g.classList.toggle('sel', c.id === sel);
@@ -67,10 +92,10 @@
     renderLog();
     $('btn-end').disabled = !!s.over;
     $('btn-captives').hidden = !s.captives.length;
-    $('btn-captives').textContent = `捕虜（${s.captives.length}）`;
+    $('btn-captives').innerHTML = `${icon('cmd/captives')}捕虜（${s.captives.length}）`;
   }
   function renderLog() {
-    $('log').innerHTML = s.log.slice(-60).map(l => `<div class="l-${l.kind}">${esc(l.date)} ${esc(l.text)}</div>`).join('');
+    $('log').innerHTML = s.log.slice(-60).map(l => `<div class="l-${l.kind}">${lineIcon(l.text)}${esc(l.date)} ${esc(l.text)}</div>`).join('');
     $('log').scrollTop = 1e9;
   }
   function statsTable(list, opts) {
@@ -80,9 +105,10 @@
       const cls = [o.acted && opts.showActed ? 'done' : '', opts.pick ? 'pick' : '', opts.on && opts.on.includes(o.id) ? 'on' : ''].join(' ');
       return `<tr class="${cls}" data-id="${esc(o.id)}"><td class="${isRuler ? 'ruler' : ''}">${esc(o.id)}</td>${['lead', 'war', 'int', 'pol', 'cha'].map(k => `<td class="${opts.hi === k ? 'hi' : ''}">${o[k]}</td>`).join('')}<td>${o.status === 'serve' && !isRuler ? o.loyalty : o.status === 'free' ? '在野' : '－'}</td>${opts.extra ? `<td>${opts.extra(o)}</td>` : ''}</tr>`;
     }).join('');
-    return `<table><tr><th>武将</th><th>統</th><th>武</th><th>知</th><th>政</th><th>魅</th><th>忠</th>${opts.extraHead ? `<th>${opts.extraHead}</th>` : ''}</tr>${rows || '<tr><td colspan="8" class="sub">いない</td></tr>'}</table>`;
+    const th = (k, t) => `<th title="${STAT[k] || '忠誠'}">${icon('stat/' + k)}${t}</th>`;
+    return `<table><tr><th>武将</th>${th('lead', '統')}${th('war', '武')}${th('int', '知')}${th('pol', '政')}${th('cha', '魅')}${th('loyalty', '忠')}${opts.extraHead ? `<th>${opts.extraHead}</th>` : ''}</tr>${rows || '<tr><td colspan="8" class="sub">いない</td></tr>'}</table>`;
   }
-  function stat(label, v, max) { return `<div><span>${label}</span>${v}${max ? '/' + max : ''}${max ? `<div class="bar"><i style="width:${Math.min(100, v / max * 100)}%"></i></div>` : ''}</div>`; }
+  function stat(id, label, v, max) { return `<div><span>${icon('stat/' + id)}${label}</span>${v}${max ? '/' + max : ''}${max ? `<div class="bar"><i style="width:${Math.min(100, v / max * 100)}%"></i></div>` : ''}</div>`; }
 
   function renderCity() {
     const box = $('city');
@@ -93,18 +119,18 @@
     const free = SG.freeIn(s, c.id).filter(o => o.found);
     const color = c.owner ? s.forces[c.owner].color : '#777';
     let h = `<h2><span class="chip" style="background:${color}"></span>${esc(c.id)}<span class="sub">${esc(SG.data.cities.find(x => x.id === c.id).province)}・${esc(SG.forceName(s, c.owner))}</span></h2>`;
-    h += `<div class="stats">${stat('人口', man(c.pop))}${stat('金', c.gold)}${stat('兵糧', c.food)}${stat('兵士', c.troops)}${stat('訓練', c.training, 100)}${stat('治安', c.order, 100)}${stat('農業', c.agri, c.agriMax)}${stat('商業', c.comm, c.commMax)}${stat('城壁', c.def, c.defMax)}</div>`;
+    h += `<div class="stats">${stat('pop', '人口', man(c.pop))}${stat('gold', '金', c.gold)}${stat('food', '兵糧', c.food)}${stat('troops', '兵士', c.troops)}${stat('training', '訓練', c.training, 100)}${stat('order', '治安', c.order, 100)}${stat('agri', '農業', c.agri, c.agriMax)}${stat('comm', '商業', c.comm, c.commMax)}${stat('def', '城壁', c.def, c.defMax)}</div>`;
     h += `<div class="sub">隣：${SG.adj(c.id).map(id => esc(id)).join('・')}</div>`;
     if (mine && !s.over) {
       const idle = offs.filter(o => !o.acted).length;
-      const b = (cmd, label, need = true) => `<button data-cmd="${cmd}" ${need && !idle ? 'disabled' : ''}>${label}</button>`;
+      const b = (cmd, label, need = true) => `<button data-cmd="${cmd}" ${need && !idle ? 'disabled' : ''}>${icon('cmd/' + cmd, 'cico')}${label}</button>`;
       h += `<h3>命令（行動できる武将 ${idle}人）</h3><div class="cmds">
         <div class="group">内政</div>${b('agri', '開墾')}${b('comm', '商業')}${b('def', '城壁')}${b('order', '治安')}
         <div class="group">軍事</div>${b('recruit', '徴兵')}${b('train', '訓練')}${b('attack', '出陣')}${b('move', '移動', false)}
         <div class="group">人事・その他</div>${b('search', '探索')}${b('employ', '登用')}${b('reward', '褒美', false)}${b('trade', '売買', false)}
-      </div><label class="toggle"><input type="checkbox" id="delegate" ${c.delegate ? 'checked' : ''}>委任（月の終わりにAIが内政・軍事を行う）</label>`;
+      </div><label class="toggle"><input type="checkbox" id="delegate" ${c.delegate ? 'checked' : ''}>${icon('cmd/delegate')}委任（月の終わりにAIが内政・軍事を行う）</label>`;
     }
-    h += `<h3>武将（${offs.length}人）</h3>` + statsTable(offs, { showActed: mine, extraHead: mine ? '行動' : '', extra: mine ? o => o.acted ? '済' : '' : null });
+    h += `<h3>武将（${offs.length}人）</h3>` + statsTable(offs, { showActed: mine, extraHead: mine ? '行動' : '', extra: mine ? o => o.acted ? icon('stat/acted', 'ico', '済') : '' : null });
     if (free.length) h += `<h3>在野（見つけた人物）</h3>` + statsTable(free);
     box.innerHTML = h;
     for (const btn of box.querySelectorAll('[data-cmd]')) btn.addEventListener('click', () => openCommand(btn.dataset.cmd));
@@ -259,12 +285,13 @@
     const mineAtk = rep.atkForce === s.player;
     const won = mineAtk ? rep.win : !rep.win;
     const head = mineAtk ? `${esc(rep.from)}から${esc(rep.to)}へ出陣` : `${esc(SG.forceName(s, rep.atkForce))}が${esc(rep.to)}へ攻めてきた！`;
-    const lines = rep.lines.map(l => `<div class="${/一騎打ち|合目|勝負|の勝ち/.test(l) ? 'duel' : /火計/.test(l) ? 'fire' : ''}">${esc(l)}</div>`).join('');
-    modal(`<h2>${esc(rep.date)} ${head}</h2><div class="result ${won ? 'win' : 'lose'}">${mineAtk ? (rep.win ? '落城させた！' : '攻略失敗') : (rep.win ? `${esc(rep.to)}を奪われた……` : '守りきった！')}</div><div class="report">${lines}</div><div class="actions"><button data-close class="primary">閉じる</button></div>`);
+    const lines = rep.lines.map(l => `<div class="${/一騎打ち|合目|勝負|の勝ち/.test(l) ? 'duel' : /火計/.test(l) ? 'fire' : ''}">${lineIcon(l)}${esc(l)}</div>`).join('');
+    const big = rep.win ? 'event/fall' : mineAtk ? 'event/rout' : 'event/hold';
+    modal(`<h2>${esc(rep.date)} ${head}</h2><div class="result ${won ? 'win' : 'lose'}">${icon(big, 'big')}${mineAtk ? (rep.win ? '落城させた！' : '攻略失敗') : (rep.win ? `${esc(rep.to)}を奪われた……` : '守りきった！')}</div><div class="report">${lines}</div><div class="actions"><button data-close class="primary">閉じる</button></div>`);
   }
   function showCaptives() {
     const list = s.captives.map(id => s.officers[id]);
-    modal(`<h2>捕虜の処遇</h2><p class="sub">登用は断られることがある（断られたら解放）。決めずに月を終えると解放する</p>${statsTable(list, { extraHead: '処遇', extra: o => `<button data-act="employ" data-id="${esc(o.id)}">登用 ${Math.round(SG.captiveChance(s, o) * 100)}%</button> <button data-act="release" data-id="${esc(o.id)}">解放</button> <button data-act="execute" data-id="${esc(o.id)}">処断</button>` })}<div class="msg" id="msg"></div><div class="actions"><button data-close>あとで</button></div>`, box => {
+    modal(`<h2>${icon('event/capture', 'hico')}捕虜の処遇</h2><p class="sub">登用は断られることがある（断られたら解放）。決めずに月を終えると解放する</p>${statsTable(list, { extraHead: '処遇', extra: o => `<button data-act="employ" data-id="${esc(o.id)}">登用 ${Math.round(SG.captiveChance(s, o) * 100)}%</button> <button data-act="release" data-id="${esc(o.id)}">解放</button> <button data-act="execute" data-id="${esc(o.id)}">処断</button>` })}<div class="msg" id="msg"></div><div class="actions"><button data-close>あとで</button></div>`, box => {
       for (const b of box.querySelectorAll('[data-act]')) b.addEventListener('click', () => {
         const r = SG.decideCaptive(s, b.dataset.id, b.dataset.act); save();
         $('modal').hidden = true; render();
@@ -328,6 +355,7 @@
   function init() {
     drawMap();
     $('btn-end').addEventListener('click', endTurn);
+    for (const [id, ic] of [['btn-forces', 'cmd/forces'], ['btn-officers', 'cmd/officers']]) $(id).insertAdjacentHTML('afterbegin', icon(ic));
     $('btn-forces').addEventListener('click', () => s && showForces());
     $('btn-officers').addEventListener('click', () => s && showOfficers());
     $('btn-log').addEventListener('click', () => s && showLog());
