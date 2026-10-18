@@ -194,6 +194,25 @@ U2 ボタンの枠：
 では U1 から始めてください。
 ```
 
+## ブロック7：マス戦闘の地形（B1）・部隊の駒（B2）
+いまは色のついた六角形と字（林・山・門）で表示している。これを絵にする。
+```
+これから歴史シミュレーションゲーム（古代中国・後漢末〜三国時代）の戦場の部品を作ってもらいます。ルールを守ってください。
+- 1回の返事で作る絵は1枚だけ
+- 画風：中国の古地図と山水画（水墨に淡い彩色）。真上から少し斜めに見下ろした絵。差し色は金と朱
+- 文字を入れない。市販のゲーム（「三國志」シリーズなど）の戦場や駒に似せない
+
+B1 地形の六角形シート：
+- 正方形 1024×1024 を 4列×4行のマス（1マス256×256）に分け、各マスに「とがった頭が上の六角形」（幅222px・高さ256px、マスいっぱい）を1つずつ描く。六角形の外は透明（できなければ真っ黒）
+- 六角形どうしを並べてつなげるので、ふちに太い線や影をつけない
+- 順番（左上から右へ）：1 平地（乾いた草地）2 森 3 山 4 川（水面）5 橋（川に木の橋）6 城内（石畳と小さな家）7 本陣（大きな楼閣を真上から）8 城門（閉じた門と門楼）9 壊れた城門（崩れて煙）10 城壁（石の壁を上から）11〜16 は空ける
+
+B2 部隊の駒：
+- 正方形 1024×1024 を 2列×2行（1マス512×512）に分け、各マスの真ん中に円い駒を1つ。背景は透明
+- 1 歩兵の駒（盾と槍の兵の小さな隊列を上から）2 騎兵の駒（馬の隊列）3 弓兵の駒 4 総大将の駒（大きな旗と鎧の将）
+- 駒のふちは白い円（ゲームが勢力の色を重ねる）。中の兵は無彩色〜淡い色で描く
+```
+
 ---
 
 ## 受け取る側（Claude Code）のメモ
@@ -205,6 +224,8 @@ U2 ボタンの枠：
 | K1 命令 | `sangoku/assets/cmd/<id>.png` | `--grid 4x4 --names agri,comm,def,order,recruit,train,attack,move,search,employ,reward,trade,delegate,captives,forces,officers`（id は `src/ui.js` の `data-cmd` と同じ） |
 | S1 数値 | `sangoku/assets/stat/<id>.png` | `--grid 4x4 --names pop,gold,food,troops,training,order,agri,comm,def,lead,war,int,pol,cha,loyalty,acted` |
 | E1 出来事 | `sangoku/assets/event/<id>.png` | `--grid 4x4 --names duel,fire,fall,hold,capture,rout,destroyed,comeofage,death,plague,flood,locust,harvest,alliance,plot,envoy` |
+| B1 地形 | `sangoku/assets/battle/<id>.webp` | `--grid --names plain,forest,mountain,river,bridge,town,keep,gate,broken,wall`。`data/tactics.js` の terrain に絵の場所を足して、`src/battle-ui.js` で六角形を絵にする |
+| B2 駒 | `sangoku/assets/battle/unit_*.webp` | `--cols 2 --grid --names unit_foot,unit_horse,unit_bow,unit_general` |
 | U1・U2 枠 | `sangoku/assets/ui/frame.webp`・`button.webp` | CSS の `border-image`（9分割）で使う |
 
 - 背景が真っ黒で返ってきたときは `--bg black`、白と灰の市松模様（透明のふり）のときは `--bg checker` をつける

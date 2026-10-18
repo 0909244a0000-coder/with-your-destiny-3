@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '../sangoku');
-const files = ['data/rules.js', 'data/cities.js', 'data/officers.js', 'data/scenarios.js', 'data/art.js', 'src/game.js'];
+const files = ['data/rules.js', 'data/cities.js', 'data/officers.js', 'data/scenarios.js', 'data/art.js', 'data/tactics.js', 'src/game.js', 'src/tactics.js'];
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 for (const f of files) assert.ok(html.includes(`src="${f}"`), `index.html が ${f} を読み込んでいない`);
 const ctx = {};
@@ -52,6 +52,53 @@ s.cities['零陵'].owner = null;
 const o = s.officers['黄忠'];
 r = SG.exec(s, 'move', { city: '長沙', to: '零陵', officers: ['黄忠'], troops: 1000 });
 assert.ok(r.ok && s.cities['零陵'].owner === '劉表' && o.city === '零陵', '空白地へ移動すると占領');
+
+// マス戦闘：両軍AIで決着まで。兵の数がおかしくならず、勝てば城が移る
+for (let seed = 1; seed <= 12; seed++) {
+  const t = SG.newGame('s194', '曹操', seed);
+  const r = SG.exec(t, 'attack', { city: '陳留', to: '河内', mode: 'tactics', units: [{ officer: '夏侯惇', troops: 8000 }, { officer: '典韋', troops: 5000 }, { officer: '郭嘉', troops: 4000 }] });
+  assert.ok(r.ok && r.tactics && t.battle, r.msg);
+  const T = t.battle;
+  assert.strictEqual(T.tiles.filter(x => x === 'keep').length, 1, '本陣が1つ');
+  assert.ok(Object.keys(T.gates).length === 2, '城門が2つ');
+  // プレイヤーの操作：動けるマスへ動いて待機
+  const u = SG.tactics.byUid(T, 'atk:0');
+  const to = [...SG.tactics.reachable(t, T, u).keys()].find(i => i !== u.pos);
+  assert.ok(SG.tactics.move(t, T, 'atk:0', to).ok, '移動できる');
+  assert.ok(!SG.tactics.move(t, T, 'atk:0', to).ok, '2回は動けない');
+  assert.ok(SG.tactics.act(t, T, 'atk:0', 'wait').ok);
+  SG.tactics.endTurn(t, T);
+  assert.ok(T.over || T.phase === 'atk', '相手の番のあとは自分の番');
+  SG.tactics.auto(t, T);
+  assert.ok(T.over && T.day <= SG.data.tactics.maxDays, '決着する');
+  const rep = SG.tactics.finish(t, T);
+  assert.strictEqual(t.battle, null);
+  assert.strictEqual(t.cities['河内'].owner, rep.win ? '曹操' : '張楊');
+  assert.ok(Number.isFinite(t.cities['河内'].troops) && t.cities['河内'].troops >= 0 && t.cities['陳留'].troops >= 0);
+  JSON.parse(JSON.stringify(t));
+}
+// 攻められたら止まる（プレイヤーが迎え撃つ）→ 決着のあと、つづきから月を進める
+{
+  const t = SG.newGame('s194', '劉備', 7);
+  t.interactive = true;
+  let battles = 0;
+  for (let m = 0; m < 12 * 4 && !t.over; m++) {
+    SG.startEndTurn(t);
+    let res = SG.runEndTurn(t);
+    while (res === 'battle') {
+      battles++;
+      const T = JSON.parse(JSON.stringify(t.battle)); // セーブしても続けられる
+      t.battle = T;
+      assert.strictEqual(T.playerSide, 'def');
+      SG.tactics.auto(t, T); SG.tactics.finish(t, T);
+      res = SG.runEndTurn(t);
+    }
+    for (const id of t.captives.slice()) SG.decideCaptive(t, id, 'release');
+    assert.ok(!t.turnQueue, '月の終わりが最後まで進む');
+  }
+  console.log(`迎え撃った戦：${battles}回（4年）`);
+  assert.ok(battles > 0, 'AIがプレイヤーの都市を攻めてくる');
+}
 
 // 数十年の自動進行（全勢力AI。プレイヤーも委任）
 function check(s, label) {
@@ -110,8 +157,17 @@ for (const seed of [1, 2, 3]) {
   assert.ok((await vb())[0] !== v2[0], 'ミニマップで移動する');
   await pg.click('#zoom-all'); assert.ok((await vb())[3] >= 1024, '全体に戻す');
   await pg.click('[data-cmd="comm"]'); await pg.click('tr.pick');
-  await pg.click('[data-cmd="attack"]'); await pg.click('[data-to]'); await pg.click('#go'); await closeAll();
-  for (let i = 0; i < 12 && await pg.isEnabled('#btn-end'); i++) { await pg.click('#btn-end'); await closeAll(); }
+  await pg.click('[data-cmd="attack"]'); await pg.click('[data-to]'); await pg.click('#go');
+  assert.ok(await pg.isVisible('#battle'), 'マス戦闘の画面が開く');
+  pg.on('dialog', d => d.accept());
+  await pg.click('#b-auto'); await pg.click('#b-close');
+  assert.ok(!(await pg.isVisible('#battle')), 'マス戦闘の画面が閉じる');
+  await closeAll();
+  for (let i = 0; i < 12 && await pg.isEnabled('#btn-end'); i++) {
+    await pg.click('#btn-end');
+    if (await pg.isVisible('#b-auto')) { await pg.click('#b-auto'); await pg.click('#b-close'); }
+    await closeAll();
+  }
   const date = await pg.evaluate(() => SG.ui.state.year * 100 + SG.ui.state.month);
   await pg.reload();
   assert.strictEqual(await pg.evaluate(() => SG.ui.state.year * 100 + SG.ui.state.month), date, '再読み込みでセーブから続く');

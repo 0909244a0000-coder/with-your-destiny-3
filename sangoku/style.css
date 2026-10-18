@@ -104,6 +104,35 @@ th .ico { width: 15px; height: 15px; margin-right: 1px; }
 .cmds button { display: flex; align-items: center; justify-content: center; padding: 3px 0; white-space: nowrap; border-width: 3px 9px; border-image-width: 3px 9px; }
 .cmds .cico { width: 22px; height: 22px; margin-right: 2px; }
 #log .ico, .report .ico { width: 20px; height: 20px; }
+/* マス戦闘 */
+#battle { position: fixed; inset: 0; z-index: 8; background: #0d1018 url(assets/ui/silk.webp); display: flex; flex-direction: column; }
+#battle[hidden] { display: none; }
+#b-top { padding: 8px 14px; border-bottom: 2px solid var(--line); background: linear-gradient(#2a2216, #1a160f); font-size: 16px; }
+#b-top b { color: var(--gold); font-size: 20px; margin-right: 8px; }
+#b-main { flex: 1; display: flex; min-height: 0; }
+#b-field { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 8px; }
+#b-svg { width: 100%; height: 100%; }
+#b-svg .hex polygon { stroke: rgba(0, 0, 0, .35); stroke-width: 1; }
+#b-svg .hex { cursor: pointer; }
+#b-svg .glyph { font-size: 18px; text-anchor: middle; fill: rgba(0, 0, 0, .45); pointer-events: none; }
+#b-svg .t-wall { stroke: #1e1a16 !important; stroke-width: 2 !important; }
+#b-svg .reach { fill: rgba(80, 160, 255, .38); stroke: #9fd0ff; stroke-width: 1.5; pointer-events: none; }
+#b-svg .hex .aim { fill: rgba(255, 70, 50, .35); stroke: #ff7a5a; stroke-width: 2; pointer-events: none; }
+#b-svg .unit { cursor: pointer; }
+#b-svg .unit .tok { stroke: #000; stroke-width: 2; }
+#b-svg .unit.ally .tok { stroke: #f5f0e0; stroke-width: 2.5; }
+#b-svg .unit.foe .tok { stroke: #b0191e; stroke-width: 4; }
+#b-svg .unit .cmdr { fill: none; stroke: var(--gold); stroke-width: 3; stroke-dasharray: 5 3; }
+#b-svg .unit.sel .tok { stroke: #fff; stroke-width: 4; }
+#b-svg .unit.aim .tok { stroke: #ff5a3a; stroke-width: 4; }
+#b-svg .unit.done { opacity: .55; }
+#b-svg .uname { font-size: 13px; font-weight: bold; text-anchor: middle; fill: #fff; paint-order: stroke; stroke: #000; stroke-width: 3px; pointer-events: none; }
+#b-side { width: 340px; overflow: auto; padding: 10px 12px; border-left: 2px solid var(--line); background: rgba(10, 13, 20, .6); }
+#b-side h2 { color: var(--bad); }
+.b-phase { padding: 6px 8px; background: rgba(217, 180, 90, .15); border: 1px solid var(--line); margin-bottom: 6px; }
+.b-acts { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.b-acts button.on { filter: brightness(1.6); color: #fff; }
+.b-log { max-height: 220px; font-size: 13px; }
 @media (max-width: 900px) {
   main { flex-direction: column; }
   #map-wrap { flex: none; height: 55vh; }

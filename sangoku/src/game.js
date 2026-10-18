@@ -194,8 +194,8 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       if (!d.owner) { d.owner = c.owner; msg += `（${to}を占領）`; log(s, `${forceName(s, c.owner)}が${to}を占領した`, 'war'); }
       return ok(msg);
     },
-    // units: [{officer, troops}]
-    attack(s, { city, to, units }) {
+    // units: [{officer, troops}]。mode 'tactics' ならマス戦闘を始める（s.battle。決着は src/tactics.js）
+    attack(s, { city, to, units, mode }) {
       const c = s.cities[city], d = s.cities[to];
       if (!c || !d || !adj(city).includes(to)) return ng('隣の都市ではない');
       if (!d.owner) return commands.move(s, { city, to, officers: units.map(u => u.officer), troops: units.reduce((a, u) => a + (u.troops || 0), 0) });
@@ -208,6 +208,10 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       const foodNeed = Math.ceil(total * R().foodPerTroop * R().march.foodMonths);
       if (c.food < foodNeed) return ng(`兵糧が足りない（${foodNeed}必要）`);
       c.food -= foodNeed;
+      if (mode === 'tactics' && SG.tactics) {
+        s.battle = SG.tactics.create(s, prepareBattle(s, city, to, units), c.owner === s.player ? 'atk' : 'def');
+        return ok(`${to}へ出陣！`, { tactics: true });
+      }
       const report = battle(s, city, to, units);
       return ok(report.win ? `${to}を攻め落とした！` : `${to}を落とせなかった`, { report });
     },
@@ -224,141 +228,155 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   }
 
   // ---------- 戦争 ----------
-  function unitPower(u, training) {
-    const o = u.officer;
+  function unitPower(s, u, training) {
+    const o = u.officer && s.officers[u.officer];
     const lead = o ? o.lead : 40, war = o ? o.war : 40;
     return u.troops * (lead * 0.6 + war * 0.4) / 100 * (0.6 + training / 250);
   }
 
-  function battle(s, fromId, toId, orders) {
+  // 戦争は 3段階：prepareBattle（両軍をそろえる）→ autoBattle か マス戦闘（src/tactics.js）→ finishBattle（結果を反映）
+  // B（戦の記録）はセーブできる素のデータ。部隊 { officer: 武将のid か null, troops, start, side, captured }
+  function prepareBattle(s, fromId, toId, orders) {
     const r = R(), from = s.cities[fromId], to = s.cities[toId];
     const atkForce = from.owner, defForce = to.owner;
-    const lines = [];
-    const atk = orders.map(u => ({ officer: s.officers[u.officer], troops: u.troops, start: u.troops, side: 'atk' }));
+    const atk = orders.map(u => ({ officer: u.officer, troops: u.troops, start: u.troops, side: 'atk' }));
     from.troops -= atk.reduce((a, u) => a + u.troops, 0);
-    for (const u of atk) u.officer.acted = true;
-    // 守備側：統率の高い順に最大5人で兵を分ける
-    const defOff = officersIn(s, toId, defForce).sort((a, b) => b.lead - a.lead).slice(0, r.maxUnits);
+    for (const u of atk) s.officers[u.officer].acted = true;
+    // 守備側：統率の高い順に最大5人で兵を分ける（君主がいれば総大将として先頭）
+    const lord = defForce && s.forces[defForce].ruler;
+    const defOff = officersIn(s, toId, defForce).sort((a, b) => (b.id === lord) - (a.id === lord) || b.lead - a.lead).slice(0, r.maxUnits);
     let def = [];
     if (to.troops > 0) {
       if (defOff.length) {
         const sum = defOff.reduce((a, o) => a + o.lead, 0);
-        def = defOff.map(o => ({ officer: o, troops: Math.floor(to.troops * o.lead / sum), side: 'def' }));
+        def = defOff.map(o => ({ officer: o.id, troops: Math.floor(to.troops * o.lead / sum), side: 'def' }));
         def[0].troops += to.troops - def.reduce((a, u) => a + u.troops, 0);
       } else def = [{ officer: null, troops: to.troops, side: 'def' }];
       for (const u of def) u.start = u.troops;
     }
     to.troops = 0;
-    const name = u => u.officer ? u.officer.id : '守備兵';
-    lines.push(`${forceName(s, atkForce)}（${atk.map(name).join('・')} 兵${atk.reduce((a, u) => a + u.troops, 0)}）が${toId}へ攻め込んだ。`);
-    lines.push(`迎え撃つ${forceName(s, defForce)}：${def.length ? def.map(name).join('・') + ' 兵' + def.reduce((a, u) => a + u.troops, 0) : 'なし'}`);
-    const captives = [];
-    const routed = [];
-    const alive = side => side.filter(u => u.troops > 0);
-    const defBonus = 1 + to.def / r.defDiv;
-    const atkTrain = from.training, defTrain = to.training;
+    const B = { from: fromId, to: toId, atkForce, defForce, atk, def, atkTrain: from.training, defTrain: to.training, lines: [], day: 0, win: null };
+    B.lines.push(`${forceName(s, atkForce)}（${atk.map(u => unitName(s, u)).join('・')} 兵${atk.reduce((a, u) => a + u.troops, 0)}）が${toId}へ攻め込んだ。`);
+    B.lines.push(`迎え撃つ${forceName(s, defForce)}：${def.length ? def.map(u => unitName(s, u)).join('・') + ' 兵' + def.reduce((a, u) => a + u.troops, 0) : 'なし'}`);
+    return B;
+  }
+  const unitName = (s, u) => u.officer ? u.officer : '守備兵';
+  const aliveUnits = list => list.filter(u => u.troops > 0);
 
-    function rout(u, why) {
-      u.troops = 0;
-      routed.push(u);
-      if (!u.officer) return;
-      const fid = u.side === 'atk' ? atkForce : defForce;
-      const isRuler = s.forces[fid].ruler === u.officer.id;
-      if (u.side === 'atk' && (isRuler || rand(s) >= r.captureRate)) { lines.push(`${u.officer.id}隊は${why || '壊滅'}し、${fromId}へ退いた。`); return; }
-      if (u.side === 'def' && (isRuler || rand(s) >= r.captureRate)) { lines.push(`${u.officer.id}隊は${why || '壊滅'}し、城内へ退いた。`); return; }
-      lines.push(`${u.officer.id}隊は${why || '壊滅'}。${u.officer.id}は捕らえられた！`);
-      captives.push(u.officer);
-      u.captured = true;
-    }
+  // 部隊が崩れる。武将は逃げるか捕まる（君主は必ず逃げる）
+  function routUnit(s, B, u, why, lines) {
+    const r = R();
+    lines = lines || B.lines;
+    u.troops = 0;
+    if (!u.officer) { lines.push(`守備兵は${why || '壊滅'}した。`); return; }
+    const fid = u.side === 'atk' ? B.atkForce : B.defForce;
+    const isRuler = s.forces[fid].ruler === u.officer;
+    if (isRuler || rand(s) >= r.captureRate) { lines.push(`${u.officer}隊は${why || '壊滅'}し、${u.side === 'atk' ? B.from + 'へ' : '城内へ'}退いた。`); return; }
+    lines.push(`${u.officer}隊は${why || '壊滅'}。${u.officer}は捕らえられた！`);
+    u.captured = true;
+  }
 
+  // 計算だけで決着をつける（AIどうし・自動）
+  function autoBattle(s, B) {
+    const r = R(), to = s.cities[B.to], lines = B.lines;
+    const { atk, def } = B;
+    const O = u => s.officers[u.officer];
     // 一騎打ち
     if (def.length && def[0].officer && rand(s) < r.duelChance) {
-      const a = atk.slice().sort((x, y) => y.officer.war - x.officer.war)[0];
-      const d = def.filter(u => u.officer).sort((x, y) => y.officer.war - x.officer.war)[0];
-      const weaker = d.officer.war < a.officer.war ? d : a;
-      if (weaker === d && rand(s) < 0.5) lines.push(`${a.officer.id}が一騎打ちを挑んだが、${d.officer.id}は応じなかった。`);
+      const a = atk.slice().sort((x, y) => O(y).war - O(x).war)[0];
+      const d = def.filter(u => u.officer).sort((x, y) => O(y).war - O(x).war)[0];
+      const weaker = O(d).war < O(a).war ? d : a;
+      if (weaker === d && rand(s) < 0.5) lines.push(`${a.officer}が一騎打ちを挑んだが、${d.officer}は応じなかった。`);
       else {
-        const res = duel(s, a.officer, d.officer);
-        lines.push(`一騎打ち！ ${a.officer.id}（武力${a.officer.war}） 対 ${d.officer.id}（武力${d.officer.war}）`);
+        const res = duel(s, O(a), O(d));
+        lines.push(`一騎打ち！ ${a.officer}（武力${O(a).war}） 対 ${d.officer}（武力${O(d).war}）`);
         lines.push(...res.lines);
-        if (res.winner) {
-          const loser = res.winner === a.officer ? d : a;
-          rout(loser, '一騎打ちに敗れて総崩れ');
-        }
+        if (res.winner) routUnit(s, B, res.winner === O(a) ? d : a, '一騎打ちに敗れて総崩れ');
       }
     }
-
+    const defBonus = 1 + to.def / r.defDiv;
     let day = 0;
-    while (day < r.battleDays && alive(atk).length && alive(def).length) {
+    while (day < r.battleDays && aliveUnits(atk).length && aliveUnits(def).length) {
       day++;
       // 計略（知力の高い武将が火計を仕掛ける）
       for (const [side, other] of [[atk, def], [def, atk]]) {
-        const sage = alive(side).filter(u => u.officer).sort((x, y) => y.officer.int - x.officer.int)[0];
-        if (!sage || rand(s) >= sage.officer.int / r.stratDiv) continue;
-        const targets = alive(other); if (!targets.length) continue;
+        const sage = aliveUnits(side).filter(u => u.officer).sort((x, y) => O(y).int - O(x).int)[0];
+        if (!sage || rand(s) >= O(sage).int / r.stratDiv) continue;
+        const targets = aliveUnits(other); if (!targets.length) continue;
         const t = pick(s, targets);
-        const wit = t.officer ? t.officer.int : 30;
-        if (rand(s) < sage.officer.int / (sage.officer.int + wit)) {
+        const wit = t.officer ? O(t).int : 30;
+        if (rand(s) < O(sage).int / (O(sage).int + wit)) {
           const loss = Math.max(1, Math.floor(t.troops * range(s, 0.08, 0.15)));
           t.troops -= loss;
-          lines.push(`${day}日目：${sage.officer.id}の火計！ ${name(t)}隊 -${loss}`);
-          if (t.troops <= 0) rout(t);
-        } else lines.push(`${day}日目：${sage.officer.id}の火計は${name(t)}に見破られた。`);
+          lines.push(`${day}日目：${sage.officer}の火計！ ${unitName(s, t)}隊 -${loss}`);
+          if (t.troops <= 0) routUnit(s, B, t);
+        } else lines.push(`${day}日目：${sage.officer}の火計は${unitName(s, t)}に見破られた。`);
       }
       // ぶつかり合い（同時に計算してから減らす）
       const dmg = new Map();
       const hit = (u, others, train, scale) => {
-        const ts = alive(others); if (!ts.length) return;
+        const ts = aliveUnits(others); if (!ts.length) return;
         const t = pick(s, ts);
-        dmg.set(t, (dmg.get(t) || 0) + unitPower(u, train) * r.battleK * range(s, 0.8, 1.2) * scale);
+        dmg.set(t, (dmg.get(t) || 0) + unitPower(s, u, train) * r.battleK * range(s, 0.8, 1.2) * scale);
       };
-      for (const u of alive(atk)) hit(u, def, atkTrain, 1 / defBonus);
-      for (const u of alive(def)) hit(u, atk, defTrain, 1);
-      for (const [t, v] of dmg) { if (t.troops <= 0) continue; t.troops -= Math.max(1, Math.round(v)); if (t.troops <= 0) rout(t); }
+      for (const u of aliveUnits(atk)) hit(u, def, B.atkTrain, 1 / defBonus);
+      for (const u of aliveUnits(def)) hit(u, atk, B.defTrain, 1);
+      for (const [t, v] of dmg) { if (t.troops <= 0) continue; t.troops -= Math.max(1, Math.round(v)); if (t.troops <= 0) routUnit(s, B, t); }
     }
-    const win = alive(def).length === 0 && alive(atk).length > 0;
-    const atkLeft = alive(atk).reduce((a, u) => a + u.troops, 0);
-    const defLeft = alive(def).reduce((a, u) => a + u.troops, 0);
-    lines.push(`${day}日で決着：攻撃側 残り${atkLeft}／守備側 残り${defLeft}`);
+    B.day = day;
+    B.win = aliveUnits(def).length === 0 && aliveUnits(atk).length > 0;
+    return B;
+  }
 
+  // 結果を反映する（城の持ち主・兵・逃げる武将・捕虜・報告）
+  function finishBattle(s, B) {
+    const r = R(), from = s.cities[B.from], to = s.cities[B.to];
+    const { atkForce, defForce, win, lines } = B;
+    const atkLeft = aliveUnits(B.atk).reduce((a, u) => a + u.troops, 0);
+    const defLeft = aliveUnits(B.def).reduce((a, u) => a + u.troops, 0);
+    lines.push(`${B.day}日で決着：攻撃側 残り${atkLeft}／守備側 残り${defLeft}`);
+    const captives = [...B.atk, ...B.def].filter(u => u.captured).map(u => s.officers[u.officer]);
     const capturedIds = new Set(captives.map(o => o.id));
     if (win) {
       to.owner = atkForce;
       to.troops = atkLeft;
-      to.training = atkTrain;
+      to.training = B.atkTrain;
       to.order = Math.max(0, to.order - r.conquestOrderLoss);
-      for (const u of atk) if (!capturedIds.has(u.officer.id) && u.troops > 0) u.officer.city = toId;
-      // 敗走した攻撃側の武将は元の都市へ（すでに city=from）
-      // 城内に残る守備側の武将：逃げるか捕まる
-      const escape = adj(toId).filter(id => s.cities[id].owner === defForce && defForce);
+      for (const u of B.atk) if (!u.captured && u.troops > 0) s.officers[u.officer].city = B.to;
+      // 敗走した攻撃側の武将は元の都市へ（すでに city=from）。城内に残る守備側の武将：逃げるか捕まる
+      const escape = adj(B.to).filter(id => s.cities[id].owner === defForce && defForce);
       const others = defForce ? citiesOf(s, defForce) : [];
-      for (const o of officersIn(s, toId, defForce)) {
+      for (const o of officersIn(s, B.to, defForce)) {
         if (capturedIds.has(o.id)) continue;
         const isRuler = defForce && s.forces[defForce].ruler === o.id;
         if (escape.length && (isRuler || rand(s) < r.fleeRate)) { o.city = pick(s, escape); lines.push(`${o.id}は${o.city}へ逃れた。`); }
         else if (isRuler && others.length) { o.city = pick(s, others).id; lines.push(`${o.id}は${o.city}へ落ち延びた。`); }
         else { captives.push(o); capturedIds.add(o.id); lines.push(`${o.id}は捕らえられた。`); }
       }
-      lines.push(`${toId}は${forceName(s, atkForce)}のものとなった。`);
+      lines.push(`${B.to}は${forceName(s, atkForce)}のものとなった。`);
     } else {
-      // 攻撃側は兵を連れて帰る
-      from.troops += atkLeft;
-      to.troops = defLeft;
-      lines.push(alive(atk).length ? `${forceName(s, atkForce)}は兵を引いた。` : `${forceName(s, atkForce)}は撃退された。`);
+      // 攻撃側は兵を連れて帰る（出陣元を失っていたら、自軍の別の都市へ）
+      const home = from.owner === atkForce ? from : citiesOf(s, atkForce)[0];
+      if (home) home.troops += atkLeft;
+      to.troops += defLeft;
+      lines.push(aliveUnits(B.atk).length ? `${forceName(s, atkForce)}は兵を引いた。` : `${forceName(s, atkForce)}は撃退された。`);
     }
     // 攻撃側の武将は守備側の都市へ、守備側の武将は（勝てば）落とした都市・（負ければ）出陣元へ連れていかれる
     for (const o of captives) {
       o.status = 'captive';
       o.captor = o.force === atkForce ? defForce : atkForce;
-      o.city = o.captor === atkForce ? (win ? toId : fromId) : toId;
+      o.city = o.captor === atkForce ? (win ? B.to : B.from) : B.to;
     }
-    const report = { date: dateText(s), from: fromId, to: toId, atkForce, defForce, win, lines, day, captives: captives.map(o => o.id) };
-    log(s, `${forceName(s, atkForce)}が${toId}（${forceName(s, defForce)}）を攻撃：${win ? '落城' : '撃退'}`, 'war');
+    const report = { date: dateText(s), from: B.from, to: B.to, atkForce, defForce, win, lines, day: B.day, captives: captives.map(o => o.id), tactical: !!B.tactical };
+    log(s, `${forceName(s, atkForce)}が${B.to}（${forceName(s, defForce)}）を攻撃：${win ? '落城' : '撃退'}`, 'war');
     if (defForce) afterLoss(s, defForce, report);
     settleCaptives(s, captives);
     if (atkForce === s.player || defForce === s.player) s.reports.push(report);
+    checkEnd(s);
     return report;
   }
+
+  function battle(s, fromId, toId, orders) { return finishBattle(s, autoBattle(s, prepareBattle(s, fromId, toId, orders))); }
 
   function duel(s, a, b) {
     const lines = []; let ha = 100, hb = 100;
@@ -476,7 +494,10 @@ var SG = typeof SG !== 'undefined' ? SG : {};
         const team = idle().sort((a, b) => (b.lead + b.war) - (a.lead + a.war)).slice(0, Math.min(r.maxUnits, idle().length - 1));
         const sum = team.reduce((a, o) => a + o.lead, 0);
         const units = team.map(o => ({ officer: o.id, troops: Math.floor(send * o.lead / sum) }));
-        if (units.every(u => u.troops >= 100)) exec(s, 'attack', { city: cityId, to: target.id, units });
+        // プレイヤーの都市を攻めるときは、プレイヤーがマス戦闘で迎え撃つ（その都市を委任していれば計算で決着）
+        const mode = s.interactive && target.owner === s.player && !target.delegate ? 'tactics' : null;
+        if (units.every(u => u.troops >= 100)) exec(s, 'attack', { city: cityId, to: target.id, units, mode });
+        if (s.battle) return;
       }
     }
     // 人の少ない前線へ武将を回す
@@ -507,27 +528,29 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     }
   }
 
-  function aiForce(s, fid) {
-    for (const c of shuffle(s, citiesOf(s, fid))) {
-      if (!s.forces[fid].alive) return;
-      if (c.owner === fid) aiCity(s, c.id);
-    }
-  }
-
   // ---------- 月の終わり ----------
-  function endTurn(s) {
-    if (s.over) return;
+  // 途中でマス戦闘（プレイヤーが迎え撃つ）が入ると止まり、決着のあと runEndTurn でつづきから進める。
+  // まだ動いていない都市の順番は s.turnQueue に入れておく（セーブにも残る）
+  function endTurn(s) { startEndTurn(s); return runEndTurn(s); }
+  function startEndTurn(s) {
+    if (s.over || s.turnQueue) return;
     if (s.captives.length) for (const id of s.captives.slice()) decideCaptive(s, id, 'release');
-    // プレイヤーの委任都市
-    if (s.player) for (const c of citiesOf(s, s.player)) if (c.delegate) aiCity(s, c.id);
-    // ほかの勢力（毎月順番を変える）
-    for (const fid of shuffle(s, Object.keys(s.forces))) {
-      if (fid === s.player || !s.forces[fid].alive) continue;
-      aiForce(s, fid);
-      if (s.over) return;
+    // プレイヤーの委任都市 → ほかの勢力（毎月順番を変える）
+    s.turnQueue = [{ delegate: true }, ...shuffle(s, Object.keys(s.forces)).filter(f => f !== s.player).map(force => ({ force }))];
+  }
+  function runEndTurn(s) {
+    if (!s.turnQueue) return 'done';
+    while (s.turnQueue.length && !s.battle && !s.over) {
+      const e = s.turnQueue.shift();
+      if (e.delegate) { if (s.player) s.turnQueue.unshift(...citiesOf(s, s.player).filter(c => c.delegate).map(c => ({ city: c.id, force: s.player }))); continue; }
+      if (!e.city) { if (s.forces[e.force].alive) s.turnQueue.unshift(...shuffle(s, citiesOf(s, e.force)).map(c => ({ city: c.id, force: e.force }))); continue; }
+      if (s.cities[e.city].owner === e.force) aiCity(s, e.city);
     }
+    if (s.battle) return 'battle';
+    s.turnQueue = null;
     // AI に攻められてとった捕虜は、次の月にプレイヤーが処遇を決める
-    nextMonth(s);
+    if (!s.over) nextMonth(s);
+    return 'done';
   }
 
   function nextMonth(s) {
@@ -600,6 +623,6 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     return { cities: cs.length, officers: membersOf(s, fid).length, troops: cs.reduce((a, c) => a + c.troops, 0), gold: cs.reduce((a, c) => a + c.gold, 0), food: cs.reduce((a, c) => a + c.food, 0) };
   }
 
-  Object.assign(SG, { rand, newGame, exec, endTurn, nextMonth, aiCity, adj, officersIn, freeIn, citiesOf, membersOf, ruler, forceName, dateText, decideCaptive, captiveChance, forceSummary, defensePower, commands });
+  Object.assign(SG, { rand, range, pick, newGame, exec, endTurn, startEndTurn, runEndTurn, nextMonth, prepareBattle, autoBattle, finishBattle, routUnit, unitPower, unitName, duel, aiCity, adj, officersIn, freeIn, citiesOf, membersOf, ruler, forceName, dateText, decideCaptive, captiveChance, forceSummary, defensePower, commands });
 })();
 if (typeof module !== 'undefined') module.exports = SG;

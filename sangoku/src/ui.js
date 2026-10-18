@@ -313,7 +313,8 @@
         <p class="sub">相手：${esc(SG.forceName(s, d.owner))}　兵${d.troops}・城壁${d.def}・訓練${d.training}・武将${defOffs.length}人（${defOffs.slice(0, 5).map(o => esc(o.id)).join('・')}）</p>
         <p class="sub">出陣する武将（最大${R.maxUnits}人、クリックで選ぶ）。兵は統率の比で分ける</p>${statsTable(list, { pick: true, hi: 'lead', on: chosen })}
         <div class="row"><label>兵</label><input type="range" id="tr" min="0" max="${c.troops}" step="100" value="${Math.floor(c.troops * 0.8 / 100) * 100}"><span id="trv"></span></div>
-        <div class="sub" id="split"></div><div class="msg" id="msg"></div><div class="actions"><button data-close>やめる</button><button id="go" class="primary">出陣する</button></div>`, box => {
+        <div class="sub" id="split"></div><div class="msg" id="msg"></div><div class="actions"><button data-close>やめる</button><button id="go-auto">自動で出陣</button><button id="go" class="primary">指揮して出陣</button></div>
+        <p class="sub">指揮：マスの戦場で部隊を動かして戦う／自動：計算ですぐ決着</p>`, box => {
         const units = () => { const sum = chosen.reduce((a, id) => a + s.officers[id].lead, 0); const n = +$('tr').value; return chosen.map(id => ({ officer: id, troops: Math.floor(n * s.officers[id].lead / sum / 100) * 100 })); };
         const upd = () => { $('trv').textContent = $('tr').value + '人　兵糧' + Math.ceil($('tr').value * R.foodPerTroop * R.march.foodMonths) + 'を使う'; $('split').textContent = units().map(u => `${u.officer} ${u.troops}`).join('　'); };
         for (const tr of box.querySelectorAll('tr.pick')) tr.addEventListener('click', () => {
@@ -322,12 +323,16 @@
           tr.classList.toggle('on', i < 0); upd();
         });
         $('tr').addEventListener('input', upd); upd();
-        $('go').addEventListener('click', () => {
+        const go = mode => {
           if (!chosen.length) { $('msg').textContent = '武将を選んでください'; return; }
-          const r = SG.exec(s, 'attack', { city: c.id, to, units: units() });
+          // 総大将（崩れたら負け）は選んだ順の1人目
+          const r = SG.exec(s, 'attack', { city: c.id, to, units: units(), mode });
           if (!r.ok) { $('msg').textContent = r.msg; return; }
-          closeModal(); afterAction(r);
-        });
+          closeModal();
+          if (r.tactics) openBattle(); else afterAction(r);
+        };
+        $('go').addEventListener('click', () => go('tactics'));
+        $('go-auto').addEventListener('click', () => go(null));
       });
     });
   }
@@ -371,16 +376,34 @@
   function showLog() { modal(`<h2>記録</h2><div class="report">${s.log.slice().reverse().map(l => `<div class="l-${l.kind}">${esc(l.date)} ${esc(l.text)}</div>`).join('')}</div><div class="actions"><button data-close>閉じる</button></div>`); }
 
   // ---------- 月を終える ----------
+  // 月の終わり。AI に攻められたら止まってマス戦闘になり、決着したらつづきから進める
   function endTurn() {
-    if (s.over) return;
+    if (s.over || s.battle) return;
     s.reports = [];
-    SG.endTurn(s);
+    SG.startEndTurn(s);
+    continueTurn();
+  }
+  function continueTurn() {
+    const res = SG.runEndTurn(s);
     save();
-    const reps = s.reports.splice(0);
     render();
-    for (const rep of reps) queue.push(() => showReport(rep));
+    if (res === 'battle') return openBattle();
+    // マス戦闘はその場で見たので、計算で決着した戦だけ報告する
+    for (const rep of s.reports.splice(0).filter(r => !r.tactical)) queue.push(() => showReport(rep));
     if (s.captives.length) queue.push(showCaptives);
     nextQueued();
+  }
+  function openBattle() {
+    SG.battleUI.open(s, {
+      save,
+      onEnd: () => {
+        s.reports = s.reports.filter(r => !r.tactical);
+        render();
+        if (s.turnQueue) return continueTurn();
+        if (s.captives.length) queue.push(showCaptives);
+        nextQueued();
+      },
+    });
   }
 
   // ---------- 始め方 ----------
@@ -392,6 +415,7 @@
       <p class="note">歴史シミュレーションの名作をお手本にした、個人で遊ぶためのファン制作ゲームです。人物は史書・演義の人物で、能力値・絵・文章はこのゲーム独自のものです。</p>`, box => {
       for (const card of box.querySelectorAll('.force-card')) card.addEventListener('click', () => {
         s = SG.newGame(sc.id, card.dataset.f);
+        s.interactive = true; // 攻められたらマス戦闘で迎え撃つ
         sel = s.officers[card.dataset.f].city;
         focusCity(sel, A.view.startZoom);
         save(); $('modal').hidden = true; render();
@@ -423,7 +447,13 @@
     $('btn-captives').addEventListener('click', () => s && s.captives.length && showCaptives());
     $('modal').addEventListener('click', e => { if (e.target === $('modal') && s) closeModal(); });
     const saved = load();
-    if (saved && saved.version === 1 && saved.forces[saved.player]) { s = saved; sel = capitalOf(); render(); focusCity(sel, A.view.startZoom); if (s.captives.length) showCaptives(); }
+    if (saved && saved.version === 1 && saved.forces[saved.player]) {
+      s = saved; s.interactive = true; sel = capitalOf(); render(); focusCity(sel, A.view.startZoom);
+      // 戦の途中・月の終わりの途中でやめていたら、つづきから
+      if (s.battle) openBattle();
+      else if (s.turnQueue) continueTurn();
+      else if (s.captives.length) showCaptives();
+    }
     else startScreen();
   }
   SG.ui = { get state() { return s; }, render, endTurn, startScreen };
