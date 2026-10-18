@@ -1,0 +1,82 @@
+:root {
+  --bg: #11151f; --panel: #1b2130; --panel2: #232b3d; --line: #6b5a32; --gold: #d9b45a; --text: #ece4d0; --dim: #a39a86;
+  --sea: #1d3550; --land: #4b5a3a; --land2: #5d6b45; --river: #5f97c7; --road: rgba(236, 228, 208, .25);
+  --good: #7fd18b; --bad: #ef7d6d; --war: #f0b35a;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); }
+body { display: flex; flex-direction: column; overflow: hidden; }
+button { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--gold); color: #fff; }
+button:disabled { opacity: .4; cursor: default; }
+button.primary { background: #6b2a1f; border-color: var(--gold); font-weight: bold; }
+#top { display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: linear-gradient(#2a2216, #1a160f); border-bottom: 2px solid var(--line); flex-wrap: wrap; }
+.brand { font-size: 22px; font-weight: bold; color: var(--gold); letter-spacing: .2em; }
+#date { font-size: 18px; }
+#me { display: flex; align-items: center; gap: 6px; }
+.spacer { flex: 1; }
+.chip { display: inline-block; width: 12px; height: 12px; border-radius: 2px; border: 1px solid #000; vertical-align: middle; }
+main { flex: 1; display: flex; min-height: 0; }
+#map-wrap { flex: 1; min-width: 0; background: var(--sea); }
+#map { width: 100%; height: 100%; display: block; }
+#map .land { fill: var(--land); stroke: #2b331f; stroke-width: 2; }
+#map .river { fill: none; stroke: var(--river); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+#map .road { stroke: var(--road); stroke-width: 2; stroke-dasharray: 4 4; }
+#map .road.hot { stroke: var(--gold); stroke-width: 3; stroke-dasharray: none; }
+#map .city { cursor: pointer; }
+#map .city rect { stroke: #000; stroke-width: 2; }
+#map .city.sel rect.mark { stroke: #fff; stroke-width: 4; }
+#map .city.target rect.mark { stroke: var(--gold); stroke-width: 4; }
+#map .city text { font-size: 15px; fill: #fff; paint-order: stroke; stroke: #000; stroke-width: 3px; text-anchor: middle; pointer-events: none; }
+#map .city text.small { font-size: 11px; fill: #d8d0bc; }
+#map .capital { fill: var(--gold); stroke: #000; stroke-width: 1; pointer-events: none; }
+#map .rname { font-size: 14px; fill: #9fc4e6; opacity: .8; font-style: italic; }
+#side { width: 400px; display: flex; flex-direction: column; background: var(--panel); border-left: 2px solid var(--line); min-height: 0; }
+#city { flex: 1; overflow: auto; padding: 10px 12px; }
+#log { height: 170px; overflow: auto; border-top: 2px solid var(--line); padding: 6px 10px; font-size: 13px; background: #141925; }
+#log div { padding: 1px 0; }
+.l-war { color: var(--war); } .l-bad { color: var(--bad); } .l-good { color: var(--good); }
+h2 { margin: 0 0 6px; font-size: 22px; color: var(--gold); display: flex; align-items: center; gap: 8px; }
+h3 { margin: 12px 0 4px; font-size: 15px; color: var(--gold); border-bottom: 1px solid var(--line); }
+.sub { color: var(--dim); font-size: 13px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px 10px; font-size: 14px; }
+.stats div span { color: var(--dim); margin-right: 4px; }
+.bar { height: 4px; background: #333; margin-top: 1px; } .bar i { display: block; height: 100%; background: var(--gold); }
+.cmds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.cmds .group { grid-column: 1 / -1; font-size: 12px; color: var(--dim); margin-top: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th { color: var(--dim); font-weight: normal; text-align: right; padding: 2px 4px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+td { text-align: right; padding: 2px 4px; border-bottom: 1px solid #2c3446; }
+th:first-child, td:first-child { text-align: left; }
+tr.done td { color: var(--dim); }
+tr.pick { cursor: pointer; } tr.pick:hover td { background: #3a3220; }
+tr.on td { background: #4a3d1f; }
+td.hi { color: var(--gold); font-weight: bold; }
+.ruler::after { content: "君"; font-size: 10px; margin-left: 3px; padding: 0 2px; border: 1px solid var(--gold); color: var(--gold); border-radius: 2px; }
+.toggle { font-size: 13px; display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+#modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .65); display: flex; align-items: center; justify-content: center; z-index: 10; }
+#modal[hidden] { display: none; }
+#modal-box { background: var(--panel); border: 2px solid var(--gold); border-radius: 6px; padding: 16px 18px; width: min(720px, 94vw); max-height: 90vh; overflow: auto; box-shadow: 0 10px 40px #000; }
+#modal-box h2 { font-size: 20px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+.row label { color: var(--dim); font-size: 14px; }
+input[type=number] { width: 100px; font: inherit; background: #0f131c; color: var(--text); border: 1px solid var(--line); padding: 3px 6px; }
+input[type=range] { width: 220px; }
+.actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.report { font-size: 14px; line-height: 1.6; max-height: 50vh; overflow: auto; background: #10141d; padding: 8px 10px; border: 1px solid var(--line); }
+.report .duel { color: var(--war); }
+.report .fire { color: #ff9d5c; }
+.result { font-size: 22px; text-align: center; margin: 8px 0; font-weight: bold; }
+.result.win { color: var(--good); } .result.lose { color: var(--bad); }
+.forces { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.force-card { border: 1px solid var(--line); border-radius: 4px; padding: 8px; cursor: pointer; background: var(--panel2); }
+.force-card:hover { border-color: var(--gold); }
+.force-card b { font-size: 17px; }
+.note { font-size: 12px; color: var(--dim); margin-top: 10px; line-height: 1.5; }
+.msg { min-height: 1.4em; color: var(--war); font-size: 14px; }
+@media (max-width: 900px) {
+  main { flex-direction: column; }
+  #map-wrap { flex: none; height: 55vh; }
+  #side { width: auto; flex: 1; border-left: none; border-top: 2px solid var(--line); }
+}

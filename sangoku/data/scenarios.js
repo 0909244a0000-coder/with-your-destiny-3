@@ -1,0 +1,40 @@
+// 天下三分：シナリオ（勢力・都市・武将の配置）
+var SG = typeof SG !== 'undefined' ? SG : {};
+SG.data = SG.data || {};
+SG.data.scenarios = [
+  {
+    id: 's194',
+    title: '194年1月 群雄割拠',
+    text: '董卓亡きあと、長安は李傕・郭汜が握り、関東では群雄が覇を競う。徐州は陶謙から劉備へ託され、兗州では曹操と呂布が激突している。',
+    year: 194, month: 1,
+    // 都市の初期値（指定のない都市はこの値。空白地は empty）
+    defaults: { owned: { gold: 500, food: 8000, troops: 8000, training: 50, order: 70 }, empty: { gold: 100, food: 1500, troops: 0, training: 0, order: 50 } },
+    loyalty: { base: 80, spread: 15 },
+    // officers: 都市ごとの所属武将（空白区切り）。1人目が君主（最初の都市）
+    forces: [
+      { ruler: '曹操', color: '#3b6fd6', cities: { 陳留: '曹操 夏侯惇 典韋 郭嘉 程昱 于禁 曹丕', 許昌: '荀彧 荀攸 夏侯淵 楽進 李典 満寵', 譙: '曹仁 曹洪 曹純 許褚' }, loyal: '夏侯惇 夏侯淵 曹仁 曹洪 曹純 典韋 許褚 曹丕', start: { 陳留: { troops: 22000, gold: 900, food: 15000 }, 許昌: { troops: 12000 } } },
+      { ruler: '劉備', color: '#2e9e4f', cities: { 下邳: '劉備 関羽 簡雍 糜竺 孫乾 陳登', 小沛: '張飛 糜芳' }, loyal: '関羽 張飛 簡雍 糜竺 孫乾', start: { 下邳: { troops: 15000, gold: 800, food: 12000 } } },
+      { ruler: '呂布', color: '#8b3fb8', cities: { 濮陽: '呂布 陳宮 張遼 高順 臧覇' }, loyal: '陳宮 高順', start: { 濮陽: { troops: 20000, gold: 600, food: 10000, training: 75 } } },
+      { ruler: '袁紹', color: '#d8b21e', cities: { 鄴: '袁紹 張郃 田豊 沮授 逢紀 許攸 袁尚', 南皮: '顔良 審配 麴義', 平原: '文醜 郭図 袁譚', 晋陽: '高覧 淳于瓊' }, loyal: '袁尚 袁譚 審配 顔良 文醜', start: { 鄴: { troops: 30000, gold: 1500, food: 25000 }, 南皮: { troops: 15000 }, 平原: { troops: 12000 } } },
+      { ruler: '公孫瓚', color: '#c9ccd2', cities: { 薊: '公孫瓚 田楷 関靖', 北平: '趙雲 公孫続' }, loyal: '公孫続 関靖', start: { 薊: { troops: 18000 }, 北平: { troops: 10000 } } },
+      { ruler: '公孫度', color: '#6b7a8f', cities: { 襄平: '公孫度 公孫康' }, loyal: '公孫康', start: { 襄平: { troops: 10000 } } },
+      { ruler: '袁術', color: '#e07a1f', cities: { 寿春: '袁術 張勲 閻象 楊弘', 汝南: '紀霊 橋蕤 雷薄' }, loyal: '', start: { 寿春: { troops: 25000, gold: 1500, food: 20000 }, 汝南: { troops: 12000 } } },
+      { ruler: '孫策', color: '#d23a3a', cities: { 廬江: '孫策 周瑜 程普 黄蓋 韓当 朱治 呂範 張昭 張紘 呂蒙 孫権 凌統' }, loyal: '周瑜 程普 黄蓋 韓当 孫権 呂蒙 凌統 朱治', start: { 廬江: { troops: 12000, training: 70 } } },
+      { ruler: '劉繇', color: '#4aa3a3', cities: { 建業: '劉繇 太史慈 笮融 薛礼 張英' }, loyal: '', start: { 建業: { troops: 14000 } } },
+      { ruler: '厳白虎', color: '#7f6a4d', cities: { 呉: '厳白虎 厳輿' }, loyal: '厳輿', start: {} },
+      { ruler: '王朗', color: '#9aa65a', cities: { 会稽: '王朗 虞翻' }, loyal: '', start: {} },
+      { ruler: '劉表', color: '#2a8c8c', cities: { 襄陽: '劉表 蔡瑁 蒯越 蒯良 張允 劉琦 伊籍', 江夏: '黄祖', 江陵: '文聘 王威', 長沙: '黄忠 韓玄' }, loyal: '劉琦 蔡瑁', start: { 襄陽: { troops: 20000, gold: 1200, food: 20000 }, 江陵: { troops: 12000 } } },
+      { ruler: '張済', color: '#a05a7a', cities: { 宛: '張済 張繍 賈詡 胡車児' }, loyal: '張繍', start: { 宛: { troops: 12000 } } },
+      { ruler: '李傕', color: '#5a3a2a', cities: { 長安: '李傕 郭汜 楊奉 徐晃' }, loyal: '', start: { 長安: { troops: 25000, gold: 800 } } },
+      { ruler: '馬騰', color: '#b88a3f', cities: { 武威: '馬騰 馬超', 天水: '馬岱 龐徳', 安定: '' }, loyal: '馬超 馬岱', start: { 武威: { troops: 15000, training: 70 }, 天水: { troops: 10000 } } },
+      { ruler: '韓遂', color: '#8a8f3a', cities: { 金城: '韓遂 成公英 閻行' }, loyal: '成公英', start: { 金城: { troops: 12000, training: 70 } } },
+      { ruler: '張魯', color: '#6a5acd', cities: { 漢中: '張魯 閻圃 楊松 楊任 張衛' }, loyal: '張衛', start: { 漢中: { troops: 16000 } } },
+      { ruler: '劉璋', color: '#c45c8a', cities: { 成都: '劉璋 法正 張松 劉巴 呉懿', 江州: '張任 李厳', 永安: '厳顔', 梓潼: '黄権 孟達 冷苞' }, loyal: '', start: { 成都: { troops: 25000, gold: 1500, food: 25000 } } },
+      { ruler: '孔融', color: '#9c7bd0', cities: { 北海: '孔融 武安国' }, loyal: '武安国', start: {} },
+      { ruler: '張楊', color: '#7a9cb8', cities: { 河内: '張楊 眭固' }, loyal: '', start: {} },
+      { ruler: '士燮', color: '#5f9e6e', cities: { 交趾: '士燮 士徽', 南海: '士壱' }, loyal: '士壱 士徽', start: {} },
+    ],
+    // 在野（探索で見つかる）
+    free: { 襄陽: '諸葛亮 龐統 馬良 馬謖', 新野: '徐庶 魏延', 河内: '司馬懿', 寿春: '魯粛 劉曄', 廬江: '周泰 蒋欽', 江夏: '甘寧', 呉: '陸遜 諸葛瑾', 天水: '姜維', 長安: '鍾繇', 許昌: '陳羣', 漢中: '王平', 零陵: '蒋琬', 成都: '費禕', 建寧: '孟獲' },
+  },
+];

@@ -1,0 +1,605 @@
+// 天下三分：ゲームのしくみ（画面に依存しない。node でも動く）
+var SG = typeof SG !== 'undefined' ? SG : {};
+(function () {
+  const R = () => SG.data.rules;
+
+  // ---------- 乱数（セーブに状態を持つので、同じ種なら同じ展開になる） ----------
+  function rand(s) {
+    s.rng = (s.rng + 0x6D2B79F5) | 0;
+    let t = s.rng;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  const range = (s, a, b) => a + (b - a) * rand(s);
+  const pick = (s, arr) => arr[Math.floor(rand(s) * arr.length)];
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  function shuffle(s, arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rand(s) * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+  // ---------- 参照 ----------
+  let adjCache = null;
+  function adj(id) {
+    if (!adjCache) {
+      adjCache = {};
+      for (const c of SG.data.cities) adjCache[c.id] = [];
+      for (const [a, b] of SG.data.roads) { adjCache[a].push(b); adjCache[b].push(a); }
+    }
+    return adjCache[id];
+  }
+  const officersIn = (s, cityId, force) => Object.values(s.officers).filter(o => o.status === 'serve' && o.city === cityId && (force === undefined || o.force === force));
+  const freeIn = (s, cityId) => Object.values(s.officers).filter(o => o.status === 'free' && o.city === cityId);
+  const citiesOf = (s, fid) => Object.values(s.cities).filter(c => c.owner === fid);
+  const membersOf = (s, fid) => Object.values(s.officers).filter(o => o.status === 'serve' && o.force === fid);
+  const ruler = (s, fid) => s.officers[s.forces[fid].ruler];
+  const forceName = (s, fid) => fid ? s.forces[fid].ruler + '軍' : '空白地';
+  const dateText = s => `${s.year}年${s.month}月`;
+  function log(s, text, kind) { s.log.push({ date: dateText(s), text, kind: kind || '' }); if (s.log.length > 300) s.log.splice(0, s.log.length - 300); }
+
+  // ---------- 新しいゲーム ----------
+  function newGame(scenarioId, playerForce, seed) {
+    const sc = SG.data.scenarios.find(x => x.id === scenarioId) || SG.data.scenarios[0];
+    const s = { version: 1, scenario: sc.id, year: sc.year, month: sc.month, rng: (seed === undefined ? Date.now() : seed) | 0, player: playerForce || null, forces: {}, cities: {}, officers: {}, log: [], reports: [], captives: [], over: null };
+    for (const c of SG.data.cities) {
+      s.cities[c.id] = { id: c.id, owner: null, pop: c.pop, agri: c.agri, agriMax: c.agriMax, comm: c.comm, commMax: c.commMax, def: c.def, defMax: c.defMax, ...sc.defaults.empty, delegate: false };
+    }
+    for (const o of SG.data.officers) {
+      s.officers[o.id] = { id: o.id, lead: o.lead, war: o.war, int: o.int, pol: o.pol, cha: o.cha, born: o.born, die: o.die, status: 'none', force: null, city: null, loyalty: 0, acted: false, found: false };
+    }
+    for (const f of sc.forces) {
+      const fid = f.ruler;
+      s.forces[fid] = { id: fid, ruler: fid, color: f.color, alive: true };
+      const loyal = new Set(f.loyal.split(/\s+/).filter(Boolean));
+      for (const [cid, names] of Object.entries(f.cities)) {
+        Object.assign(s.cities[cid], sc.defaults.owned, f.start[cid] || {}, { owner: fid });
+        for (const n of names.split(/\s+/).filter(Boolean)) {
+          const o = s.officers[n];
+          if (!o) throw new Error('武将がいない: ' + n);
+          Object.assign(o, { force: fid, city: cid, status: 'serve', loyalty: n === fid ? 100 : loyal.has(n) ? 100 : Math.round(clamp(sc.loyalty.base + range(s, -sc.loyalty.spread, sc.loyalty.spread), 30, 99)) });
+        }
+      }
+    }
+    for (const [cid, names] of Object.entries(sc.free)) for (const n of names.split(/\s+/).filter(Boolean)) Object.assign(s.officers[n], { status: 'free', city: cid });
+    // まだ若い武将は登場を待つ
+    for (const o of Object.values(s.officers)) {
+      if (o.status === 'none') { o.status = 'dead'; continue; }
+      if (s.year - o.born < R().comeOfAge) { o.pending = o.status; o.status = 'unborn'; }
+    }
+    if (playerForce && !s.forces[playerForce]) throw new Error('勢力がない: ' + playerForce);
+    log(s, `${sc.title}。${playerForce ? forceName(s, playerForce) + 'として天下を目指す。' : ''}`);
+    return s;
+  }
+
+  // ---------- 内政など（プレイヤー・AI 共通の命令） ----------
+  function usable(s, cityId, oid) {
+    const c = s.cities[cityId], o = s.officers[oid];
+    if (!c || !o) return '対象がいない';
+    if (o.status !== 'serve' || o.city !== cityId || o.force !== c.owner) return 'この都市の武将ではない';
+    if (o.acted) return `${o.id}は今月すでに行動した`;
+    return null;
+  }
+  const ok = (msg, extra) => Object.assign({ ok: true, msg }, extra || {});
+  const ng = msg => ({ ok: false, msg });
+
+  const commands = {
+    // kind: agri 開墾 / comm 商業 / def 城壁 / order 治安
+    develop(s, { city, officer, kind }) {
+      const err = usable(s, city, officer); if (err) return ng(err);
+      const c = s.cities[city], o = s.officers[officer], r = R();
+      const conf = { agri: ['開墾', 'pol', 'agriMax', r.devCost, r.devBase, r.devPerStat], comm: ['商業', 'pol', 'commMax', r.devCost, r.devBase, r.devPerStat], def: ['城壁修復', 'lead', 'defMax', r.devCost, r.devBase, r.devPerStat], order: ['治安', 'war', null, r.orderCost, r.orderBase, r.orderPerStat] }[kind];
+      if (!conf) return ng('命令がちがう');
+      const [label, stat, maxKey, cost, base, per] = conf;
+      const max = maxKey ? c[maxKey] : 100;
+      if (c[kind] >= max) return ng(`${label}はもう上限`);
+      if (c.gold < cost) return ng(`金が足りない（${cost}必要）`);
+      c.gold -= cost;
+      const gain = Math.max(1, Math.round((base + o[stat] * per) * range(s, 0.8, 1.2)));
+      const before = c[kind];
+      c[kind] = Math.min(max, c[kind] + gain);
+      o.acted = true;
+      return ok(`${o.id}が${label}：${before}→${c[kind]}`);
+    },
+    recruit(s, { city, officer, amount }) {
+      const err = usable(s, city, officer); if (err) return ng(err);
+      const c = s.cities[city], o = s.officers[officer], r = R();
+      const cap = Math.floor(Math.min(r.recruitBase + o.cha * r.recruitPerCha, c.gold / r.goldPer100Troops * 100, c.pop * r.recruitPopRate));
+      const n = Math.floor(Math.min(amount || cap, cap) / 100) * 100;
+      if (n < 100) return ng('兵を集められない（金か人口が足りない）');
+      c.gold -= Math.ceil(n / 100 * r.goldPer100Troops);
+      c.training = Math.round((c.troops * c.training) / (c.troops + n));
+      c.troops += n; c.pop -= n;
+      c.order = Math.max(0, Math.round(c.order - n / 1000 * r.recruitOrderLoss));
+      o.acted = true;
+      return ok(`${o.id}が徴兵：兵 +${n}（${c.troops}）`);
+    },
+    train(s, { city, officer }) {
+      const err = usable(s, city, officer); if (err) return ng(err);
+      const c = s.cities[city], o = s.officers[officer], r = R();
+      if (c.troops <= 0) return ng('兵がいない');
+      if (c.training >= 100) return ng('訓練はもう上限');
+      const before = c.training;
+      c.training = Math.min(100, c.training + Math.round(r.trainBase + o.lead * r.trainPerStat));
+      o.acted = true;
+      return ok(`${o.id}が訓練：${before}→${c.training}`);
+    },
+    search(s, { city, officer }) {
+      const err = usable(s, city, officer); if (err) return ng(err);
+      const c = s.cities[city], o = s.officers[officer], r = R();
+      o.acted = true;
+      const hidden = freeIn(s, city).filter(x => !x.found);
+      if (hidden.length && rand(s) < 0.3 + o.int / 200) {
+        const f = pick(s, hidden); f.found = true;
+        return ok(`${o.id}が探索：在野の人物「${f.id}」を見つけた`, { found: f.id });
+      }
+      if (rand(s) < r.searchGoldChance) { const g = Math.round(range(s, r.searchGold[0], r.searchGold[1])); c.gold += g; return ok(`${o.id}が探索：金${g}を見つけた`); }
+      return ok(`${o.id}が探索：何も見つからなかった`);
+    },
+    // 在野（同じ都市・発見済み）か、隣の他勢力の武将（引き抜き）
+    employ(s, { city, officer, target }) {
+      const err = usable(s, city, officer); if (err) return ng(err);
+      const c = s.cities[city], o = s.officers[officer], t = s.officers[target];
+      if (!t) return ng('対象がいない');
+      const lord = ruler(s, c.owner);
+      if (t.status === 'free') {
+        if (t.city !== city || !t.found) return ng('この都市で見つかっていない');
+        o.acted = true;
+        const p = clamp(0.3 + (o.cha - 50) / 100 + (lord.cha - 50) / 200, 0.1, 0.95);
+        if (rand(s) < p) { Object.assign(t, { status: 'serve', force: c.owner, city, loyalty: Math.round(range(s, 65, 90)), acted: true }); return ok(`${o.id}の説得で${t.id}が仕官した`, { joined: t.id }); }
+        return ok(`${t.id}は仕官を断った`);
+      }
+      if (t.status === 'serve' && t.force !== c.owner && adj(city).includes(t.city)) {
+        if (t.id === s.forces[t.force].ruler) return ng('君主は引き抜けない');
+        o.acted = true;
+        const p = t.loyalty >= 95 ? 0 : clamp((o.cha + 30 - t.loyalty) / 150, 0, 0.6);
+        if (rand(s) < p) { Object.assign(t, { force: c.owner, city, loyalty: Math.round(range(s, 55, 75)), acted: true }); return ok(`${t.id}が寝返った！`, { joined: t.id }); }
+        return ok(`${t.id}の引き抜きに失敗した`);
+      }
+      return ng('登用できない相手');
+    },
+    reward(s, { city, target, gold }) {
+      const c = s.cities[city], t = s.officers[target];
+      if (!c || !t || t.status !== 'serve' || t.force !== c.owner || t.city !== city) return ng('この都市の武将ではない');
+      if (t.id === s.forces[c.owner].ruler) return ng('君主に褒美はいらない');
+      gold = Math.floor(gold || 100);
+      if (c.gold < gold) return ng('金が足りない');
+      c.gold -= gold;
+      const before = t.loyalty;
+      t.loyalty = Math.min(100, Math.round(t.loyalty + gold * R().rewardLoyaltyPerGold * range(s, 0.8, 1.2)));
+      return ok(`${t.id}に褒美（金${gold}）：忠誠 ${before}→${t.loyalty}`);
+    },
+    // buy: 金で兵糧を買う / sell: 兵糧を売る（amount は金の額）
+    trade(s, { city, mode, amount }) {
+      const c = s.cities[city], r = R();
+      amount = Math.floor(amount || 0);
+      if (!c || amount <= 0) return ng('量がちがう');
+      if (mode === 'buy') { if (c.gold < amount) return ng('金が足りない'); c.gold -= amount; c.food += amount * r.buyFoodPerGold; return ok(`金${amount}で兵糧${amount * r.buyFoodPerGold}を買った`); }
+      const need = amount * r.sellFoodPerGold;
+      if (c.food < need) return ng('兵糧が足りない');
+      c.food -= need; c.gold += amount; return ok(`兵糧${need}を売って金${amount}を得た`);
+    },
+    // 自分の隣の都市へ武将・兵・金・兵糧を送る（空白地にも行ける＝占領）
+    move(s, { city, to, officers, troops, gold, food }) {
+      const c = s.cities[city], d = s.cities[to];
+      if (!c || !d || !adj(city).includes(to)) return ng('隣の都市ではない');
+      if (d.owner && d.owner !== c.owner) return ng('他勢力の都市へは出陣で');
+      officers = officers || [];
+      for (const id of officers) { const e = usable(s, city, id); if (e) return ng(e); }
+      if (!d.owner && !officers.length) return ng('空白地へは武将が必要');
+      troops = Math.floor(troops || 0); gold = Math.floor(gold || 0); food = Math.floor(food || 0);
+      if (troops > c.troops || gold > c.gold || food > c.food || troops < 0 || gold < 0 || food < 0) return ng('送る量が多すぎる');
+      if (!officers.length && !troops && !gold && !food) return ng('何も送らない');
+      if (troops) { d.training = Math.round((d.troops * d.training + troops * c.training) / (d.troops + troops)); d.troops += troops; c.troops -= troops; }
+      c.gold -= gold; d.gold += gold; c.food -= food; d.food += food;
+      for (const id of officers) Object.assign(s.officers[id], { city: to, acted: true });
+      let msg = `${city}→${to}へ移動`;
+      if (!d.owner) { d.owner = c.owner; msg += `（${to}を占領）`; log(s, `${forceName(s, c.owner)}が${to}を占領した`, 'war'); }
+      return ok(msg);
+    },
+    // units: [{officer, troops}]
+    attack(s, { city, to, units }) {
+      const c = s.cities[city], d = s.cities[to];
+      if (!c || !d || !adj(city).includes(to)) return ng('隣の都市ではない');
+      if (!d.owner) return commands.move(s, { city, to, officers: units.map(u => u.officer), troops: units.reduce((a, u) => a + (u.troops || 0), 0) });
+      if (d.owner === c.owner) return ng('自分の都市');
+      if (!units || !units.length) return ng('武将がいない');
+      if (units.length > R().maxUnits) return ng(`出陣は${R().maxUnits}人まで`);
+      for (const u of units) { const e = usable(s, city, u.officer); if (e) return ng(e); u.troops = Math.floor(u.troops || 0); if (u.troops < 100) return ng(`${u.officer}の兵が少なすぎる`); }
+      const total = units.reduce((a, u) => a + u.troops, 0);
+      if (total > c.troops) return ng('兵が足りない');
+      const foodNeed = Math.ceil(total * R().foodPerTroop * R().march.foodMonths);
+      if (c.food < foodNeed) return ng(`兵糧が足りない（${foodNeed}必要）`);
+      c.food -= foodNeed;
+      const report = battle(s, city, to, units);
+      return ok(report.win ? `${to}を攻め落とした！` : `${to}を落とせなかった`, { report });
+    },
+  };
+
+  function exec(s, name, args) {
+    if (s.over) return ng('ゲームは終わっている');
+    const f = commands[name];
+    if (!f) return ng('命令がない: ' + name);
+    const r = f(s, args || {});
+    if (r.ok) { const c = args && s.cities[args.city]; if (c && c.owner === s.player) log(s, `【${args.city}】${r.msg}`); }
+    if (r.ok) checkEnd(s);
+    return r;
+  }
+
+  // ---------- 戦争 ----------
+  function unitPower(u, training) {
+    const o = u.officer;
+    const lead = o ? o.lead : 40, war = o ? o.war : 40;
+    return u.troops * (lead * 0.6 + war * 0.4) / 100 * (0.6 + training / 250);
+  }
+
+  function battle(s, fromId, toId, orders) {
+    const r = R(), from = s.cities[fromId], to = s.cities[toId];
+    const atkForce = from.owner, defForce = to.owner;
+    const lines = [];
+    const atk = orders.map(u => ({ officer: s.officers[u.officer], troops: u.troops, start: u.troops, side: 'atk' }));
+    from.troops -= atk.reduce((a, u) => a + u.troops, 0);
+    for (const u of atk) u.officer.acted = true;
+    // 守備側：統率の高い順に最大5人で兵を分ける
+    const defOff = officersIn(s, toId, defForce).sort((a, b) => b.lead - a.lead).slice(0, r.maxUnits);
+    let def = [];
+    if (to.troops > 0) {
+      if (defOff.length) {
+        const sum = defOff.reduce((a, o) => a + o.lead, 0);
+        def = defOff.map(o => ({ officer: o, troops: Math.floor(to.troops * o.lead / sum), side: 'def' }));
+        def[0].troops += to.troops - def.reduce((a, u) => a + u.troops, 0);
+      } else def = [{ officer: null, troops: to.troops, side: 'def' }];
+      for (const u of def) u.start = u.troops;
+    }
+    to.troops = 0;
+    const name = u => u.officer ? u.officer.id : '守備兵';
+    lines.push(`${forceName(s, atkForce)}（${atk.map(name).join('・')} 兵${atk.reduce((a, u) => a + u.troops, 0)}）が${toId}へ攻め込んだ。`);
+    lines.push(`迎え撃つ${forceName(s, defForce)}：${def.length ? def.map(name).join('・') + ' 兵' + def.reduce((a, u) => a + u.troops, 0) : 'なし'}`);
+    const captives = [];
+    const routed = [];
+    const alive = side => side.filter(u => u.troops > 0);
+    const defBonus = 1 + to.def / r.defDiv;
+    const atkTrain = from.training, defTrain = to.training;
+
+    function rout(u, why) {
+      u.troops = 0;
+      routed.push(u);
+      if (!u.officer) return;
+      const fid = u.side === 'atk' ? atkForce : defForce;
+      const isRuler = s.forces[fid].ruler === u.officer.id;
+      if (u.side === 'atk' && (isRuler || rand(s) >= r.captureRate)) { lines.push(`${u.officer.id}隊は${why || '壊滅'}し、${fromId}へ退いた。`); return; }
+      if (u.side === 'def' && (isRuler || rand(s) >= r.captureRate)) { lines.push(`${u.officer.id}隊は${why || '壊滅'}し、城内へ退いた。`); return; }
+      lines.push(`${u.officer.id}隊は${why || '壊滅'}。${u.officer.id}は捕らえられた！`);
+      captives.push(u.officer);
+      u.captured = true;
+    }
+
+    // 一騎打ち
+    if (def.length && def[0].officer && rand(s) < r.duelChance) {
+      const a = atk.slice().sort((x, y) => y.officer.war - x.officer.war)[0];
+      const d = def.filter(u => u.officer).sort((x, y) => y.officer.war - x.officer.war)[0];
+      const weaker = d.officer.war < a.officer.war ? d : a;
+      if (weaker === d && rand(s) < 0.5) lines.push(`${a.officer.id}が一騎打ちを挑んだが、${d.officer.id}は応じなかった。`);
+      else {
+        const res = duel(s, a.officer, d.officer);
+        lines.push(`一騎打ち！ ${a.officer.id}（武力${a.officer.war}） 対 ${d.officer.id}（武力${d.officer.war}）`);
+        lines.push(...res.lines);
+        if (res.winner) {
+          const loser = res.winner === a.officer ? d : a;
+          rout(loser, '一騎打ちに敗れて総崩れ');
+        }
+      }
+    }
+
+    let day = 0;
+    while (day < r.battleDays && alive(atk).length && alive(def).length) {
+      day++;
+      // 計略（知力の高い武将が火計を仕掛ける）
+      for (const [side, other] of [[atk, def], [def, atk]]) {
+        const sage = alive(side).filter(u => u.officer).sort((x, y) => y.officer.int - x.officer.int)[0];
+        if (!sage || rand(s) >= sage.officer.int / r.stratDiv) continue;
+        const targets = alive(other); if (!targets.length) continue;
+        const t = pick(s, targets);
+        const wit = t.officer ? t.officer.int : 30;
+        if (rand(s) < sage.officer.int / (sage.officer.int + wit)) {
+          const loss = Math.max(1, Math.floor(t.troops * range(s, 0.08, 0.15)));
+          t.troops -= loss;
+          lines.push(`${day}日目：${sage.officer.id}の火計！ ${name(t)}隊 -${loss}`);
+          if (t.troops <= 0) rout(t);
+        } else lines.push(`${day}日目：${sage.officer.id}の火計は${name(t)}に見破られた。`);
+      }
+      // ぶつかり合い（同時に計算してから減らす）
+      const dmg = new Map();
+      const hit = (u, others, train, scale) => {
+        const ts = alive(others); if (!ts.length) return;
+        const t = pick(s, ts);
+        dmg.set(t, (dmg.get(t) || 0) + unitPower(u, train) * r.battleK * range(s, 0.8, 1.2) * scale);
+      };
+      for (const u of alive(atk)) hit(u, def, atkTrain, 1 / defBonus);
+      for (const u of alive(def)) hit(u, atk, defTrain, 1);
+      for (const [t, v] of dmg) { if (t.troops <= 0) continue; t.troops -= Math.max(1, Math.round(v)); if (t.troops <= 0) rout(t); }
+    }
+    const win = alive(def).length === 0 && alive(atk).length > 0;
+    const atkLeft = alive(atk).reduce((a, u) => a + u.troops, 0);
+    const defLeft = alive(def).reduce((a, u) => a + u.troops, 0);
+    lines.push(`${day}日で決着：攻撃側 残り${atkLeft}／守備側 残り${defLeft}`);
+
+    const capturedIds = new Set(captives.map(o => o.id));
+    if (win) {
+      to.owner = atkForce;
+      to.troops = atkLeft;
+      to.training = atkTrain;
+      to.order = Math.max(0, to.order - r.conquestOrderLoss);
+      for (const u of atk) if (!capturedIds.has(u.officer.id) && u.troops > 0) u.officer.city = toId;
+      // 敗走した攻撃側の武将は元の都市へ（すでに city=from）
+      // 城内に残る守備側の武将：逃げるか捕まる
+      const escape = adj(toId).filter(id => s.cities[id].owner === defForce && defForce);
+      const others = defForce ? citiesOf(s, defForce) : [];
+      for (const o of officersIn(s, toId, defForce)) {
+        if (capturedIds.has(o.id)) continue;
+        const isRuler = defForce && s.forces[defForce].ruler === o.id;
+        if (escape.length && (isRuler || rand(s) < r.fleeRate)) { o.city = pick(s, escape); lines.push(`${o.id}は${o.city}へ逃れた。`); }
+        else if (isRuler && others.length) { o.city = pick(s, others).id; lines.push(`${o.id}は${o.city}へ落ち延びた。`); }
+        else { captives.push(o); capturedIds.add(o.id); lines.push(`${o.id}は捕らえられた。`); }
+      }
+      lines.push(`${toId}は${forceName(s, atkForce)}のものとなった。`);
+    } else {
+      // 攻撃側は兵を連れて帰る
+      from.troops += atkLeft;
+      to.troops = defLeft;
+      lines.push(alive(atk).length ? `${forceName(s, atkForce)}は兵を引いた。` : `${forceName(s, atkForce)}は撃退された。`);
+    }
+    // 攻撃側の武将は守備側の都市へ、守備側の武将は（勝てば）落とした都市・（負ければ）出陣元へ連れていかれる
+    for (const o of captives) {
+      o.status = 'captive';
+      o.captor = o.force === atkForce ? defForce : atkForce;
+      o.city = o.captor === atkForce ? (win ? toId : fromId) : toId;
+    }
+    const report = { date: dateText(s), from: fromId, to: toId, atkForce, defForce, win, lines, day, captives: captives.map(o => o.id) };
+    log(s, `${forceName(s, atkForce)}が${toId}（${forceName(s, defForce)}）を攻撃：${win ? '落城' : '撃退'}`, 'war');
+    if (defForce) afterLoss(s, defForce, report);
+    settleCaptives(s, captives);
+    if (atkForce === s.player || defForce === s.player) s.reports.push(report);
+    return report;
+  }
+
+  function duel(s, a, b) {
+    const lines = []; let ha = 100, hb = 100;
+    for (let round = 1; round <= 10 && ha > 0 && hb > 0; round++) {
+      const aWins = rand(s) < a.war ** 2 / (a.war ** 2 + b.war ** 2);
+      const dmg = Math.round(range(s, 8, 22));
+      if (aWins) hb -= dmg; else ha -= dmg;
+      if (round <= 3 || ha <= 0 || hb <= 0) lines.push(`　${round}合目：${aWins ? a.id : b.id}の一撃！`);
+    }
+    if (ha > 0 && hb > 0) { lines.push('　10合打ち合って勝負つかず。'); return { lines, winner: null }; }
+    const w = ha > 0 ? a : b;
+    lines.push(`　${w.id}の勝ち！`);
+    return { lines, winner: w };
+  }
+
+  // 都市を失った勢力の後始末（滅亡・君主の交代）
+  function afterLoss(s, fid, report) {
+    const f = s.forces[fid];
+    if (!f.alive) return;
+    if (citiesOf(s, fid).length) return;
+    f.alive = false;
+    for (const o of membersOf(s, fid)) { o.status = 'free'; o.force = null; o.found = true; }
+    report && report.lines.push(`${forceName(s, fid)}は滅亡した。`);
+    log(s, `${forceName(s, fid)}が滅亡した`, 'war');
+  }
+
+  // 君主が欠けたら跡継ぎを決める（いなければ滅亡）
+  function ensureRuler(s, fid) {
+    const f = s.forces[fid];
+    if (!f.alive) return;
+    const r = s.officers[f.ruler];
+    if (r && r.status === 'serve' && r.force === fid) return;
+    const heirs = membersOf(s, fid).sort((a, b) => (b.cha + b.lead) - (a.cha + a.lead));
+    if (!heirs.length || !citiesOf(s, fid).length) {
+      f.alive = false;
+      for (const c of citiesOf(s, fid)) c.owner = null;
+      for (const o of membersOf(s, fid)) { o.status = 'free'; o.force = null; o.found = true; }
+      log(s, `${f.ruler}軍は跡継ぎがなく滅亡した`, 'war');
+      return;
+    }
+    const old = f.ruler;
+    f.ruler = heirs[0].id; heirs[0].loyalty = 100;
+    log(s, `${old}に代わり、${f.ruler}が君主となった`, 'war');
+  }
+
+  // 捕虜の処遇。プレイヤーの捕虜は画面で決める
+  function settleCaptives(s, list) {
+    for (const o of list) {
+      if (o.captor === s.player) { s.captives.push(o.id); continue; }
+      aiCaptive(s, o);
+    }
+    for (const fid of Object.keys(s.forces)) ensureRuler(s, fid);
+  }
+  function captiveChance(s, o) {
+    const lord = ruler(s, o.captor);
+    const wasRuler = o.force && s.forces[o.force] && s.forces[o.force].ruler === o.id;
+    let p = clamp(0.5 + (lord.cha - o.loyalty) / 100, 0.05, 0.95);
+    if (wasRuler) p *= 0.3;
+    return p;
+  }
+  function aiCaptive(s, o) {
+    if (rand(s) < captiveChance(s, o)) decideCaptive(s, o.id, 'employ', true);
+    else decideCaptive(s, o.id, 'release', true);
+  }
+  // how: employ 登用 / release 解放 / execute 処断
+  function decideCaptive(s, id, how, silent) {
+    const o = s.officers[id];
+    if (!o || o.status !== 'captive') return ng('捕虜ではない');
+    s.captives = s.captives.filter(x => x !== id);
+    const captor = o.captor;
+    let msg;
+    if (how === 'execute') { o.status = 'dead'; msg = `${o.id}を処断した`; }
+    else if (how === 'employ' && s.forces[captor].alive && (silent || rand(s) < captiveChance(s, o))) {
+      // 捕らえていた都市がその後奪われていたら、自勢力の別の都市へ
+      const city = s.cities[o.city].owner === captor ? o.city : pick(s, citiesOf(s, captor)).id;
+      Object.assign(o, { status: 'serve', force: captor, city, loyalty: Math.round(range(s, 50, 75)), acted: true });
+      msg = `${o.id}が${forceName(s, captor)}に降った`;
+    } else {
+      // 元の勢力が残っていれば帰る。なければ在野
+      const home = o.force && s.forces[o.force].alive ? citiesOf(s, o.force) : [];
+      if (home.length) { o.status = 'serve'; o.city = pick(s, home).id; }
+      else { o.status = 'free'; o.force = null; o.found = true; }
+      msg = how === 'employ' ? `${o.id}は登用を拒んだので解放した` : `${o.id}を解放した`;
+    }
+    delete o.captor;
+    for (const fid of Object.keys(s.forces)) ensureRuler(s, fid);
+    if (!silent || captor === s.player) log(s, msg, 'war');
+    checkEnd(s);
+    return ok(msg);
+  }
+
+  // ---------- AI ----------
+  function defensePower(s, c) { return c.troops * (1 + c.def / R().defDiv); }
+
+  function aiCity(s, cityId) {
+    const c = s.cities[cityId], fid = c.owner, r = R(), ai = r.ai;
+    if (!fid) return;
+    const idle = () => officersIn(s, cityId, fid).filter(o => !o.acted);
+    const neighbors = adj(cityId).map(id => s.cities[id]);
+    const enemies = neighbors.filter(n => n.owner && n.owner !== fid);
+    const empties = neighbors.filter(n => !n.owner);
+    const threat = enemies.reduce((m, n) => Math.max(m, n.troops), 0);
+    const best = (list, key) => list.slice().sort((a, b) => b[key] - a[key])[0];
+
+    // 空白地へ進む
+    if (empties.length && idle().length >= 2 && c.troops >= ai.occupyTroops * 2 && c.troops > threat) {
+      const o = best(idle(), 'lead');
+      exec(s, 'move', { city: cityId, to: pick(s, empties).id, officers: [o.id], troops: ai.occupyTroops, food: Math.min(c.food >> 2, 3000) });
+    }
+    // 攻撃
+    if (enemies.length && idle().length >= 2 && c.troops >= ai.minAttackTroops && rand(s) < ai.attackChance) {
+      const send = Math.floor(c.troops * ai.attackShare);
+      const target = enemies.slice().sort((a, b) => defensePower(s, a) - defensePower(s, b))[0];
+      if (send > defensePower(s, target) * ai.attackRatio && c.food >= send * r.foodPerTroop * 2) {
+        const team = idle().sort((a, b) => (b.lead + b.war) - (a.lead + a.war)).slice(0, Math.min(r.maxUnits, idle().length - 1));
+        const sum = team.reduce((a, o) => a + o.lead, 0);
+        const units = team.map(o => ({ officer: o.id, troops: Math.floor(send * o.lead / sum) }));
+        if (units.every(u => u.troops >= 100)) exec(s, 'attack', { city: cityId, to: target.id, units });
+      }
+    }
+    // 人の少ない前線へ武将を回す
+    const mine = neighbors.filter(n => n.owner === fid);
+    if (idle().length > 3) {
+      const need = mine.find(n => officersIn(s, n.id, fid).length < 2);
+      if (need) exec(s, 'move', { city: cityId, to: need.id, officers: [best(idle(), 'lead').id], troops: enemies.length ? 0 : Math.floor(c.troops / 4) });
+    }
+    // 忠誠の低い武将に褒美
+    for (const o of officersIn(s, cityId, fid)) if (o.loyalty < ai.rewardBelow && c.gold > 400 && o.id !== s.forces[fid].ruler) exec(s, 'reward', { city: cityId, target: o.id, gold: 100 });
+    // 兵糧が乏しければ買う
+    if (c.food < c.troops * r.foodPerTroop * 4 && c.gold > 300) exec(s, 'trade', { city: cityId, mode: 'buy', amount: Math.floor(c.gold / 3) });
+    // 残りの武将で内政・軍備
+    for (const o of shuffle(s, idle())) {
+      const found = freeIn(s, cityId).filter(x => x.found);
+      const tries = [];
+      if (found.length) tries.push(['employ', { target: found[0].id }]);
+      if (c.order < 60) tries.push(['develop', { kind: 'order' }]);
+      if (c.troops < Math.max(threat * 1.1, 5000) && c.gold >= 150) tries.push(['recruit', {}]);
+      if (c.training < 70 && c.troops > 2000) tries.push(['train', {}]);
+      const dev = [['agri', c.agri / c.agriMax], ['comm', c.comm / c.commMax]].filter(x => x[1] < 1).sort((a, b) => a[1] - b[1]);
+      if (enemies.length && c.def < c.defMax && rand(s) < 0.3) tries.push(['develop', { kind: 'def' }]);
+      if (dev.length) tries.push(['develop', { kind: dev[0][0] }]);
+      if (c.gold >= 300 && c.troops < c.pop * 0.08) tries.push(['recruit', {}]);
+      if (freeIn(s, cityId).some(x => !x.found) || rand(s) < 0.15) tries.push(['search', {}]);
+      tries.push(['train', {}]);
+      for (const [name, args] of tries) if (exec(s, name, { city: cityId, officer: o.id, ...args }).ok) break;
+    }
+  }
+
+  function aiForce(s, fid) {
+    for (const c of shuffle(s, citiesOf(s, fid))) {
+      if (!s.forces[fid].alive) return;
+      if (c.owner === fid) aiCity(s, c.id);
+    }
+  }
+
+  // ---------- 月の終わり ----------
+  function endTurn(s) {
+    if (s.over) return;
+    if (s.captives.length) for (const id of s.captives.slice()) decideCaptive(s, id, 'release');
+    // プレイヤーの委任都市
+    if (s.player) for (const c of citiesOf(s, s.player)) if (c.delegate) aiCity(s, c.id);
+    // ほかの勢力（毎月順番を変える）
+    for (const fid of shuffle(s, Object.keys(s.forces))) {
+      if (fid === s.player || !s.forces[fid].alive) continue;
+      aiForce(s, fid);
+      if (s.over) return;
+    }
+    // AI に攻められてとった捕虜は、次の月にプレイヤーが処遇を決める
+    nextMonth(s);
+  }
+
+  function nextMonth(s) {
+    const r = R();
+    for (const o of Object.values(s.officers)) o.acted = false;
+    s.month++;
+    if (s.month > 12) { s.month = 1; s.year++; }
+    for (const c of Object.values(s.cities)) {
+      const of = c.order / 100;
+      c.gold += Math.floor(c.comm * r.goldPerComm * of);
+      if (s.month === r.harvestMonth) c.food += Math.floor(c.agri * r.foodPerAgri * of);
+      c.food -= Math.ceil(c.troops * r.foodPerTroop);
+      if (c.food < 0) {
+        c.food = 0;
+        const lost = Math.floor(c.troops * r.starveLoss);
+        c.troops -= lost; c.order = Math.max(0, c.order - 5);
+        if (c.owner === s.player && lost) log(s, `【${c.id}】兵糧が尽き、兵${lost}が逃げた`, 'bad');
+      }
+      const base = SG.data.cities.find(x => x.id === c.id);
+      c.pop = Math.min(base.pop * 2, Math.floor(c.pop * (1 + r.popGrowth * of)));
+      for (const ev of r.events) {
+        if (ev.month && !ev.month.includes(s.month)) continue;
+        if (rand(s) >= ev.chance) continue;
+        if (ev.pop) c.pop = Math.floor(c.pop * (1 + ev.pop));
+        if (ev.order) c.order = clamp(c.order + ev.order, 0, 100);
+        if (ev.agri) c.agri = Math.floor(c.agri * (1 + ev.agri));
+        if (ev.def) c.def = Math.floor(c.def * (1 + ev.def));
+        if (ev.food) c.food = Math.floor(c.food * (1 + ev.food));
+        if (c.owner === s.player) log(s, `【${c.id}】${ev.name}が起こった`, 'bad');
+      }
+    }
+    // 忠誠の低い武将は去ることがある
+    for (const o of Object.values(s.officers)) {
+      if (o.status !== 'serve' || o.id === s.forces[o.force].ruler) continue;
+      if (o.loyalty < r.desertLoyalty && rand(s) < r.desertChance) {
+        if (o.force === s.player) log(s, `${o.id}が出奔した`, 'bad');
+        Object.assign(o, { status: 'free', force: null, found: true });
+      }
+    }
+    if (s.month === 1) newYear(s);
+    for (const fid of Object.keys(s.forces)) ensureRuler(s, fid);
+    checkEnd(s);
+  }
+
+  function newYear(s) {
+    const r = R();
+    for (const o of Object.values(s.officers)) {
+      if (o.status === 'unborn' && s.year - o.born >= r.comeOfAge) {
+        const f = o.pending === 'serve' && s.forces[o.force] && s.forces[o.force].alive ? o.force : null;
+        if (f) { const home = s.cities[o.city] && s.cities[o.city].owner === f ? o.city : ruler(s, f).city; Object.assign(o, { status: 'serve', city: home, loyalty: 100 }); }
+        else Object.assign(o, { status: 'free', force: null, found: false });
+        if (f === s.player) log(s, `${o.id}が元服し、軍に加わった`);
+        delete o.pending;
+      } else if ((o.status === 'serve' || o.status === 'free') && s.year >= o.die && rand(s) < r.deathChance) {
+        const wasPlayer = o.force === s.player;
+        o.status = 'dead';
+        if (wasPlayer || (o.force && s.forces[o.force].ruler === o.id)) log(s, `${o.id}が世を去った`, wasPlayer ? 'bad' : '');
+      }
+    }
+  }
+
+  function checkEnd(s) {
+    if (!s.player || s.over) return;
+    if (!s.forces[s.player].alive) { s.over = 'lose'; log(s, '我が軍は滅亡した……', 'bad'); return; }
+    if (Object.values(s.cities).every(c => c.owner === s.player)) { s.over = 'win'; log(s, '天下を統一した！', 'good'); }
+  }
+
+  function forceSummary(s, fid) {
+    const cs = citiesOf(s, fid);
+    return { cities: cs.length, officers: membersOf(s, fid).length, troops: cs.reduce((a, c) => a + c.troops, 0), gold: cs.reduce((a, c) => a + c.gold, 0), food: cs.reduce((a, c) => a + c.food, 0) };
+  }
+
+  Object.assign(SG, { rand, newGame, exec, endTurn, nextMonth, aiCity, adj, officersIn, freeIn, citiesOf, membersOf, ruler, forceName, dateText, decideCaptive, captiveChance, forceSummary, defensePower, commands });
+})();
+if (typeof module !== 'undefined') module.exports = SG;
