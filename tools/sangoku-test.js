@@ -165,7 +165,8 @@ for (const seed of [1, 2, 3]) {
   await closeAll();
   for (let i = 0; i < 12 && await pg.isEnabled('#btn-end'); i++) {
     await pg.click('#btn-end');
-    if (await pg.isVisible('#b-auto')) { await pg.click('#b-auto'); await pg.click('#b-close'); }
+    // 同じ月に何度も攻められることがある（決着のたびに次の戦が開く）
+    while (await pg.isVisible('#battle')) { await pg.click('#b-auto'); await pg.click('#b-close'); }
     await closeAll();
   }
   const date = await pg.evaluate(() => SG.ui.state.year * 100 + SG.ui.state.month);
