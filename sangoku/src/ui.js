@@ -166,7 +166,7 @@
     const rows = list.map(o => {
       const isRuler = o.force && s.forces[o.force] && s.forces[o.force].ruler === o.id;
       const cls = [o.acted && opts.showActed ? 'done' : '', opts.pick ? 'pick' : '', opts.on && opts.on.includes(o.id) ? 'on' : ''].join(' ');
-      return `<tr class="${cls}" data-id="${esc(o.id)}"><td class="${isRuler ? 'ruler' : ''}">${face(o)}${esc(o.id)}</td>${['lead', 'war', 'int', 'pol', 'cha'].map(k => `<td class="${opts.hi === k ? 'hi' : ''}">${o[k]}</td>`).join('')}<td>${o.status === 'serve' && !isRuler ? o.loyalty : o.status === 'free' ? '在野' : '－'}</td>${opts.extra ? `<td>${opts.extra(o)}</td>` : ''}</tr>`;
+      return `<tr class="${cls}" data-id="${esc(o.id)}"><td class="${isRuler ? 'ruler' : ''}">${face(o)}${esc(o.id)}${o.mole === s.player && o.force !== s.player ? '<span class="mole">内通</span>' : ''}</td>${['lead', 'war', 'int', 'pol', 'cha'].map(k => `<td class="${opts.hi === k ? 'hi' : ''}">${o[k]}</td>`).join('')}<td>${o.status === 'serve' && !isRuler ? o.loyalty : o.status === 'free' ? '在野' : '－'}</td>${opts.extra ? `<td>${opts.extra(o)}</td>` : ''}</tr>`;
     }).join('');
     const th = (k, t) => `<th title="${STAT[k] || '忠誠'}">${icon('stat/' + k)}${t}</th>`;
     return `<table><tr><th>武将</th>${th('lead', '統')}${th('war', '武')}${th('int', '知')}${th('pol', '政')}${th('cha', '魅')}${th('loyalty', '忠')}${opts.extraHead ? `<th>${opts.extraHead}</th>` : ''}</tr>${rows || '<tr><td colspan="8" class="sub">いない</td></tr>'}</table>`;
@@ -190,7 +190,7 @@
       h += `<h3>命令（行動できる武将 ${idle}人）</h3><div class="cmds">
         <div class="group">内政</div>${b('agri', '開墾')}${b('comm', '商業')}${b('def', '城壁')}${b('order', '治安')}
         <div class="group">軍事</div>${b('recruit', '徴兵')}${b('train', '訓練')}${b('attack', '出陣')}${b('move', '移動', false)}
-        <div class="group">人事・その他</div>${b('search', '探索')}${b('employ', '登用')}${b('reward', '褒美', false)}${b('trade', '売買', false)}
+        <div class="group">人事・その他</div>${b('search', '探索')}${b('employ', '登用')}${b('reward', '褒美', false)}${b('trade', '売買', false)}${b('plot', '計略')}
       </div><label class="toggle"><input type="checkbox" id="delegate" ${c.delegate ? 'checked' : ''}>${icon('cmd/delegate')}委任（月の終わりにAIが内政・軍事を行う）</label>`;
     }
     h += `<h3>武将（${offs.length}人）</h3>` + statsTable(offs, { showActed: mine, extraHead: mine ? '行動' : '', extra: mine ? o => o.acted ? icon('stat/acted', 'ico', '済') : '' : null });
@@ -251,6 +251,7 @@
         `<div class="row"><label>集める兵</label><input type="number" id="amt" min="100" step="100" value="${Math.min(3000, Math.floor(c.gold / per) * 100)}"><span class="sub">100人ごとに金${per}。上限は 魅力×${R.recruitPerCha}＋${R.recruitBase}。治安が下がる</span></div>`);
     }
     if (cmd === 'employ') return openEmploy(c);
+    if (cmd === 'plot') return openPlot(c);
     if (cmd === 'reward') return openReward(c);
     if (cmd === 'trade') return openTrade(c);
     if (cmd === 'move') return openMove(c);
@@ -269,6 +270,43 @@
       });
     });
   }
+  // 計略：種類 → 相手 → 仕掛ける武将（成功率つき）
+  function openPlot(c) {
+    const P = SG.data.rules.plot;
+    const enemies = SG.adj(c.id).map(id => s.cities[id]).filter(x => x.owner && x.owner !== s.player);
+    const desc = { rumor: '隣の敵の都市の治安を下げる', incite: '隣の敵の都市の兵を逃がし、治安も下げる', discord: '隣の都市の敵武将の忠誠を下げる（引き抜きやすくなる）', mole: '自分の武将を敵に偽って寝返らせる。その都市を攻めると内応して城門を開く' };
+    modal(`<h2>${icon('event/plot', 'hico')}計略</h2><p class="sub">成功率は、仕掛ける武将の知力と、相手の都市で一番知力の高い武将との比べ合い。金${c.gold}</p>
+      ${enemies.length ? Object.entries(P).map(([k, v]) => `<div class="row"><button data-k="${k}" ${c.gold < v.cost ? 'disabled' : ''}>${v.name}</button><span class="sub">金${v.cost}。${desc[k]}</span></div>`).join('') : '<p>隣に敵の都市がない。</p>'}
+      <div class="actions"><button data-close>閉じる</button></div>`, box => {
+      for (const b of box.querySelectorAll('[data-k]')) b.addEventListener('click', () => plotTargets(c, b.dataset.k, enemies));
+    });
+  }
+  function plotTargets(c, kind, enemies) {
+    const P = SG.data.rules.plot[kind];
+    const pickRun = target => {
+      const list = SG.officersIn(s, c.id, s.player).filter(o => !o.acted && (kind !== 'mole' || o.id !== s.forces[s.player].ruler)).sort((a, b) => b.int - a.int);
+      modal(`<h2>${P.name}：仕掛ける武将</h2><p class="sub">知力が効く。右の％が成功率</p>${statsTable(list, { pick: true, hi: 'int', extraHead: '成功率', extra: o => Math.round(SG.plotChance(s, c.id, o.id, kind, target) * 100) + '%' })}
+        <div class="msg" id="msg"></div><div class="actions"><button data-close>閉じる</button></div>`, box => {
+        for (const tr of box.querySelectorAll('tr.pick')) tr.addEventListener('click', () => {
+          const r = SG.exec(s, 'plot', { city: c.id, officer: tr.dataset.id, kind, target });
+          if (!r.ok) { $('msg').textContent = r.msg; return; }
+          closeModal(); afterAction(r);
+          modal(`<h2>${icon('event/plot', 'hico')}${P.name}</h2><div class="result ${r.success ? 'win' : 'lose'}">${r.success ? '成功！' : '失敗……'}</div><p>${esc(r.msg)}</p><div class="actions"><button data-close class="primary">閉じる</button></div>`);
+        });
+      });
+    };
+    if (kind === 'discord') {
+      const foes = enemies.flatMap(x => SG.officersIn(s, x.id, x.owner).filter(o => o.id !== s.forces[o.force].ruler));
+      modal(`<h2>離間：相手の武将</h2><p class="sub">忠誠が低い武将ほど効きやすい</p>${statsTable(foes.sort((a, b) => a.loyalty - b.loyalty), { pick: true, extraHead: '所属', extra: o => esc(SG.forceName(s, o.force)) + '・' + esc(o.city) })}<div class="actions"><button data-close>閉じる</button></div>`, box => {
+        for (const tr of box.querySelectorAll('tr.pick')) tr.addEventListener('click', () => pickRun(tr.dataset.id));
+      });
+    } else {
+      modal(`<h2>${P.name}：相手の都市</h2><div class="row">${enemies.map(x => `<button data-to="${esc(x.id)}"><span class="chip" style="background:${s.forces[x.owner].color}"></span> ${esc(x.id)}（${esc(SG.forceName(s, x.owner))}・治安${x.order}・兵${man(x.troops)}）</button>`).join('')}</div><div class="actions"><button data-close>閉じる</button></div>`, box => {
+        for (const b of box.querySelectorAll('[data-to]')) b.addEventListener('click', () => pickRun(b.dataset.to));
+      });
+    }
+  }
+
   function openReward(c) {
     const list = SG.officersIn(s, c.id, s.player).filter(o => s.forces[s.player].ruler !== o.id).sort((a, b) => a.loyalty - b.loyalty);
     modal(`<h2>褒美</h2><div class="row"><label>金</label><input type="number" id="amt" value="100" min="10" step="10"><span class="sub">金${c.gold}。金10ごとに忠誠およそ+1</span></div>${statsTable(list, { pick: true })}<div class="msg" id="msg"></div><div class="actions"><button data-close>閉じる</button></div>`, box => {

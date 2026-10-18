@@ -89,6 +89,8 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   function create(s, B, playerSide) {
     const T = { B, playerSide, cols: D().cols, rows: D().rows, day: 1, phase: 'atk', over: false, win: null, started: false };
     makeField(s, T, B.to);
+    // 内応で城門が開いている
+    if (B.gatesOpen) for (const g of Object.keys(T.gates)) { T.tiles[g] = 'broken'; delete T.gates[g]; }
     for (const u of B.atk.concat(B.def)) if (!D().types[u.type]) u.type = autoType(u.officer && s.officers[u.officer]);
     B.atk.forEach((u, n) => Object.assign(u, { n, commander: n === 0 }));
     B.def.forEach((u, n) => Object.assign(u, { n, commander: n === 0 }));

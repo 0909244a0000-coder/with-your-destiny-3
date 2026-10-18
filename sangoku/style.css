@@ -179,6 +179,7 @@ th .ico { width: 15px; height: 15px; margin-right: 1px; }
 #b-svg .tbadge.t-bow { fill: #2a4a2a; }
 #b-svg .tname { font-size: 11px; font-weight: bold; text-anchor: middle; fill: #ffd36a; paint-order: stroke; stroke: #000; stroke-width: 3px; pointer-events: none; }
 select.type { font: inherit; font-size: 13px; background: #0f131c; color: var(--text); border: 1px solid var(--line); }
+.mole { font-size: 10px; margin-left: 4px; padding: 0 3px; border: 1px solid #c58cff; color: #c58cff; border-radius: 2px; }
 @media (max-width: 900px) {
   main { flex-direction: column; }
   #map-wrap { flex: none; height: 55vh; }

@@ -27,6 +27,7 @@ SG.data.art = {
     [/落城|攻め落とした|のものとなった|奪われた/, 'event/fall'], [/撃退|守りきった|落とせなかった|兵を引いた/, 'event/hold'],
     [/捕らえ|捕虜/, 'event/capture'], [/壊滅|総崩れ|退いた|逃れた|落ち延び/, 'event/rout'], [/占領/, 'map/flag'],
     [/世を去った|処断/, 'event/death'], [/元服/, 'event/comeofage'], [/疫病/, 'event/plague'], [/洪水/, 'event/flood'], [/蝗害/, 'event/locust'],
+    [/流言|扇動|離間|埋伏|内応|見破/, 'event/plot'],
     [/仕官|寝返った|降った/, 'cmd/employ'], [/君主となった/, 'map/capital'], [/出奔/, 'event/rout'], [/兵糧が尽き/, 'stat/food'],
   ],
 };

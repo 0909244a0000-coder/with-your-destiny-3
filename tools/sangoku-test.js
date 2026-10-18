@@ -96,6 +96,37 @@ for (let seed = 1; seed <= 12; seed++) {
   assert.ok(T.B.def.every(u => SG.data.tactics.types[u.type]), '守り手にも兵種がつく');
   SG.tactics.auto(t, T); SG.tactics.finish(t, T);
 }
+// 計略：流言は治安を下げ、離間は忠誠を下げ、埋伏の毒は攻めたとき内応して城門を開く
+{
+  let done = { rumor: 0, discord: 0, mole: 0 };
+  for (let seed = 1; seed <= 40 && Object.values(done).some(v => !v); seed++) {
+    const t = SG.newGame('s194', '曹操', seed);
+    t.cities['陳留'].gold = 5000;
+    const o0 = t.cities['濮陽'].order;
+    let r = SG.exec(t, 'plot', { city: '陳留', officer: '郭嘉', kind: 'rumor', target: '濮陽' });
+    assert.ok(r.ok, r.msg);
+    if (r.success) { assert.ok(t.cities['濮陽'].order < o0, '流言で治安が下がる'); done.rumor++; }
+    const l0 = t.officers['張遼'].loyalty;
+    r = SG.exec(t, 'plot', { city: '陳留', officer: '程昱', kind: 'discord', target: '張遼' });
+    assert.ok(r.ok, r.msg);
+    if (r.success) { assert.ok(t.officers['張遼'].loyalty < l0, '離間で忠誠が下がる'); done.discord++; }
+    assert.ok(!SG.exec(t, 'plot', { city: '陳留', officer: '于禁', kind: 'discord', target: '呂布' }).ok, '君主に離間は効かない');
+    r = SG.exec(t, 'plot', { city: '陳留', officer: '荀攸', kind: 'mole', target: '濮陽' }); // 荀攸は許昌にいる
+    assert.ok(!r.ok, '別の都市の武将は使えない');
+    r = SG.exec(t, 'plot', { city: '陳留', officer: '于禁', kind: 'mole', target: '濮陽' });
+    assert.ok(r.ok, r.msg);
+    if (r.success && !done.mole) {
+      assert.strictEqual(t.officers['于禁'].force, '呂布', '埋伏した武将は相手に仕える');
+      const B = SG.prepareBattle(t, '陳留', '濮陽', [{ officer: '夏侯惇', troops: 8000 }]);
+      assert.ok(B.gatesOpen && t.officers['于禁'].force === '曹操', '攻めると内応して戻る');
+      assert.ok(!B.def.some(u => u.officer === '于禁'));
+      const T = SG.tactics.create(t, B, null);
+      assert.strictEqual(Object.keys(T.gates).length, 0, 'マス戦闘でも城門が開いている');
+      done.mole++;
+    }
+  }
+  assert.ok(Object.values(done).every(v => v > 0), '計略が一度は成功する');
+}
 // 攻められたら止まる（プレイヤーが迎え撃つ）→ 決着のあと、つづきから月を進める
 {
   const t = SG.newGame('s194', '劉備', 7);

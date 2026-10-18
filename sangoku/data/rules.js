@@ -27,6 +27,16 @@ SG.data.rules = {
   searchGold: [50, 200], searchGoldChance: 0.3,
   rewardLoyaltyPerGold: 0.1,  // 褒美の金 ×これ だけ忠誠が上がる
   desertLoyalty: 40, desertChance: 0.02,
+  // 計略（隣の敵の都市へ）。成功率 = base + (仕掛ける武将の知力 − 相手の都市で一番の知力) / 100 を min〜max に収める
+  plot: {
+    rumor: { name: '流言', cost: 100, base: 0.5, min: 0.1, max: 0.9, order: [10, 25] },             // 治安を下げる
+    incite: { name: '扇動', cost: 200, base: 0.4, min: 0.05, max: 0.8, troops: [0.05, 0.12], order: [3, 8] }, // 兵が逃げる
+    discord: { name: '離間', cost: 100, base: 0.45, min: 0.05, max: 0.85, loyalty: [8, 20] },       // 武将の忠誠を下げる（君主の魅力が高いほど効きにくい）
+    mole: { name: '埋伏の毒', cost: 300, base: 0.3, min: 0.05, max: 0.7 },                          // 偽って寝返る。攻めたとき内応して城門を開く
+  },
+  moleGateDef: 0.3,           // 内応で城門が開いたとき、計算の戦の城壁の守りをこの割合にする
+  // AI の計略：知力がこれ以上の武将が、この確率で隣の敵に仕掛ける
+  aiPlot: { int: 75, chance: 0.15, minGold: 400 },
   // 戦争
   maxUnits: 5,
   battleDays: 30,

@@ -194,6 +194,37 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       if (!d.owner) { d.owner = c.owner; msg += `（${to}を占領）`; log(s, `${forceName(s, c.owner)}が${to}を占領した`, 'war'); }
       return ok(msg);
     },
+    // 計略。kind：rumor 流言・incite 扇動（target＝都市）／discord 離間（target＝武将）／mole 埋伏の毒（target＝都市。その勢力に偽って寝返る）
+    plot(s, { city, officer, kind, target }) {
+      const err = usable(s, city, officer); if (err) return ng(err);
+      const c = s.cities[city], o = s.officers[officer], conf = R().plot[kind];
+      if (!conf) return ng('計略がちがう');
+      const info = plotTarget(s, city, kind, target);
+      if (info.err) return ng(info.err);
+      if (c.gold < conf.cost) return ng(`金が足りない（${conf.cost}必要）`);
+      if (kind === 'mole' && o.id === s.forces[c.owner].ruler) return ng('君主は送れない');
+      c.gold -= conf.cost;
+      o.acted = true;
+      const p = plotChance(s, city, officer, kind, target);
+      const tc = info.city, foe = forceName(s, tc.owner);
+      const pubLog = msg => { if (tc.owner === s.player) log(s, msg, 'bad'); };
+      if (rand(s) >= p) { pubLog(`${forceName(s, c.owner)}の${conf.name}を見破った（${tc.id}）`); return ok(`${o.id}の${conf.name}は見破られた（${tc.id}）`); }
+      let msg;
+      if (kind === 'rumor') { const d = Math.round(range(s, ...conf.order)); tc.order = Math.max(0, tc.order - d); msg = `${tc.id}に流言！ 治安 -${d}`; }
+      else if (kind === 'incite') {
+        const lost = Math.floor(tc.troops * range(s, ...conf.troops)), d = Math.round(range(s, ...conf.order));
+        tc.troops -= lost; tc.order = Math.max(0, tc.order - d); msg = `${tc.id}で扇動！ 兵 -${lost}、治安 -${d}`;
+      } else if (kind === 'discord') {
+        const t = s.officers[target], d = Math.round(range(s, ...conf.loyalty));
+        t.loyalty = Math.max(0, t.loyalty - d); msg = `${t.id}に離間！ 忠誠 -${d}（${t.loyalty}）`;
+      } else {
+        // 埋伏：武将は相手の勢力に仕える。その都市を攻めると内応する
+        Object.assign(o, { force: tc.owner, city: tc.id, loyalty: Math.round(range(s, 60, 80)), mole: c.owner });
+        msg = `${o.id}が${foe}に偽って降った（埋伏の毒・${tc.id}）`;
+      }
+      pubLog(`${forceName(s, c.owner)}の${conf.name}：${msg}`);
+      return ok(msg, { success: true });
+    },
     // units: [{officer, troops}]。mode 'tactics' ならマス戦闘を始める（s.battle。決着は src/tactics.js）
     attack(s, { city, to, units, mode }) {
       const c = s.cities[city], d = s.cities[to];
@@ -216,6 +247,30 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       return ok(report.win ? `${to}を攻め落とした！` : `${to}を落とせなかった`, { report });
     },
   };
+
+  // 計略の相手を確かめる：{ city }（相手の都市）か { err }
+  function plotTarget(s, cityId, kind, target) {
+    const c = s.cities[cityId];
+    const tc = kind === 'discord' ? s.officers[target] && s.officers[target].status === 'serve' && s.cities[s.officers[target].city] : s.cities[target];
+    if (!tc || !adj(cityId).includes(tc.id)) return { err: '隣の都市ではない' };
+    if (!tc.owner || tc.owner === c.owner) return { err: '敵の都市ではない' };
+    if (kind === 'discord') {
+      const t = s.officers[target];
+      if (t.force !== tc.owner) return { err: '相手がちがう' };
+      if (t.id === s.forces[t.force].ruler) return { err: '君主には効かない' };
+    }
+    return { city: tc };
+  }
+  function plotChance(s, cityId, officerId, kind, target) {
+    const conf = R().plot[kind], o = s.officers[officerId];
+    const info = plotTarget(s, cityId, kind, target); if (info.err) return 0;
+    const tc = info.city;
+    const wise = officersIn(s, tc.id, tc.owner).reduce((m, x) => Math.max(m, x.int), 30);
+    let p = conf.base + (o.int - wise) / 100;
+    if (kind === 'discord') p -= (ruler(s, tc.owner).cha - 50) / 200 + (s.officers[target].loyalty - 70) / 200;
+    if (kind === 'mole') p = conf.base + (o.int - ruler(s, tc.owner).int) / 100;
+    return clamp(p, conf.min, conf.max);
+  }
 
   function exec(s, name, args) {
     if (s.over) return ng('ゲームは終わっている');
@@ -244,7 +299,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     for (const u of atk) s.officers[u.officer].acted = true;
     // 守備側：統率の高い順に最大5人で兵を分ける（君主がいれば総大将として先頭）
     const lord = defForce && s.forces[defForce].ruler;
-    const defOff = officersIn(s, toId, defForce).sort((a, b) => (b.id === lord) - (a.id === lord) || b.lead - a.lead).slice(0, r.maxUnits);
+    const defOff = officersIn(s, toId, defForce).filter(o => o.mole !== atkForce).sort((a, b) => (b.id === lord) - (a.id === lord) || b.lead - a.lead).slice(0, r.maxUnits);
     let def = [];
     if (to.troops > 0) {
       if (defOff.length) {
@@ -256,7 +311,14 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     }
     to.troops = 0;
     const B = { from: fromId, to: toId, atkForce, defForce, atk, def, atkTrain: from.training, defTrain: to.training, lines: [], day: 0, win: null };
+    // 埋伏の毒：攻め手の勢力の手の者が城内にいれば、内応して城門を開き、攻め手に戻る
+    const moles = officersIn(s, toId, defForce).filter(o => o.mole === atkForce);
+    for (const m of moles) {
+      Object.assign(m, { force: atkForce, city: fromId, loyalty: 100, acted: true }); delete m.mole;
+      B.gatesOpen = true;
+    }
     B.lines.push(`${forceName(s, atkForce)}（${atk.map(u => unitName(s, u)).join('・')} 兵${atk.reduce((a, u) => a + u.troops, 0)}）が${toId}へ攻め込んだ。`);
+    if (B.gatesOpen) B.lines.push(`${moles.map(m => m.id).join('・')}が内応！ 城門が開かれた！`);
     B.lines.push(`迎え撃つ${forceName(s, defForce)}：${def.length ? def.map(u => unitName(s, u)).join('・') + ' 兵' + def.reduce((a, u) => a + u.troops, 0) : 'なし'}`);
     return B;
   }
@@ -294,7 +356,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
         if (res.winner) routUnit(s, B, res.winner === O(a) ? d : a, '一騎打ちに敗れて総崩れ');
       }
     }
-    const defBonus = 1 + to.def / r.defDiv;
+    const defBonus = 1 + to.def / r.defDiv * (B.gatesOpen ? r.moleGateDef : 1);
     let day = 0;
     while (day < r.battleDays && aliveUnits(atk).length && aliveUnits(def).length) {
       day++;
@@ -409,7 +471,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     if (!f.alive) return;
     const r = s.officers[f.ruler];
     if (r && r.status === 'serve' && r.force === fid) return;
-    const heirs = membersOf(s, fid).sort((a, b) => (b.cha + b.lead) - (a.cha + a.lead));
+    const heirs = membersOf(s, fid).filter(o => !o.mole).sort((a, b) => (b.cha + b.lead) - (a.cha + a.lead));
     if (!heirs.length || !citiesOf(s, fid).length) {
       f.alive = false;
       for (const c of citiesOf(s, fid)) c.owner = null;
@@ -523,6 +585,13 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       if (dev.length) tries.push(['develop', { kind: dev[0][0] }]);
       if (c.gold >= 300 && c.troops < c.pop * 0.08) tries.push(['recruit', {}]);
       if (freeIn(s, cityId).some(x => !x.found) || rand(s) < 0.15) tries.push(['search', {}]);
+      // 知将はときどき隣の敵に計略（流言・離間）
+      const ap = r.aiPlot;
+      if (o.int >= ap.int && c.gold >= ap.minGold && enemies.length && rand(s) < ap.chance) {
+        const tc = pick(s, enemies);
+        const tgt = officersIn(s, tc.id, tc.owner).filter(x => x.id !== s.forces[tc.owner].ruler).sort((a, b) => a.loyalty - b.loyalty)[0];
+        tries.unshift(tgt && rand(s) < 0.5 ? ['plot', { kind: 'discord', target: tgt.id }] : ['plot', { kind: 'rumor', target: tc.id }]);
+      }
       tries.push(['train', {}]);
       for (const [name, args] of tries) if (exec(s, name, { city: cityId, officer: o.id, ...args }).ok) break;
     }
@@ -623,6 +692,6 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     return { cities: cs.length, officers: membersOf(s, fid).length, troops: cs.reduce((a, c) => a + c.troops, 0), gold: cs.reduce((a, c) => a + c.gold, 0), food: cs.reduce((a, c) => a + c.food, 0) };
   }
 
-  Object.assign(SG, { rand, range, pick, newGame, exec, endTurn, startEndTurn, runEndTurn, nextMonth, prepareBattle, autoBattle, finishBattle, routUnit, unitPower, unitName, duel, aiCity, adj, officersIn, freeIn, citiesOf, membersOf, ruler, forceName, dateText, decideCaptive, captiveChance, forceSummary, defensePower, commands });
+  Object.assign(SG, { plotChance, plotTarget, rand, range, pick, newGame, exec, endTurn, startEndTurn, runEndTurn, nextMonth, prepareBattle, autoBattle, finishBattle, routUnit, unitPower, unitName, duel, aiCity, adj, officersIn, freeIn, citiesOf, membersOf, ruler, forceName, dateText, decideCaptive, captiveChance, forceSummary, defensePower, commands });
 })();
 if (typeof module !== 'undefined') module.exports = SG;
