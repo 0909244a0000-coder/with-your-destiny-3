@@ -131,8 +131,12 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       // 駒：勢力の色の円に兵の絵（総大将・弓・騎兵・歩兵は武将の能力で見た目だけ変える）、下に名前の札と兵の棒
       const cy = c[1] - 5;
       el('circle', { cx: c[0], cy, r: 23, fill: colorOf(x.side), class: 'tok' }, g);
-      const img = el('image', { href: SG.data.art.battle + 'unit_' + unitLook(x) + '.webp', x: c[0] - 21, y: cy - 21, width: 42, height: 42, class: 'tokimg' }, g);
-      img.addEventListener('error', () => img.remove());
+      // 武将の顔を円く切り抜いて駒にする（顔がない守備兵などは兵の絵）
+      const faceUrl = x.officer && SG.faceOf && SG.faceOf(s.officers[x.officer]);
+      const clip = 'clip-' + id.replace(':', '-');
+      el('circle', { cx: c[0], cy, r: 21 }, el('clipPath', { id: clip }, g));
+      const img = el('image', { href: faceUrl || SG.data.art.battle + 'unit_' + unitLook(x) + '.webp', x: c[0] - 21, y: cy - 21, width: 42, height: 42, class: 'tokimg', 'clip-path': `url(#${clip})`, preserveAspectRatio: 'xMidYMid slice' }, g);
+      img.addEventListener('error', () => img.setAttribute('href', SG.data.art.battle + 'unit_' + unitLook(x) + '.webp'));
       el('circle', { cx: c[0], cy, r: 23, class: 'ring', stroke: colorOf(x.side) }, g);
       if (x.commander) el('circle', { cx: c[0], cy, r: 27, class: 'cmdr' }, g);
       el('rect', { x: c[0] - 24, y: c[1] + 14, width: 48, height: 15, rx: 3, class: 'uplate' }, g);
