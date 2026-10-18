@@ -54,9 +54,15 @@
       el('rect', { class: 'cloth', x: h * 0.2, y: -h * 1.3, width: h * 0.8, height: h * 0.8, mask: 'url(#flagmask)' }, fl);
       el('image', { href: A.flag, x: h * 0.2, y: -h * 1.3, width: h * 0.8, height: h * 0.8 }, fl);
       el('image', { class: 'capital', href: A.capital, x: -h * 1.05, y: -h * 1.05, width: h * 0.7, height: h * 0.7, visibility: 'hidden' }, gr);
-      el('text', { y: h + 13 }, gr).textContent = c.id;
-      el('text', { class: 'small', y: h + 25 }, gr);
       gr.addEventListener('click', () => clickCity(c.id));
+    }
+    // 地名の札（暗い札に明るい字）。となりの城に隠れないよう、全部の城より上に描く
+    const labels = el('g', { class: 'labels' }, svg);
+    for (const c of SG.data.cities) {
+      const lg = el('g', { class: 'label', 'data-id': c.id, transform: `translate(${pos[c.id][0]},${pos[c.id][1]})` }, labels);
+      el('rect', { class: 'plate', y: h + 1, height: 29, rx: 4 }, lg);
+      el('text', { class: 'name', y: h + 15 }, lg).textContent = c.id;
+      el('text', { class: 'small', y: h + 27 }, lg);
     }
   }
   function refreshMap() {
@@ -73,7 +79,16 @@
       g.querySelector('.cloth').setAttribute('fill', color);
       g.querySelector('.flag').setAttribute('visibility', c.owner ? 'visible' : 'hidden');
       g.querySelector('.capital').setAttribute('visibility', caps.has(c.id) ? 'visible' : 'hidden');
-      g.querySelector('.small').textContent = c.troops ? '兵' + man(c.troops) : '';
+      const troops = c.troops ? '兵' + man(c.troops) : '';
+      const label = $('map').querySelector(`.label[data-id="${c.id}"]`);
+      label.classList.toggle('sel', c.id === sel);
+      const small = label.querySelector('.small');
+      if (small.textContent !== troops) {
+        small.textContent = troops;
+        const w = Math.max(c.id.length * 15, troops.length * 7.5) + 10;
+        const plate = label.querySelector('.plate');
+        plate.setAttribute('x', -w / 2); plate.setAttribute('width', w); plate.setAttribute('height', troops ? 29 : 18);
+      }
       g.classList.toggle('sel', c.id === sel);
       g.classList.toggle('target', targets.includes(c.id));
     }

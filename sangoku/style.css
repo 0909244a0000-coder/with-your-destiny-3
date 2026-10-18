@@ -1,5 +1,5 @@
 :root {
-  --bg: #11151f; --panel: #1b2130; --panel2: #232b3d; --line: #6b5a32; --gold: #d9b45a; --text: #ece4d0; --dim: #a39a86;
+  --bg: #11151f; --panel: #1b2130; --panel2: #232b3d; --line: #6b5a32; --gold: #d9b45a; --text: #ece4d0; --dim: #c4b99c;
   --sea: #1d3550; --land: #4b5a3a; --land2: #5d6b45; --river: #5f97c7; --road: rgba(40, 26, 10, .55);
   --good: #7fd18b; --bad: #ef7d6d; --war: #f0b35a;
   font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
@@ -37,8 +37,11 @@ main { flex: 1; display: flex; min-height: 0; }
 #map .city .base { opacity: .9; stroke: rgba(0, 0, 0, .6); stroke-width: 1.5; }
 #map .city .flag image { mix-blend-mode: multiply; }
 #map .city:hover .castle { filter: brightness(1.2); }
-#map .city text { font-size: 15px; fill: #fff; paint-order: stroke; stroke: #000; stroke-width: 3px; text-anchor: middle; pointer-events: none; }
-#map .city text.small { font-size: 11px; fill: #d8d0bc; }
+#map .label { pointer-events: none; }
+#map .label text { font-size: 15px; font-weight: bold; fill: #fff6df; text-anchor: middle; pointer-events: none; }
+#map .label text.small { font-size: 11px; font-weight: normal; fill: #f0d58c; }
+#map .label .plate { fill: rgba(18, 13, 8, .82); stroke: rgba(217, 180, 90, .55); stroke-width: 1; pointer-events: none; }
+#map .label.sel .plate { stroke: #fff; stroke-width: 1.5; }
 #map .capital, #map .flag { pointer-events: none; }
 #map .rname { font-size: 15px; fill: #d8ecff; paint-order: stroke; stroke: #1d3550; stroke-width: 3px; opacity: .85; pointer-events: none; }
 #side { width: 400px; display: flex; flex-direction: column; background: var(--panel) url(assets/ui/silk.webp); border-left: 2px solid var(--line); min-height: 0; }
