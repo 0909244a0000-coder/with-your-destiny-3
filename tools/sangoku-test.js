@@ -127,6 +127,32 @@ for (let seed = 1; seed <= 12; seed++) {
   }
   assert.ok(Object.values(done).every(v => v > 0), '計略が一度は成功する');
 }
+// 外交：贈答で友好度、同盟中は攻められない、降伏勧告で勢力ごと加わる
+{
+  const t = SG.newGame('s194', '曹操', 5);
+  t.cities['陳留'].gold = 9000;
+  const tr0 = SG.rel(t, '曹操', '呂布').trust;
+  assert.ok(SG.exec(t, 'diplo', { city: '陳留', officer: '曹操', kind: 'gift', target: '呂布', gold: 500 }).ok);
+  assert.ok(SG.rel(t, '曹操', '呂布').trust > tr0, '贈答で友好度が上がる');
+  SG.rel(t, '曹操', '呂布').trust = 100;
+  let ok1 = false;
+  for (const o of ['郭嘉', '程昱', '于禁', '夏侯惇', '典韋']) { const r = SG.exec(t, 'diplo', { city: '陳留', officer: o, kind: 'ally', target: '呂布' }); assert.ok(r.ok, r.msg); if (r.success) { ok1 = true; break; } }
+  assert.ok(ok1 && SG.pactOf(t, '曹操', '呂布') === 'ally', '同盟が結べる');
+  assert.ok(!SG.exec(t, 'attack', { city: '陳留', to: '濮陽', units: [{ officer: '曹仁', troops: 1000 }] }).ok, '同盟相手は攻められない');
+  for (let m = 0; m < 13; m++) SG.nextMonth(t);
+  assert.strictEqual(SG.pactOf(t, '曹操', '呂布'), null, '同盟は期限で切れる');
+  // 降伏勧告：小さな勢力（張楊）に、兵を十分持って
+  const u = SG.newGame('s194', '曹操', 9);
+  u.cities['陳留'].troops = 200000; SG.rel(u, '曹操', '張楊').trust = 100;
+  let joined = false;
+  for (let k = 0; k < 30 && !joined; k++) {
+    for (const o of SG.officersIn(u, '陳留', '曹操')) o.acted = false;
+    const r = SG.exec(u, 'diplo', { city: '陳留', officer: '曹操', kind: 'surrender', target: '張楊' });
+    assert.ok(r.ok, r.msg); joined = !!r.success;
+  }
+  assert.ok(joined && u.cities['河内'].owner === '曹操' && u.officers['張楊'].force === '曹操' && !u.forces['張楊'].alive, '降伏で都市と武将が加わる');
+  assert.ok(!SG.exec(u, 'diplo', { city: '陳留', officer: '郭嘉', kind: 'surrender', target: '袁紹' }).ok, '大きな勢力には降伏勧告できない');
+}
 // 攻められたら止まる（プレイヤーが迎え撃つ）→ 決着のあと、つづきから月を進める
 {
   const t = SG.newGame('s194', '劉備', 7);

@@ -37,6 +37,20 @@ SG.data.rules = {
   moleGateDef: 0.3,           // 内応で城門が開いたとき、計算の戦の城壁の守りをこの割合にする
   // AI の計略：知力がこれ以上の武将が、この確率で隣の敵に仕掛ける
   aiPlot: { int: 75, chance: 0.15, minGold: 400 },
+  // 外交：友好度（0〜100）は勢力の組ごと。同盟・停戦の間は、お互いに攻められず計略もかけられない
+  diplo: {
+    startTrust: 40,
+    giftPerTrust: 10,         // 贈答：金がこれだけで友好度 +1（使者の魅力70が基準）
+    ally: { name: '同盟', months: 12, base: -0.35, perTrust: 0.012, perCha: 0.005, failTrust: -5 },
+    truce: { name: '停戦', months: 6, base: -0.1, perTrust: 0.01, perCha: 0.004, failTrust: -3 },
+    // 降伏勧告：相手の兵がこちらの 1/ratio 以下で、都市が maxCities 以下のときだけ
+    surrender: { name: '降伏勧告', ratio: 4, maxCities: 2, base: 0.05, perTrust: 0.006, perCha: 0.004, failTrust: -10 },
+    weakBonus: 0.15,          // 相手のほうが弱いとき、同盟・停戦に乗りやすい
+    pactTrust: 10,            // 結んだときに友好度が上がる
+    aiPactChance: 0.004,      // 毎月、隣り合うAIどうしが同盟・停戦を結ぶ確率（組ごと）
+    aiOfferTrust: 65,         // この友好度以上のAIは、プレイヤーに同盟を申し入れることがある
+    aiOfferChance: 0.03,
+  },
   // 戦争
   maxUnits: 5,
   battleDays: 30,

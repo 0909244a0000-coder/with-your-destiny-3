@@ -190,7 +190,7 @@
       h += `<h3>命令（行動できる武将 ${idle}人）</h3><div class="cmds">
         <div class="group">内政</div>${b('agri', '開墾')}${b('comm', '商業')}${b('def', '城壁')}${b('order', '治安')}
         <div class="group">軍事</div>${b('recruit', '徴兵')}${b('train', '訓練')}${b('attack', '出陣')}${b('move', '移動', false)}
-        <div class="group">人事・その他</div>${b('search', '探索')}${b('employ', '登用')}${b('reward', '褒美', false)}${b('trade', '売買', false)}${b('plot', '計略')}
+        <div class="group">人事・その他</div>${b('search', '探索')}${b('employ', '登用')}${b('reward', '褒美', false)}${b('trade', '売買', false)}${b('plot', '計略')}${b('diplo', '外交')}
       </div><label class="toggle"><input type="checkbox" id="delegate" ${c.delegate ? 'checked' : ''}>${icon('cmd/delegate')}委任（月の終わりにAIが内政・軍事を行う）</label>`;
     }
     h += `<h3>武将（${offs.length}人）</h3>` + statsTable(offs, { showActed: mine, extraHead: mine ? '行動' : '', extra: mine ? o => o.acted ? icon('stat/acted', 'ico', '済') : '' : null });
@@ -252,6 +252,7 @@
     }
     if (cmd === 'employ') return openEmploy(c);
     if (cmd === 'plot') return openPlot(c);
+    if (cmd === 'diplo') return openDiplo(c);
     if (cmd === 'reward') return openReward(c);
     if (cmd === 'trade') return openTrade(c);
     if (cmd === 'move') return openMove(c);
@@ -270,6 +271,49 @@
       });
     });
   }
+  // 外交：相手の勢力 → 種類 → 使者（成功率つき）
+  const relText = fid => { const p = SG.pactOf(s, s.player, fid), r = SG.rel(s, s.player, fid); return p ? `<span class="pact">${SG.data.rules.diplo[p].name} あと${r.until - (s.year * 12 + s.month) + 1}か月</span>` : ''; };
+  function openDiplo(c) {
+    const fs = Object.values(s.forces).filter(f => f.alive && f.id !== s.player).map(f => ({ f, sum: SG.forceSummary(s, f.id) })).sort((a, b) => b.sum.cities - a.sum.cities);
+    modal(`<h2>${icon('event/alliance', 'hico')}外交：相手の勢力</h2><p class="sub">同盟・停戦の間は、お互いに攻められず、計略もかけられない</p>
+      <table><tr><th>勢力</th><th>都市</th><th>兵</th><th>友好度</th><th>関係</th></tr>${fs.map(({ f, sum }) => `<tr class="pick" data-f="${esc(f.id)}"><td>${face(s.officers[f.ruler])}<span class="chip" style="background:${f.color}"></span> ${esc(f.ruler)}軍</td><td>${sum.cities}</td><td>${man(sum.troops)}</td><td>${SG.rel(s, s.player, f.id).trust}</td><td>${relText(f.id)}</td></tr>`).join('')}</table>
+      <div class="actions"><button data-close>閉じる</button></div>`, box => {
+      for (const tr of box.querySelectorAll('tr.pick')) tr.addEventListener('click', () => diploKinds(c, tr.dataset.f));
+    });
+  }
+  function diploKinds(c, target) {
+    const D = SG.data.rules.diplo, pact = SG.pactOf(s, s.player, target);
+    const desc = { ally: `${D.ally.months}か月、お互いに攻めない`, truce: `${D.truce.months}か月、お互いに攻めない`, surrender: `都市${D.surrender.maxCities}つ以下で、兵がこちらの1/${D.surrender.ratio}以下の相手を、まるごと配下にする` };
+    modal(`<h2>${esc(SG.forceName(s, target))}への外交</h2><p class="sub">友好度 ${SG.rel(s, s.player, target).trust}　${relText(target)}　金${c.gold}</p>
+      <div class="row"><button data-k="gift">贈答</button><input type="number" id="amt" value="200" min="10" step="10"><span class="sub">金を贈って友好度を上げる（金${D.giftPerTrust}でおよそ+1）</span></div>
+      ${['ally', 'truce', 'surrender'].map(k => `<div class="row"><button data-k="${k}" ${pact && k !== 'surrender' ? 'disabled' : ''}>${D[k].name}</button><span class="sub">${desc[k]}</span></div>`).join('')}
+      <div class="actions"><button data-close>閉じる</button></div>`, box => {
+      for (const b of box.querySelectorAll('[data-k]')) b.addEventListener('click', () => {
+        const kind = b.dataset.k, gold = +$('amt').value;
+        const list = SG.officersIn(s, c.id, s.player).filter(o => !o.acted).sort((a, b) => b.cha - a.cha);
+        modal(`<h2>${kind === 'gift' ? '贈答' : D[kind].name}：使者</h2><p class="sub">魅力が効く${kind === 'gift' ? '' : '。右の％が成功率'}</p>${statsTable(list, { pick: true, hi: 'cha', extraHead: kind === 'gift' ? '' : '成功率', extra: kind === 'gift' ? null : o => Math.round(SG.diploChance(s, s.player, o.id, kind, target) * 100) + '%' })}
+          <div class="msg" id="msg"></div><div class="actions"><button data-close>閉じる</button></div>`, box2 => {
+          for (const tr of box2.querySelectorAll('tr.pick')) tr.addEventListener('click', () => {
+            const r = SG.exec(s, 'diplo', { city: c.id, officer: tr.dataset.id, kind, target, gold });
+            if (!r.ok) { $('msg').textContent = r.msg; return; }
+            closeModal(); afterAction(r);
+            modal(`<h2>${icon('event/envoy', 'hico')}${kind === 'gift' ? '贈答' : D[kind].name}</h2><div class="result ${r.success ? 'win' : 'lose'}">${r.success ? '成功！' : '失敗……'}</div><p>${esc(r.msg)}</p><div class="actions"><button data-close class="primary">閉じる</button></div>`);
+          });
+        });
+      });
+    });
+  }
+  // AI からの申し入れ
+  function showOffer() {
+    const o = s.offers && s.offers[0]; if (!o) return nextQueued();
+    const D = SG.data.rules.diplo;
+    modal(`<h2>${icon('event/envoy', 'hico')}使者の来訪</h2><p>${face(s.officers[s.forces[o.force].ruler], 'face-l')}${esc(SG.forceName(s, o.force))}から、${D[o.kind].name}（${D[o.kind].months}か月）の申し入れが来た。</p><p class="sub">友好度 ${SG.rel(s, s.player, o.force).trust}</p>
+      <div class="actions"><button id="no">断る</button><button id="yes" class="primary">受ける</button></div>`, () => {
+      const ans = yes => { SG.answerOffer(s, 0, yes); save(); $('modal').hidden = true; render(); if (s.offers.length) showOffer(); else nextQueued(); };
+      $('yes').addEventListener('click', () => ans(true)); $('no').addEventListener('click', () => ans(false));
+    });
+  }
+
   // 計略：種類 → 相手 → 仕掛ける武将（成功率つき）
   function openPlot(c) {
     const P = SG.data.rules.plot;
@@ -424,7 +468,7 @@
   // ---------- 一覧 ----------
   function showForces() {
     const fs = Object.values(s.forces).filter(f => f.alive).map(f => ({ f, sum: SG.forceSummary(s, f.id) })).sort((a, b) => b.sum.cities - a.sum.cities);
-    modal(`<h2>勢力一覧</h2><table><tr><th>勢力</th><th>君主の能力（統武知政魅）</th><th>都市</th><th>武将</th><th>兵</th><th>金</th></tr>${fs.map(({ f, sum }) => { const r = s.officers[f.ruler]; return `<tr><td><span class="chip" style="background:${f.color}"></span> ${esc(f.ruler)}軍${f.id === s.player ? '（自軍）' : ''}</td><td>${r.lead}・${r.war}・${r.int}・${r.pol}・${r.cha}</td><td>${sum.cities}</td><td>${sum.officers}</td><td>${man(sum.troops)}</td><td>${sum.gold}</td></tr>`; }).join('')}</table><div class="actions"><button data-close>閉じる</button></div>`);
+    modal(`<h2>勢力一覧</h2><table><tr><th>勢力</th><th>君主の能力（統武知政魅）</th><th>都市</th><th>武将</th><th>兵</th><th>金</th><th>友好度</th><th>関係</th></tr>${fs.map(({ f, sum }) => { const r = s.officers[f.ruler], me = f.id === s.player; return `<tr><td>${face(r)}<span class="chip" style="background:${f.color}"></span> ${esc(f.ruler)}軍${me ? '（自軍）' : ''}</td><td>${r.lead}・${r.war}・${r.int}・${r.pol}・${r.cha}</td><td>${sum.cities}</td><td>${sum.officers}</td><td>${man(sum.troops)}</td><td>${sum.gold}</td><td>${me ? '' : SG.rel(s, s.player, f.id).trust}</td><td>${me ? '' : relText(f.id)}</td></tr>`; }).join('')}</table><div class="actions"><button data-close>閉じる</button></div>`);
   }
   function showOfficers() {
     const list = SG.membersOf(s, s.player).sort((a, b) => (a.city > b.city ? 1 : a.city < b.city ? -1 : 0));
@@ -450,6 +494,7 @@
     // マス戦闘はその場で見たので、計算で決着した戦だけ報告する
     for (const rep of s.reports.splice(0).filter(r => !r.tactical)) queue.push(() => showReport(rep));
     if (s.captives.length) queue.push(showCaptives);
+    if (s.offers && s.offers.length) queue.push(showOffer);
     nextQueued();
   }
   function openBattle() {
@@ -512,6 +557,7 @@
       if (s.battle) openBattle();
       else if (s.turnQueue) continueTurn();
       else if (s.captives.length) showCaptives();
+      else if (s.offers && s.offers.length) showOffer();
     }
     else startScreen();
   }

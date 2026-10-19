@@ -38,7 +38,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   // ---------- 新しいゲーム ----------
   function newGame(scenarioId, playerForce, seed) {
     const sc = SG.data.scenarios.find(x => x.id === scenarioId) || SG.data.scenarios[0];
-    const s = { version: 1, scenario: sc.id, year: sc.year, month: sc.month, rng: (seed === undefined ? Date.now() : seed) | 0, player: playerForce || null, forces: {}, cities: {}, officers: {}, log: [], reports: [], captives: [], over: null };
+    const s = { version: 1, scenario: sc.id, year: sc.year, month: sc.month, rng: (seed === undefined ? Date.now() : seed) | 0, player: playerForce || null, forces: {}, cities: {}, officers: {}, log: [], reports: [], captives: [], over: null, relations: {}, offers: [] };
     for (const c of SG.data.cities) {
       s.cities[c.id] = { id: c.id, owner: null, pop: c.pop, agri: c.agri, agriMax: c.agriMax, comm: c.comm, commMax: c.commMax, def: c.def, defMax: c.defMax, ...sc.defaults.empty, delegate: false };
     }
@@ -194,6 +194,30 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       if (!d.owner) { d.owner = c.owner; msg += `（${to}を占領）`; log(s, `${forceName(s, c.owner)}が${to}を占領した`, 'war'); }
       return ok(msg);
     },
+    // 外交。kind：gift 贈答（gold）／ally 同盟／truce 停戦／surrender 降伏勧告。target＝相手の勢力
+    diplo(s, { city, officer, kind, target, gold }) {
+      const err = usable(s, city, officer); if (err) return ng(err);
+      const c = s.cities[city], o = s.officers[officer], D = R().diplo, me = c.owner;
+      if (!s.forces[target] || !s.forces[target].alive || target === me) return ng('相手がいない');
+      const r = rel(s, me, target), name = forceName(s, target);
+      if (kind === 'gift') {
+        gold = Math.floor(gold || 0);
+        if (gold < 10 || c.gold < gold) return ng('金が足りない');
+        c.gold -= gold; o.acted = true;
+        const up = Math.max(1, Math.round(gold / D.giftPerTrust * o.cha / 70 * range(s, 0.8, 1.2)));
+        r.trust = Math.min(100, r.trust + up);
+        return ok(`${name}に金${gold}を贈った：友好度 +${up}（${r.trust}）`, { success: true });
+      }
+      if (!D[kind]) return ng('外交がちがう');
+      if (kind !== 'surrender' && pactOf(s, me, target)) return ng(`すでに${D[pactOf(s, me, target)].name}中`);
+      const p = diploChance(s, me, officer, kind, target);
+      if (kind === 'surrender' && p === 0) return ng(`降伏勧告は、兵がこちらの1/${D.surrender.ratio}以下で都市${D.surrender.maxCities}つ以下の相手だけ`);
+      o.acted = true;
+      if (rand(s) >= p) { r.trust = clamp(r.trust + D[kind].failTrust, 0, 100); return ok(`${name}は${D[kind].name}を断った`); }
+      if (kind === 'surrender') { const lord = s.forces[target].ruler; absorb(s, me, target); log(s, `${lord}が降伏し、${forceName(s, me)}に加わった`, 'war'); checkEnd(s); return ok(`${lord}が降伏した！ 都市と武将が加わった`, { success: true }); }
+      makePact(s, me, target, kind);
+      return ok(`${name}と${D[kind].name}を結んだ（${D[kind].months}か月）`, { success: true });
+    },
     // 計略。kind：rumor 流言・incite 扇動（target＝都市）／discord 離間（target＝武将）／mole 埋伏の毒（target＝都市。その勢力に偽って寝返る）
     plot(s, { city, officer, kind, target }) {
       const err = usable(s, city, officer); if (err) return ng(err);
@@ -231,6 +255,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       if (!c || !d || !adj(city).includes(to)) return ng('隣の都市ではない');
       if (!d.owner) return commands.move(s, { city, to, officers: units.map(u => u.officer), troops: units.reduce((a, u) => a + (u.troops || 0), 0) });
       if (d.owner === c.owner) return ng('自分の都市');
+      if (pactOf(s, c.owner, d.owner)) return ng(`${forceName(s, d.owner)}とは${R().diplo[pactOf(s, c.owner, d.owner)].name}中`);
       if (!units || !units.length) return ng('武将がいない');
       if (units.length > R().maxUnits) return ng(`出陣は${R().maxUnits}人まで`);
       for (const u of units) { const e = usable(s, city, u.officer); if (e) return ng(e); u.troops = Math.floor(u.troops || 0); if (u.troops < 100) return ng(`${u.officer}の兵が少なすぎる`); }
@@ -254,6 +279,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     const tc = kind === 'discord' ? s.officers[target] && s.officers[target].status === 'serve' && s.cities[s.officers[target].city] : s.cities[target];
     if (!tc || !adj(cityId).includes(tc.id)) return { err: '隣の都市ではない' };
     if (!tc.owner || tc.owner === c.owner) return { err: '敵の都市ではない' };
+    if (pactOf(s, c.owner, tc.owner)) return { err: `${forceName(s, tc.owner)}とは${R().diplo[pactOf(s, c.owner, tc.owner)].name}中` };
     if (kind === 'discord') {
       const t = s.officers[target];
       if (t.force !== tc.owner) return { err: '相手がちがう' };
@@ -538,7 +564,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     if (!fid) return;
     const idle = () => officersIn(s, cityId, fid).filter(o => !o.acted);
     const neighbors = adj(cityId).map(id => s.cities[id]);
-    const enemies = neighbors.filter(n => n.owner && n.owner !== fid);
+    const enemies = neighbors.filter(n => n.owner && n.owner !== fid && !pactOf(s, fid, n.owner));
     const empties = neighbors.filter(n => !n.owner);
     const threat = enemies.reduce((m, n) => Math.max(m, n.troops), 0);
     const best = (list, key) => list.slice().sort((a, b) => b[key] - a[key])[0];
@@ -659,6 +685,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
         Object.assign(o, { status: 'free', force: null, found: true });
       }
     }
+    diploMonth(s);
     if (s.month === 1) newYear(s);
     for (const fid of Object.keys(s.forces)) ensureRuler(s, fid);
     checkEnd(s);
@@ -687,11 +714,82 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     if (Object.values(s.cities).every(c => c.owner === s.player)) { s.over = 'win'; log(s, '天下を統一した！', 'good'); }
   }
 
+  // ---------- 外交 ----------
+  const monthIndex = s => s.year * 12 + s.month;
+  const relKey = (a, b) => a < b ? a + '|' + b : b + '|' + a;
+  function rel(s, a, b) {
+    if (!s.relations) s.relations = {};
+    const k = relKey(a, b);
+    return s.relations[k] || (s.relations[k] = { trust: R().diplo.startTrust, pact: null, until: 0 });
+  }
+  // いま結んでいる約束（'ally' / 'truce' / null）
+  function pactOf(s, a, b) {
+    if (!a || !b || a === b || !s.relations) return null;
+    const r = s.relations[relKey(a, b)];
+    return r && r.pact && r.until >= monthIndex(s) ? r.pact : null;
+  }
+  const power = (s, fid) => citiesOf(s, fid).reduce((a, c) => a + c.troops, 0);
+  function diploChance(s, fid, envoyId, kind, target) {
+    const D = R().diplo, conf = D[kind], o = s.officers[envoyId];
+    if (!conf || !s.forces[target] || !s.forces[target].alive || target === fid) return 0;
+    const r = rel(s, fid, target);
+    let p = conf.base + r.trust * conf.perTrust + (o.cha - 50) * conf.perCha;
+    if (kind === 'surrender') {
+      if (citiesOf(s, target).length > conf.maxCities || power(s, target) * conf.ratio > power(s, fid)) return 0;
+      return clamp(p, 0.02, 0.7);
+    }
+    if (power(s, target) < power(s, fid)) p += D.weakBonus;
+    return clamp(p, 0.02, 0.9);
+  }
+  function makePact(s, a, b, kind) {
+    const r = rel(s, a, b), D = R().diplo;
+    Object.assign(r, { pact: kind, until: monthIndex(s) + D[kind].months - 1, trust: Math.min(100, r.trust + D.pactTrust) });
+  }
+  // 降伏：相手の都市と武将がこちらのものになる
+  function absorb(s, fid, target) {
+    const lord = s.forces[target].ruler;
+    for (const c of citiesOf(s, target)) c.owner = fid;
+    for (const o of membersOf(s, target)) Object.assign(o, { force: fid, loyalty: o.id === lord ? 60 : Math.round(range(s, 55, 75)) });
+    s.forces[target].alive = false;
+    for (const id of Object.keys(s.relations || {})) if (id.split('|').includes(target)) delete s.relations[id];
+  }
+  // 毎月：約束の期限切れ、AIどうしの約束、プレイヤーへの申し入れ
+  function diploMonth(s) {
+    const D = R().diplo, now = monthIndex(s);
+    for (const [k, r] of Object.entries(s.relations || {})) {
+      if (r.pact && r.until < now) {
+        const [a, b] = k.split('|');
+        if (a === s.player || b === s.player) log(s, `${forceName(s, a === s.player ? b : a)}との${D[r.pact].name}が切れた`);
+        r.pact = null;
+      }
+    }
+    const alive = Object.keys(s.forces).filter(f => s.forces[f].alive);
+    const touching = (a, b) => citiesOf(s, a).some(c => adj(c.id).some(id => s.cities[id].owner === b));
+    for (let i = 0; i < alive.length; i++) for (let j = i + 1; j < alive.length; j++) {
+      const a = alive[i], b = alive[j];
+      if (a === s.player || b === s.player || pactOf(s, a, b) || !touching(a, b)) continue;
+      if (rand(s) < D.aiPactChance) makePact(s, a, b, rand(s) < 0.5 ? 'ally' : 'truce');
+    }
+    if (s.player && s.forces[s.player] && s.forces[s.player].alive) for (const f of alive) {
+      if (f === s.player || pactOf(s, f, s.player) || rel(s, f, s.player).trust < D.aiOfferTrust) continue;
+      if (rand(s) < D.aiOfferChance && !(s.offers || []).some(x => x.force === f)) (s.offers = s.offers || []).push({ force: f, kind: 'ally' });
+    }
+  }
+  // プレイヤーへの申し入れに答える
+  function answerOffer(s, i, yes) {
+    const o = (s.offers || [])[i]; if (!o) return ng('申し入れがない');
+    s.offers.splice(i, 1);
+    if (!s.forces[o.force].alive) return ng('その勢力はもうない');
+    if (yes) { makePact(s, s.player, o.force, o.kind); log(s, `${forceName(s, o.force)}と${R().diplo[o.kind].name}を結んだ`, 'good'); return ok('結んだ'); }
+    rel(s, s.player, o.force).trust = Math.max(0, rel(s, s.player, o.force).trust - 5);
+    return ok('断った');
+  }
+
   function forceSummary(s, fid) {
     const cs = citiesOf(s, fid);
     return { cities: cs.length, officers: membersOf(s, fid).length, troops: cs.reduce((a, c) => a + c.troops, 0), gold: cs.reduce((a, c) => a + c.gold, 0), food: cs.reduce((a, c) => a + c.food, 0) };
   }
 
-  Object.assign(SG, { plotChance, plotTarget, rand, range, pick, newGame, exec, endTurn, startEndTurn, runEndTurn, nextMonth, prepareBattle, autoBattle, finishBattle, routUnit, unitPower, unitName, duel, aiCity, adj, officersIn, freeIn, citiesOf, membersOf, ruler, forceName, dateText, decideCaptive, captiveChance, forceSummary, defensePower, commands });
+  Object.assign(SG, { rel, pactOf, diploChance, answerOffer, plotChance, plotTarget, rand, range, pick, newGame, exec, endTurn, startEndTurn, runEndTurn, nextMonth, prepareBattle, autoBattle, finishBattle, routUnit, unitPower, unitName, duel, aiCity, adj, officersIn, freeIn, citiesOf, membersOf, ruler, forceName, dateText, decideCaptive, captiveChance, forceSummary, defensePower, commands });
 })();
 if (typeof module !== 'undefined') module.exports = SG;
