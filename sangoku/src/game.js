@@ -466,18 +466,24 @@ var SG = typeof SG !== 'undefined' ? SG : {};
 
   function battle(s, fromId, toId, orders) { return finishBattle(s, autoBattle(s, prepareBattle(s, fromId, toId, orders))); }
 
+  // 特技（data/skills.js）を持っているか
+  function hasSkill(o, k) { const S = SG.data.skills; return !!(o && S && S.of[o.id] && S.of[o.id].includes(k)); }
+  const skillVal = (o, k, key, base) => hasSkill(o, k) ? SG.data.skills.list[k][key] : base;
+  // 一騎打ち。rounds は画面で1合ずつ見せるための記録（{ hit: 'a'|'b', dmg, ha, hb }）。勇将は武力+10
   function duel(s, a, b) {
-    const lines = []; let ha = 100, hb = 100;
+    const lines = [], rounds = []; let ha = 100, hb = 100;
+    const wa = a.war + skillVal(a, 'hero', 'duelWar', 0), wb = b.war + skillVal(b, 'hero', 'duelWar', 0);
     for (let round = 1; round <= 10 && ha > 0 && hb > 0; round++) {
-      const aWins = rand(s) < a.war ** 2 / (a.war ** 2 + b.war ** 2);
+      const aWins = rand(s) < wa ** 2 / (wa ** 2 + wb ** 2);
       const dmg = Math.round(range(s, 8, 22));
       if (aWins) hb -= dmg; else ha -= dmg;
+      rounds.push({ hit: aWins ? 'a' : 'b', dmg, ha: Math.max(0, ha), hb: Math.max(0, hb) });
       if (round <= 3 || ha <= 0 || hb <= 0) lines.push(`　${round}合目：${aWins ? a.id : b.id}の一撃！`);
     }
-    if (ha > 0 && hb > 0) { lines.push('　10合打ち合って勝負つかず。'); return { lines, winner: null }; }
+    if (ha > 0 && hb > 0) { lines.push('　10合打ち合って勝負つかず。'); return { lines, rounds, winner: null }; }
     const w = ha > 0 ? a : b;
     lines.push(`　${w.id}の勝ち！`);
-    return { lines, winner: w };
+    return { lines, rounds, winner: w };
   }
 
   // 都市を失った勢力の後始末（滅亡・君主の交代）
@@ -790,6 +796,6 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     return { cities: cs.length, officers: membersOf(s, fid).length, troops: cs.reduce((a, c) => a + c.troops, 0), gold: cs.reduce((a, c) => a + c.gold, 0), food: cs.reduce((a, c) => a + c.food, 0) };
   }
 
-  Object.assign(SG, { rel, pactOf, diploChance, answerOffer, plotChance, plotTarget, rand, range, pick, newGame, exec, endTurn, startEndTurn, runEndTurn, nextMonth, prepareBattle, autoBattle, finishBattle, routUnit, unitPower, unitName, duel, aiCity, adj, officersIn, freeIn, citiesOf, membersOf, ruler, forceName, dateText, decideCaptive, captiveChance, forceSummary, defensePower, commands });
+  Object.assign(SG, { hasSkill, skillVal, rel, pactOf, diploChance, answerOffer, plotChance, plotTarget, rand, range, pick, newGame, exec, endTurn, startEndTurn, runEndTurn, nextMonth, prepareBattle, autoBattle, finishBattle, routUnit, unitPower, unitName, duel, aiCity, adj, officersIn, freeIn, citiesOf, membersOf, ruler, forceName, dateText, decideCaptive, captiveChance, forceSummary, defensePower, commands });
 })();
 if (typeof module !== 'undefined') module.exports = SG;

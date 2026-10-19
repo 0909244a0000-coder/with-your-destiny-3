@@ -472,7 +472,9 @@
   }
   function showOfficers() {
     const list = SG.membersOf(s, s.player).sort((a, b) => (a.city > b.city ? 1 : a.city < b.city ? -1 : 0));
-    modal(`<h2>武将一覧（${list.length}人）</h2>${statsTable(list, { pick: true, showActed: true, extraHead: '都市', extra: o => esc(o.city) + (o.acted ? '・済' : '') })}<div class="actions"><button data-close>閉じる</button></div>`, box => {
+    const skills = o => (SG.data.skills.of[o.id] || []).map(k => `<span class="skill" title="${SG.data.skills.list[k].text}">${SG.data.skills.list[k].name}</span>`).join('');
+    modal(`<h2>武将一覧（${list.length}人）</h2>${statsTable(list, { pick: true, showActed: true, extraHead: '都市・特技', extra: o => esc(o.city) + (o.acted ? '・済' : '') + ' ' + skills(o) })}
+      <p class="sub">${Object.values(SG.data.skills.list).map(v => `${v.name}：${v.text}`).join('　')}</p><div class="actions"><button data-close>閉じる</button></div>`, box => {
       for (const tr of box.querySelectorAll('tr.pick')) tr.addEventListener('click', () => { sel = s.officers[tr.dataset.id].city; closeModal(); focusCity(sel); });
     });
   }

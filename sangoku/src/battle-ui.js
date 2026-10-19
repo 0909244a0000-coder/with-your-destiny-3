@@ -24,7 +24,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     root = document.getElementById('battle');
     root.hidden = false;
     stop();
-    root.innerHTML = `<div id="b-top"></div><div id="b-main"><div id="b-field"><svg id="b-svg"></svg><svg id="b-fx"></svg><div id="b-banner" hidden></div></div><aside id="b-side"></aside></div>`;
+    root.innerHTML = `<div id="b-top"></div><div id="b-main"><div id="b-field"><svg id="b-svg"></svg><svg id="b-fx"></svg><div id="b-banner" hidden></div><div id="b-duel" hidden></div></div><aside id="b-side"></aside></div>`;
     const svg = document.getElementById('b-svg');
     const w = W * (T.cols + 0.5) + 4, h = R * 1.5 * (T.rows - 1) + R * 2 + 4;
     svg.setAttribute('viewBox', `-2 -2 ${w} ${h}`);
@@ -48,8 +48,8 @@ var SG = typeof SG !== 'undefined' ? SG : {};
     draw();
     animate(r);
     if (r.act) setTimeout(() => effects(r.act), r.from !== r.to ? P.slideMs / speed : 0);
-    const long = r.lines.some(l => /一騎打ち|合目/.test(l));
-    timer = setTimeout(tick, (long ? P.duelMs : r.act ? P.actMs : P.moveMs) / speed);
+    const dt = duelTime(r);
+    timer = setTimeout(tick, (dt ? dt + P.slideMs : r.act ? P.actMs : P.moveMs) / speed);
   }
   // ---------- 演出（数字・火・矢・一騎打ち・敗走） ----------
   // 戦場の上に重ねた #b-fx に描き、決まった時間で消す。draw() で描き直しても消えない
@@ -84,17 +84,42 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       else if (f.type === 'miss') { pic(f.pos, 'event/fire', 40, 500); words(f.pos, '見破られた', 'gray'); }
       else if (f.type === 'refuse') words(f.pos, '応じず', 'gray');
       else if (f.type === 'charge') words([center(f.pos)[0], center(f.pos)[1] - 40], '突撃！', 'gold', 900);
-      else if (f.type === 'duel') {
-        const [x1, y1] = center(f.a), [x2, y2] = center(f.b), mid = [(x1 + x2) / 2, (y1 + y2) / 2];
-        pic(mid, 'event/duel', 90, 1800);
-        late(() => words([mid[0], mid[1] + 50], f.winner ? `${f.winner}の勝ち！` : '勝負つかず', 'gold', 1500), 900);
-      } else if (f.type === 'gate') {
+      else if (f.type === 'duel') duelScreen(f);
+      else if (f.type === 'gate') {
         burst(f.pos, 'fire'); num(f.pos, '-' + f.loss, 'dmg');
         if (f.broken) { pic(f.pos, 'event/fall', 80, 1600); words(f.pos, '城門突破！', 'big'); }
       }
       if (f.routed) late(() => { pic(f.pos, f.captured ? 'event/capture' : 'event/rout', 56, 1400); words([center(f.pos)[0], center(f.pos)[1] + 34], f.captured ? '捕縛' : '敗走', 'red'); }, 450);
     }
   }
+  // 一騎打ちの画面：2人の顔と体力の棒、1合ずつ
+  function duelScreen(f) {
+    const box = document.getElementById('b-duel'); if (!box || !f.rounds) return;
+    const P = SG.data.tactics.play, A = s.officers[f.ida], B2 = s.officers[f.idb];
+    const side = (o, k) => `<div class="d-side d-${k}">${o && SG.faceOf(o) ? `<img src="${SG.faceOf(o)}" alt="">` : ''}<b>${esc(o.id)}</b><span>武力 ${o.war}${SG.hasSkill(o, 'hero') ? '（勇将+10）' : ''}</span><div class="d-hp"><i id="d-hp-${k}" style="width:100%"></i></div></div>`;
+    box.innerHTML = `<div class="d-title">一騎打ち！</div><div class="d-row">${side(A, 'a')}<div class="d-vs">VS</div>${side(B2, 'b')}</div><div class="d-msg" id="d-msg">　</div>`;
+    box.hidden = false;
+    clearTimeout(box._t);
+    let k = 0;
+    const step = () => {
+      const r = f.rounds[k];
+      if (!r) {
+        document.getElementById('d-msg').innerHTML = `<span class="d-win">${f.winner ? esc(f.winner) + 'の勝ち！' : '勝負つかず'}</span>`;
+        box._t = setTimeout(() => { box.hidden = true; }, P.duelEndMs / speed);
+        return;
+      }
+      document.getElementById('d-hp-a').style.width = r.ha + '%';
+      document.getElementById('d-hp-b').style.width = r.hb + '%';
+      const hitter = r.hit === 'a' ? A : B2, target = r.hit === 'a' ? 'b' : 'a';
+      const el2 = box.querySelector('.d-' + target); el2.classList.remove('shake'); void el2.offsetWidth; el2.classList.add('shake');
+      document.getElementById('d-msg').textContent = `${k + 1}合目：${hitter.id}の一撃！ -${r.dmg}`;
+      k++;
+      box._t = setTimeout(step, P.duelRoundMs / speed);
+    };
+    box._t = setTimeout(step, P.duelRoundMs / speed);
+  }
+  // 一騎打ちを見せるのにかかる時間
+  const duelTime = r => { const f = r.act && r.act.fx && r.act.fx.find(x => x.type === 'duel'); const P = SG.data.tactics.play; return f ? (f.rounds.length + 1) * P.duelRoundMs + P.duelEndMs : 0; };
   function dayBanner() {
     if (T.over) return;
     const svg = document.getElementById('b-fx'), vb = svg.viewBox.baseVal;
@@ -229,6 +254,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       const btn = (k, label, extra) => `<button data-k="${k}" class="${mode === k ? 'on' : ''}" ${n(k) ? '' : 'disabled'}>${label}${extra || ''}</button>`;
       const fireTarget = SG.tactics.targets(s, T, u, 'fire')[0];
       h += `<h3>${face(u, 'face-l')}${esc(SG.tactics.nameOf(u))}隊${u.commander ? '（総大将）' : ''}</h3>
+        ${o && SG.data.skills.of[o.id] ? `<div class="skills">${SG.data.skills.of[o.id].map(k => `<span class="skill" title="${SG.data.skills.list[k].text}">${SG.data.skills.list[k].name}</span>`).join('')}</div>` : ''}
         <div class="sub">${SG.tactics.typeOf(u).name}　兵 ${u.troops}／${u.start}　${o ? `統${o.lead} 武${o.war} 知${o.int}` : ''}<br>地形：${t.name}（守り×${SG.tactics.guard(s, T, u).toFixed(2)}）　移動力 ${SG.tactics.moveOf(s, u)}</div>
         <div class="b-acts">${btn('attack', '攻撃')}${btn('bow', '弓')}${btn('fire', '火計', fireTarget ? ` ${Math.round(SG.tactics.fireChance(s, T, u, SG.tactics.byUid(T, fireTarget)) * 100)}%` : '')}${btn('duel', '一騎打ち')}${btn('gate', '城門')}
         <button data-k="wait">待機</button>${T.undo && T.undo.id === sel ? '<button data-k="undo">移動を戻す</button>' : ''}</div>

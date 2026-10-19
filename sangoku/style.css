@@ -181,6 +181,21 @@ th .ico { width: 15px; height: 15px; margin-right: 1px; }
 select.type { font: inherit; font-size: 13px; background: #0f131c; color: var(--text); border: 1px solid var(--line); }
 .mole { font-size: 10px; margin-left: 4px; padding: 0 3px; border: 1px solid #c58cff; color: #c58cff; border-radius: 2px; }
 .pact { font-size: 12px; padding: 0 4px; border: 1px solid var(--good); color: var(--good); border-radius: 2px; }
+.skill { display: inline-block; font-size: 11px; margin: 0 2px; padding: 0 4px; border: 1px solid var(--gold); color: var(--gold); border-radius: 2px; background: rgba(217, 180, 90, .1); }
+.skills { margin: 2px 0; }
+#b-duel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, 90%); padding: 14px 18px; background: rgba(12, 9, 6, .94); border: 2px solid var(--gold); border-radius: 6px; box-shadow: 0 10px 40px #000; text-align: center; }
+#b-duel[hidden] { display: none; }
+.d-title { font-size: 26px; font-weight: bold; color: var(--war); letter-spacing: .2em; }
+.d-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0; }
+.d-side { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.d-side img { width: 110px; height: 110px; border: 2px solid var(--gold); border-radius: 4px; object-fit: cover; }
+.d-side b { font-size: 20px; } .d-side span { font-size: 13px; color: var(--dim); }
+.d-hp { width: 140px; height: 8px; background: #000; border: 1px solid #555; } .d-hp i { display: block; height: 100%; background: linear-gradient(90deg, #c0392b, #f0b35a); transition: width .25s; }
+.d-vs { font-size: 30px; font-weight: bold; color: #ff7a5a; }
+.d-msg { font-size: 17px; min-height: 1.5em; }
+.d-win { font-size: 24px; color: #ffd36a; font-weight: bold; }
+.shake { animation: shake .3s; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
 @media (max-width: 900px) {
   main { flex-direction: column; }
   #map-wrap { flex: none; height: 55vh; }

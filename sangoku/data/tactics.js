@@ -38,7 +38,7 @@ SG.data.tactics = {
   // 兵種のおまかせ：知力が武力より高ければ弓兵、武力がこれ以上なら騎兵、ほかは歩兵
   autoHorseWar: 80,
   // AI の手を見せる速さ：1手の間（ミリ秒）。speeds は「ゆっくり・ふつう・速い」の倍率
-  play: { moveMs: 450, actMs: 800, duelMs: 2200, phaseMs: 300, slideMs: 350, speeds: [0.5, 1, 3] },
+  play: { moveMs: 450, actMs: 800, duelRoundMs: 420, duelEndMs: 1300, phaseMs: 300, slideMs: 350, speeds: [0.5, 1, 3] },
   // AI
   ai: { duelGap: 15, duelChance: 0.3, fireInt: 70, fireChance: 0.5, engage: 5 },
 };

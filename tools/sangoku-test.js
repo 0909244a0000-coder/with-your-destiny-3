@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '../sangoku');
-const files = ['data/rules.js', 'data/cities.js', 'data/officers.js', 'data/scenarios.js', 'data/art.js', 'data/tactics.js', 'src/game.js', 'src/tactics.js'];
+const files = ['data/rules.js', 'data/cities.js', 'data/officers.js', 'data/scenarios.js', 'data/art.js', 'data/tactics.js', 'data/skills.js', 'src/game.js', 'src/tactics.js'];
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 for (const f of files) assert.ok(html.includes(`src="${f}"`), `index.html が ${f} を読み込んでいない`);
 const ctx = {};
@@ -126,6 +126,23 @@ for (let seed = 1; seed <= 12; seed++) {
     }
   }
   assert.ok(Object.values(done).every(v => v > 0), '計略が一度は成功する');
+}
+// 特技：神速は移動+1、看破は火計を受けにくい、勇将は一騎打ちで強い
+{
+  const t = SG.newGame('s194', '曹操', 4);
+  SG.exec(t, 'attack', { city: '陳留', to: '濮陽', mode: 'tactics', units: [{ officer: '夏侯惇', troops: 5000, type: 'foot' }, { officer: '郭嘉', troops: 3000, type: 'bow' }] });
+  const T = t.battle, [xh, gj] = T.B.atk, zl = T.B.def.find(u => u.officer === '張遼'), cg = T.B.def.find(u => u.officer === '陳宮');
+  assert.ok(SG.hasSkill(t.officers['張遼'], 'swift') && !SG.hasSkill(t.officers['夏侯惇'], 'swift'));
+  zl.type = 'foot';
+  assert.strictEqual(SG.tactics.moveOf(t, zl), SG.tactics.moveOf(t, xh) + 1, '神速は移動+1（張遼と夏侯惇はどちらも統率80以上）');
+  const before = SG.tactics.fireChance(t, T, cg, gj);
+  delete SG.data.skills.of['郭嘉'];
+  assert.ok(SG.tactics.fireChance(t, T, cg, gj) > before, '看破があると火計の成功率が下がる');
+  SG.data.skills.of['郭嘉'] = ['insight'];
+  let heroWins = 0;
+  for (let k = 0; k < 200; k++) { const r = SG.duel(t, { id: 'A', war: 85 }, { id: '関羽', war: 85 }); if (r.winner && r.winner.id === '関羽') heroWins++; else if (r.winner) heroWins--; assert.ok(r.rounds.length > 0); }
+  assert.ok(heroWins > 0, '勇将は同じ武力の相手に勝ち越す');
+  SG.tactics.auto(t, T); SG.tactics.finish(t, T);
 }
 // 外交：贈答で友好度、同盟中は攻められない、降伏勧告で勢力ごと加わる
 {

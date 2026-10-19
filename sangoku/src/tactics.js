@@ -31,7 +31,8 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   // 兵種（u.type）。決まっていなければ武将の能力でおまかせ
   function autoType(o) { return !o ? 'foot' : o.int > o.war ? 'bow' : o.war >= D().autoHorseWar ? 'horse' : 'foot'; }
   const typeOf = u => D().types[u.type] || D().types.foot;
-  const moveOf = (s, u) => D().move.base + typeOf(u).move + ((officer(s, u) || { lead: 0 }).lead >= D().move.bonusLead ? 1 : 0);
+  const sk = (s, u, k, key, base) => SG.skillVal(officer(s, u), k, key, base);
+  const moveOf = (s, u) => D().move.base + typeOf(u).move + sk(s, u, 'swift', 'move', 0) + ((officer(s, u) || { lead: 0 }).lead >= D().move.bonusLead ? 1 : 0);
   const stepCost = (T, u, j) => terr(T, j).cost + (['forest', 'mountain'].includes(T.tiles[j]) ? typeOf(u).rough : 0);
   const say = (T, text) => T.B.lines.push(`${T.day}日目：${text}`);
 
@@ -175,7 +176,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   const strength = (s, T, u) => SG.unitPower(s, u, u.side === 'atk' ? T.B.atkTrain : T.B.defTrain) * typeOf(u).atk;
   function guard(s, T, u) {
     const t = terr(T, u.pos);
-    return t.def * typeOf(u).def * (t.wall && u.side === 'def' ? 1 + s.cities[T.B.to].def / D().wallDefPer : 1);
+    return t.def * typeOf(u).def * sk(s, u, 'wall', 'guardMul', 1) * (t.wall && u.side === 'def' ? 1 + s.cities[T.B.to].def / D().wallDefPer : 1);
   }
   // 損害を与える。画面の演出のため、何が起きたかを T.fx に残す
   function hurt(s, T, u, loss, why, kind) {
@@ -204,18 +205,18 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       const t = byUid(T, target);
       if (kind === 'attack') {
         // 騎兵の突撃：この日に移動してから攻撃すると強い
-        const charge = typeOf(u).charge && T.undo && T.undo.id === id && T.undo.from !== u.pos ? typeOf(u).charge : 1;
+        const charge = typeOf(u).charge && T.undo && T.undo.id === id && T.undo.from !== u.pos ? typeOf(u).charge * sk(s, u, 'charge', 'chargeMul', 1) : 1;
         if (charge > 1 && T.fx) T.fx.push({ type: 'charge', pos: u.pos });
         const dmg = hurt(s, T, t, strength(s, T, u) * charge * d.attackK * terr(T, u.pos).atk * r(0.85, 1.15) / guard(s, T, t));
         let msg = `${nameOf(u)}隊が${charge > 1 ? '突撃！ ' : ''}${nameOf(t)}隊を攻撃 -${dmg}`;
-        if (t.troops > 0) msg += `／反撃 -${hurt(s, T, u, strength(s, T, t) * d.attackK * d.counter * r(0.85, 1.15) / guard(s, T, u), null, 'counter')}`;
+        if (t.troops > 0) msg += `／反撃 -${hurt(s, T, u, strength(s, T, t) * d.attackK * d.counter * sk(s, t, 'fame', 'counterMul', 1) * r(0.85, 1.15) / guard(s, T, u), null, 'counter')}`;
         say(T, msg);
       } else if (kind === 'bow') {
-        say(T, `${nameOf(u)}隊の弓 → ${nameOf(t)}隊 -${hurt(s, T, t, strength(s, T, u) / typeOf(u).atk * d.attackK * typeOf(u).bow.k * r(0.85, 1.15) / guard(s, T, t))}`);
+        say(T, `${nameOf(u)}隊の弓 → ${nameOf(t)}隊 -${hurt(s, T, t, strength(s, T, u) / typeOf(u).atk * d.attackK * typeOf(u).bow.k * sk(s, u, 'archer', 'bowMul', 1) * r(0.85, 1.15) / guard(s, T, t))}`);
       } else if (kind === 'fire') {
         const a = officer(s, u), b = officer(s, t), wit = b ? b.int : 30;
         const p = fireChance(s, T, u, t);
-        if (SG.rand(s) < p) say(T, `${a.id}の火計！ ${nameOf(t)}隊 -${hurt(s, T, t, t.troops * r(d.fire.loss[0], d.fire.loss[1]), '火に包まれ壊滅', 'fire')}`);
+        if (SG.rand(s) < p) say(T, `${a.id}の火計！ ${nameOf(t)}隊 -${hurt(s, T, t, Math.min(t.troops, t.troops * r(d.fire.loss[0], d.fire.loss[1]) * sk(s, u, 'fire', 'fireMul', 1)), '火に包まれ壊滅', 'fire')}`);
         else fx.push({ type: 'miss', id: uid(t), pos: t.pos }), say(T, `${a.id}の火計は${b ? b.id : '守備兵'}に見破られた（知力${a.int}対${wit}）`);
       } else if (kind === 'duel') {
         const a = officer(s, u), b = officer(s, t);
@@ -224,7 +225,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
           const res = SG.duel(s, a, b);
           say(T, `一騎打ち！ ${a.id}（武力${a.war}） 対 ${b.id}（武力${b.war}）`);
           T.B.lines.push(...res.lines);
-          fx.push({ type: 'duel', a: fromPos, b: t.pos, winner: res.winner ? res.winner.id : null });
+          fx.push({ type: 'duel', a: fromPos, b: t.pos, ida: a.id, idb: b.id, rounds: res.rounds, winner: res.winner ? res.winner.id : null });
           if (res.winner) hurt(s, T, res.winner === a ? t : u, 1e9, '一騎打ちに敗れて総崩れ');
         }
       } else return ng('命令がちがう');
@@ -238,7 +239,7 @@ var SG = typeof SG !== 'undefined' ? SG : {};
   }
   function fireChance(s, T, u, t) {
     const a = officer(s, u), b = officer(s, t), wit = b ? b.int : 30;
-    return clamp(a.int / (a.int + wit) * terr(T, t.pos).fire, D().fire.min, D().fire.max);
+    return clamp(a.int / (a.int + wit) * terr(T, t.pos).fire + sk(s, u, 'fire', 'fireAdd', 0) - sk(s, t, 'insight', 'fireResist', 0), D().fire.min, D().fire.max);
   }
 
   // ---------- 決着 ----------
