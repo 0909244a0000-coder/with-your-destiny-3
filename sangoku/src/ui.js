@@ -513,12 +513,15 @@
   }
 
   // ---------- 始め方 ----------
-  function startScreen() {
-    const sc = SG.data.scenarios[0];
+  // 始める：シナリオ（年代の順）を選び、君主を選ぶ
+  function startScreen(scId) {
+    const list = SG.data.scenarios.slice().sort((a, b) => a.year - b.year);
+    const sc = list.find(x => x.id === scId) || SG.data.scenarios[0];
     const preview = SG.newGame(sc.id, null, 1);
     const fs = Object.values(preview.forces).map(f => ({ f, sum: SG.forceSummary(preview, f.id), r: preview.officers[f.ruler] })).sort((a, b) => b.sum.cities - a.sum.cities || b.sum.officers - a.sum.officers);
-    modal(`<h2>天下三分　${esc(sc.title)}</h2><p>${esc(sc.text)}</p><p class="sub">君主を選んでください。</p><div class="forces">${fs.map(({ f, sum, r }) => `<div class="force-card" data-f="${esc(f.id)}">${face(r, 'face-l')}<span class="chip" style="background:${f.color}"></span> <b>${esc(f.ruler)}</b><div class="sub">統${r.lead} 武${r.war} 知${r.int} 政${r.pol} 魅${r.cha}</div><div class="sub">都市${sum.cities}・武将${sum.officers}・兵${man(sum.troops)}</div></div>`).join('')}</div>
+    modal(`<h2>天下三分</h2><div class="sc-tabs">${list.map(x => `<button data-sc="${x.id}" class="${x.id === sc.id ? 'on' : ''}">${esc(x.title)}</button>`).join('')}</div><p>${esc(sc.text)}</p><p class="sub">君主を選んでください。</p><div class="forces">${fs.map(({ f, sum, r }) => `<div class="force-card" data-f="${esc(f.id)}">${face(r, 'face-l')}<span class="chip" style="background:${f.color}"></span> <b>${esc(f.ruler)}</b><div class="sub">統${r.lead} 武${r.war} 知${r.int} 政${r.pol} 魅${r.cha}</div><div class="sub">都市${sum.cities}・武将${sum.officers}・兵${man(sum.troops)}</div></div>`).join('')}</div>
       <p class="note">歴史シミュレーションの名作をお手本にした、個人で遊ぶためのファン制作ゲームです。人物は史書・演義の人物で、能力値・絵・文章はこのゲーム独自のものです。</p>`, box => {
+      for (const btn of box.querySelectorAll('[data-sc]')) btn.addEventListener('click', () => startScreen(btn.dataset.sc));
       for (const card of box.querySelectorAll('.force-card')) card.addEventListener('click', () => {
         s = SG.newGame(sc.id, card.dataset.f);
         s.interactive = true; // 攻められたらマス戦闘で迎え撃つ

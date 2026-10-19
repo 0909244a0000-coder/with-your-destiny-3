@@ -33,6 +33,15 @@ for (const id of [...art.battleTiles, 'unit_foot', 'unit_horse', 'unit_bow', 'un
 for (const [, p] of art.logIcons) { const [d, n] = p.split('/'); assert.ok(fs.existsSync(path.join(root, art[d] + n + '.webp')), `記録の絵がない: ${p}`); }
 for (const o of SG.data.officers) for (const k of ['lead', 'war', 'int', 'pol', 'cha']) assert.ok(o[k] >= 1 && o[k] <= 100, `${o.id} の ${k}`);
 
+// シナリオ：配置の重なりがない、亡くなった年より後に置いていない、どのシナリオも数年動く
+for (const sc of SG.data.scenarios) {
+  const names = [...sc.forces.flatMap(f => Object.values(f.cities)), ...Object.values(sc.free)].join(' ').split(/\s+/).filter(Boolean);
+  assert.strictEqual(new Set(names).size, names.length, `${sc.id}：同じ武将を2か所に置いている`);
+  for (const n of names) { const o = SG.data.officers.find(x => x.id === n); assert.ok(o, `${sc.id}：武将がいない ${n}`); assert.ok(o.die >= sc.year, `${sc.id}：${n}はもう亡くなっている`); }
+  for (const f of sc.forces) assert.ok(Object.values(f.cities)[0].split(/\s+/)[0] === f.ruler, `${sc.id}：${f.ruler}が最初の都市の先頭にいない`);
+  const g = SG.newGame(sc.id, sc.forces[0].ruler, 2);
+  for (let i = 0; i < 36; i++) { SG.endTurn(g); for (const id of g.captives.slice()) SG.decideCaptive(g, id, 'release'); }
+}
 // 命令
 let s = SG.newGame('s194', '劉備', 42);
 const c = s.cities['下邳'];
@@ -232,6 +241,9 @@ for (const seed of [1, 2, 3]) {
   await pg.goto('file://' + path.join(root, 'index.html'));
   await pg.evaluate(() => localStorage.clear());
   await pg.reload();
+  await pg.click('[data-sc="s207"]');
+  assert.ok(await pg.isVisible('.force-card[data-f="孫権"]'), '207年のシナリオを選べる');
+  await pg.click('[data-sc="s194"]');
   await pg.click('.force-card[data-f="袁紹"]');
   const closeAll = async () => { while (await pg.isVisible('#modal-box [data-close]')) await pg.click('#modal-box [data-close]'); };
   // 地図の拡大：ホイールで拡大、ドラッグで動かしても都市は選ばれない、ミニマップで移動、全体に戻す
