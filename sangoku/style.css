@@ -198,6 +198,8 @@ select.type { font: inherit; font-size: 13px; background: #0f131c; color: var(--
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
 .sc-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 8px; }
 .sc-tabs button.on { filter: brightness(1.6); color: #fff; font-weight: bold; }
+.bond { font-size: 10px; margin-left: 3px; padding: 0 2px; border: 1px solid #ff9db0; color: #ff9db0; border-radius: 2px; }
+.rank { font-size: 11px; color: var(--dim); white-space: nowrap; }
 @media (max-width: 900px) {
   main { flex-direction: column; }
   #map-wrap { flex: none; height: 55vh; }

@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '../sangoku');
-const files = ['data/rules.js', 'data/cities.js', 'data/officers.js', 'data/scenarios.js', 'data/art.js', 'data/tactics.js', 'data/skills.js', 'src/game.js', 'src/tactics.js'];
+const files = ['data/rules.js', 'data/cities.js', 'data/officers.js', 'data/scenarios.js', 'data/art.js', 'data/tactics.js', 'data/skills.js', 'data/bonds.js', 'src/game.js', 'src/tactics.js'];
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 for (const f of files) assert.ok(html.includes(`src="${f}"`), `index.html が ${f} を読み込んでいない`);
 const ctx = {};
@@ -152,6 +152,28 @@ for (let seed = 1; seed <= 12; seed++) {
   for (let k = 0; k < 200; k++) { const r = SG.duel(t, { id: 'A', war: 85 }, { id: '関羽', war: 85 }); if (r.winner && r.winner.id === '関羽') heroWins++; else if (r.winner) heroWins--; assert.ok(r.rounds.length > 0); }
   assert.ok(heroWins > 0, '勇将は同じ武力の相手に勝ち越す');
   SG.tactics.auto(t, T); SG.tactics.finish(t, T);
+}
+// 官職と血縁：功績で昇進し兵の上限が増える、上限を超えた出陣はできない、血縁は引き抜けず跡を継ぐ
+{
+  const t = SG.newGame('s190', '孫堅', 3);
+  const cp = t.officers['朱治'];
+  assert.ok(SG.troopCap(t, t.officers['孫堅']) === SG.data.rules.rulerTroops, '君主は上限が大きい');
+  cp.merit = 0;
+  assert.strictEqual(SG.troopCap(t, cp), SG.data.rules.ranks[0].troops);
+  t.cities['長沙'].troops = 30000;
+  assert.ok(!SG.exec(t, 'attack', { city: '長沙', to: '江陵', units: [{ officer: '朱治', troops: 9000 }] }).ok, '官職の上限を超えて出陣できない');
+  SG.gainMerit(t, cp, 30);
+  assert.strictEqual(SG.rankOf(t, cp).name, '偏将軍', '功績で昇進する');
+  assert.ok(SG.exec(t, 'develop', { city: '長沙', officer: '朱治', kind: 'agri' }).ok && cp.merit === 31, '内政で功績');
+  assert.ok(SG.bonded(t, t.officers['孫策']) && !SG.bonded(t, t.officers['程普']), '孫策は孫堅の血縁');
+  t.officers['孫堅'].status = 'dead';
+  SG.nextMonth(t);
+  assert.strictEqual(t.forces['孫堅'].ruler, '孫策', '血縁が跡を継ぐ');
+  const u = SG.newGame('s194', '曹操', 3);
+  assert.ok(SG.bonded(u, u.officers['関羽']) && SG.bonded(u, u.officers['張飛']), '義兄弟');
+  assert.ok(!SG.exec(u, 'plot', { city: '陳留', officer: '郭嘉', kind: 'discord', target: '関羽' }).ok, '義兄弟に離間は効かない');
+  const old = JSON.parse(JSON.stringify(u)); for (const o of Object.values(old.officers)) delete o.merit; delete old.relations;
+  SG.migrate(old); assert.ok(old.officers['関羽'].merit > 0 && old.relations, '前の版のセーブを直す');
 }
 // 外交：贈答で友好度、同盟中は攻められない、降伏勧告で勢力ごと加わる
 {

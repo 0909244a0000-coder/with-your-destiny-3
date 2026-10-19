@@ -166,7 +166,7 @@
     const rows = list.map(o => {
       const isRuler = o.force && s.forces[o.force] && s.forces[o.force].ruler === o.id;
       const cls = [o.acted && opts.showActed ? 'done' : '', opts.pick ? 'pick' : '', opts.on && opts.on.includes(o.id) ? 'on' : ''].join(' ');
-      return `<tr class="${cls}" data-id="${esc(o.id)}"><td class="${isRuler ? 'ruler' : ''}">${face(o)}${esc(o.id)}${o.mole === s.player && o.force !== s.player ? '<span class="mole">内通</span>' : ''}</td>${['lead', 'war', 'int', 'pol', 'cha'].map(k => `<td class="${opts.hi === k ? 'hi' : ''}">${o[k]}</td>`).join('')}<td>${o.status === 'serve' && !isRuler ? o.loyalty : o.status === 'free' ? '在野' : '－'}</td>${opts.extra ? `<td>${opts.extra(o)}</td>` : ''}</tr>`;
+      return `<tr class="${cls}" data-id="${esc(o.id)}"><td class="${isRuler ? 'ruler' : ''}">${face(o)}${esc(o.id)}${SG.bonded(s, o) ? '<span class="bond" title="君主と血縁・義兄弟。忠誠が下がらない">絆</span>' : ''}${o.mole === s.player && o.force !== s.player ? '<span class="mole">内通</span>' : ''}</td>${['lead', 'war', 'int', 'pol', 'cha'].map(k => `<td class="${opts.hi === k ? 'hi' : ''}">${o[k]}</td>`).join('')}<td>${o.status === 'serve' && !isRuler ? o.loyalty : o.status === 'free' ? '在野' : '－'}</td>${opts.extra ? `<td>${opts.extra(o)}</td>` : ''}</tr>`;
     }).join('');
     const th = (k, t) => `<th title="${STAT[k] || '忠誠'}">${icon('stat/' + k)}${t}</th>`;
     return `<table><tr><th>武将</th>${th('lead', '統')}${th('war', '武')}${th('int', '知')}${th('pol', '政')}${th('cha', '魅')}${th('loyalty', '忠')}${opts.extraHead ? `<th>${opts.extraHead}</th>` : ''}</tr>${rows || '<tr><td colspan="8" class="sub">いない</td></tr>'}</table>`;
@@ -193,7 +193,7 @@
         <div class="group">人事・その他</div>${b('search', '探索')}${b('employ', '登用')}${b('reward', '褒美', false)}${b('trade', '売買', false)}${b('plot', '計略')}${b('diplo', '外交')}
       </div><label class="toggle"><input type="checkbox" id="delegate" ${c.delegate ? 'checked' : ''}>${icon('cmd/delegate')}委任（月の終わりにAIが内政・軍事を行う）</label>`;
     }
-    h += `<h3>武将（${offs.length}人）</h3>` + statsTable(offs, { showActed: mine, extraHead: mine ? '行動' : '', extra: mine ? o => o.acted ? icon('stat/acted', 'ico', '済') : '' : null });
+    h += `<h3>武将（${offs.length}人）</h3>` + statsTable(offs, { showActed: mine, extraHead: '官職', extra: o => `<span class="rank">${SG.rankOf(s, o).name}</span>` + (mine && o.acted ? icon('stat/acted', 'ico', '済') : '') });
     if (free.length) h += `<h3>在野（見つけた人物）</h3>` + statsTable(free);
     box.innerHTML = h;
     for (const btn of box.querySelectorAll('[data-cmd]')) btn.addEventListener('click', () => openCommand(btn.dataset.cmd));
@@ -407,13 +407,13 @@
       const defOffs = SG.officersIn(s, to, d.owner);
       modal(`<h2>${esc(c.id)} → ${esc(to)} 出陣</h2>
         <p class="sub">相手：${esc(SG.forceName(s, d.owner))}　兵${d.troops}・城壁${d.def}・訓練${d.training}・武将${defOffs.length}人（${defOffs.slice(0, 5).map(o => esc(o.id)).join('・')}）</p>
-        <p class="sub">出陣する武将（最大${R.maxUnits}人、クリックで選ぶ）。兵は統率の比で分ける。兵種は右の欄で選ぶ</p>${statsTable(list, { pick: true, hi: 'lead', on: chosen, extraHead: '兵種', extra: o => `<select class="type" data-o="${esc(o.id)}">${Object.entries(TY).map(([k, v]) => `<option value="${k}" ${types[o.id] === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select>` })}
+        <p class="sub">出陣する武将（最大${R.maxUnits}人、クリックで選ぶ）。兵は統率の比で分け、官職の上限まで。兵種は右の欄で選ぶ</p>${statsTable(list, { pick: true, hi: 'lead', on: chosen, extraHead: '兵種', extra: o => `<select class="type" data-o="${esc(o.id)}">${Object.entries(TY).map(([k, v]) => `<option value="${k}" ${types[o.id] === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select>` })}
         <p class="sub">歩兵：守りが固く城門に強い／騎兵：移動+2、移動してからの攻撃は突撃（森・山は苦手、弓なし）／弓兵：弓が3マス先まで強い（近くの戦いは弱い）</p>
         <div class="row"><label>兵</label><input type="range" id="tr" min="0" max="${c.troops}" step="100" value="${Math.floor(c.troops * 0.8 / 100) * 100}"><span id="trv"></span></div>
         <div class="sub" id="split"></div><div class="msg" id="msg"></div><div class="actions"><button data-close>やめる</button><button id="go-auto">自動で出陣</button><button id="go" class="primary">指揮して出陣</button></div>
         <p class="sub">指揮：マスの戦場で部隊を動かして戦う／自動：AIが戦うのを見る（途中で「指揮に戻る」もできる）</p>`, box => {
-        const units = () => { const sum = chosen.reduce((a, id) => a + s.officers[id].lead, 0); const n = +$('tr').value; return chosen.map(id => ({ officer: id, troops: Math.floor(n * s.officers[id].lead / sum / 100) * 100, type: types[id] })); };
-        const upd = () => { $('trv').textContent = $('tr').value + '人　兵糧' + Math.ceil($('tr').value * R.foodPerTroop * R.march.foodMonths) + 'を使う'; $('split').textContent = units().map(u => `${u.officer}（${TY[u.type].name}） ${u.troops}`).join('　'); };
+        const units = () => { const sum = chosen.reduce((a, id) => a + s.officers[id].lead, 0); const n = +$('tr').value; return chosen.map(id => ({ officer: id, troops: Math.min(SG.troopCap(s, s.officers[id]), Math.floor(n * s.officers[id].lead / sum / 100) * 100), type: types[id] })); };
+        const upd = () => { $('trv').textContent = $('tr').value + '人　兵糧' + Math.ceil($('tr').value * R.foodPerTroop * R.march.foodMonths) + 'を使う'; $('split').textContent = units().map(u => `${u.officer}（${TY[u.type].name}） ${u.troops}${u.troops >= SG.troopCap(s, s.officers[u.officer]) ? '（上限）' : ''}`).join('　'); };
         for (const sel of box.querySelectorAll('select.type')) {
           sel.addEventListener('click', e => e.stopPropagation());
           sel.addEventListener('change', () => { types[sel.dataset.o] = sel.value; upd(); });
@@ -473,7 +473,7 @@
   function showOfficers() {
     const list = SG.membersOf(s, s.player).sort((a, b) => (a.city > b.city ? 1 : a.city < b.city ? -1 : 0));
     const skills = o => (SG.data.skills.of[o.id] || []).map(k => `<span class="skill" title="${SG.data.skills.list[k].text}">${SG.data.skills.list[k].name}</span>`).join('');
-    modal(`<h2>武将一覧（${list.length}人）</h2>${statsTable(list, { pick: true, showActed: true, extraHead: '都市・特技', extra: o => esc(o.city) + (o.acted ? '・済' : '') + ' ' + skills(o) })}
+    modal(`<h2>武将一覧（${list.length}人）</h2>${statsTable(list, { pick: true, showActed: true, extraHead: '都市・官職・特技', extra: o => esc(o.city) + (o.acted ? '・済' : '') + '・' + SG.rankOf(s, o).name + `（功${o.merit}）` + ' ' + skills(o) })}
       <p class="sub">${Object.values(SG.data.skills.list).map(v => `${v.name}：${v.text}`).join('　')}</p><div class="actions"><button data-close>閉じる</button></div>`, box => {
       for (const tr of box.querySelectorAll('tr.pick')) tr.addEventListener('click', () => { sel = s.officers[tr.dataset.id].city; closeModal(); focusCity(sel); });
     });
@@ -557,7 +557,7 @@
     $('modal').addEventListener('click', e => { if (e.target === $('modal') && s) closeModal(); });
     const saved = load();
     if (saved && saved.version === 1 && saved.forces[saved.player]) {
-      s = saved; s.interactive = true; sel = capitalOf(); render(); focusCity(sel, A.view.startZoom);
+      s = SG.migrate(saved); s.interactive = true; sel = capitalOf(); render(); focusCity(sel, A.view.startZoom);
       // 戦の途中・月の終わりの途中でやめていたら、つづきから
       if (s.battle) openBattle();
       else if (s.turnQueue) continueTurn();

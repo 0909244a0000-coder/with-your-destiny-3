@@ -51,6 +51,17 @@ SG.data.rules = {
     aiOfferTrust: 65,         // この友好度以上のAIは、プレイヤーに同盟を申し入れることがある
     aiOfferChance: 0.03,
   },
+  // 官職：功績（merit）で決まり、出陣の1部隊の兵の上限になる。君主は rulerTroops
+  ranks: [
+    { name: '無官', merit: 0, troops: 5000 },
+    { name: '校尉', merit: 10, troops: 8000 },
+    { name: '偏将軍', merit: 30, troops: 12000 },
+    { name: '将軍', merit: 60, troops: 16000 },
+    { name: '大将軍', merit: 100, troops: 20000 },
+  ],
+  rulerTroops: 25000,
+  // 功績：命令が成功したとき（battleWin＝勝った戦に出た武将、battleHold＝守りきった武将）。最初の功績＝(一番高い能力−startFrom)×startPer
+  merit: { develop: 1, recruit: 1, train: 1, search: 1, employ: 2, plot: 3, diplo: 3, battleWin: 5, battleHold: 4, startFrom: 60, startPer: 2.5 },
   // 戦争
   maxUnits: 5,
   battleDays: 30,
