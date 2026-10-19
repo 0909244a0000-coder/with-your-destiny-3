@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>天下三分</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="top">
+  <div class="brand">天下三分</div>
+  <div id="date"></div>
+  <div id="me"></div>
+  <div class="spacer"></div>
+  <button id="btn-captives" hidden></button>
+  <button id="btn-forces">勢力一覧</button>
+  <button id="btn-officers">武将一覧</button>
+  <button id="btn-log">記録</button>
+  <button id="btn-reset">最初から</button>
+  <button id="btn-end" class="primary">月を終える</button>
+</header>
+<main>
+  <div id="map-wrap">
+    <svg id="map" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="map-ctl"><button id="zoom-in" title="拡大（ホイールでも）">＋</button><button id="zoom-out" title="縮小">－</button><button id="zoom-home" title="君主のいる都市へ">本拠</button><button id="zoom-all" title="全体を見る">全体</button></div>
+    <svg id="minimap" viewBox="0 0 1024 1024"></svg>
+  </div>
+  <aside id="side">
+    <div id="city"></div>
+    <div id="log"></div>
+  </aside>
+</main>
+<div id="battle" hidden></div>
+<div id="modal" hidden><div id="modal-box"></div></div>
+<script src="data/rules.js"></script>
+<script src="data/cities.js"></script>
+<script src="data/officers.js"></script>
+<script src="data/scenarios.js"></script>
+<script src="data/art.js"></script>
+<script src="data/tactics.js"></script>
+<script src="data/skills.js"></script>
+<script src="data/bonds.js"></script>
+<script src="src/game.js"></script>
+<script src="src/tactics.js"></script>
+<script src="src/mapview.js"></script>
+<script src="src/battle-ui.js"></script>
+<script src="src/ui.js"></script>
+</body>
+</html>

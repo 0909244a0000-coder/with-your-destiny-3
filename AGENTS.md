@@ -23,6 +23,7 @@
 - `docs/HANDOFF.md` … 引き継ぎメモ（今どうなっているか、決まったこと、次にやること）
 - `docs/ART.md` … 絵の決まりと発注リスト
 - `docs/REVIEW.md` … ほかのAIに確認（自動プレイで測る）と相談を頼むときの手順。結果は `docs/reviews/` に置く
+- `sangoku/` … 別のゲーム「天下三分」（三国志シミュレーション。独立して動く。説明は `sangoku/README.md`、テストは `tools/sangoku-test.js`）
 - `tools/` … 確かめるための道具（全テスト `run-tests.js`、各機能のテスト `*-test.js`、バランスの自動プレイ、絵の切り取り）
 
 ## 技術メモ
