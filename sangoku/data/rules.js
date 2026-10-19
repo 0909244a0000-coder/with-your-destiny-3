@@ -89,5 +89,10 @@ SG.data.rules = {
     minAttackTroops: 6000,
     occupyTroops: 3000,       // 空白地へ送る兵
     rewardBelow: 60,
+    // 後方（敵と接していない都市）は、兵・金・兵糧を前線のほうへ送る
+    rearKeepTroops: 2000,     // 後方に残す兵
+    rearSendShare: 0.4,       // 余った兵のうち送る割合
+    rearKeepGold: 300, rearKeepFood: 3000,
+    rearMinSend: 1000,        // これより少なければ送らない
   },
 };

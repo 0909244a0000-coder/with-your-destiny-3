@@ -607,8 +607,19 @@ var SG = typeof SG !== 'undefined' ? SG : {};
         if (s.battle) return;
       }
     }
-    // 人の少ない前線へ武将を回す
+    // 後方の都市は、兵・金・兵糧と武将を、前線に近い隣の自分の都市へ送る
     const mine = neighbors.filter(n => n.owner === fid);
+    if (!enemies.length && !empties.length && mine.length) {
+      const dist = frontDistance(s, fid);
+      const next = mine.filter(n => dist[n.id] < dist[cityId]).sort((a, b) => dist[a.id] - dist[b.id])[0];
+      if (next) {
+        const troops = Math.floor(Math.max(0, c.troops - ai.rearKeepTroops) * ai.rearSendShare / 100) * 100;
+        const gold = Math.max(0, c.gold - ai.rearKeepGold), food = Math.max(0, c.food - ai.rearKeepFood);
+        const go = idle().length > 1 ? [best(idle(), 'lead').id] : [];
+        if (troops >= ai.rearMinSend || go.length) exec(s, 'move', { city: cityId, to: next.id, officers: go, troops: troops >= ai.rearMinSend ? troops : 0, gold: Math.floor(gold / 2), food: Math.floor(food / 2) });
+      }
+    }
+    // 人の少ない前線へ武将を回す
     if (idle().length > 3) {
       const need = mine.find(n => officersIn(s, n.id, fid).length < 2);
       if (need) exec(s, 'move', { city: cityId, to: need.id, officers: [best(idle(), 'lead').id], troops: enemies.length ? 0 : Math.floor(c.troops / 4) });
@@ -640,6 +651,20 @@ var SG = typeof SG !== 'undefined' ? SG : {};
       tries.push(['train', {}]);
       for (const [name, args] of tries) if (exec(s, name, { city: cityId, officer: o.id, ...args }).ok) break;
     }
+  }
+
+  // 自分の都市ごとの、敵（同盟・停戦の相手を除く）か空白地と接する都市までの道のり。同じ月のうちは覚えておく
+  const frontCache = new Map();
+  function frontDistance(s, fid) {
+    const key = `${fid}@${s.year * 12 + s.month}:${citiesOf(s, fid).length}`;
+    if (frontCache.has(key)) return frontCache.get(key);
+    const dist = {}, q = [];
+    for (const c of citiesOf(s, fid)) if (adj(c.id).some(id => s.cities[id].owner !== fid && !pactOf(s, fid, s.cities[id].owner))) { dist[c.id] = 0; q.push(c.id); }
+    while (q.length) { const id = q.shift(); for (const n of adj(id)) if (s.cities[n].owner === fid && dist[n] === undefined) { dist[n] = dist[id] + 1; q.push(n); } }
+    for (const c of citiesOf(s, fid)) if (dist[c.id] === undefined) dist[c.id] = 99;
+    if (frontCache.size > 200) frontCache.clear();
+    frontCache.set(key, dist);
+    return dist;
   }
 
   // ---------- 月の終わり ----------

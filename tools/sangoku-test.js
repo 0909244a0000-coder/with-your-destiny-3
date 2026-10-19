@@ -175,6 +175,14 @@ for (let seed = 1; seed <= 12; seed++) {
   const old = JSON.parse(JSON.stringify(u)); for (const o of Object.values(old.officers)) delete o.merit; delete old.relations;
   SG.migrate(old); assert.ok(old.officers['関羽'].merit > 0 && old.relations, '前の版のセーブを直す');
 }
+// AIの戦略：後方の都市は前線へ兵を送る（曹操の譙は、ほかの勢力と接していないようにすると兵が減る）
+{
+  const t = SG.newGame('s194', null, 2);
+  for (const id of SG.adj('譙')) t.cities[id].owner = '曹操';
+  t.cities['譙'].troops = 20000;
+  SG.aiCity(t, '譙');
+  assert.ok(t.cities['譙'].troops < 20000, '後方の兵を前へ送る');
+}
 // 外交：贈答で友好度、同盟中は攻められない、降伏勧告で勢力ごと加わる
 {
   const t = SG.newGame('s194', '曹操', 5);
